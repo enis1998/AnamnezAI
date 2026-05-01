@@ -156,15 +156,44 @@ tailwind.config = {
 </div>
 
 <!-- ── VIEW: PREPARING ── -->
-<div id="view-preparing" class="hidden max-w-xl mx-auto px-4 py-20 text-center fade">
-  <div class="relative w-20 h-20 mx-auto mb-6">
+<div id="view-preparing" class="hidden max-w-xl mx-auto px-4 py-16 text-center fade">
+  <div class="relative w-24 h-24 mx-auto mb-7">
     <div class="absolute inset-0 rounded-full bg-secc pulse-ring"></div>
-    <div class="relative w-20 h-20 rounded-full bg-pric flex items-center justify-center">
-      <span class="material-symbols-outlined msym-fill text-white text-3xl">psychology</span>
+    <div class="relative w-24 h-24 rounded-full bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-4xl">psychology</span>
     </div>
   </div>
   <h2 class="font-head font-bold text-pri text-xl mb-2" id="txt-prep">AnamnezAI Hazırlanıyor</h2>
-  <p class="text-onsv text-sm" id="txt-prep-sub">Gemma 4 ilk sorunuzu hazırlıyor...</p>
+  <p class="text-onsv text-sm mb-1" id="txt-prep-sub">Gemma 4 ilk sorunuzu hazırlıyor...</p>
+
+  <!-- Cycling tips -->
+  <div id="prep-tip" class="text-[11px] text-onsv opacity-60 mb-5 min-h-[18px] transition-all duration-500">⏱ Model ilk yüklemede 30–90 saniye sürebilir</div>
+
+  <!-- Countdown bar -->
+  <div class="max-w-xs mx-auto mb-5">
+    <div class="flex justify-between text-[10px] font-bold text-onsv opacity-50 mb-1.5">
+      <span>Model yükleniyor</span>
+      <span id="prep-elapsed">0s</span>
+    </div>
+    <div class="w-full h-1.5 bg-surfc rounded-full overflow-hidden">
+      <div id="prep-progress" class="h-full bg-sec rounded-full transition-all duration-1000" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Timeout retry area — shown after 100s -->
+  <div id="prep-retry" class="hidden mt-5 p-4 bg-orange-50 rounded-2xl border border-orange-100">
+    <p class="text-warn text-sm mb-3 font-semibold">⚠️ Model daha uzun sürüyor. Bu normaldir.</p>
+    <div class="flex gap-2 justify-center flex-wrap">
+      <button onclick="retryStart()"
+        class="px-5 py-2.5 rounded-xl bg-warn text-white font-bold text-sm hover:opacity-90 transition-all">
+        🔄 Tekrar Dene
+      </button>
+      <button onclick="showView('view-landing')"
+        class="px-5 py-2.5 rounded-xl bg-surfc text-onsv font-bold text-sm hover:bg-surfch transition-all">
+        ← Geri Dön
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ── VIEW: INTERVIEW ── -->
@@ -254,6 +283,30 @@ tailwind.config = {
 const API = 'http://localhost:8000';
 let sessionId = null, lang = 'tr', recognition = null;
 let chatHistory = []; // [{role:'ai'|'user', text:''}]
+let lastStartParams = null; // for retry
+let prepTimerRef = null;
+let prepElapsedRef = null;
+let warmupDone = false;
+
+// Preparing screen cycling tips
+const PREP_TIPS_TR = [
+  '⏱ Model ilk yüklemede 30–90 saniye sürebilir',
+  '🧠 Gemma 4 tıbbi dil modelini hafızaya yüklüyor...',
+  '💡 Yerel AI — verileriniz sunucuya gönderilmez',
+  '🔒 Tüm işlem bu cihazda gerçekleşiyor',
+  '⚕ MTS triaj kriterleri hazırlanıyor...',
+  '🩺 Klinik soru bankası oluşturuluyor...',
+  '🤔 İlk yanıt en yavaş olur, sonrakiler çok daha hızlıdır',
+];
+const PREP_TIPS_EN = [
+  '⏱ First load may take 30–90 seconds',
+  '🧠 Gemma 4 is loading the medical language model...',
+  '💡 Local AI — no data sent to servers',
+  '🔒 All processing happens on this device',
+  '⚕ Preparing MTS triage criteria...',
+  '🩺 Building clinical question set...',
+  '🤔 First response is slowest — subsequent ones are much faster',
+];
 
 // ── i18n ──
 const T = {
@@ -350,10 +403,10 @@ function showToast(msg, isErr=false){
   setTimeout(()=>el.classList.add('hidden'),3500);
 }
 
-// ── Connection Check ──
+// ── Connection Check & Warmup ──
 async function checkHealth(){
   try {
-    const r = await fetch(`${API}/health`,{signal:AbortSignal.timeout(3000)});
+    const r = await fetch(`${API}/health`,{signal:AbortSignal.timeout(5000)});
     const d = await r.json();
     const ok = d.ollama==='connected' && d.gemma_available;
     const pill = document.getElementById('conn-pill');
@@ -365,6 +418,11 @@ async function checkHealth(){
       pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700';
       dot.className='w-1.5 h-1.5 rounded-full bg-emerald-500';
       txt.textContent=t('connOk');
+      // Warmup model in background (silently, one time)
+      if(!warmupDone){
+        warmupDone=true;
+        fetch(`${API}/api/warmup`,{method:'POST',signal:AbortSignal.timeout(200000)}).catch(()=>{});
+      }
     } else {
       pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700';
       dot.className='w-1.5 h-1.5 rounded-full bg-amber-500';
@@ -430,6 +488,18 @@ async function startInterview(){
   if(!name){showToast(t('errName'),true);return;}
   if(!age||age<1){showToast(t('errAge'),true);return;}
 
+  lastStartParams = {name, age, gender};
+  await _doStartInterview(name, age, gender);
+}
+
+async function retryStart(){
+  if(!lastStartParams) return;
+  document.getElementById('prep-retry').classList.add('hidden');
+  warmupDone=true; // warmup zaten denendi, atla
+  await _doStartInterview(lastStartParams.name, lastStartParams.age, lastStartParams.gender);
+}
+
+async function _doStartInterview(name, age, gender){
   const btn=document.getElementById('btn-start');
   btn.disabled=true;
   btn.innerHTML='<span class="material-symbols-outlined msym spin text-[18px]">refresh</span>';
@@ -437,20 +507,66 @@ async function startInterview(){
   showView('view-preparing');
   chatHistory=[];
 
+  // --- Preparing screen: elapsed counter + cycling tips ---
+  let elapsed=0;
+  const MAX_WAIT=150; // show retry after 100s, total wait
+  if(prepElapsedRef) clearInterval(prepElapsedRef);
+  document.getElementById('prep-retry').classList.add('hidden');
+  document.getElementById('prep-progress').style.width='0%';
+
+  const tips = lang==='tr' ? PREP_TIPS_TR : PREP_TIPS_EN;
+  let tipIdx=0;
+
+  prepElapsedRef = setInterval(()=>{
+    elapsed++;
+    const el=document.getElementById('prep-elapsed');
+    if(el) el.textContent=`${elapsed}s`;
+    const bar=document.getElementById('prep-progress');
+    if(bar) bar.style.width=`${Math.min(95,(elapsed/MAX_WAIT)*100)}%`;
+    // Cycle tip every 7s
+    if(elapsed%7===0){
+      tipIdx=(tipIdx+1)%tips.length;
+      const tip=document.getElementById('prep-tip');
+      if(tip){tip.style.opacity='0';setTimeout(()=>{tip.textContent=tips[tipIdx];tip.style.opacity='0.6';},300);}
+    }
+    // Show retry after 100s
+    if(elapsed>=100){
+      const retryEl=document.getElementById('prep-retry');
+      if(retryEl) retryEl.classList.remove('hidden');
+    }
+  },1000);
+
+  function stopPrepTimer(){
+    if(prepElapsedRef){clearInterval(prepElapsedRef);prepElapsedRef=null;}
+    const bar=document.getElementById('prep-progress');
+    if(bar) bar.style.width='100%';
+  }
+
   try {
     const res = await fetch(`${API}/api/session/start`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({patient_name:name,age,gender,language:lang})
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({patient_name:name,age,gender,language:lang}),
+      signal: AbortSignal.timeout(190000)  // 190s — covers 180s backend timeout
     });
-    if(!res.ok) throw new Error();
+    stopPrepTimer();
+    if(!res.ok){
+      const err = await res.json().catch(()=>({detail:'Bağlantı hatası'}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
     const data = await res.json();
     sessionId = data.session_id;
     updateProgress(data.step, data.total_steps);
     addAIMessage(data.question);
     showView('view-interview');
-  } catch {
-    showToast(t('errConn'),true);
-    showView('view-landing');
+  } catch(e) {
+    stopPrepTimer();
+    const retryEl = document.getElementById('prep-retry');
+    if(retryEl) retryEl.classList.remove('hidden');
+    const msg = e.name==='TimeoutError'
+      ? '⚠️ Gemma 4 yanıt vermedi (190sn). Model yükleniyor olabilir — "Tekrar Dene" ya da birkaç saniye sonra tekrar başlatın.'
+      : (e.message || t('errConn'));
+    showToast(msg, true);
   } finally {
     btn.disabled=false;
     btn.innerHTML=`<span class="material-symbols-outlined msym text-[18px]">play_arrow</span><span id="txt-btn-start">${t('btnStart')}</span>`;
@@ -479,9 +595,13 @@ async function submitAnswer(){
   try {
     const res = await fetch(`${API}/api/session/answer`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({session_id:sessionId,answer:ans})
+      body:JSON.stringify({session_id:sessionId,answer:ans}),
+      signal: AbortSignal.timeout(190000)
     });
-    if(!res.ok) throw new Error();
+    if(!res.ok){
+      const err = await res.json().catch(()=>({detail:'Sunucu hatası'}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
     const data = await res.json();
     showTyping(false);
 
@@ -492,9 +612,12 @@ async function submitAnswer(){
       addAIMessage(data.question);
       updateProgress(data.step, data.total_steps);
     }
-  } catch {
+  } catch(e) {
     showTyping(false);
-    showToast(t('errConn'),true);
+    const msg = e.name==='TimeoutError'
+      ? 'Gemma 4 yanıt vermedi. Lütfen tekrar gönderin.'
+      : (e.message || t('errConn'));
+    showToast(msg, true);
   } finally {
     btn.disabled=false;
     btn.innerHTML=`<span id="txt-btn-next">${t('sendBtn')}</span><span class="material-symbols-outlined msym text-[16px]">send</span>`;

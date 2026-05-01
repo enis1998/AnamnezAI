@@ -77,14 +77,14 @@ class ClinicalSummaryResponse(BaseModel):
 # ─────────────────────────────────────────────
 #  Ollama /api/chat Helper
 # ─────────────────────────────────────────────
-async def ask_gemma(prompt: str, system: str = "") -> str:
+async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0) -> str:
     """Ollama /api/chat üzerinden Gemma 4'e istek gönderir."""
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
     try:
-        async with httpx.AsyncClient(timeout=180.0) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.post(
                 f"{OLLAMA_BASE_URL}/api/chat",
                 json={
@@ -95,7 +95,7 @@ async def ask_gemma(prompt: str, system: str = "") -> str:
                         "temperature": 0.25,
                         "top_p": 0.85,
                         "top_k": 40,
-                        "num_predict": 768,
+                        "num_predict": 512,
                         "repeat_penalty": 1.1,
                     },
                 },
@@ -104,6 +104,10 @@ async def ask_gemma(prompt: str, system: str = "") -> str:
             return resp.json()["message"]["content"].strip()
     except httpx.ConnectError:
         raise HTTPException(status_code=503, detail="Ollama çalışmıyor. Terminal'de: ollama serve")
+    except httpx.ReadTimeout:
+        raise HTTPException(status_code=504, detail=f"Gemma 4 yanıt vermedi (timeout {int(timeout)}sn). Model yükleniyor olabilir, lütfen tekrar deneyin.")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Bağlantı zaman aşımı. Ollama servisini kontrol edin.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gemma 4 hatası: {str(e)}")
 
@@ -146,25 +150,49 @@ async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, Non
 # ─────────────────────────────────────────────
 SYSTEM_PROMPT_TR = """Sen AnamnezAI — deneyimli, empatik bir tıbbi pre-triaj asistanısın.
 Gemma 4 tarafından güçlendiriliyorsun ve tamamen yerel (Ollama) çalışıyorsun.
+UZMANLIK: Türkçe tıbbi terminoloji (dispne, taşikardi, diyaforez, presenkop, pallor, siyanoz, bradikardi, hipertansif kriz, troponin) ile düşün; halkın anlayacağı dilde sor.
 GÖREV: Hastanın semptomlarını anlamak için klinik açıdan değerli, bağlamsal sorular sor.
 KURALLAR:
-- Her seferinde SADECE 1 soru sor.
+- Her seferinde SADECE 1 soru sor (maksimum 2 cümle).
 - Önceki cevapları dikkate alarak soru üret (bağlamsal mülakat).
 - Tıbbi jargon kullanma, halkın anlayacağı dil kullan.
-- Acil semptomlar (göğüs ağrısı, nefes darlığı, bilinç kaybı) görürsen önce detaylandır.
-- Empatik, sakinleştirici ton. Maksimum 2 cümle. Soru işaretiyle bitir."""
+- ACİL semptomlar (göğüs ağrısı, nefes darlığı, bilinç kaybı, felç bulguları) görürsen hemen o yönde detaylandır.
+- MTS (Manchester Triage System) kriterlerine göre değerlendir: yayılım, şiddet (1-10), süre, tetikleyici, eşlik eden bulgular.
+- Empatik, sakinleştirici ton. Soru işaretiyle bitir.
+
+ÖRNEK MÜLAKATİ:
+Hasta: Ali Yılmaz, 58 yaş, Erkek.
+S: "Merhaba Ali Bey, sizi bugün buraya getiren en önemli şikayetiniz nedir?"
+C: "Göğsümde baskı hissediyorum sabahtan beri."
+S: "Bu baskı hissi elinize, kolunuza ya da çenenize yayılıyor mu?"
+C: "Evet, sol koluma kadar geliyor."
+S: "Bu his 1'den 10'a kadar bir skalada kaç olur ve nefes almakta güçlük çekiyor musunuz?"
+
+BU ÖRNEĞİ İZLE — Bağlamsal, derinleştirici ve klinisyen gibi düşünen sorular sor."""
 
 SYSTEM_PROMPT_EN = """You are AnamnezAI — an experienced, empathetic medical pre-triage assistant.
 Powered by Gemma 4, running 100% locally via Ollama.
+EXPERTISE: Think with clinical terminology (dyspnea, tachycardia, diaphoresis, presyncope, pallor, cyanosis, hypertensive crisis); ask in plain language.
 TASK: Ask clinically relevant, contextual questions to understand the patient's symptoms.
 RULES:
-- Ask ONLY ONE question at a time.
-- Generate questions based on previous answers (contextual interview).
+- Ask ONLY ONE question at a time (max 2 sentences).
+- Generate questions based on ALL previous answers (contextual interview).
 - Avoid medical jargon, use plain language.
-- If emergency signs present (chest pain, difficulty breathing), explore those first.
-- Empathetic, calming tone. Max 2 sentences. End with a question?"""
+- EMERGENCY signs (chest pain, breathing difficulty, loss of consciousness, stroke signs): explore FIRST.
+- Apply MTS (Manchester Triage System) criteria: radiation, severity (1-10), duration, triggers, associated symptoms.
+- Empathetic, calming tone. End with a question?
 
-TRIAGE_SYSTEM_TR = """Sen klinik triaj uzmanısın (Gemma 4 tarafından güçlendirilmişsin).
+EXAMPLE EXCHANGE:
+Patient: John Doe, 58y, Male.
+Q: "Hello John, what's the main reason you're here today?"
+A: "I've had chest pressure since this morning."
+Q: "Does this pressure spread to your arm, jaw, or back?"
+A: "Yes, it goes down my left arm."
+Q: "On a scale of 1-10 how severe is it, and do you have any difficulty breathing?"
+
+FOLLOW THIS EXAMPLE — contextual, deepening, clinician-like questions."""
+
+TRIAGE_SYSTEM_TR = """Sen Manchester Triage System (MTS) ve CTAS standartlarına göre eğitilmiş klinik triaj uzmanısın (Gemma 4 tarafından güçlendirilmişsin).
 Hastanın semptom mülakat geçmişini analiz et.
 ÇIKTI: SADECE geçerli JSON döndür. Başka hiçbir metin veya markdown ekleme.
 {
@@ -177,9 +205,12 @@ Hastanın semptom mülakat geçmişini analiz et.
   "clinical_notes": "Doktor için kritik gözlemler 2-3 cümle",
   "urgency_flags": ["Acil uyarı bayrakları — örn: Kardiyak risk faktörleri mevcut"]
 }
-TRİAJ: RED=Hayati risk/derhal, YELLOW=Acil 30dk-2saat, GREEN=Rutin poliklinik"""
+TRİAJ STANDARTLARI:
+RED = Hayati risk / derhal müdahale (AMI, inme, anafilaksi, solunum yetmezliği, GCS<8)
+YELLOW = Acil, 30dk-2saat içinde görülmeli (yüksek ateş, orta şiddetli ağrı, brakikardi, hipertansif acil)  
+GREEN = Rutin poliklinik (hafif semptom, kronik takip, üst solunum yolu enfeksiyonu)"""
 
-TRIAGE_SYSTEM_EN = """You are a clinical triage expert (powered by Gemma 4).
+TRIAGE_SYSTEM_EN = """You are a clinical triage expert trained on Manchester Triage System (MTS) and CTAS standards (powered by Gemma 4).
 Analyze the patient's symptom interview history.
 OUTPUT: Return ONLY valid JSON. No other text or markdown.
 {
@@ -192,12 +223,18 @@ OUTPUT: Return ONLY valid JSON. No other text or markdown.
   "clinical_notes": "Critical notes for doctor 2-3 sentences",
   "urgency_flags": ["Emergency flags if any"]
 }
-TRIAGE: RED=Life-threatening/immediate, YELLOW=Urgent 30min-2hrs, GREEN=Routine outpatient"""
+TRIAGE STANDARDS:
+RED = Life-threatening / immediate (AMI, stroke, anaphylaxis, respiratory failure, GCS<8)
+YELLOW = Urgent, seen within 30min-2hrs (high fever, moderate pain, bradycardia, hypertensive urgency)
+GREEN = Routine outpatient (mild symptoms, chronic follow-up, URTI)"""
 
+# Triage renk palet
 TRIAGE_COLOR = {"RED": "#ba1a1a", "YELLOW": "#e07b26", "GREEN": "#006a68"}
+
 
 def get_system_prompt(lang: str) -> str:
     return SYSTEM_PROMPT_TR if lang == "tr" else SYSTEM_PROMPT_EN
+
 
 def get_triage_system(lang: str) -> str:
     return TRIAGE_SYSTEM_TR if lang == "tr" else TRIAGE_SYSTEM_EN
@@ -205,6 +242,26 @@ def get_triage_system(lang: str) -> str:
 # ─────────────────────────────────────────────
 #  Endpoints
 # ─────────────────────────────────────────────
+
+@app.post("/api/warmup")
+async def warmup_model():
+    """Gemma 4 modelini hafızaya yükler (ilk çağrıyı hızlandırır)."""
+    try:
+        async with httpx.AsyncClient(timeout=200.0) as client:
+            resp = await client.post(
+                f"{OLLAMA_BASE_URL}/api/generate",
+                json={
+                    "model": GEMMA_MODEL,
+                    "prompt": "Hi",
+                    "stream": False,
+                    "options": {"num_predict": 1},
+                },
+            )
+            resp.raise_for_status()
+        return {"status": "warmed_up", "model": GEMMA_MODEL}
+    except Exception as e:
+        return {"status": "warmup_failed", "error": str(e)}
+
 
 @app.get("/health")
 async def health_check():
