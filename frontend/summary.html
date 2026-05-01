@@ -100,6 +100,16 @@ function render(d) {
     </div>
   </div>
 
+  <!-- Urgency Flags (varsa) -->
+  ${d.urgency_flags && d.urgency_flags.length ? `
+  <div class="bg-error-container rounded-2xl shadow-sm p-6 mb-4 border-l-4 border-error">
+    <p class="text-xs font-bold text-error uppercase tracking-wider mb-3">⚠️ Acil Uyarı Bayrakları</p>
+    <ul class="space-y-1">
+      ${d.urgency_flags.map(f=>`<li class="text-sm font-semibold text-error flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">warning</span>${f}</li>`).join('')}
+    </ul>
+  </div>` : ''}
+
   <!-- Chief Complaint -->
   <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-6 mb-4">
     <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Ana Şikayet</p>
