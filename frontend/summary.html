@@ -1,186 +1,209 @@
 <!DOCTYPE html>
-<html lang="tr" class="light">
+<html lang="tr">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MediScreen AI — Klinik Özet</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<title>AnamnezAI — Klinik Özet Raporu</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
 <script>
-tailwind.config = {
-  theme: { extend: {
-    colors: {
-      "primary":"#002f40","primary-container":"#00475e","secondary":"#006a68",
-      "secondary-container":"#a0f1ed","surface":"#f8fafb","surface-container":"#eceeef",
-      "surface-container-low":"#f2f4f5","surface-container-lowest":"#ffffff",
-      "surface-container-high":"#e6e8e9","on-surface":"#191c1d",
-      "on-surface-variant":"#40484c","on-primary":"#ffffff",
-      "outline-variant":"#c0c7cd","error":"#ba1a1a","error-container":"#ffdad6",
-      "tertiary-container":"#dca26c"
-    },
-    fontFamily: { headline:["Manrope"], body:["Inter"] }
-  }}
-}
+tailwind.config={theme:{extend:{colors:{
+  pri:"#002f40",pric:"#00475e",sec:"#006a68",secc:"#a0f1ed",
+  surf:"#f4f7f9",surfc:"#e8ecee",ons:"#191c1d",onsv:"#3f4749",
+  ouv:"#bfc7ca",err:"#ba1a1a",errc:"#ffdad6",warn:"#e07b26"
+},fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}}}}
 </script>
 <style>
-  body { font-family:'Inter',sans-serif; background:#f8fafb; color:#191c1d; }
-  h1,h2,h3 { font-family:'Manrope',sans-serif; }
-  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
-  .glass { background:rgba(248,250,251,0.75); backdrop-filter:blur(20px); }
-  .fade-in { animation:fadeIn .5s ease; }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-  .score-ring { transform:rotate(-90deg); transform-origin:center; }
+  body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#eef4f7 0%,#f4f7f9 50%,#ebf4f3 100%);min-height:100vh;color:#191c1d}
+  h1,h2,h3{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  .glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(24px)}
+  .card{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 8px 32px rgba(0,47,64,0.07)}
+  .fade{animation:fadeUp .5s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .ring-anim{animation:ringDraw 1.2s ease-out both}
+  @keyframes ringDraw{from{stroke-dashoffset:var(--full)}to{stroke-dashoffset:var(--offset)}}
+  @media print{header,#print-btn,#actions-bar{display:none!important}body{background:white}main{padding-top:0!important}}
 </style>
 </head>
 <body>
 
-<header class="fixed top-0 w-full z-50 glass border-b border-white/20 px-6 py-4 flex justify-between items-center">
-  <div class="flex items-center gap-3">
-    <div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
-      <span class="material-symbols-outlined text-white text-sm">monitor_heart</span>
+<header class="fixed top-0 w-full z-50 glass border-b border-white/30 px-5 py-3 flex justify-between items-center h-14">
+  <a href="index.html" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-[18px]">monitor_heart</span>
     </div>
-    <span class="font-headline font-bold text-primary text-lg">MediScreen AI</span>
-  </div>
-  <a href="index.html"
-    class="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors font-medium">
-    <span class="material-symbols-outlined text-sm">arrow_back</span>Yeni Mülakat
+    <span class="font-head font-bold text-pri text-[15px]">AnamnezAI</span>
   </a>
+  <div class="flex items-center gap-2">
+    <button id="print-btn" onclick="window.print()"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
+      <span class="material-symbols-outlined msym text-[15px]">print</span>Yazdır
+    </button>
+    <a href="index.html"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
+      <span class="material-symbols-outlined msym text-[15px]">add</span>Yeni Hasta
+    </a>
+  </div>
 </header>
 
-<main class="pt-24 pb-20 px-4 max-w-3xl mx-auto fade-in" id="summary-container">
-  <!-- yükleniyor -->
+<main class="pt-16 pb-16 px-4 max-w-3xl mx-auto" id="main-content">
+
+  <!-- Loading state -->
   <div id="loading-state" class="text-center py-24">
-    <span class="material-symbols-outlined text-5xl text-secondary animate-spin block mb-4">refresh</span>
-    <p class="text-on-surface-variant">Özet yükleniyor...</p>
+    <span class="material-symbols-outlined msym text-5xl text-sec block mb-4" style="animation:spin .8s linear infinite;display:inline-block">refresh</span>
+    <p class="text-onsv text-sm">Rapor yükleniyor...</p>
   </div>
+
 </main>
 
 <script>
-const data = JSON.parse(localStorage.getItem('mediscreen_summary') || 'null');
+const raw = localStorage.getItem('anamnez_summary');
+const data = raw ? JSON.parse(raw) : null;
 
 const TRIAGE = {
-  RED:   { bg:'bg-red-50',   badge:'bg-error text-white',          icon:'emergency',    labelTR:'ACİL',   labelEN:'EMERGENCY' },
-  YELLOW:{ bg:'bg-amber-50', badge:'bg-[#dca26c] text-white',      icon:'warning',      labelTR:'ACIL',   labelEN:'URGENT' },
-  GREEN: { bg:'bg-teal-50',  badge:'bg-secondary text-white',      icon:'check_circle', labelTR:'RUTİN',  labelEN:'ROUTINE' },
+  RED:   {bg:'#fff5f5',border:'#ba1a1a',badge:'background:#ba1a1a',icon:'emergency',   ltr:'ACİL',         len:'EMERGENCY'},
+  YELLOW:{bg:'#fff8f0',border:'#e07b26',badge:'background:#e07b26',icon:'warning',     ltr:'ACİL/BEKLEYEBİLİR',len:'URGENT'},
+  GREEN: {bg:'#f0faf9',border:'#006a68',badge:'background:#006a68',icon:'check_circle',ltr:'RUTİN',         len:'ROUTINE'},
 };
 
-function render(d) {
-  const level = TRIAGE[d.triage_level] || TRIAGE.YELLOW;
-  const html = `
-  <div class="mb-8">
-    <div class="flex items-center gap-3 mb-2">
-      <span class="text-xs font-bold text-secondary uppercase tracking-wider">Klinik Özet Raporu</span>
-    </div>
-    <h1 class="text-3xl font-bold text-primary mb-1">${d.patient_name}</h1>
-    <p class="text-on-surface-variant text-sm">${d.age} yaşında • ${d.gender} • ${new Date(d.generated_at).toLocaleString('tr-TR')}</p>
-  </div>
+function circum(r){return 2*Math.PI*r;}
 
-  <!-- Triage Banner -->
-  <div class="${level.bg} rounded-2xl p-6 mb-6 flex items-center justify-between">
-    <div class="flex items-center gap-4">
-      <span class="material-symbols-outlined text-4xl" style="font-variation-settings:'FILL' 1;color:${d.triage_color}">${level.icon}</span>
-      <div>
-        <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Triaj Seviyesi</p>
-        <span class="px-4 py-1 rounded-full text-sm font-bold ${level.badge}">${level.labelTR}</span>
+function render(d){
+  const lv = TRIAGE[d.triage_level] || TRIAGE.YELLOW;
+  const r = 44, C = circum(r);
+  const offset = C * (1 - d.confidence_score/100);
+  const color  = d.triage_color;
+  const dt = new Date(d.generated_at).toLocaleString('tr-TR');
+  const urgHtml = d.urgency_flags && d.urgency_flags.length ? `
+    <div class="card p-5 mb-4 border-l-4" style="border-left-color:#ba1a1a;background:#fff5f5">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-symbols-outlined msym-fill text-err text-[18px]">warning</span>
+        <p class="text-[11px] font-bold text-err uppercase tracking-wider">Acil Uyarı Bayrakları</p>
       </div>
-    </div>
-    <!-- Confidence Ring -->
-    <div class="relative w-20 h-20 flex-shrink-0">
-      <svg class="w-20 h-20" viewBox="0 0 80 80">
-        <circle cx="40" cy="40" r="32" fill="none" stroke="#e1e3e4" stroke-width="8"/>
-        <circle cx="40" cy="40" r="32" fill="none" stroke="${d.triage_color}" stroke-width="8"
-          stroke-dasharray="${2*Math.PI*32}" stroke-dashoffset="${2*Math.PI*32*(1-d.confidence_score/100)}"
-          stroke-linecap="round" class="score-ring"/>
-      </svg>
-      <div class="absolute inset-0 flex flex-col items-center justify-center">
-        <span class="text-lg font-bold text-primary leading-none">${d.confidence_score}%</span>
-        <span class="text-[9px] text-on-surface-variant font-bold uppercase">AI Skoru</span>
-      </div>
-    </div>
-  </div>
+      <ul class="space-y-1.5">
+        ${d.urgency_flags.map(f=>`<li class="flex items-start gap-2 text-[13px] font-semibold text-red-700">
+          <span class="material-symbols-outlined msym text-err text-[14px] mt-0.5 flex-shrink-0">error</span>${f}</li>`).join('')}
+      </ul>
+    </div>` : '';
 
-  <!-- Urgency Flags (varsa) -->
-  ${d.urgency_flags && d.urgency_flags.length ? `
-  <div class="bg-error-container rounded-2xl shadow-sm p-6 mb-4 border-l-4 border-error">
-    <p class="text-xs font-bold text-error uppercase tracking-wider mb-3">⚠️ Acil Uyarı Bayrakları</p>
-    <ul class="space-y-1">
-      ${d.urgency_flags.map(f=>`<li class="text-sm font-semibold text-error flex items-center gap-2">
-        <span class="material-symbols-outlined text-sm">warning</span>${f}</li>`).join('')}
-    </ul>
-  </div>` : ''}
+  const condHtml = d.possible_conditions.map((c,i)=>`
+    <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-[12px] font-bold
+      ${i===0?'text-white':'text-sec bg-secc/60'}"
+      ${i===0?`style="background:${color}"`:''}>${i===0?'#1 ':i===1?'#2 ':'#3 '}${c}</span>`).join('');
 
-  <!-- Chief Complaint -->
-  <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-6 mb-4">
-    <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Ana Şikayet</p>
-    <p class="text-base font-semibold text-primary">${d.chief_complaint}</p>
-  </div>
-
-  <!-- Symptoms Summary -->
-  <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-6 mb-4">
-    <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Semptom Özeti</p>
-    <p class="text-sm text-on-surface leading-relaxed">${d.symptoms_summary}</p>
-  </div>
-
-  <!-- Possible Conditions -->
-  <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-6 mb-4">
-    <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Olası Durumlar</p>
-    <div class="flex flex-wrap gap-2">
-      ${d.possible_conditions.map((c,i) => `
-        <span class="px-3 py-1.5 rounded-xl text-xs font-bold
-          ${i===0 ? 'bg-primary-container text-white' : 'bg-secondary-container text-secondary'}">
-          ${c}
-        </span>`).join('')}
-    </div>
-  </div>
-
-  <!-- Clinical Notes + Recommendation -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-    <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-6">
-      <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Doktor İçin Notlar</p>
-      <p class="text-sm text-on-surface leading-relaxed">${d.clinical_notes}</p>
-    </div>
-    <div class="bg-primary-container rounded-2xl p-6 text-white">
-      <p class="text-xs font-bold text-white/70 uppercase tracking-wider mb-3">Önerilen Eylem</p>
-      <div class="flex items-start gap-3">
-        <span class="material-symbols-outlined text-2xl flex-shrink-0" style="font-variation-settings:'FILL' 1">recommend</span>
-        <p class="text-sm font-semibold leading-relaxed">${d.recommended_action}</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Actions -->
-  <div class="flex gap-3 flex-wrap">
-    <button onclick="window.print()"
-      class="flex items-center gap-2 px-5 py-3 rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/30
-             text-sm font-bold text-primary hover:bg-surface-container transition-all">
-      <span class="material-symbols-outlined text-sm">print</span>Yazdır / PDF
-    </button>
-    <a href="doctor.html"
-      class="flex items-center gap-2 px-5 py-3 rounded-xl bg-secondary-container text-secondary
-             text-sm font-bold hover:opacity-80 transition-all">
-      <span class="material-symbols-outlined text-sm">dashboard</span>Doktor Paneline Git
-    </a>
-    <a href="index.html"
-      class="flex items-center gap-2 px-5 py-3 rounded-xl bg-primary-container text-white
-             text-sm font-bold hover:opacity-90 transition-all">
-      <span class="material-symbols-outlined text-sm">add</span>Yeni Hasta
-    </a>
-  </div>
-
-  <p class="mt-8 text-xs text-on-surface-variant text-center">
-    ⚠️ Bu rapor AI tarafından üretilmiştir. Tıbbi teşhis yerine geçmez. Kesin tanı için doktorunuza başvurun.
-  </p>
-  `;
   document.getElementById('loading-state').remove();
-  document.getElementById('summary-container').insertAdjacentHTML('beforeend', html);
+  document.getElementById('main-content').insertAdjacentHTML('beforeend',`
+  <div class="fade">
+
+    <!-- Header -->
+    <div class="mb-6 pt-2">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Klinik Özet Raporu</span>
+        <span class="text-[11px] text-onsv">·</span>
+        <span class="text-[11px] text-onsv">${dt}</span>
+      </div>
+      <h1 class="text-[28px] font-head font-bold text-pri mb-0.5">${d.patient_name}</h1>
+      <p class="text-onsv text-[13px]">${d.age} yaşında · ${d.gender}</p>
+    </div>
+
+    <!-- Triage Banner -->
+    <div class="card p-5 mb-5 flex items-center justify-between gap-4" style="background:${lv.bg};border-left:4px solid ${lv.border}">
+      <div class="flex items-center gap-4">
+        <span class="material-symbols-outlined msym-fill text-[40px]" style="color:${color}">${lv.icon}</span>
+        <div>
+          <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1">Triaj Seviyesi</p>
+          <span class="px-4 py-1.5 rounded-full text-[12px] font-bold text-white" style="background:${color}">${lv.ltr}</span>
+        </div>
+      </div>
+      <!-- Confidence Ring -->
+      <div class="relative w-20 h-20 flex-shrink-0">
+        <svg viewBox="0 0 100 100" class="w-20 h-20 -rotate-90">
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="#e8ecee" stroke-width="10"/>
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="10"
+            stroke-linecap="round"
+            stroke-dasharray="${C}" stroke-dashoffset="${C}"
+            style="--full:${C};--offset:${offset};animation:ringDraw 1.2s ease-out .3s both"/>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-[18px] font-head font-bold text-pri leading-none">${d.confidence_score}%</span>
+          <span class="text-[9px] text-onsv font-bold uppercase mt-0.5">AI Skoru</span>
+        </div>
+      </div>
+    </div>
+
+    ${urgHtml}
+
+    <!-- Chief Complaint -->
+    <div class="card p-5 mb-4">
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Ana Şikayet</p>
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined msym-fill text-pric text-[20px] mt-0.5 flex-shrink-0">medical_information</span>
+        <p class="text-[15px] font-semibold text-pri leading-relaxed">${d.chief_complaint}</p>
+      </div>
+    </div>
+
+    <!-- 2-col grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <!-- Symptoms -->
+      <div class="card p-5">
+        <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">Semptom Özeti</p>
+        <p class="text-[13px] text-ons leading-relaxed">${d.symptoms_summary}</p>
+      </div>
+      <!-- Clinical Notes -->
+      <div class="card p-5">
+        <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">Doktor için Notlar</p>
+        <p class="text-[13px] text-ons leading-relaxed">${d.clinical_notes}</p>
+      </div>
+    </div>
+
+    <!-- Possible conditions -->
+    <div class="card p-5 mb-4">
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">Olası Tanılar</p>
+      <div class="flex flex-wrap gap-2">${condHtml}</div>
+    </div>
+
+    <!-- Recommended action -->
+    <div class="rounded-2xl p-5 mb-6 text-white" style="background:${color}">
+      <p class="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Önerilen Eylem</p>
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined msym-fill text-[22px] flex-shrink-0 mt-0.5">recommend</span>
+        <p class="text-[14px] font-semibold leading-relaxed">${d.recommended_action}</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div id="actions-bar" class="flex flex-wrap gap-3">
+      <button onclick="window.print()"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-pri border border-ouv/40 text-[13px] font-bold hover:bg-surfc transition-all shadow-sm">
+        <span class="material-symbols-outlined msym text-[16px]">print</span>PDF / Yazdır
+      </button>
+      <a href="doctor.html"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-secc text-sec text-[13px] font-bold hover:opacity-80 transition-all shadow-sm">
+        <span class="material-symbols-outlined msym text-[16px]">dashboard</span>Doktor Paneli
+      </a>
+      <a href="index.html"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-[13px] font-bold hover:opacity-90 transition-all shadow-sm" style="background:#00475e">
+        <span class="material-symbols-outlined msym text-[16px]">add</span>Yeni Hasta
+      </a>
+    </div>
+
+    <p class="mt-8 text-[11px] text-onsv text-center opacity-60">
+      ⚠️ Bu rapor Gemma 4 AI tarafından üretilmiştir. Tıbbi teşhis yerine geçmez. Kesin tanı için doktorunuza başvurun.
+    </p>
+  </div>`);
 }
 
-if (data) {
-  render(data);
-} else {
-  document.getElementById('loading-state').innerHTML =
-    `<p class="text-error font-bold">Özet bulunamadı. <a href="index.html" class="underline">Anasayfaya dön</a></p>`;
+if(data) render(data);
+else {
+  document.getElementById('loading-state').innerHTML=`
+    <div class="text-center py-20">
+      <span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span>
+      <p class="text-err font-bold mb-4">Özet bulunamadı.</p>
+      <a href="index.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Anasayfaya Dön</a>
+    </div>`;
 }
 </script>
 </body>

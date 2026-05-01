@@ -1,446 +1,556 @@
 <!DOCTYPE html>
-<html lang="tr" class="light">
+<html lang="tr">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MediScreen AI — Akıllı Hasta Ön Triaj Sistemi</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<title>AnamnezAI — Akıllı Hasta Ön Triaj</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
 <script>
 tailwind.config = {
   theme: { extend: {
     colors: {
-      "primary":"#002f40","primary-container":"#00475e","secondary":"#006a68",
-      "secondary-container":"#a0f1ed","surface":"#f8fafb","surface-container":"#eceeef",
-      "surface-container-low":"#f2f4f5","surface-container-lowest":"#ffffff",
-      "surface-container-high":"#e6e8e9","on-surface":"#191c1d",
-      "on-surface-variant":"#40484c","on-primary":"#ffffff","on-secondary":"#ffffff",
-      "outline-variant":"#c0c7cd","error":"#ba1a1a","error-container":"#ffdad6"
+      pri:"#002f40", pric:"#00475e", sec:"#006a68", secc:"#a0f1ed",
+      surf:"#f4f7f9", surfc:"#e8ecee", surfcl:"#eef1f3", surflow:"#ffffff",
+      surfch:"#dde1e3", ons:"#191c1d", onsv:"#3f4749",
+      ouv:"#bfc7ca", err:"#ba1a1a", errc:"#ffdad6", warn:"#e07b26"
     },
-    fontFamily: { headline:["Manrope"], body:["Inter"] }
+    fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}
   }}
 }
 </script>
 <style>
-  body { font-family:'Inter',sans-serif; background:#f8fafb; color:#191c1d; }
-  h1,h2,h3 { font-family:'Manrope',sans-serif; }
-  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
-  .glass { background:rgba(248,250,251,0.75); backdrop-filter:blur(20px); }
-  .pulse-ring { animation:pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
-  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.15)} }
-  .fade-in { animation:fadeIn .4s ease; }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-  .progress-bar { transition: width .5s ease; }
+  *{box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#eef4f7 0%,#f4f7f9 60%,#ebf4f3 100%);min-height:100vh;color:#191c1d}
+  h1,h2,h3{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  .glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+  .card{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 8px 32px rgba(0,47,64,0.07)}
+  .fade{animation:fadeUp .4s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .slide{animation:slideIn .35s ease both}
+  @keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+  .spin{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .pulse-ring{animation:pr 2s ease infinite}
+  @keyframes pr{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.2);opacity:.2}}
+  .dot-bounce{animation:db .6s ease infinite alternate}
+  @keyframes db{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+  .prog-bar{transition:width .5s cubic-bezier(.4,0,.2,1)}
+  .chat-scroll{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#c0c7cd transparent}
+  .voice-active{animation:voicePulse 1s ease infinite}
+  @keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(0,106,104,.4)}50%{box-shadow:0 0 0 10px rgba(0,106,104,0)}}
+  textarea:focus{outline:none;box-shadow:0 0 0 2px #006a68}
+  input:focus,select:focus{outline:none;box-shadow:0 0 0 2px #006a68}
 </style>
 </head>
 <body>
 
-<!-- ── NAV ── -->
-<header class="fixed top-0 w-full z-50 glass border-b border-white/20 px-6 py-4 flex justify-between items-center">
-  <div class="flex items-center gap-3">
-    <div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
-      <span class="material-symbols-outlined text-white text-sm">monitor_heart</span>
+<!-- NAV -->
+<header class="fixed top-0 w-full z-50 glass border-b border-white/30 px-5 py-3 flex justify-between items-center h-14">
+  <a href="index.html" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-[18px]">monitor_heart</span>
     </div>
-    <span class="font-headline font-bold text-primary text-lg">MediScreen AI</span>
-  </div>
-  <div class="flex items-center gap-4">
-    <a href="doctor.html" class="text-sm text-on-surface-variant hover:text-primary transition-colors font-medium">
-      <span class="material-symbols-outlined align-middle text-sm mr-1">stethoscope</span>Doktor Paneli
+    <span class="font-head font-bold text-pri text-[15px]">AnamnezAI</span>
+  </a>
+  <div class="flex items-center gap-3">
+    <!-- Connection Status -->
+    <div id="conn-pill" class="hidden items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold">
+      <div id="conn-dot" class="w-1.5 h-1.5 rounded-full"></div>
+      <span id="conn-text"></span>
+    </div>
+    <a href="doctor.html" class="flex items-center gap-1.5 text-[13px] text-onsv hover:text-pri transition-colors font-medium">
+      <span class="material-symbols-outlined msym text-[16px]">stethoscope</span>
+      <span class="hidden sm:inline">Doktor Paneli</span>
     </a>
-    <div id="lang-toggle" class="flex bg-surface-container rounded-full p-1 gap-1">
-      <button onclick="setLang('tr')" id="btn-tr" class="px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary-container text-white">TR</button>
-      <button onclick="setLang('en')" id="btn-en" class="px-3 py-1 rounded-full text-xs font-bold transition-all text-on-surface-variant">EN</button>
+    <!-- Lang toggle -->
+    <div class="flex bg-surfc rounded-full p-0.5 gap-0.5">
+      <button onclick="setLang('tr')" id="btn-tr" class="px-3 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white">TR</button>
+      <button onclick="setLang('en')" id="btn-en" class="px-3 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">EN</button>
     </div>
   </div>
 </header>
 
-<!-- ── MAIN ── -->
-<main class="pt-24 pb-20 px-4 max-w-2xl mx-auto">
+<main class="pt-14 min-h-screen">
 
-  <!-- LANDING VIEW -->
-  <div id="view-landing" class="fade-in">
-    <div class="text-center mb-12 pt-8">
-      <div class="inline-flex items-center gap-2 bg-secondary-container px-4 py-2 rounded-full mb-6">
-        <span class="material-symbols-outlined text-secondary text-sm">auto_awesome</span>
-        <span class="text-xs font-bold text-secondary uppercase tracking-wider" id="txt-powered">Gemma 4 ile Güçlendirildi</span>
-      </div>
-      <h1 class="text-4xl font-bold text-primary leading-tight mb-4" id="txt-hero">
-        Doktorunuz sizi görmeden önce,<br/>
-        <span class="text-secondary">AI sizi dinler.</span>
-      </h1>
-      <p class="text-on-surface-variant text-base max-w-lg mx-auto" id="txt-sub">
-        Semptomlarınızı bizimle paylaşın. Yapay zeka sizi anlayacak ve doktorunuza öncelikli, hazır bir klinik özet sunacak.
-      </p>
+<!-- ── VIEW: LANDING ── -->
+<div id="view-landing" class="max-w-xl mx-auto px-4 py-10 fade">
+
+  <!-- Hero -->
+  <div class="text-center mb-8 pt-4">
+    <div class="inline-flex items-center gap-2 bg-secc/60 border border-sec/20 px-4 py-1.5 rounded-full mb-5">
+      <span class="material-symbols-outlined msym-fill text-sec text-[14px]">auto_awesome</span>
+      <span class="text-[11px] font-bold text-sec uppercase tracking-widest" id="txt-powered">Gemma 4 ile Güçlendirildi</span>
     </div>
-
-    <!-- PATIENT FORM -->
-    <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-8 space-y-6">
-      <h2 class="text-xl font-bold text-primary" id="txt-form-title">Hasta Bilgileri</h2>
-
-      <div class="space-y-1">
-        <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="lbl-name">Ad Soyad</label>
-        <input id="inp-name" type="text" placeholder="Adınızı girin"
-          class="w-full rounded-xl bg-surface-container-high px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition"/>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="space-y-1">
-          <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="lbl-age">Yaş</label>
-          <input id="inp-age" type="number" min="1" max="120" placeholder="30"
-            class="w-full rounded-xl bg-surface-container-high px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition"/>
-        </div>
-        <div class="space-y-1">
-          <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="lbl-gender">Cinsiyet</label>
-          <select id="inp-gender"
-            class="w-full rounded-xl bg-surface-container-high px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition">
-            <option value="Erkek" id="opt-male">Erkek</option>
-            <option value="Kadın" id="opt-female">Kadın</option>
-            <option value="Belirtmek İstemiyorum" id="opt-other">Belirtmek İstemiyorum</option>
-          </select>
-        </div>
-      </div>
-
-      <button onclick="startInterview()" id="btn-start"
-        class="w-full h-14 rounded-xl bg-primary-container text-white font-bold text-sm tracking-wide
-               hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
-        <span class="material-symbols-outlined">play_arrow</span>
-        <span id="txt-btn-start">Mülakatı Başlat</span>
-      </button>
-
-      <p class="text-center text-xs text-on-surface-variant" id="txt-privacy">
-        🔒 Verileriniz yalnızca bu oturumda tutulur ve paylaşılmaz.
-      </p>
-    </div>
-
-    <!-- HOW IT WORKS -->
-    <div class="mt-12 grid grid-cols-3 gap-4">
-      <div class="bg-surface-container-lowest rounded-2xl p-5 text-center shadow-sm">
-        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-3">
-          <span class="material-symbols-outlined text-secondary text-lg">record_voice_over</span>
-        </div>
-        <p class="text-xs font-bold text-primary mb-1" id="step1-title">Konuş</p>
-        <p class="text-xs text-on-surface-variant" id="step1-desc">Semptomlarını AI'a anlat</p>
-      </div>
-      <div class="bg-surface-container-lowest rounded-2xl p-5 text-center shadow-sm">
-        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-3">
-          <span class="material-symbols-outlined text-secondary text-lg">psychology</span>
-        </div>
-        <p class="text-xs font-bold text-primary mb-1" id="step2-title">Analiz</p>
-        <p class="text-xs text-on-surface-variant" id="step2-desc">Gemma 4 seni değerlendirir</p>
-      </div>
-      <div class="bg-surface-container-lowest rounded-2xl p-5 text-center shadow-sm">
-        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-3">
-          <span class="material-symbols-outlined text-secondary text-lg">summarize</span>
-        </div>
-        <p class="text-xs font-bold text-primary mb-1" id="step3-title">Özet</p>
-        <p class="text-xs text-on-surface-variant" id="step3-desc">Doktoruna hazır rapor</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- INTERVIEW VIEW -->
-  <div id="view-interview" class="hidden fade-in">
-    <!-- Progress -->
-    <div class="mb-8">
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="txt-progress-label">Mülakat İlerlemesi</span>
-        <span id="txt-step-counter" class="text-xs font-bold text-secondary">1 / 5</span>
-      </div>
-      <div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-        <div id="progress-bar" class="progress-bar h-full bg-secondary rounded-full" style="width:20%"></div>
-      </div>
-    </div>
-
-    <!-- AI Question Card -->
-    <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-8 mb-6">
-      <div class="flex items-start gap-4">
-        <div class="w-10 h-10 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center">
-          <span class="material-symbols-outlined text-white text-sm">smart_toy</span>
-        </div>
-        <div class="flex-1">
-          <p class="text-xs font-bold text-secondary mb-2 uppercase tracking-wider">MediScreen AI</p>
-          <p id="txt-question" class="text-lg font-semibold text-primary leading-snug">
-            Yükleniyor...
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Answer Area -->
-    <div class="bg-surface-container-low rounded-2xl p-6 space-y-4">
-      <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="lbl-answer">Cevabınız</label>
-      <textarea id="inp-answer" rows="4" placeholder="Cevabınızı buraya yazın..."
-        class="w-full rounded-xl bg-surface-container-lowest px-4 py-3 text-sm resize-none
-               focus:outline-none focus:ring-2 focus:ring-primary-container transition"></textarea>
-
-      <!-- Voice Button -->
-      <div class="flex items-center gap-3">
-        <button id="btn-voice" onclick="toggleVoice()"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant
-                 hover:bg-secondary-container hover:text-secondary transition-all text-sm font-medium">
-          <span class="material-symbols-outlined text-sm">mic</span>
-          <span id="txt-voice-btn">Sesli Yanıt</span>
-        </button>
-        <span class="text-xs text-on-surface-variant" id="txt-voice-status"></span>
-      </div>
-
-      <button onclick="submitAnswer()" id="btn-next"
-        class="w-full h-14 rounded-xl bg-primary-container text-white font-bold text-sm
-               hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
-        <span id="txt-btn-next">Sonraki Soru</span>
-        <span class="material-symbols-outlined text-sm">arrow_forward</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- LOADING VIEW -->
-  <div id="view-loading" class="hidden fade-in text-center py-20">
-    <div class="relative w-20 h-20 mx-auto mb-8">
-      <div class="absolute inset-0 rounded-full bg-secondary-container pulse-ring"></div>
-      <div class="relative w-20 h-20 rounded-full bg-primary-container flex items-center justify-center">
-        <span class="material-symbols-outlined text-white text-3xl">psychology</span>
-      </div>
-    </div>
-    <h2 class="text-2xl font-bold text-primary mb-3" id="txt-analyzing">Analiz Ediliyor...</h2>
-    <p class="text-on-surface-variant text-sm" id="txt-analyzing-sub">
-      Gemma 4 semptomlarınızı değerlendiriyor ve klinik özet hazırlıyor.
+    <h1 class="text-[32px] font-head font-bold text-pri leading-tight mb-3" id="txt-hero">
+      Doktorunuz sizi görmeden önce<br/>
+      <span class="text-sec" id="txt-hero2">AI sizi dinler.</span>
+    </h1>
+    <p class="text-onsv text-[14px] max-w-sm mx-auto leading-relaxed" id="txt-sub">
+      Yapay zeka 5 akıllı soru sorar, semptomlarınızı analiz eder ve doktorunuza hazır klinik özet sunar.
     </p>
   </div>
 
+  <!-- Form Card -->
+  <div class="card p-7 mb-6">
+    <h2 class="font-head font-bold text-pri text-[17px] mb-5" id="txt-form-title">Hasta Bilgileri</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-[11px] font-bold text-onsv uppercase tracking-wider mb-1.5" id="lbl-name">Ad Soyad</label>
+        <input id="inp-name" type="text" placeholder="Adınızı girin"
+          class="w-full rounded-xl bg-surfc px-4 py-3 text-[14px] border border-transparent transition-all"/>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-bold text-onsv uppercase tracking-wider mb-1.5" id="lbl-age">Yaş</label>
+          <input id="inp-age" type="number" min="1" max="120" placeholder="30"
+            class="w-full rounded-xl bg-surfc px-4 py-3 text-[14px] border border-transparent transition-all"/>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-onsv uppercase tracking-wider mb-1.5" id="lbl-gender">Cinsiyet</label>
+          <select id="inp-gender"
+            class="w-full rounded-xl bg-surfc px-4 py-3 text-[14px] border border-transparent transition-all appearance-none">
+            <option value="Erkek" id="opt-m">Erkek</option>
+            <option value="Kadın" id="opt-f">Kadın</option>
+            <option value="Belirtmek İstemiyorum" id="opt-o">Belirtmek İstemiyorum</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="startInterview()" id="btn-start"
+        class="w-full h-12 rounded-xl bg-pric text-white font-bold text-[14px] tracking-wide
+               hover:bg-pri active:scale-[.98] transition-all flex items-center justify-center gap-2 mt-2">
+        <span class="material-symbols-outlined msym text-[18px]">play_arrow</span>
+        <span id="txt-btn-start">Mülakatı Başlat</span>
+      </button>
+    </div>
+    <p class="text-center text-[11px] text-onsv mt-4" id="txt-privacy">🔒 Verileriniz bu oturum süresince yerel olarak tutulur.</p>
+  </div>
+
+  <!-- How it works -->
+  <div class="grid grid-cols-3 gap-3">
+    <div class="card p-4 text-center">
+      <div class="w-9 h-9 rounded-full bg-secc flex items-center justify-center mx-auto mb-2">
+        <span class="material-symbols-outlined msym text-sec text-[18px]">record_voice_over</span>
+      </div>
+      <p class="text-[12px] font-bold text-pri mb-0.5" id="s1t">Anlat</p>
+      <p class="text-[11px] text-onsv" id="s1d">Semptomlarını paylaş</p>
+    </div>
+    <div class="card p-4 text-center">
+      <div class="w-9 h-9 rounded-full bg-secc flex items-center justify-center mx-auto mb-2">
+        <span class="material-symbols-outlined msym text-sec text-[18px]">psychology</span>
+      </div>
+      <p class="text-[12px] font-bold text-pri mb-0.5" id="s2t">Analiz</p>
+      <p class="text-[11px] text-onsv" id="s2d">Gemma 4 değerlendirir</p>
+    </div>
+    <div class="card p-4 text-center">
+      <div class="w-9 h-9 rounded-full bg-secc flex items-center justify-center mx-auto mb-2">
+        <span class="material-symbols-outlined msym text-sec text-[18px]">summarize</span>
+      </div>
+      <p class="text-[12px] font-bold text-pri mb-0.5" id="s3t">Rapor</p>
+      <p class="text-[11px] text-onsv" id="s3d">Doktora hazır özet</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── VIEW: PREPARING ── -->
+<div id="view-preparing" class="hidden max-w-xl mx-auto px-4 py-20 text-center fade">
+  <div class="relative w-20 h-20 mx-auto mb-6">
+    <div class="absolute inset-0 rounded-full bg-secc pulse-ring"></div>
+    <div class="relative w-20 h-20 rounded-full bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-3xl">psychology</span>
+    </div>
+  </div>
+  <h2 class="font-head font-bold text-pri text-xl mb-2" id="txt-prep">AnamnezAI Hazırlanıyor</h2>
+  <p class="text-onsv text-sm" id="txt-prep-sub">Gemma 4 ilk sorunuzu hazırlıyor...</p>
+</div>
+
+<!-- ── VIEW: INTERVIEW ── -->
+<div id="view-interview" class="hidden max-w-2xl mx-auto px-4 py-2 fade" style="height:calc(100vh - 56px);display:none;flex-direction:column">
+
+  <!-- Progress -->
+  <div class="py-3 flex-shrink-0">
+    <div class="flex justify-between items-center mb-1.5">
+      <span class="text-[11px] font-bold text-onsv uppercase tracking-wider" id="lbl-prog">Mülakat</span>
+      <div class="flex items-center gap-2">
+        <span id="txt-step" class="text-[12px] font-bold text-sec">1/5</span>
+        <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-secc/50 text-sec text-[10px] font-bold">
+          <span class="material-symbols-outlined msym-fill text-[12px]">smart_toy</span>
+          <span>Gemma 4</span>
+        </div>
+      </div>
+    </div>
+    <div class="w-full h-1.5 bg-surfc rounded-full overflow-hidden">
+      <div id="prog-bar" class="prog-bar h-full bg-sec rounded-full" style="width:20%"></div>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div id="chat-area" class="flex-1 chat-scroll space-y-4 py-2 overflow-y-auto" style="min-height:0"></div>
+
+  <!-- Typing indicator -->
+  <div id="typing-ind" class="hidden flex-shrink-0 flex items-center gap-3 py-2 px-1">
+    <div class="w-8 h-8 rounded-full bg-pric/10 flex items-center justify-center flex-shrink-0">
+      <span class="material-symbols-outlined msym text-pric text-[16px]">smart_toy</span>
+    </div>
+    <div class="flex gap-1.5 items-center">
+      <div class="w-2 h-2 rounded-full bg-sec dot-bounce" style="animation-delay:0ms"></div>
+      <div class="w-2 h-2 rounded-full bg-sec dot-bounce" style="animation-delay:150ms"></div>
+      <div class="w-2 h-2 rounded-full bg-sec dot-bounce" style="animation-delay:300ms"></div>
+      <span class="text-[11px] text-onsv ml-1" id="txt-typing">Gemma 4 düşünüyor...</span>
+    </div>
+  </div>
+
+  <!-- Answer Input -->
+  <div class="card p-4 flex-shrink-0 mb-3">
+    <textarea id="inp-answer" rows="3" placeholder="Cevabınızı buraya yazın..."
+      class="w-full rounded-xl bg-surfc px-4 py-3 text-[14px] resize-none border border-transparent transition-all mb-3"
+      onkeydown="handleKey(event)"></textarea>
+    <div class="flex items-center gap-2">
+      <button id="btn-voice" onclick="toggleVoice()"
+        class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surfc text-onsv hover:bg-secc hover:text-sec transition-all text-[12px] font-medium flex-shrink-0">
+        <span class="material-symbols-outlined msym text-[16px]" id="voice-icon">mic</span>
+        <span id="txt-voice">Sesli</span>
+      </button>
+      <span id="txt-vstatus" class="text-[11px] text-onsv flex-1"></span>
+      <button onclick="submitAnswer()" id="btn-next"
+        class="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-pric text-white font-bold text-[13px]
+               hover:bg-pri active:scale-[.97] transition-all">
+        <span id="txt-btn-next">Gönder</span>
+        <span class="material-symbols-outlined msym text-[16px]">send</span>
+      </button>
+    </div>
+    <p class="text-[10px] text-onsv mt-2 text-right opacity-60">Ctrl+Enter ile hızlı gönder</p>
+  </div>
+</div>
+
+<!-- ── VIEW: ANALYZING ── -->
+<div id="view-analyzing" class="hidden max-w-xl mx-auto px-4 py-20 text-center fade">
+  <div class="relative w-24 h-24 mx-auto mb-8">
+    <div class="absolute inset-0 rounded-full bg-secc pulse-ring scale-110"></div>
+    <div class="relative w-24 h-24 rounded-full bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-4xl">biotech</span>
+    </div>
+  </div>
+  <h2 class="font-head font-bold text-pri text-2xl mb-3" id="txt-analyzing">Klinik Analiz Yapılıyor</h2>
+  <p class="text-onsv text-sm max-w-xs mx-auto leading-relaxed" id="txt-analyzing-sub">
+    Gemma 4 semptomlarınızı değerlendiriyor ve triaj raporu hazırlıyor...
+  </p>
+  <div class="flex justify-center gap-2 mt-6">
+    <div class="w-2 h-2 rounded-full bg-sec dot-bounce" style="animation-delay:0ms"></div>
+    <div class="w-2 h-2 rounded-full bg-sec dot-bounce" style="animation-delay:200ms"></div>
+    <div class="w-2 h-2 rounded-full bg-sec dot-bounce" style="animation-delay:400ms"></div>
+  </div>
+</div>
+
 </main>
 
-<!-- ── TOAST ── -->
-<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-on-surface text-white
-     px-5 py-3 rounded-xl text-sm font-medium shadow-lg z-50 transition-all"></div>
+<!-- Toast -->
+<div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-[13px] font-medium shadow-xl z-50 transition-all"></div>
 
 <script>
 const API = 'http://localhost:8000';
-let sessionId = null;
-let currentStep = 0;
-let totalSteps = 5;
-let lang = 'tr';
-let recognition = null;
+let sessionId = null, lang = 'tr', recognition = null;
+let chatHistory = []; // [{role:'ai'|'user', text:''}]
 
-// ── Translations ──
+// ── i18n ──
 const T = {
-  tr: {
-    powered:'Gemma 4 ile Güçlendirildi', hero:'Doktorunuz sizi görmeden önce,', hero2:'AI sizi dinler.',
-    sub:'Semptomlarınızı bizimle paylaşın. Yapay zeka sizi anlayacak ve doktorunuza öncelik özeti sunacak.',
+  tr:{
+    powered:'Gemma 4 ile Güçlendirildi',
+    hero:'Doktorunuz sizi görmeden önce', hero2:'AI sizi dinler.',
+    sub:'Yapay zeka 5 akıllı soru sorar, semptomlarınızı analiz eder ve doktorunuza hazır klinik özet sunar.',
     formTitle:'Hasta Bilgileri', lblName:'Ad Soyad', lblAge:'Yaş', lblGender:'Cinsiyet',
-    optMale:'Erkek', optFemale:'Kadın', optOther:'Belirtmek İstemiyorum',
-    btnStart:'Mülakatı Başlat', privacy:'🔒 Verileriniz yalnızca bu oturumda tutulur ve paylaşılmaz.',
-    step1t:'Konuş', step1d:'Semptomlarını AI\'a anlat', step2t:'Analiz', step2d:'Gemma 4 seni değerlendirir',
-    step3t:'Özet', step3d:'Doktoruna hazır rapor', progressLabel:'Mülakat İlerlemesi',
-    lblAnswer:'Cevabınız', answerPh:'Cevabınızı buraya yazın...',
-    voiceBtn:'Sesli Yanıt', btnNext:'Sonraki Soru', btnFinish:'Mülakatı Tamamla',
-    analyzing:'Analiz Ediliyor...', analyzingSub:'Gemma 4 semptomlarınızı değerlendiriyor.',
+    optM:'Erkek', optF:'Kadın', optO:'Belirtmek İstemiyorum',
+    btnStart:'Mülakatı Başlat', privacy:'🔒 Verileriniz yerel olarak tutulur ve paylaşılmaz.',
+    s1t:'Anlat', s1d:'Semptomlarını paylaş', s2t:'Analiz', s2d:'Gemma 4 değerlendirir', s3t:'Rapor', s3d:'Doktora hazır özet',
+    lblProg:'Mülakat İlerlemesi', lblAns:'Cevabınız', ansPh:'Cevabınızı buraya yazın...',
+    voiceBtn:'Sesli', sendBtn:'Gönder', finishBtn:'Tamamla',
+    prep:'AnamnezAI Hazırlanıyor', prepSub:'Gemma 4 ilk sorunuzu hazırlıyor...',
+    typing:'Gemma 4 düşünüyor...',
+    analyzing:'Klinik Analiz Yapılıyor', analyzingSub:'Gemma 4 semptomlarınızı değerlendiriyor...',
     errName:'Lütfen adınızı girin.', errAge:'Lütfen yaşınızı girin.',
-    errAnswer:'Lütfen bir cevap yazın.', errBackend:'Backend bağlantısı kurulamadı.',
-    listening:'Dinleniyor...', voiceStop:'Kaydı Durdur'
+    errAns:'Lütfen cevap yazın.', errConn:'Backend bağlantısı yok.',
+    listening:'Dinleniyor...', stopRec:'Durdur',
+    connOk:'Gemma 4 Hazır', connOff:'Offline Mod'
   },
-  en: {
-    powered:'Powered by Gemma 4', hero:'Before your doctor sees you,', hero2:'AI listens first.',
-    sub:'Share your symptoms with us. AI will understand you and provide your doctor with a prioritized clinical summary.',
+  en:{
+    powered:'Powered by Gemma 4',
+    hero:'Before your doctor sees you,', hero2:'AI listens first.',
+    sub:'AI asks 5 smart questions, analyzes your symptoms, and provides a ready clinical summary to your doctor.',
     formTitle:'Patient Info', lblName:'Full Name', lblAge:'Age', lblGender:'Gender',
-    optMale:'Male', optFemale:'Female', optOther:'Prefer not to say',
-    btnStart:'Start Interview', privacy:'🔒 Your data is only kept during this session.',
-    step1t:'Talk', step1d:'Tell AI your symptoms', step2t:'Analyze', step2d:'Gemma 4 evaluates you',
-    step3t:'Summary', step3d:'Ready report for doctor', progressLabel:'Interview Progress',
-    lblAnswer:'Your Answer', answerPh:'Type your answer here...',
-    voiceBtn:'Voice Reply', btnNext:'Next Question', btnFinish:'Complete Interview',
-    analyzing:'Analyzing...', analyzingSub:'Gemma 4 is evaluating your symptoms.',
+    optM:'Male', optF:'Female', optO:'Prefer not to say',
+    btnStart:'Start Interview', privacy:'🔒 Your data is kept locally and never shared.',
+    s1t:'Tell', s1d:'Share your symptoms', s2t:'Analyze', s2d:'Gemma 4 evaluates', s3t:'Report', s3d:'Ready for doctor',
+    lblProg:'Interview Progress', lblAns:'Your Answer', ansPh:'Type your answer here...',
+    voiceBtn:'Voice', sendBtn:'Send', finishBtn:'Finish',
+    prep:'AnamnezAI Preparing', prepSub:'Gemma 4 is preparing your first question...',
+    typing:'Gemma 4 is thinking...',
+    analyzing:'Clinical Analysis', analyzingSub:'Gemma 4 is evaluating your symptoms...',
     errName:'Please enter your name.', errAge:'Please enter your age.',
-    errAnswer:'Please write an answer.', errBackend:'Cannot connect to backend.',
-    listening:'Listening...', voiceStop:'Stop Recording'
+    errAns:'Please write an answer.', errConn:'Backend connection failed.',
+    listening:'Listening...', stopRec:'Stop',
+    connOk:'Gemma 4 Ready', connOff:'Offline Mode'
   }
 };
+const t = k => T[lang][k] ?? k;
 
-function t(key) { return T[lang][key] || key; }
-
-function setLang(l) {
+function setLang(l){
   lang = l;
   document.getElementById('btn-tr').className = l==='tr'
-    ? 'px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary-container text-white'
-    : 'px-3 py-1 rounded-full text-xs font-bold transition-all text-on-surface-variant';
+    ? 'px-3 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white'
+    : 'px-3 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
   document.getElementById('btn-en').className = l==='en'
-    ? 'px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary-container text-white'
-    : 'px-3 py-1 rounded-full text-xs font-bold transition-all text-on-surface-variant';
-  applyTranslations();
+    ? 'px-3 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white'
+    : 'px-3 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
+  applyT();
 }
 
-function applyTranslations() {
-  document.getElementById('txt-powered').textContent = t('powered');
-  document.getElementById('txt-sub').textContent = t('sub');
-  document.getElementById('txt-form-title').textContent = t('formTitle');
-  document.getElementById('lbl-name').textContent = t('lblName');
-  document.getElementById('lbl-age').textContent = t('lblAge');
-  document.getElementById('lbl-gender').textContent = t('lblGender');
-  document.getElementById('opt-male').textContent = t('optMale');
-  document.getElementById('opt-female').textContent = t('optFemale');
-  document.getElementById('opt-other').textContent = t('optOther');
-  document.getElementById('txt-btn-start').textContent = t('btnStart');
-  document.getElementById('txt-privacy').textContent = t('privacy');
-  document.getElementById('step1-title').textContent = t('step1t');
-  document.getElementById('step1-desc').textContent = t('step1d');
-  document.getElementById('step2-title').textContent = t('step2t');
-  document.getElementById('step2-desc').textContent = t('step2d');
-  document.getElementById('step3-title').textContent = t('step3t');
-  document.getElementById('step3-desc').textContent = t('step3d');
-  document.getElementById('txt-progress-label').textContent = t('progressLabel');
-  document.getElementById('lbl-answer').textContent = t('lblAnswer');
-  document.getElementById('inp-answer').placeholder = t('answerPh');
-  document.getElementById('txt-voice-btn').textContent = t('voiceBtn');
-  document.getElementById('txt-analyzing').textContent = t('analyzing');
-  document.getElementById('txt-analyzing-sub').textContent = t('analyzingSub');
+function applyT(){
+  const m = {
+    'txt-powered':t('powered'),'txt-hero':t('hero'),'txt-hero2':t('hero2'),
+    'txt-sub':t('sub'),'txt-form-title':t('formTitle'),'lbl-name':t('lblName'),
+    'lbl-age':t('lblAge'),'lbl-gender':t('lblGender'),'opt-m':t('optM'),'opt-f':t('optF'),'opt-o':t('optO'),
+    'txt-btn-start':t('btnStart'),'txt-privacy':t('privacy'),
+    's1t':t('s1t'),'s1d':t('s1d'),'s2t':t('s2t'),'s2d':t('s2d'),'s3t':t('s3t'),'s3d':t('s3d'),
+    'lbl-prog':t('lblProg'),'txt-typing':t('typing'),
+    'txt-prep':t('prep'),'txt-prep-sub':t('prepSub'),
+    'txt-analyzing':t('analyzing'),'txt-analyzing-sub':t('analyzingSub'),
+  };
+  Object.entries(m).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.textContent=val;});
+  const ia = document.getElementById('inp-answer');
+  if(ia) ia.placeholder = t('ansPh');
 }
 
-function showView(id) {
-  ['view-landing','view-interview','view-loading'].forEach(v => {
-    document.getElementById(v).classList.add('hidden');
-    document.getElementById(v).classList.remove('fade-in');
+// ── Views ──
+function showView(id){
+  ['view-landing','view-preparing','view-interview','view-analyzing'].forEach(v=>{
+    const el=document.getElementById(v);
+    el.classList.add('hidden');
+    el.style.display='none';
   });
-  const el = document.getElementById(id);
+  const el=document.getElementById(id);
   el.classList.remove('hidden');
-  setTimeout(() => el.classList.add('fade-in'), 10);
+  if(id==='view-interview'){
+    el.style.display='flex';
+    el.style.flexDirection='column';
+  } else {
+    el.style.display='';
+    setTimeout(()=>el.classList.add('fade'),10);
+  }
 }
 
-function showToast(msg, isError=false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-sm font-medium shadow-lg z-50 transition-all
-    ${isError ? 'bg-error text-white' : 'bg-on-surface text-white'}`;
-  t.classList.remove('hidden');
-  setTimeout(() => t.classList.add('hidden'), 3500);
+function showToast(msg, isErr=false){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className=`fixed bottom-5 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-[13px] font-medium shadow-xl z-50
+    ${isErr?'bg-err text-white':'bg-ons text-white'}`;
+  el.classList.remove('hidden');
+  setTimeout(()=>el.classList.add('hidden'),3500);
 }
 
-async function startInterview() {
+// ── Connection Check ──
+async function checkHealth(){
+  try {
+    const r = await fetch(`${API}/health`,{signal:AbortSignal.timeout(3000)});
+    const d = await r.json();
+    const ok = d.ollama==='connected' && d.gemma_available;
+    const pill = document.getElementById('conn-pill');
+    const dot  = document.getElementById('conn-dot');
+    const txt  = document.getElementById('conn-text');
+    pill.classList.remove('hidden');
+    pill.style.display='flex';
+    if(ok){
+      pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700';
+      dot.className='w-1.5 h-1.5 rounded-full bg-emerald-500';
+      txt.textContent=t('connOk');
+    } else {
+      pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700';
+      dot.className='w-1.5 h-1.5 rounded-full bg-amber-500';
+      txt.textContent=t('connOff');
+    }
+  } catch {
+    const pill=document.getElementById('conn-pill');
+    pill.classList.remove('hidden');
+    pill.style.display='flex';
+    pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-red-50 text-red-600';
+    document.getElementById('conn-dot').className='w-1.5 h-1.5 rounded-full bg-red-500';
+    document.getElementById('conn-text').textContent=t('connOff');
+  }
+}
+
+// ── Chat UI ──
+function addAIMessage(text){
+  chatHistory.push({role:'ai',text});
+  renderChat();
+}
+function addUserMessage(text){
+  chatHistory.push({role:'user',text});
+  renderChat();
+}
+function renderChat(){
+  const area = document.getElementById('chat-area');
+  area.innerHTML = chatHistory.map(m => m.role==='ai' ? `
+    <div class="flex items-start gap-3 slide">
+      <div class="w-8 h-8 rounded-full bg-pric/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <span class="material-symbols-outlined msym text-pric text-[15px]">smart_toy</span>
+      </div>
+      <div class="max-w-[82%]">
+        <p class="text-[10px] font-bold text-sec uppercase tracking-wider mb-1">AnamnezAI · Gemma 4</p>
+        <div class="bg-white rounded-2xl rounded-tl-sm px-4 py-3 text-[14px] text-ons leading-relaxed shadow-sm border border-surfc">
+          ${m.text}
+        </div>
+      </div>
+    </div>` : `
+    <div class="flex items-start gap-3 justify-end slide">
+      <div class="max-w-[82%]">
+        <div class="bg-pric rounded-2xl rounded-tr-sm px-4 py-3 text-[14px] text-white leading-relaxed">
+          ${m.text}
+        </div>
+      </div>
+      <div class="w-8 h-8 rounded-full bg-pric flex items-center justify-center flex-shrink-0 mt-0.5">
+        <span class="material-symbols-outlined msym text-white text-[15px]">person</span>
+      </div>
+    </div>`
+  ).join('');
+  area.scrollTop = area.scrollHeight;
+}
+function showTyping(show){
+  const el=document.getElementById('typing-ind');
+  el.style.display = show ? 'flex' : 'none';
+  el.classList.toggle('hidden',!show);
+}
+
+// ── Interview Flow ──
+async function startInterview(){
   const name = document.getElementById('inp-name').value.trim();
   const age  = parseInt(document.getElementById('inp-age').value);
   const gender = document.getElementById('inp-gender').value;
+  if(!name){showToast(t('errName'),true);return;}
+  if(!age||age<1){showToast(t('errAge'),true);return;}
 
-  if (!name) { showToast(t('errName'), true); return; }
-  if (!age || age < 1) { showToast(t('errAge'), true); return; }
+  const btn=document.getElementById('btn-start');
+  btn.disabled=true;
+  btn.innerHTML='<span class="material-symbols-outlined msym spin text-[18px]">refresh</span>';
 
-  document.getElementById('btn-start').disabled = true;
-  document.getElementById('btn-start').innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">refresh</span>';
+  showView('view-preparing');
+  chatHistory=[];
 
   try {
-    const res = await fetch(`${API}/api/session/start`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ patient_name:name, age, gender, language:lang })
+    const res = await fetch(`${API}/api/session/start`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({patient_name:name,age,gender,language:lang})
     });
-    if (!res.ok) throw new Error();
+    if(!res.ok) throw new Error();
     const data = await res.json();
     sessionId = data.session_id;
-    totalSteps = data.total_steps;
-    updateInterviewUI(data);
+    updateProgress(data.step, data.total_steps);
+    addAIMessage(data.question);
     showView('view-interview');
   } catch {
-    showToast(t('errBackend'), true);
+    showToast(t('errConn'),true);
+    showView('view-landing');
   } finally {
-    document.getElementById('btn-start').disabled = false;
-    document.getElementById('btn-start').innerHTML =
-      `<span class="material-symbols-outlined">play_arrow</span><span>${t('btnStart')}</span>`;
+    btn.disabled=false;
+    btn.innerHTML=`<span class="material-symbols-outlined msym text-[18px]">play_arrow</span><span id="txt-btn-start">${t('btnStart')}</span>`;
   }
 }
 
-function updateInterviewUI(data) {
-  currentStep = data.step;
-  document.getElementById('txt-question').textContent = data.question;
-  document.getElementById('txt-step-counter').textContent = `${data.step} / ${data.total_steps}`;
-  document.getElementById('progress-bar').style.width = `${(data.step / data.total_steps) * 100}%`;
-  document.getElementById('inp-answer').value = '';
-
-  const isLast = data.step >= data.total_steps;
-  document.getElementById('txt-btn-next').textContent = isLast ? t('btnFinish') : t('btnNext');
+function updateProgress(step, total){
+  document.getElementById('txt-step').textContent=`${step}/${total}`;
+  document.getElementById('prog-bar').style.width=`${(step/total)*100}%`;
+  const isLast = step >= total;
+  document.getElementById('txt-btn-next').textContent = isLast ? t('finishBtn') : t('sendBtn');
 }
 
-async function submitAnswer() {
-  const answer = document.getElementById('inp-answer').value.trim();
-  if (!answer) { showToast(t('errAnswer'), true); return; }
+async function submitAnswer(){
+  const ans = document.getElementById('inp-answer').value.trim();
+  if(!ans){showToast(t('errAns'),true);return;}
 
-  const btn = document.getElementById('btn-next');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">refresh</span>';
+  const btn=document.getElementById('btn-next');
+  btn.disabled=true;
+  btn.innerHTML=`<span class="material-symbols-outlined msym spin text-[16px]">refresh</span>`;
+
+  addUserMessage(ans);
+  document.getElementById('inp-answer').value='';
+  showTyping(true);
 
   try {
-    const res = await fetch(`${API}/api/session/answer`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ session_id:sessionId, answer })
+    const res = await fetch(`${API}/api/session/answer`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({session_id:sessionId,answer:ans})
     });
-    if (!res.ok) throw new Error();
+    if(!res.ok) throw new Error();
     const data = await res.json();
+    showTyping(false);
 
-    if (data.question === '__COMPLETED__') {
-      showView('view-loading');
+    if(data.question==='__COMPLETED__'){
+      showView('view-analyzing');
       await fetchSummary();
     } else {
-      updateInterviewUI(data);
+      addAIMessage(data.question);
+      updateProgress(data.step, data.total_steps);
     }
   } catch {
-    showToast(t('errBackend'), true);
+    showTyping(false);
+    showToast(t('errConn'),true);
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = `<span>${t('btnNext')}</span><span class="material-symbols-outlined text-sm">arrow_forward</span>`;
+    btn.disabled=false;
+    btn.innerHTML=`<span id="txt-btn-next">${t('sendBtn')}</span><span class="material-symbols-outlined msym text-[16px]">send</span>`;
   }
 }
 
-async function fetchSummary() {
+async function fetchSummary(){
   try {
     const res = await fetch(`${API}/api/session/${sessionId}/summary`);
-    if (!res.ok) throw new Error();
+    if(!res.ok) throw new Error();
     const data = await res.json();
-    // Özeti localStorage'a yaz ve summary sayfasına yönlendir
-    localStorage.setItem('mediscreen_summary', JSON.stringify(data));
-    window.location.href = 'summary.html';
+    localStorage.setItem('anamnez_summary', JSON.stringify(data));
+    window.location.href='summary.html';
   } catch {
-    showToast(t('errBackend'), true);
+    showToast(t('errConn'),true);
     showView('view-interview');
   }
 }
 
-// ── Voice Recognition ──
-function toggleVoice() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('Tarayıcınız sesli girişi desteklemiyor.', true);
-    return;
+// ── Voice ──
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
+    showToast('Tarayıcınız sesli girişi desteklemiyor. Chrome/Edge kullanın.',true);return;
   }
-  if (recognition) {
-    recognition.stop();
-    recognition = null;
-    document.getElementById('txt-voice-btn').textContent = t('voiceBtn');
-    document.getElementById('txt-voice-status').textContent = '';
-    return;
+  if(recognition){
+    recognition.stop();return;
   }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
   recognition = new SR();
-  recognition.lang = lang === 'tr' ? 'tr-TR' : 'en-US';
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  document.getElementById('txt-voice-btn').textContent = t('voiceStop');
-  document.getElementById('txt-voice-status').textContent = t('listening');
-
-  recognition.onresult = (e) => {
+  recognition.lang = lang==='tr'?'tr-TR':'en-US';
+  recognition.continuous=false; recognition.interimResults=false;
+  document.getElementById('txt-voice').textContent=t('stopRec');
+  document.getElementById('txt-vstatus').textContent=t('listening');
+  document.getElementById('btn-voice').classList.add('voice-active','bg-secc','text-sec');
+  document.getElementById('voice-icon').textContent='mic_off';
+  recognition.onresult = e => {
     document.getElementById('inp-answer').value = e.results[0][0].transcript;
-    document.getElementById('txt-voice-status').textContent = '✓';
+    document.getElementById('txt-vstatus').textContent='✓ Kaydedildi';
   };
   recognition.onend = () => {
-    recognition = null;
-    document.getElementById('txt-voice-btn').textContent = t('voiceBtn');
+    recognition=null;
+    document.getElementById('txt-voice').textContent=t('voiceBtn');
+    document.getElementById('txt-vstatus').textContent='';
+    document.getElementById('btn-voice').classList.remove('voice-active','bg-secc','text-sec');
+    document.getElementById('voice-icon').textContent='mic';
   };
   recognition.start();
 }
 
-// Enter → submit
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.ctrlKey && !document.getElementById('view-interview').classList.contains('hidden')) {
-    submitAnswer();
-  }
-});
+function handleKey(e){
+  if(e.key==='Enter'&&e.ctrlKey){e.preventDefault();submitAnswer();}
+}
+
+// ── Init ──
+checkHealth();
+setInterval(checkHealth, 30000);
 </script>
 </body>
 </html>

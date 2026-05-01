@@ -1,17 +1,15 @@
 """
-MediScreen AI — Backend v2
+AnamnezAI — Backend v2.0
 AI-Powered Patient Pre-Triage using Gemma 4 via Ollama
 Gemma 4 Good Hackathon — Health & Sciences + Ollama Prize Tracks
-
-Sprint 2: Streaming SSE, bağlamsal mülakat, gelişmiş triaj
 """
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, StreamingResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Optional, AsyncGenerator, AsyncGenerator
+from typing import AsyncGenerator
 import httpx
 import json
 import uuid
@@ -22,10 +20,10 @@ from datetime import datetime
 #  Config
 # ─────────────────────────────────────────────
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-GEMMA_MODEL     = os.getenv("GEMMA_MODEL", "gemma4:e4b")   # gemma4:e2b (hızlı) | gemma4:e4b (önerilir) | gemma4:26b (güçlü)
+GEMMA_MODEL     = os.getenv("GEMMA_MODEL", "gemma4:e4b")   # gemma4:e2b | gemma4:e4b | gemma4:26b
 
 app = FastAPI(
-    title="MediScreen AI",
+    title="AnamnezAI",
     description="AI-Powered Patient Pre-Triage using Gemma 4 via Ollama — Gemma 4 Good Hackathon",
     version="2.0.0",
 )
@@ -37,13 +35,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve frontend
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
-
-# In-memory session store  (replace with Redis/DB for production)
-sessions: dict[str, dict] = {}
+# In-memory storage (Redis/DB for production)
+sessions:  dict[str, dict] = {}
+summaries: dict[str, dict] = {}   # session_id → full clinical summary cache
 
 # ─────────────────────────────────────────────
 #  Pydantic Models
@@ -52,7 +46,7 @@ class StartSessionRequest(BaseModel):
     patient_name: str
     age: int
     gender: str
-    language: str = "tr"   # "tr" veya "en"
+    language: str = "tr"
 
 class AnswerRequest(BaseModel):
     session_id: str
@@ -75,16 +69,16 @@ class ClinicalSummaryResponse(BaseModel):
     chief_complaint: str
     symptoms_summary: str
     possible_conditions: list[str]
+    urgency_flags: list[str] = []
     recommended_action: str
     clinical_notes: str
-    urgency_flags: list[str]
     generated_at: str
 
 # ─────────────────────────────────────────────
-#  Ollama / Gemma 4 Core
+#  Ollama /api/chat Helper
 # ─────────────────────────────────────────────
 async def ask_gemma(prompt: str, system: str = "") -> str:
-    """Ollama /api/chat endpoint üzerinden Gemma 4'e istek gönderir."""
+    """Ollama /api/chat üzerinden Gemma 4'e istek gönderir."""
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
@@ -109,16 +103,13 @@ async def ask_gemma(prompt: str, system: str = "") -> str:
             resp.raise_for_status()
             return resp.json()["message"]["content"].strip()
     except httpx.ConnectError:
-        raise HTTPException(
-            status_code=503,
-            detail="Ollama çalışmıyor. Terminal'de: ollama serve",
-        )
+        raise HTTPException(status_code=503, detail="Ollama çalışmıyor. Terminal'de: ollama serve")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gemma 4 hatası: {str(e)}")
 
 
 async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, None]:
-    """Gemma 4'ten token token streaming yanıt alır (SSE için)."""
+    """Gemma 4'ten token token streaming (SSE için)."""
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
@@ -150,15 +141,12 @@ async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, Non
     except httpx.ConnectError:
         yield f"data: {json.dumps({'error': 'Ollama bağlantısı yok'})}\n\n"
 
-
 # ─────────────────────────────────────────────
 #  Gemma 4 Sistem Promptları
 # ─────────────────────────────────────────────
-SYSTEM_PROMPT_TR = """Sen MediScreen AI — deneyimli, empatik bir tıbbi pre-triaj asistanısın.
+SYSTEM_PROMPT_TR = """Sen AnamnezAI — deneyimli, empatik bir tıbbi pre-triaj asistanısın.
 Gemma 4 tarafından güçlendiriliyorsun ve tamamen yerel (Ollama) çalışıyorsun.
-
 GÖREV: Hastanın semptomlarını anlamak için klinik açıdan değerli, bağlamsal sorular sor.
-
 KURALLAR:
 - Her seferinde SADECE 1 soru sor.
 - Önceki cevapları dikkate alarak soru üret (bağlamsal mülakat).
@@ -166,23 +154,19 @@ KURALLAR:
 - Acil semptomlar (göğüs ağrısı, nefes darlığı, bilinç kaybı) görürsen önce detaylandır.
 - Empatik, sakinleştirici ton. Maksimum 2 cümle. Soru işaretiyle bitir."""
 
-SYSTEM_PROMPT_EN = """You are MediScreen AI — an experienced, empathetic medical pre-triage assistant.
+SYSTEM_PROMPT_EN = """You are AnamnezAI — an experienced, empathetic medical pre-triage assistant.
 Powered by Gemma 4, running 100% locally via Ollama.
-
 TASK: Ask clinically relevant, contextual questions to understand the patient's symptoms.
-
 RULES:
 - Ask ONLY ONE question at a time.
 - Generate questions based on previous answers (contextual interview).
-- Avoid medical jargon, use plain patient-friendly language.
-- If emergency signs present (chest pain, difficulty breathing), prioritize those.
-- Empathetic, calming tone. Max 2 sentences. End with a question mark."""
+- Avoid medical jargon, use plain language.
+- If emergency signs present (chest pain, difficulty breathing), explore those first.
+- Empathetic, calming tone. Max 2 sentences. End with a question?"""
 
 TRIAGE_SYSTEM_TR = """Sen klinik triaj uzmanısın (Gemma 4 tarafından güçlendirilmişsin).
 Hastanın semptom mülakat geçmişini analiz et.
-
 ÇIKTI: SADECE geçerli JSON döndür. Başka hiçbir metin veya markdown ekleme.
-
 {
   "triage_level": "RED veya YELLOW veya GREEN",
   "confidence_score": 0-100 arası tam sayı,
@@ -191,16 +175,13 @@ Hastanın semptom mülakat geçmişini analiz et.
   "possible_conditions": ["En olası tanı", "İkinci olasılık", "Üçüncü olasılık"],
   "recommended_action": "Önerilen eylem tek cümle",
   "clinical_notes": "Doktor için kritik gözlemler 2-3 cümle",
-  "urgency_flags": ["Acil uyarı bayrakları — örn: 'Kardiyak risk faktörleri mevcut'"]
+  "urgency_flags": ["Acil uyarı bayrakları — örn: Kardiyak risk faktörleri mevcut"]
 }
-
 TRİAJ: RED=Hayati risk/derhal, YELLOW=Acil 30dk-2saat, GREEN=Rutin poliklinik"""
 
 TRIAGE_SYSTEM_EN = """You are a clinical triage expert (powered by Gemma 4).
 Analyze the patient's symptom interview history.
-
 OUTPUT: Return ONLY valid JSON. No other text or markdown.
-
 {
   "triage_level": "RED or YELLOW or GREEN",
   "confidence_score": integer 0-100,
@@ -211,10 +192,9 @@ OUTPUT: Return ONLY valid JSON. No other text or markdown.
   "clinical_notes": "Critical notes for doctor 2-3 sentences",
   "urgency_flags": ["Emergency flags if any"]
 }
-
 TRIAGE: RED=Life-threatening/immediate, YELLOW=Urgent 30min-2hrs, GREEN=Routine outpatient"""
 
-TRIAGE_COLOR = {"RED": "#ba1a1a", "YELLOW": "#dca26c", "GREEN": "#006a68"}
+TRIAGE_COLOR = {"RED": "#ba1a1a", "YELLOW": "#e07b26", "GREEN": "#006a68"}
 
 def get_system_prompt(lang: str) -> str:
     return SYSTEM_PROMPT_TR if lang == "tr" else SYSTEM_PROMPT_EN
@@ -225,14 +205,6 @@ def get_triage_system(lang: str) -> str:
 # ─────────────────────────────────────────────
 #  Endpoints
 # ─────────────────────────────────────────────
-
-@app.get("/")
-async def root():
-    index = os.path.join(FRONTEND_DIR, "index.html")
-    if os.path.exists(index):
-        return FileResponse(index)
-    return {"message": "MediScreen AI v2 çalışıyor.", "docs": "/docs", "model": GEMMA_MODEL}
-
 
 @app.get("/health")
 async def health_check():
@@ -249,6 +221,8 @@ async def health_check():
             "gemma_model": GEMMA_MODEL,
             "gemma_available": gemma_available,
             "available_models": models,
+            "sessions_active": len(sessions),
+            "summaries_cached": len(summaries),
         }
     except Exception as e:
         return {"status": "degraded", "ollama": "disconnected", "error": str(e)}
@@ -260,7 +234,6 @@ async def start_session(req: StartSessionRequest):
     session_id = str(uuid.uuid4())
     lang = req.language
 
-    # İlk soru da Gemma 4 tarafından dinamik üretiliyor
     opening_prompt = (
         f"Hasta: {req.patient_name}, {req.age} yaşında, {req.gender}.\n"
         f"Bu ilk görüşme. Hastanın bugünkü ana şikayetini öğrenmek için samimi, "
@@ -284,12 +257,7 @@ async def start_session(req: StartSessionRequest):
         "created_at": datetime.utcnow().isoformat(),
     }
 
-    return SessionResponse(
-        session_id=session_id,
-        question=first_question,
-        step=1,
-        total_steps=5,
-    )
+    return SessionResponse(session_id=session_id, question=first_question, step=1, total_steps=5)
 
 
 @app.post("/api/session/answer", response_model=SessionResponse)
@@ -348,31 +316,6 @@ async def submit_answer(req: AnswerRequest):
     )
 
 
-@app.get("/api/session/{session_id}/stream-summary")
-async def stream_summary(session_id: str):
-    """Klinik özeti SSE ile token token akıtır."""
-    session = sessions.get(session_id)
-    if not session or not session["completed"]:
-        raise HTTPException(status_code=400, detail="Geçersiz oturum.")
-    lang = session["language"]
-    history_text = "\n".join(
-        f"Q{i+1}: {qa['question']}\nA: {qa.get('answer','')}"
-        for i, qa in enumerate(session["qa_history"])
-    )
-    prompt = (
-        f"Hasta: {session['patient_name']}, {session['age']} yaş, {session['gender']}.\n"
-        f"Mülakat:\n{history_text}\n\nDoktor için kısa klinik özet yaz (3-4 cümle)."
-    ) if lang == "tr" else (
-        f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n"
-        f"Interview:\n{history_text}\n\nWrite a brief clinical summary for the doctor (3-4 sentences)."
-    )
-    return StreamingResponse(
-        stream_gemma(prompt, get_system_prompt(lang)),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
-
-
 @app.get("/api/session/{session_id}/summary", response_model=ClinicalSummaryResponse)
 async def get_clinical_summary(session_id: str):
     """Tamamlanan mülakattan Gemma 4 ile klinik özet ve triaj üretir."""
@@ -381,6 +324,10 @@ async def get_clinical_summary(session_id: str):
         raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
     if not session["completed"]:
         raise HTTPException(status_code=400, detail="Mülakat henüz tamamlanmadı.")
+
+    # Return cached if exists
+    if session_id in summaries:
+        return ClinicalSummaryResponse(**summaries[session_id])
 
     lang = session["language"]
     history_text = "\n".join(
@@ -400,7 +347,7 @@ async def get_clinical_summary(session_id: str):
 
     raw = await ask_gemma(triage_prompt, get_triage_system(lang))
 
-    # JSON parse — ```json blokları da temizle
+    # Robust JSON parse
     cleaned = raw.strip()
     if "```" in cleaned:
         parts = cleaned.split("```")
@@ -431,7 +378,10 @@ async def get_clinical_summary(session_id: str):
     if level not in TRIAGE_COLOR:
         level = "YELLOW"
 
-    return ClinicalSummaryResponse(
+    flags = [f for f in triage_data.get("urgency_flags", [])
+             if f and len(f) > 3 and "boş" not in f.lower() and "empty" not in f.lower()]
+
+    result = ClinicalSummaryResponse(
         session_id=session_id,
         patient_name=session["patient_name"],
         age=session["age"],
@@ -442,29 +392,81 @@ async def get_clinical_summary(session_id: str):
         chief_complaint=triage_data.get("chief_complaint", ""),
         symptoms_summary=triage_data.get("symptoms_summary", ""),
         possible_conditions=triage_data.get("possible_conditions", [])[:5],
+        urgency_flags=flags,
         recommended_action=triage_data.get("recommended_action", ""),
         clinical_notes=triage_data.get("clinical_notes", ""),
-        urgency_flags=triage_data.get("urgency_flags", []),
         generated_at=datetime.utcnow().isoformat() + "Z",
+    )
+
+    # Cache for doctor queue
+    summaries[session_id] = result.model_dump()
+    return result
+
+
+@app.get("/api/session/{session_id}/stream-summary")
+async def stream_summary(session_id: str):
+    """Klinik özeti SSE ile token token akıtır."""
+    session = sessions.get(session_id)
+    if not session or not session["completed"]:
+        raise HTTPException(status_code=400, detail="Geçersiz oturum.")
+    lang = session["language"]
+    history_text = "\n".join(
+        f"Q{i+1}: {qa['question']}\nA: {qa.get('answer','')}"
+        for i, qa in enumerate(session["qa_history"])
+    )
+    prompt = (
+        f"Hasta: {session['patient_name']}, {session['age']} yaş, {session['gender']}.\n"
+        f"Mülakat:\n{history_text}\n\nDoktor için kısa klinik özet yaz (3-4 cümle)."
+    ) if lang == "tr" else (
+        f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n"
+        f"Interview:\n{history_text}\n\nWrite a brief clinical summary for the doctor (3-4 sentences)."
+    )
+    return StreamingResponse(
+        stream_gemma(prompt, get_system_prompt(lang)),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
 @app.get("/api/patients/queue")
 async def get_patient_queue():
-    """Tamamlanmış hasta listesini döndürür."""
-    completed = [
-        {
-            "session_id": sid,
-            "patient_name": s["patient_name"],
-            "age": s["age"],
-            "gender": s["gender"],
-            "completed": s["completed"],
-            "created_at": s.get("created_at", ""),
-        }
-        for sid, s in sessions.items()
-        if s["completed"]
-    ]
-    return {"total": len(completed), "patients": completed}
+    """Triaj önceliğine göre tam veriyle hasta kuyruğunu döndürür."""
+    priority = {"RED": 0, "YELLOW": 1, "GREEN": 2, "PENDING": 3}
+    patients = []
+    for sid, s in sessions.items():
+        if s["completed"]:
+            p = {
+                "session_id": sid,
+                "patient_name": s["patient_name"],
+                "age": s["age"],
+                "gender": s["gender"],
+                "created_at": s.get("created_at", ""),
+                "triage_level": "PENDING",
+                "triage_color": "#8c9499",
+                "confidence_score": 0,
+                "chief_complaint": "Özet bekleniyor...",
+                "urgency_flags": [],
+                "recommended_action": "",
+                "symptoms_summary": "",
+                "possible_conditions": [],
+                "clinical_notes": "",
+                "generated_at": "",
+            }
+            if sid in summaries:
+                p.update(summaries[sid])
+            patients.append(p)
+
+    patients.sort(key=lambda x: priority.get(x.get("triage_level", "PENDING"), 3))
+    return {
+        "total": len(patients),
+        "patients": patients,
+        "stats": {
+            "red":     sum(1 for p in patients if p.get("triage_level") == "RED"),
+            "yellow":  sum(1 for p in patients if p.get("triage_level") == "YELLOW"),
+            "green":   sum(1 for p in patients if p.get("triage_level") == "GREEN"),
+            "pending": sum(1 for p in patients if p.get("triage_level") == "PENDING"),
+        },
+    }
 
 
 @app.delete("/api/session/{session_id}")
@@ -472,14 +474,25 @@ async def delete_session(session_id: str):
     """Oturumu siler (HIPAA uyumu için)."""
     if session_id in sessions:
         del sessions[session_id]
+        summaries.pop(session_id, None)
         return {"message": "Oturum silindi."}
     raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
 
 
+# ─────────────────────────────────────────────
+#  Serve Frontend — MUST be last (API routes take priority)
+# ─────────────────────────────────────────────
+FRONTEND_DIR = os.getenv(
+    "FRONTEND_DIR",
+    os.path.join(os.path.dirname(__file__), "..", "frontend"),
+)
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+
 if __name__ == "__main__":
     import uvicorn
     print(f"\n{'='*55}")
-    print(f"  MediScreen AI v2 — Gemma 4 Medical Pre-Triage")
+    print(f"  AnamnezAI v2 — Gemma 4 Medical Pre-Triage")
     print(f"  Model  : {GEMMA_MODEL} (via Ollama)")
     print(f"  Ollama : {OLLAMA_BASE_URL}")
     print(f"  API    : http://localhost:8000")
