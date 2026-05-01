@@ -40,3 +40,10 @@ desktop.ini
 *.bin
 *.safetensors
 
+
+chroma_db/
+backend/check_syntax.py
+backend/find_quotes.py
+backend/test_rag.py
+backend/srv_*.txt
+__pycache__/

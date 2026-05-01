@@ -1,32 +1,36 @@
 """
-AnamnezAI — Backend v2.0
+AnamnezAI — Backend v3.0
 AI-Powered Patient Pre-Triage using Gemma 4 via Ollama
 Gemma 4 Good Hackathon — Health & Sciences + Ollama Prize Tracks
+v3.0: RAG (Retrieval-Augmented Generation) ile tıbbi bilgi tabanı entegrasyonu
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 import httpx
 import json
 import uuid
 import os
+import tempfile
 from datetime import datetime
 
 # ─────────────────────────────────────────────
 #  Config
 # ─────────────────────────────────────────────
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-GEMMA_MODEL     = os.getenv("GEMMA_MODEL", "gemma4:e4b")   # gemma4:e2b | gemma4:e4b | gemma4:26b
+GEMMA_MODEL     = os.getenv("GEMMA_MODEL", "gemma4:e4b")
+RAG_ENABLED     = os.getenv("RAG_ENABLED", "true").lower() == "true"
 
 app = FastAPI(
     title="AnamnezAI",
-    description="AI-Powered Patient Pre-Triage using Gemma 4 via Ollama — Gemma 4 Good Hackathon",
-    version="2.0.0",
+    description="AI-Powered Patient Pre-Triage using Gemma 4 via Ollama + RAG — Gemma 4 Good Hackathon",
+    version="3.0.0",
 )
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,6 +42,26 @@ app.add_middleware(
 # In-memory storage (Redis/DB for production)
 sessions:  dict[str, dict] = {}
 summaries: dict[str, dict] = {}   # session_id → full clinical summary cache
+
+# ─────────────────────────────────────────────
+#  RAG Init (lazy — sunucu başlangıcını yavaşlatmaz)
+# ─────────────────────────────────────────────
+_rag_initialized = False
+
+def _init_rag_if_needed():
+    global _rag_initialized
+    if _rag_initialized or not RAG_ENABLED:
+        return
+    try:
+        import rag as rag_module
+        if rag_module.is_rag_available():
+            stats = rag_module.get_db_stats()
+            if stats.get("total_chunks", 0) == 0:
+                # İlk başlatma: yerleşik bilgi tabanını yükle
+                rag_module.ingest_builtin_knowledge()
+            _rag_initialized = True
+    except Exception as e:
+        print(f"[RAG] Başlatma atlandı: {e}")
 
 # ─────────────────────────────────────────────
 #  Pydantic Models
@@ -110,6 +134,27 @@ async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0) -> st
         raise HTTPException(status_code=504, detail="Bağlantı zaman aşımı. Ollama servisini kontrol edin.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gemma 4 hatası: {str(e)}")
+
+
+async def ask_gemma_rag(prompt: str, system: str = "", rag_query: str = "",
+                        timeout: float = 180.0) -> str:
+    """RAG bağlamıyla güçlendirilmiş Gemma 4 isteği.
+
+    rag_query ile ilgili tıbbi referanslar otomatik olarak system prompt'a eklenir.
+    RAG mevcut değilse veya kayıt yoksa normal ask_gemma gibi davranır.
+    """
+    enriched_system = system
+    if RAG_ENABLED and rag_query:
+        try:
+            _init_rag_if_needed()
+            import rag as rag_module
+            context = rag_module.get_context_for_prompt(rag_query, n_results=4, min_relevance=0.3)
+            if context:
+                enriched_system = system + "\n\n" + context if system else context
+        except Exception:
+            pass  # RAG başarısız olursa sessizce devam et
+
+    return await ask_gemma(prompt, system=enriched_system, timeout=timeout)
 
 
 async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, None]:
@@ -263,6 +308,120 @@ async def warmup_model():
         return {"status": "warmup_failed", "error": str(e)}
 
 
+# ─────────────────────────────────────────────
+#  RAG Endpoints
+# ─────────────────────────────────────────────
+
+@app.get("/api/rag/status")
+async def rag_status():
+    """RAG bilgi tabanı durumunu döndürür."""
+    if not RAG_ENABLED:
+        return {"enabled": False, "reason": "RAG_ENABLED=false"}
+    try:
+        import rag as rag_module
+        if not rag_module.is_rag_available():
+            return {"enabled": False, "reason": "chromadb veya sentence-transformers kurulu değil"}
+        _init_rag_if_needed()
+        stats = rag_module.get_db_stats()
+        return {
+            "enabled": True,
+            "initialized": _rag_initialized,
+            **stats,
+        }
+    except Exception as e:
+        return {"enabled": False, "error": str(e)}
+
+
+@app.post("/api/rag/ingest/text")
+async def rag_ingest_text(body: dict):
+    """Ham metin veya Q&A çiftlerini bilgi tabanına ekler."""
+    text = body.get("text", "")
+    source = body.get("source", "user_upload")
+    category = body.get("category", "custom")
+
+    if not text or len(text.strip()) < 20:
+        raise HTTPException(status_code=400, detail="Metin çok kısa (min 20 karakter).")
+
+    try:
+        import rag as rag_module
+        _init_rag_if_needed()
+        added = rag_module.ingest_text(text, source=source, category=category)
+        return {"added_chunks": added, "source": source}
+    except ImportError:
+        raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil. pip install chromadb sentence-transformers")
+
+
+@app.post("/api/rag/ingest/pdf")
+async def rag_ingest_pdf(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
+    """PDF dosyasını yükler ve bilgi tabanına ekler (arka planda)."""
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Sadece PDF dosyası kabul edilir.")
+
+    try:
+        import rag as rag_module
+        contents = await file.read()
+        # Geçici dosyaya yaz
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(contents)
+            tmp_path = tmp.name
+
+        def _ingest():
+            try:
+                _init_rag_if_needed()
+                count = rag_module.ingest_pdf(tmp_path, source_name=file.filename[:40])
+                import os
+                os.unlink(tmp_path)
+                print(f"[RAG] PDF yüklendi: {file.filename} — {count} chunk")
+            except Exception as e:
+                print(f"[RAG] PDF hatası: {e}")
+
+        if background_tasks:
+            background_tasks.add_task(_ingest)
+            return {"status": "processing", "filename": file.filename,
+                    "message": "PDF arka planda işleniyor. /api/rag/status ile kontrol edin."}
+        else:
+            _ingest()
+            stats = rag_module.get_db_stats()
+            return {"status": "done", "filename": file.filename, "total_chunks": stats.get("total_chunks")}
+
+    except ImportError:
+        raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil.")
+
+
+@app.post("/api/rag/ingest/builtin")
+async def rag_ingest_builtin():
+    """Yerleşik tıbbi bilgi tabanını (MTS, kardiyak, nörolojik vb.) yükler."""
+    try:
+        import rag as rag_module
+        added = rag_module.ingest_builtin_knowledge()
+        stats = rag_module.get_db_stats()
+        return {
+            "added_chunks": added,
+            "total_chunks": stats.get("total_chunks", 0),
+            "sources": stats.get("sources", {}),
+        }
+    except ImportError:
+        raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil.")
+
+
+@app.get("/api/rag/query")
+async def rag_query(q: str, n: int = 4):
+    """RAG retrieval test endpoint — hangi bağlamın alındığını gösterir."""
+    if not q:
+        raise HTTPException(status_code=400, detail="q parametresi gerekli.")
+    try:
+        import rag as rag_module
+        _init_rag_if_needed()
+        hits = rag_module.retrieve(q, n_results=n)
+        return {
+            "query": q,
+            "results": hits,
+            "context_preview": rag_module.get_context_for_prompt(q, n_results=n)[:500] + "...",
+        }
+    except ImportError:
+        raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil.")
+
+
 @app.get("/health")
 async def health_check():
     """Ollama bağlantısı ve Gemma 4 model durumunu kontrol eder."""
@@ -272,6 +431,22 @@ async def health_check():
             models = [m["name"] for m in resp.json().get("models", [])]
             model_base = GEMMA_MODEL.split(":")[0]
             gemma_available = any(model_base in m for m in models)
+
+        # RAG durumu
+        rag_info = {"rag_enabled": RAG_ENABLED, "rag_chunks": 0}
+        if RAG_ENABLED:
+            try:
+                import rag as rag_module
+                if rag_module.is_rag_available():
+                    stats = rag_module.get_db_stats()
+                    rag_info["rag_chunks"] = stats.get("total_chunks", 0)
+                    rag_info["rag_available"] = True
+                else:
+                    rag_info["rag_available"] = False
+                    rag_info["rag_note"] = "pip install chromadb sentence-transformers"
+            except Exception:
+                rag_info["rag_available"] = False
+
         return {
             "status": "ok",
             "ollama": "connected",
@@ -280,6 +455,7 @@ async def health_check():
             "available_models": models,
             "sessions_active": len(sessions),
             "summaries_cached": len(summaries),
+            **rag_info,
         }
     except Exception as e:
         return {"status": "degraded", "ollama": "disconnected", "error": str(e)}
@@ -287,7 +463,7 @@ async def health_check():
 
 @app.post("/api/session/start", response_model=SessionResponse)
 async def start_session(req: StartSessionRequest):
-    """Yeni hasta mülakatı başlatır — ilk soruyu Gemma 4 üretir."""
+    """Yeni hasta mülakatı başlatır — ilk soruyu Gemma 4 + RAG ile üretir."""
     session_id = str(uuid.uuid4())
     lang = req.language
 
@@ -300,7 +476,13 @@ async def start_session(req: StartSessionRequest):
         f"First visit. Ask a warm, empathetic opening question to learn their main complaint. Q1/5."
     )
 
-    first_question = await ask_gemma(opening_prompt, get_system_prompt(lang))
+    # RAG ile açılış sorusu — genel triaj bilgisi ile güçlendir
+    rag_query = f"medical triage first question patient interview clinical assessment"
+    first_question = await ask_gemma_rag(
+        opening_prompt,
+        system=get_system_prompt(lang),
+        rag_query=rag_query,
+    )
 
     sessions[session_id] = {
         "patient_name": req.patient_name,
@@ -361,7 +543,13 @@ async def submit_answer(req: AnswerRequest):
             f"If emergency signs present, explore further. Q{current_step+1}/{total_steps}."
         )
 
-    next_question = await ask_gemma(next_prompt, get_system_prompt(lang))
+    # Hastanın cevaplarından RAG sorgu metni oluştur (semptom kelimelerini çıkar)
+    rag_query = req.answer + " " + history_text[-300:]  # Son 300 karakter
+    next_question = await ask_gemma_rag(
+        next_prompt,
+        system=get_system_prompt(lang),
+        rag_query=rag_query,
+    )
     session["step"] += 1
     session["qa_history"].append({"question": next_question, "answer": None})
 
@@ -549,11 +737,30 @@ if os.path.exists(FRONTEND_DIR):
 if __name__ == "__main__":
     import uvicorn
     print(f"\n{'='*55}")
-    print(f"  AnamnezAI v2 — Gemma 4 Medical Pre-Triage")
+    print(f"  AnamnezAI v3 — Gemma 4 Medical Pre-Triage + RAG")
     print(f"  Model  : {GEMMA_MODEL} (via Ollama)")
     print(f"  Ollama : {OLLAMA_BASE_URL}")
+    print(f"  RAG    : {'Aktif' if RAG_ENABLED else 'Devre Disi'}")
     print(f"  API    : http://localhost:8000")
     print(f"  Docs   : http://localhost:8000/docs")
     print(f"{'='*55}\n")
+
+    # RAG bilgi tabanını arka planda yükle (ilk başlatmada)
+    if RAG_ENABLED:
+        try:
+            import rag as rag_module
+            if rag_module.is_rag_available():
+                stats = rag_module.get_db_stats()
+                if stats.get("total_chunks", 0) == 0:
+                    print("  RAG: Yerlesik tibbi bilgi tabani yukleniyor...")
+                    rag_module.ingest_builtin_knowledge()
+                    print(f"  RAG: HAZIR ({rag_module.get_db_stats().get('total_chunks')} chunk)")
+                else:
+                    print(f"  RAG: HAZIR ({stats.get('total_chunks')} chunk, {len(stats.get('sources', {}))} kaynak)")
+            else:
+                print("  RAG: chromadb/sentence-transformers kurulu degil (pip install ile eklenebilir)")
+        except Exception as e:
+            print(f"  RAG: Atıldı — {e}")
+
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 
