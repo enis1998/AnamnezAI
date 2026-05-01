@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="tr" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MediScreen AI — Doktor Paneli</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      "primary":"#002f40","primary-container":"#00475e","secondary":"#006a68",
+      "secondary-container":"#a0f1ed","surface":"#f8fafb","surface-container":"#eceeef",
+      "surface-container-low":"#f2f4f5","surface-container-lowest":"#ffffff",
+      "surface-container-high":"#e6e8e9","on-surface":"#191c1d",
+      "on-surface-variant":"#40484c","on-primary":"#ffffff",
+      "outline-variant":"#c0c7cd","error":"#ba1a1a","error-container":"#ffdad6",
+      "tertiary-container":"#dca26c"
+    },
+    fontFamily: { headline:["Manrope"], body:["Inter"] }
+  }}
+}
+</script>
+<style>
+  body { font-family:'Inter',sans-serif; background:#f8fafb; color:#191c1d; }
+  h1,h2,h3 { font-family:'Manrope',sans-serif; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .glass { background:rgba(248,250,251,0.75); backdrop-filter:blur(20px); }
+  .fade-in { animation:fadeIn .4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  tr { transition: background .15s; }
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR + MAIN LAYOUT ── -->
+<div class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-60 flex-shrink-0 bg-surface-container-lowest flex flex-col py-8 shadow-sm">
+    <div class="px-6 mb-8 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-primary-container flex items-center justify-center">
+        <span class="material-symbols-outlined text-white text-sm">monitor_heart</span>
+      </div>
+      <span class="font-headline font-bold text-primary">MediScreen AI</span>
+    </div>
+
+    <nav class="flex-1 px-4 space-y-1">
+      <a href="doctor.html" class="flex items-center gap-3 bg-surface-container text-primary-container font-semibold rounded-xl px-4 py-3 text-sm">
+        <span class="material-symbols-outlined text-sm">dashboard</span>Dashboard
+      </a>
+      <a href="index.html" class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container rounded-xl px-4 py-3 text-sm transition-colors">
+        <span class="material-symbols-outlined text-sm">person_add</span>Yeni Hasta
+      </a>
+      <a href="#" class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container rounded-xl px-4 py-3 text-sm transition-colors">
+        <span class="material-symbols-outlined text-sm">folder_shared</span>Hasta Kayıtları
+      </a>
+      <a href="#" class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container rounded-xl px-4 py-3 text-sm transition-colors">
+        <span class="material-symbols-outlined text-sm">psychology</span>AI Analizleri
+      </a>
+    </nav>
+
+    <div class="px-4 pt-4 border-t border-outline-variant/20">
+      <div class="flex items-center gap-3 p-3">
+        <div class="w-9 h-9 rounded-full bg-primary-container/20 flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary-container text-sm">stethoscope</span>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-primary">Dr. Smith</p>
+          <p class="text-[10px] text-on-surface-variant">Klinik Yönetici</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Top Bar -->
+    <header class="glass border-b border-white/20 px-8 py-4 flex justify-between items-center flex-shrink-0">
+      <div>
+        <h1 class="text-xl font-bold text-primary">Klinik Triaj Paneli</h1>
+        <p class="text-xs text-on-surface-variant" id="txt-date">Yükleniyor...</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="loadQueue()"
+          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container text-sm font-medium
+                 text-on-surface-variant hover:bg-surface-container-high transition-colors">
+          <span class="material-symbols-outlined text-sm">refresh</span>Yenile
+        </button>
+        <button class="flex items-center gap-2 px-4 py-2 rounded-xl bg-error-container text-error text-sm font-bold">
+          <span class="material-symbols-outlined text-sm">emergency</span>Acil
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-8">
+
+      <!-- Stats Row -->
+      <div class="grid grid-cols-4 gap-4 mb-8" id="stats-row">
+        <div class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm">
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Toplam Hasta</p>
+          <p class="text-3xl font-bold text-primary" id="stat-total">—</p>
+        </div>
+        <div class="bg-red-50 rounded-2xl p-5 shadow-sm">
+          <p class="text-xs font-bold text-error uppercase tracking-wider mb-1">🔴 Acil</p>
+          <p class="text-3xl font-bold text-error" id="stat-red">—</p>
+        </div>
+        <div class="bg-amber-50 rounded-2xl p-5 shadow-sm">
+          <p class="text-xs font-bold text-[#a06020] uppercase tracking-wider mb-1">🟡 Acil/Bekleyebilir</p>
+          <p class="text-3xl font-bold text-[#a06020]" id="stat-yellow">—</p>
+        </div>
+        <div class="bg-teal-50 rounded-2xl p-5 shadow-sm">
+          <p class="text-xs font-bold text-secondary uppercase tracking-wider mb-1">🟢 Rutin</p>
+          <p class="text-3xl font-bold text-secondary" id="stat-green">—</p>
+        </div>
+      </div>
+
+      <!-- Patient Table -->
+      <div class="bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-8 py-5 flex justify-between items-center border-b border-surface-container">
+          <h2 class="text-lg font-bold text-primary">Aktif Hasta Kuyruğu</h2>
+          <span class="text-xs text-on-surface-variant font-medium" id="txt-queue-count">Yükleniyor...</span>
+        </div>
+
+        <div id="table-body">
+          <div class="text-center py-16 text-on-surface-variant">
+            <span class="material-symbols-outlined text-5xl block mb-3 animate-spin">refresh</span>
+            <p class="text-sm">Hasta listesi yükleniyor...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Demo Patients (gösterge amaçlı) -->
+      <div class="mt-6 bg-surface-container-low rounded-2xl p-6">
+        <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-4">
+          Demo Hastalar (Offline Gösterim)
+        </p>
+        <div id="demo-table"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Detail Modal -->
+<div id="modal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-surface-container-lowest rounded-2xl shadow-xl max-w-lg w-full p-8 relative fade-in">
+    <button onclick="closeModal()" class="absolute top-4 right-4 text-on-surface-variant hover:text-primary">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+
+// Demo data (backend bağlantısı yokken gösterim için)
+const DEMO_PATIENTS = [
+  { session_id:'demo-1', patient_name:'Ayşe Kaya', age:42, gender:'Kadın',
+    triage_level:'RED', triage_color:'#ba1a1a', confidence_score:94,
+    chief_complaint:'Göğüs ağrısı, sol kola yayılım', symptoms_summary:'Akut başlangıçlı göğüs ağrısı, sol kola yayılım, nefes darlığı.',
+    possible_conditions:['Miyokard Enfarktüsü','Unstabil Angina','Pulmoner Emboli'],
+    recommended_action:'Derhal kardiyoloji konsültasyonu', clinical_notes:'EKG ve troponin testi önerilir.', generated_at: new Date().toISOString() },
+  { session_id:'demo-2', patient_name:'Mehmet Demir', age:68, gender:'Erkek',
+    triage_level:'YELLOW', triage_color:'#dca26c', confidence_score:87,
+    chief_complaint:'Yüksek ateş, solunum zorluğu', symptoms_summary:'39.2°C ateş, öksürük, nefes darlığı 3 gündür.',
+    possible_conditions:['Pnömoni','Bronşit','COVID-19'],
+    recommended_action:'Akciğer grafisi ve kan tahlili', clinical_notes:'SpO2 takibi önerilir.', generated_at: new Date().toISOString() },
+  { session_id:'demo-3', patient_name:'Zeynep Arslan', age:29, gender:'Kadın',
+    triage_level:'GREEN', triage_color:'#006a68', confidence_score:79,
+    chief_complaint:'Hafif karın ağrısı, bulantı', symptoms_summary:'3 gündür devam eden hafif karın ağrısı ve iştahsızlık.',
+    possible_conditions:['Gastrit','İBS','Sindirim Bozukluğu'],
+    recommended_action:'Rutin muayene ve diyet düzenlemesi', clinical_notes:'Şüpheli gastrit, endoskopi gerekebilir.', generated_at: new Date().toISOString() },
+];
+
+const TRIAGE_CFG = {
+  RED:    { bg:'bg-red-50',    badge:'bg-error text-white',    label:'🔴  ACİL',   dot:'bg-error' },
+  YELLOW: { bg:'bg-amber-50',  badge:'bg-[#dca26c] text-white',label:'🟡  ACIL',   dot:'bg-[#dca26c]' },
+  GREEN:  { bg:'bg-teal-50',   badge:'bg-secondary text-white',label:'🟢  RUTİN',  dot:'bg-secondary' },
+};
+
+document.getElementById('txt-date').textContent =
+  new Date().toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+async function loadQueue() {
+  try {
+    const res = await fetch(`${API}/api/patients/queue`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    renderTable(data.patients, 'table-body');
+    updateStats(data.patients);
+    document.getElementById('txt-queue-count').textContent = `${data.total} hasta`;
+  } catch {
+    document.getElementById('table-body').innerHTML =
+      `<div class="text-center py-10 text-on-surface-variant text-sm">
+        Backend bağlantısı yok — demo veriler gösteriliyor.
+       </div>`;
+    document.getElementById('txt-queue-count').textContent = 'Offline';
+  }
+  renderDemo();
+}
+
+function renderDemo() {
+  renderTable(DEMO_PATIENTS, 'demo-table');
+  updateStats(DEMO_PATIENTS);
+}
+
+function updateStats(patients) {
+  document.getElementById('stat-total').textContent  = patients.length;
+  document.getElementById('stat-red').textContent    = patients.filter(p=>p.triage_level==='RED').length;
+  document.getElementById('stat-yellow').textContent = patients.filter(p=>p.triage_level==='YELLOW').length;
+  document.getElementById('stat-green').textContent  = patients.filter(p=>p.triage_level==='GREEN').length;
+}
+
+function renderTable(patients, containerId) {
+  if (!patients.length) {
+    document.getElementById(containerId).innerHTML =
+      `<div class="text-center py-12 text-on-surface-variant text-sm">Henüz hasta yok.</div>`;
+    return;
+  }
+
+  // Triage sırası: RED → YELLOW → GREEN
+  const order = {RED:0,YELLOW:1,GREEN:2};
+  const sorted = [...patients].sort((a,b)=>(order[a.triage_level]||1)-(order[b.triage_level]||1));
+
+  const rows = sorted.map(p => {
+    const cfg = TRIAGE_CFG[p.triage_level] || TRIAGE_CFG.YELLOW;
+    const score = p.confidence_score ? `${p.confidence_score}%` : '—';
+    return `
+    <tr class="hover:bg-surface-container-low/40 cursor-pointer border-b border-surface-container"
+        onclick="showDetail('${p.session_id}')">
+      <td class="px-6 py-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-primary-container/20 flex items-center justify-center font-bold text-primary text-sm flex-shrink-0">
+            ${p.patient_name.split(' ').map(n=>n[0]).slice(0,2).join('')}
+          </div>
+          <div>
+            <p class="text-sm font-bold text-on-surface">${p.patient_name}</p>
+            <p class="text-xs text-on-surface-variant">${p.age} yaş • ${p.gender}</p>
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-4">
+        <span class="px-3 py-1 rounded-full text-xs font-bold ${cfg.badge}">${cfg.label}</span>
+      </td>
+      <td class="px-6 py-4 text-sm text-on-surface">${p.chief_complaint || '—'}</td>
+      <td class="px-6 py-4">
+        <div class="inline-flex items-center gap-1 bg-secondary-container/40 px-3 py-1.5 rounded-lg">
+          <span class="text-sm font-bold text-secondary">${score}</span>
+        </div>
+      </td>
+      <td class="px-6 py-4 text-right">
+        <button class="px-4 py-2 bg-primary-container text-white rounded-xl text-xs font-bold hover:opacity-90 transition-all"
+          onclick="event.stopPropagation();showDetail('${p.session_id}')">
+          Raporu Gör
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById(containerId).innerHTML = `
+    <table class="w-full">
+      <thead>
+        <tr class="bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-widest">
+          <th class="px-6 py-3 text-left">Hasta</th>
+          <th class="px-6 py-3 text-left">Triaj</th>
+          <th class="px-6 py-3 text-left">Ana Şikayet</th>
+          <th class="px-6 py-3 text-left">AI Skoru</th>
+          <th class="px-6 py-3 text-right">İşlem</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── All patients combined ──
+const allPatients = {};
+DEMO_PATIENTS.forEach(p => allPatients[p.session_id] = p);
+
+function showDetail(sid) {
+  const p = allPatients[sid];
+  if (!p) return;
+  const cfg = TRIAGE_CFG[p.triage_level] || TRIAGE_CFG.YELLOW;
+  document.getElementById('modal-content').innerHTML = `
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-11 h-11 rounded-full bg-primary-container/20 flex items-center justify-center font-bold text-primary">
+        ${p.patient_name.split(' ').map(n=>n[0]).slice(0,2).join('')}
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-primary">${p.patient_name}</h3>
+        <p class="text-xs text-on-surface-variant">${p.age} yaş • ${p.gender}</p>
+      </div>
+      <span class="ml-auto px-3 py-1 rounded-full text-xs font-bold ${cfg.badge}">${cfg.label}</span>
+    </div>
+    <div class="space-y-4">
+      <div class="bg-surface-container-low rounded-xl p-4">
+        <p class="text-xs font-bold text-on-surface-variant mb-1">ANA ŞİKAYET</p>
+        <p class="text-sm font-semibold text-primary">${p.chief_complaint}</p>
+      </div>
+      <div class="bg-surface-container-low rounded-xl p-4">
+        <p class="text-xs font-bold text-on-surface-variant mb-1">SEMPTOM ÖZETİ</p>
+        <p class="text-sm text-on-surface">${p.symptoms_summary}</p>
+      </div>
+      <div class="bg-surface-container-low rounded-xl p-4">
+        <p class="text-xs font-bold text-on-surface-variant mb-2">OLASI DURUMLAR</p>
+        <div class="flex flex-wrap gap-2">
+          ${p.possible_conditions.map((c,i)=>`
+            <span class="px-2 py-1 rounded-lg text-xs font-bold
+              ${i===0?'bg-primary-container text-white':'bg-secondary-container text-secondary'}">${c}</span>`).join('')}
+        </div>
+      </div>
+      <div class="bg-primary-container rounded-xl p-4 text-white">
+        <p class="text-xs font-bold text-white/70 mb-1">ÖNERİLEN EYLEM</p>
+        <p class="text-sm font-semibold">${p.recommended_action}</p>
+      </div>
+    </div>
+    <div class="mt-6 flex gap-3">
+      <button onclick="localStorage.setItem('mediscreen_summary',JSON.stringify(${JSON.stringify(JSON.stringify(p))}));window.location='summary.html'"
+        class="flex-1 py-3 bg-primary-container text-white rounded-xl text-sm font-bold hover:opacity-90 transition-all text-center">
+        Tam Raporu Aç
+      </button>
+    </div>`;
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+}
+
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+loadQueue();
+// Her 30 sn'de otomatik yenile
+setInterval(loadQueue, 30000);
+</script>
+</body>
+</html>
+

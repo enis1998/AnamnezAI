@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="tr" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MediScreen AI — Akıllı Hasta Ön Triaj Sistemi</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      "primary":"#002f40","primary-container":"#00475e","secondary":"#006a68",
+      "secondary-container":"#a0f1ed","surface":"#f8fafb","surface-container":"#eceeef",
+      "surface-container-low":"#f2f4f5","surface-container-lowest":"#ffffff",
+      "surface-container-high":"#e6e8e9","on-surface":"#191c1d",
+      "on-surface-variant":"#40484c","on-primary":"#ffffff","on-secondary":"#ffffff",
+      "outline-variant":"#c0c7cd","error":"#ba1a1a","error-container":"#ffdad6"
+    },
+    fontFamily: { headline:["Manrope"], body:["Inter"] }
+  }}
+}
+</script>
+<style>
+  body { font-family:'Inter',sans-serif; background:#f8fafb; color:#191c1d; }
+  h1,h2,h3 { font-family:'Manrope',sans-serif; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .glass { background:rgba(248,250,251,0.75); backdrop-filter:blur(20px); }
+  .pulse-ring { animation:pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.15)} }
+  .fade-in { animation:fadeIn .4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .progress-bar { transition: width .5s ease; }
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<header class="fixed top-0 w-full z-50 glass border-b border-white/20 px-6 py-4 flex justify-between items-center">
+  <div class="flex items-center gap-3">
+    <div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+      <span class="material-symbols-outlined text-white text-sm">monitor_heart</span>
+    </div>
+    <span class="font-headline font-bold text-primary text-lg">MediScreen AI</span>
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="doctor.html" class="text-sm text-on-surface-variant hover:text-primary transition-colors font-medium">
+      <span class="material-symbols-outlined align-middle text-sm mr-1">stethoscope</span>Doktor Paneli
+    </a>
+    <div id="lang-toggle" class="flex bg-surface-container rounded-full p-1 gap-1">
+      <button onclick="setLang('tr')" id="btn-tr" class="px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary-container text-white">TR</button>
+      <button onclick="setLang('en')" id="btn-en" class="px-3 py-1 rounded-full text-xs font-bold transition-all text-on-surface-variant">EN</button>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main class="pt-24 pb-20 px-4 max-w-2xl mx-auto">
+
+  <!-- LANDING VIEW -->
+  <div id="view-landing" class="fade-in">
+    <div class="text-center mb-12 pt-8">
+      <div class="inline-flex items-center gap-2 bg-secondary-container px-4 py-2 rounded-full mb-6">
+        <span class="material-symbols-outlined text-secondary text-sm">auto_awesome</span>
+        <span class="text-xs font-bold text-secondary uppercase tracking-wider" id="txt-powered">Gemma 4 ile Güçlendirildi</span>
+      </div>
+      <h1 class="text-4xl font-bold text-primary leading-tight mb-4" id="txt-hero">
+        Doktorunuz sizi görmeden önce,<br/>
+        <span class="text-secondary">AI sizi dinler.</span>
+      </h1>
+      <p class="text-on-surface-variant text-base max-w-lg mx-auto" id="txt-sub">
+        Semptomlarınızı bizimle paylaşın. Yapay zeka sizi anlayacak ve doktorunuza öncelikli, hazır bir klinik özet sunacak.
+      </p>
+    </div>
+
+    <!-- PATIENT FORM -->
+    <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-8 space-y-6">
+      <h2 class="text-xl font-bold text-primary" id="txt-form-title">Hasta Bilgileri</h2>
+
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="lbl-name">Ad Soyad</label>
+        <input id="inp-name" type="text" placeholder="Adınızı girin"
+          class="w-full rounded-xl bg-surface-container-high px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition"/>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="lbl-age">Yaş</label>
+          <input id="inp-age" type="number" min="1" max="120" placeholder="30"
+            class="w-full rounded-xl bg-surface-container-high px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition"/>
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="lbl-gender">Cinsiyet</label>
+          <select id="inp-gender"
+            class="w-full rounded-xl bg-surface-container-high px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition">
+            <option value="Erkek" id="opt-male">Erkek</option>
+            <option value="Kadın" id="opt-female">Kadın</option>
+            <option value="Belirtmek İstemiyorum" id="opt-other">Belirtmek İstemiyorum</option>
+          </select>
+        </div>
+      </div>
+
+      <button onclick="startInterview()" id="btn-start"
+        class="w-full h-14 rounded-xl bg-primary-container text-white font-bold text-sm tracking-wide
+               hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined">play_arrow</span>
+        <span id="txt-btn-start">Mülakatı Başlat</span>
+      </button>
+
+      <p class="text-center text-xs text-on-surface-variant" id="txt-privacy">
+        🔒 Verileriniz yalnızca bu oturumda tutulur ve paylaşılmaz.
+      </p>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="mt-12 grid grid-cols-3 gap-4">
+      <div class="bg-surface-container-lowest rounded-2xl p-5 text-center shadow-sm">
+        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-3">
+          <span class="material-symbols-outlined text-secondary text-lg">record_voice_over</span>
+        </div>
+        <p class="text-xs font-bold text-primary mb-1" id="step1-title">Konuş</p>
+        <p class="text-xs text-on-surface-variant" id="step1-desc">Semptomlarını AI'a anlat</p>
+      </div>
+      <div class="bg-surface-container-lowest rounded-2xl p-5 text-center shadow-sm">
+        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-3">
+          <span class="material-symbols-outlined text-secondary text-lg">psychology</span>
+        </div>
+        <p class="text-xs font-bold text-primary mb-1" id="step2-title">Analiz</p>
+        <p class="text-xs text-on-surface-variant" id="step2-desc">Gemma 4 seni değerlendirir</p>
+      </div>
+      <div class="bg-surface-container-lowest rounded-2xl p-5 text-center shadow-sm">
+        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-3">
+          <span class="material-symbols-outlined text-secondary text-lg">summarize</span>
+        </div>
+        <p class="text-xs font-bold text-primary mb-1" id="step3-title">Özet</p>
+        <p class="text-xs text-on-surface-variant" id="step3-desc">Doktoruna hazır rapor</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERVIEW VIEW -->
+  <div id="view-interview" class="hidden fade-in">
+    <!-- Progress -->
+    <div class="mb-8">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="txt-progress-label">Mülakat İlerlemesi</span>
+        <span id="txt-step-counter" class="text-xs font-bold text-secondary">1 / 5</span>
+      </div>
+      <div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+        <div id="progress-bar" class="progress-bar h-full bg-secondary rounded-full" style="width:20%"></div>
+      </div>
+    </div>
+
+    <!-- AI Question Card -->
+    <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-8 mb-6">
+      <div class="flex items-start gap-4">
+        <div class="w-10 h-10 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center">
+          <span class="material-symbols-outlined text-white text-sm">smart_toy</span>
+        </div>
+        <div class="flex-1">
+          <p class="text-xs font-bold text-secondary mb-2 uppercase tracking-wider">MediScreen AI</p>
+          <p id="txt-question" class="text-lg font-semibold text-primary leading-snug">
+            Yükleniyor...
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Answer Area -->
+    <div class="bg-surface-container-low rounded-2xl p-6 space-y-4">
+      <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider" id="lbl-answer">Cevabınız</label>
+      <textarea id="inp-answer" rows="4" placeholder="Cevabınızı buraya yazın..."
+        class="w-full rounded-xl bg-surface-container-lowest px-4 py-3 text-sm resize-none
+               focus:outline-none focus:ring-2 focus:ring-primary-container transition"></textarea>
+
+      <!-- Voice Button -->
+      <div class="flex items-center gap-3">
+        <button id="btn-voice" onclick="toggleVoice()"
+          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant
+                 hover:bg-secondary-container hover:text-secondary transition-all text-sm font-medium">
+          <span class="material-symbols-outlined text-sm">mic</span>
+          <span id="txt-voice-btn">Sesli Yanıt</span>
+        </button>
+        <span class="text-xs text-on-surface-variant" id="txt-voice-status"></span>
+      </div>
+
+      <button onclick="submitAnswer()" id="btn-next"
+        class="w-full h-14 rounded-xl bg-primary-container text-white font-bold text-sm
+               hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+        <span id="txt-btn-next">Sonraki Soru</span>
+        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- LOADING VIEW -->
+  <div id="view-loading" class="hidden fade-in text-center py-20">
+    <div class="relative w-20 h-20 mx-auto mb-8">
+      <div class="absolute inset-0 rounded-full bg-secondary-container pulse-ring"></div>
+      <div class="relative w-20 h-20 rounded-full bg-primary-container flex items-center justify-center">
+        <span class="material-symbols-outlined text-white text-3xl">psychology</span>
+      </div>
+    </div>
+    <h2 class="text-2xl font-bold text-primary mb-3" id="txt-analyzing">Analiz Ediliyor...</h2>
+    <p class="text-on-surface-variant text-sm" id="txt-analyzing-sub">
+      Gemma 4 semptomlarınızı değerlendiriyor ve klinik özet hazırlıyor.
+    </p>
+  </div>
+
+</main>
+
+<!-- ── TOAST ── -->
+<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-on-surface text-white
+     px-5 py-3 rounded-xl text-sm font-medium shadow-lg z-50 transition-all"></div>
+
+<script>
+const API = 'http://localhost:8000';
+let sessionId = null;
+let currentStep = 0;
+let totalSteps = 5;
+let lang = 'tr';
+let recognition = null;
+
+// ── Translations ──
+const T = {
+  tr: {
+    powered:'Gemma 4 ile Güçlendirildi', hero:'Doktorunuz sizi görmeden önce,', hero2:'AI sizi dinler.',
+    sub:'Semptomlarınızı bizimle paylaşın. Yapay zeka sizi anlayacak ve doktorunuza öncelik özeti sunacak.',
+    formTitle:'Hasta Bilgileri', lblName:'Ad Soyad', lblAge:'Yaş', lblGender:'Cinsiyet',
+    optMale:'Erkek', optFemale:'Kadın', optOther:'Belirtmek İstemiyorum',
+    btnStart:'Mülakatı Başlat', privacy:'🔒 Verileriniz yalnızca bu oturumda tutulur ve paylaşılmaz.',
+    step1t:'Konuş', step1d:'Semptomlarını AI\'a anlat', step2t:'Analiz', step2d:'Gemma 4 seni değerlendirir',
+    step3t:'Özet', step3d:'Doktoruna hazır rapor', progressLabel:'Mülakat İlerlemesi',
+    lblAnswer:'Cevabınız', answerPh:'Cevabınızı buraya yazın...',
+    voiceBtn:'Sesli Yanıt', btnNext:'Sonraki Soru', btnFinish:'Mülakatı Tamamla',
+    analyzing:'Analiz Ediliyor...', analyzingSub:'Gemma 4 semptomlarınızı değerlendiriyor.',
+    errName:'Lütfen adınızı girin.', errAge:'Lütfen yaşınızı girin.',
+    errAnswer:'Lütfen bir cevap yazın.', errBackend:'Backend bağlantısı kurulamadı.',
+    listening:'Dinleniyor...', voiceStop:'Kaydı Durdur'
+  },
+  en: {
+    powered:'Powered by Gemma 4', hero:'Before your doctor sees you,', hero2:'AI listens first.',
+    sub:'Share your symptoms with us. AI will understand you and provide your doctor with a prioritized clinical summary.',
+    formTitle:'Patient Info', lblName:'Full Name', lblAge:'Age', lblGender:'Gender',
+    optMale:'Male', optFemale:'Female', optOther:'Prefer not to say',
+    btnStart:'Start Interview', privacy:'🔒 Your data is only kept during this session.',
+    step1t:'Talk', step1d:'Tell AI your symptoms', step2t:'Analyze', step2d:'Gemma 4 evaluates you',
+    step3t:'Summary', step3d:'Ready report for doctor', progressLabel:'Interview Progress',
+    lblAnswer:'Your Answer', answerPh:'Type your answer here...',
+    voiceBtn:'Voice Reply', btnNext:'Next Question', btnFinish:'Complete Interview',
+    analyzing:'Analyzing...', analyzingSub:'Gemma 4 is evaluating your symptoms.',
+    errName:'Please enter your name.', errAge:'Please enter your age.',
+    errAnswer:'Please write an answer.', errBackend:'Cannot connect to backend.',
+    listening:'Listening...', voiceStop:'Stop Recording'
+  }
+};
+
+function t(key) { return T[lang][key] || key; }
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('btn-tr').className = l==='tr'
+    ? 'px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary-container text-white'
+    : 'px-3 py-1 rounded-full text-xs font-bold transition-all text-on-surface-variant';
+  document.getElementById('btn-en').className = l==='en'
+    ? 'px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary-container text-white'
+    : 'px-3 py-1 rounded-full text-xs font-bold transition-all text-on-surface-variant';
+  applyTranslations();
+}
+
+function applyTranslations() {
+  document.getElementById('txt-powered').textContent = t('powered');
+  document.getElementById('txt-sub').textContent = t('sub');
+  document.getElementById('txt-form-title').textContent = t('formTitle');
+  document.getElementById('lbl-name').textContent = t('lblName');
+  document.getElementById('lbl-age').textContent = t('lblAge');
+  document.getElementById('lbl-gender').textContent = t('lblGender');
+  document.getElementById('opt-male').textContent = t('optMale');
+  document.getElementById('opt-female').textContent = t('optFemale');
+  document.getElementById('opt-other').textContent = t('optOther');
+  document.getElementById('txt-btn-start').textContent = t('btnStart');
+  document.getElementById('txt-privacy').textContent = t('privacy');
+  document.getElementById('step1-title').textContent = t('step1t');
+  document.getElementById('step1-desc').textContent = t('step1d');
+  document.getElementById('step2-title').textContent = t('step2t');
+  document.getElementById('step2-desc').textContent = t('step2d');
+  document.getElementById('step3-title').textContent = t('step3t');
+  document.getElementById('step3-desc').textContent = t('step3d');
+  document.getElementById('txt-progress-label').textContent = t('progressLabel');
+  document.getElementById('lbl-answer').textContent = t('lblAnswer');
+  document.getElementById('inp-answer').placeholder = t('answerPh');
+  document.getElementById('txt-voice-btn').textContent = t('voiceBtn');
+  document.getElementById('txt-analyzing').textContent = t('analyzing');
+  document.getElementById('txt-analyzing-sub').textContent = t('analyzingSub');
+}
+
+function showView(id) {
+  ['view-landing','view-interview','view-loading'].forEach(v => {
+    document.getElementById(v).classList.add('hidden');
+    document.getElementById(v).classList.remove('fade-in');
+  });
+  const el = document.getElementById(id);
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('fade-in'), 10);
+}
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-sm font-medium shadow-lg z-50 transition-all
+    ${isError ? 'bg-error text-white' : 'bg-on-surface text-white'}`;
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 3500);
+}
+
+async function startInterview() {
+  const name = document.getElementById('inp-name').value.trim();
+  const age  = parseInt(document.getElementById('inp-age').value);
+  const gender = document.getElementById('inp-gender').value;
+
+  if (!name) { showToast(t('errName'), true); return; }
+  if (!age || age < 1) { showToast(t('errAge'), true); return; }
+
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-start').innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">refresh</span>';
+
+  try {
+    const res = await fetch(`${API}/api/session/start`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ patient_name:name, age, gender, language:lang })
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    sessionId = data.session_id;
+    totalSteps = data.total_steps;
+    updateInterviewUI(data);
+    showView('view-interview');
+  } catch {
+    showToast(t('errBackend'), true);
+  } finally {
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-start').innerHTML =
+      `<span class="material-symbols-outlined">play_arrow</span><span>${t('btnStart')}</span>`;
+  }
+}
+
+function updateInterviewUI(data) {
+  currentStep = data.step;
+  document.getElementById('txt-question').textContent = data.question;
+  document.getElementById('txt-step-counter').textContent = `${data.step} / ${data.total_steps}`;
+  document.getElementById('progress-bar').style.width = `${(data.step / data.total_steps) * 100}%`;
+  document.getElementById('inp-answer').value = '';
+
+  const isLast = data.step >= data.total_steps;
+  document.getElementById('txt-btn-next').textContent = isLast ? t('btnFinish') : t('btnNext');
+}
+
+async function submitAnswer() {
+  const answer = document.getElementById('inp-answer').value.trim();
+  if (!answer) { showToast(t('errAnswer'), true); return; }
+
+  const btn = document.getElementById('btn-next');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">refresh</span>';
+
+  try {
+    const res = await fetch(`${API}/api/session/answer`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ session_id:sessionId, answer })
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    if (data.question === '__COMPLETED__') {
+      showView('view-loading');
+      await fetchSummary();
+    } else {
+      updateInterviewUI(data);
+    }
+  } catch {
+    showToast(t('errBackend'), true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>${t('btnNext')}</span><span class="material-symbols-outlined text-sm">arrow_forward</span>`;
+  }
+}
+
+async function fetchSummary() {
+  try {
+    const res = await fetch(`${API}/api/session/${sessionId}/summary`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    // Özeti localStorage'a yaz ve summary sayfasına yönlendir
+    localStorage.setItem('mediscreen_summary', JSON.stringify(data));
+    window.location.href = 'summary.html';
+  } catch {
+    showToast(t('errBackend'), true);
+    showView('view-interview');
+  }
+}
+
+// ── Voice Recognition ──
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Tarayıcınız sesli girişi desteklemiyor.', true);
+    return;
+  }
+  if (recognition) {
+    recognition.stop();
+    recognition = null;
+    document.getElementById('txt-voice-btn').textContent = t('voiceBtn');
+    document.getElementById('txt-voice-status').textContent = '';
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = lang === 'tr' ? 'tr-TR' : 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  document.getElementById('txt-voice-btn').textContent = t('voiceStop');
+  document.getElementById('txt-voice-status').textContent = t('listening');
+
+  recognition.onresult = (e) => {
+    document.getElementById('inp-answer').value = e.results[0][0].transcript;
+    document.getElementById('txt-voice-status').textContent = '✓';
+  };
+  recognition.onend = () => {
+    recognition = null;
+    document.getElementById('txt-voice-btn').textContent = t('voiceBtn');
+  };
+  recognition.start();
+}
+
+// Enter → submit
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.ctrlKey && !document.getElementById('view-interview').classList.contains('hidden')) {
+    submitAnswer();
+  }
+});
+</script>
+</body>
+</html>
+

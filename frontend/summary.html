@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tr" class="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MediScreen AI — Klinik Özet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      "primary":"#002f40","primary-container":"#00475e","secondary":"#006a68",
+      "secondary-container":"#a0f1ed","surface":"#f8fafb","surface-container":"#eceeef",
+      "surface-container-low":"#f2f4f5","surface-container-lowest":"#ffffff",
+      "surface-container-high":"#e6e8e9","on-surface":"#191c1d",
+      "on-surface-variant":"#40484c","on-primary":"#ffffff",
+      "outline-variant":"#c0c7cd","error":"#ba1a1a","error-container":"#ffdad6",
+      "tertiary-container":"#dca26c"
+    },
+    fontFamily: { headline:["Manrope"], body:["Inter"] }
+  }}
+}
+</script>
+<style>
+  body { font-family:'Inter',sans-serif; background:#f8fafb; color:#191c1d; }
+  h1,h2,h3 { font-family:'Manrope',sans-serif; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .glass { background:rgba(248,250,251,0.75); backdrop-filter:blur(20px); }
+  .fade-in { animation:fadeIn .5s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .score-ring { transform:rotate(-90deg); transform-origin:center; }
+</style>
+</head>
+<body>
+
+<header class="fixed top-0 w-full z-50 glass border-b border-white/20 px-6 py-4 flex justify-between items-center">
+  <div class="flex items-center gap-3">
+    <div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+      <span class="material-symbols-outlined text-white text-sm">monitor_heart</span>
+    </div>
+    <span class="font-headline font-bold text-primary text-lg">MediScreen AI</span>
+  </div>
+  <a href="index.html"
+    class="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition-colors font-medium">
+    <span class="material-symbols-outlined text-sm">arrow_back</span>Yeni Mülakat
+  </a>
+</header>
+
+<main class="pt-24 pb-20 px-4 max-w-3xl mx-auto fade-in" id="summary-container">
+  <!-- yükleniyor -->
+  <div id="loading-state" class="text-center py-24">
+    <span class="material-symbols-outlined text-5xl text-secondary animate-spin block mb-4">refresh</span>
+    <p class="text-on-surface-variant">Özet yükleniyor...</p>
+  </div>
+</main>
+
+<script>
+const data = JSON.parse(localStorage.getItem('mediscreen_summary') || 'null');
+
+const TRIAGE = {
+  RED:   { bg:'bg-red-50',   badge:'bg-error text-white',          icon:'emergency',    labelTR:'ACİL',   labelEN:'EMERGENCY' },
+  YELLOW:{ bg:'bg-amber-50', badge:'bg-[#dca26c] text-white',      icon:'warning',      labelTR:'ACIL',   labelEN:'URGENT' },
+  GREEN: { bg:'bg-teal-50',  badge:'bg-secondary text-white',      icon:'check_circle', labelTR:'RUTİN',  labelEN:'ROUTINE' },
+};
+
+function render(d) {
+  const level = TRIAGE[d.triage_level] || TRIAGE.YELLOW;
+  const html = `
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-2">
+      <span class="text-xs font-bold text-secondary uppercase tracking-wider">Klinik Özet Raporu</span>
+    </div>
+    <h1 class="text-3xl font-bold text-primary mb-1">${d.patient_name}</h1>
+    <p class="text-on-surface-variant text-sm">${d.age} yaşında • ${d.gender} • ${new Date(d.generated_at).toLocaleString('tr-TR')}</p>
+  </div>
+
+  <!-- Triage Banner -->
+  <div class="${level.bg} rounded-2xl p-6 mb-6 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <span class="material-symbols-outlined text-4xl" style="font-variation-settings:'FILL' 1;color:${d.triage_color}">${level.icon}</span>
+      <div>
+        <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Triaj Seviyesi</p>
+        <span class="px-4 py-1 rounded-full text-sm font-bold ${level.badge}">${level.labelTR}</span>
+      </div>
+    </div>
+    <!-- Confidence Ring -->
+    <div class="relative w-20 h-20 flex-shrink-0">
+      <svg class="w-20 h-20" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="32" fill="none" stroke="#e1e3e4" stroke-width="8"/>
+        <circle cx="40" cy="40" r="32" fill="none" stroke="${d.triage_color}" stroke-width="8"
+          stroke-dasharray="${2*Math.PI*32}" stroke-dashoffset="${2*Math.PI*32*(1-d.confidence_score/100)}"
+          stroke-linecap="round" class="score-ring"/>
+      </svg>
+      <div class="absolute inset-0 flex flex-col items-center justify-center">
+        <span class="text-lg font-bold text-primary leading-none">${d.confidence_score}%</span>
+        <span class="text-[9px] text-on-surface-variant font-bold uppercase">AI Skoru</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chief Complaint -->
+  <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-6 mb-4">
+    <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Ana Şikayet</p>
+    <p class="text-base font-semibold text-primary">${d.chief_complaint}</p>
+  </div>
+
+  <!-- Symptoms Summary -->
+  <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-6 mb-4">
+    <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Semptom Özeti</p>
+    <p class="text-sm text-on-surface leading-relaxed">${d.symptoms_summary}</p>
+  </div>
+
+  <!-- Possible Conditions -->
+  <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-6 mb-4">
+    <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Olası Durumlar</p>
+    <div class="flex flex-wrap gap-2">
+      ${d.possible_conditions.map((c,i) => `
+        <span class="px-3 py-1.5 rounded-xl text-xs font-bold
+          ${i===0 ? 'bg-primary-container text-white' : 'bg-secondary-container text-secondary'}">
+          ${c}
+        </span>`).join('')}
+    </div>
+  </div>
+
+  <!-- Clinical Notes + Recommendation -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-sm p-6">
+      <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Doktor İçin Notlar</p>
+      <p class="text-sm text-on-surface leading-relaxed">${d.clinical_notes}</p>
+    </div>
+    <div class="bg-primary-container rounded-2xl p-6 text-white">
+      <p class="text-xs font-bold text-white/70 uppercase tracking-wider mb-3">Önerilen Eylem</p>
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-2xl flex-shrink-0" style="font-variation-settings:'FILL' 1">recommend</span>
+        <p class="text-sm font-semibold leading-relaxed">${d.recommended_action}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex gap-3 flex-wrap">
+    <button onclick="window.print()"
+      class="flex items-center gap-2 px-5 py-3 rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/30
+             text-sm font-bold text-primary hover:bg-surface-container transition-all">
+      <span class="material-symbols-outlined text-sm">print</span>Yazdır / PDF
+    </button>
+    <a href="doctor.html"
+      class="flex items-center gap-2 px-5 py-3 rounded-xl bg-secondary-container text-secondary
+             text-sm font-bold hover:opacity-80 transition-all">
+      <span class="material-symbols-outlined text-sm">dashboard</span>Doktor Paneline Git
+    </a>
+    <a href="index.html"
+      class="flex items-center gap-2 px-5 py-3 rounded-xl bg-primary-container text-white
+             text-sm font-bold hover:opacity-90 transition-all">
+      <span class="material-symbols-outlined text-sm">add</span>Yeni Hasta
+    </a>
+  </div>
+
+  <p class="mt-8 text-xs text-on-surface-variant text-center">
+    ⚠️ Bu rapor AI tarafından üretilmiştir. Tıbbi teşhis yerine geçmez. Kesin tanı için doktorunuza başvurun.
+  </p>
+  `;
+  document.getElementById('loading-state').remove();
+  document.getElementById('summary-container').insertAdjacentHTML('beforeend', html);
+}
+
+if (data) {
+  render(data);
+} else {
+  document.getElementById('loading-state').innerHTML =
+    `<p class="text-error font-bold">Özet bulunamadı. <a href="index.html" class="underline">Anasayfaya dön</a></p>`;
+}
+</script>
+</body>
+</html>
+
