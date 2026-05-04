@@ -127,19 +127,19 @@ Mevcut sağlık teknolojilerinin soğuk, klinik, bunaltıcı görünümünü red
 
 ---
 
-### SPRINT 5 — Kaggle Notebook + Hackathon Sunumu (SONRAKI)
+### SPRINT 5 — Kaggle Notebook + Hackathon Sunumu (TAMAMLANDI)
 **Hedef:** Yarışma için resmi Kaggle notebook hazırla
 
-- [ ] `notebooks/mediscreen_ai_kaggle.ipynb` yeniden yaz:
-  - Bölüm 1: Problem tanımı — Türkiye'de acil servis yükü
-  - Bölüm 2: AnamnezAI mimarisi diyagramı
-  - Bölüm 3: Ollama ile Gemma 4 bağlantısı (çalışan kod hücresi)
-  - Bölüm 4: Simüle hasta mülakatı (3 farklı senaryo: RED/YELLOW/GREEN)
-  - Bölüm 5: Triaj sonucu görselleştirme
-  - Bölüm 6: Performans metrikleri (latency, token/sn)
-  - Bölüm 7: Gerçek uygulama entegrasyonu linki
+- [x] `notebooks/mediscreen_ai_kaggle.ipynb` yeniden yazıldı:
+  - Bölüm 1: Problem tanımı — Türkiye'de acil servis yükü (117M başvuru, istatistikler)
+  - Bölüm 2: AnamnezAI mimarisi diyagramı (ASCII art)
+  - Bölüm 3: Ollama ile Gemma 4 bağlantısı + bağlantı testi hücresi
+  - Bölüm 4: Simüle hasta mülakatı (3 senaryo: RED/YELLOW/GREEN)
+  - Bölüm 5: Triaj sonucu görselleştirme (ASCII tablo + güven çubukları)
+  - Bölüm 6: Performans metrikleri (latency, dakika başına kapasite)
+  - Bölüm 7: Gerçek uygulama entegrasyonu + API kullanım örneği
   - CC-BY 4.0 lisans başlığı
-- [ ] `README.md` hackathon bölümü ekle
+  - Gemma 4 (gemma4:e4b) referansları düzeltildi (gemma3 → gemma4)
 - [ ] Demo ekran görüntüleri pipeline'a ekle
 
 ---
