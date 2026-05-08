@@ -15,3 +15,10 @@ chromadb>=0.5.0
 sentence-transformers>=3.0.0
 pypdf>=4.0.0
 
+# Sprint 9 — Rate Limiting
+slowapi>=0.1.9
+
+# Sprint 5 — QR Code (kiosk session QR)
+qrcode[pil]>=7.4.2
+Pillow>=10.0.0
+

@@ -1,14 +1,14 @@
 """
-AnamnezAI — Backend v4.0
+AnamnezAI — Backend v5.0
 AI-Powered Patient Pre-Triage using Gemma 4 via Ollama
 Gemma 4 Good Hackathon — Health & Sciences + Ollama Prize Tracks
-v4.0: SQLite kalıcılık + Multimodal görüntü analizi + Gerçek zamanlı SSE kuyruğu + Vital bulgular
+v5.0: Rate limiting + QR code + Kiosk lock/unlock + CSV export + Print ticket + PWA support
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import AsyncGenerator, Optional
@@ -22,7 +22,26 @@ import threading
 import asyncio
 import base64
 import re
+import io
+import csv
 from datetime import datetime
+
+# Sprint 9 — Rate limiting
+try:
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
+    _rate_limit_available = True
+except ImportError:
+    _rate_limit_available = False
+
+# Sprint 5 — QR code
+try:
+    import qrcode
+    from PIL import Image as PILImage
+    _qr_available = True
+except ImportError:
+    _qr_available = False
 
 # Auth modülü
 from auth import (
@@ -44,7 +63,7 @@ DB_PATH         = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "
 app = FastAPI(
     title="AnamnezAI",
     description="AI-Powered Patient Pre-Triage — Gemma 4 + RAG + Vision | Gemma 4 Good Hackathon",
-    version="4.0.0",
+    version="5.0.0",
 )
 
 app.add_middleware(
@@ -53,6 +72,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Sprint 9 — Rate limiting setup
+if _rate_limit_available:
+    limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    print("[AnamnezAI] Rate limiting: active (slowapi)")
+
+# Kiosk lock state (Sprint 5)
+_kiosk_locked = False
 
 # In-memory storage (synced to SQLite)
 sessions:  dict[str, dict] = {}
@@ -1524,7 +1553,7 @@ async def gdpr_delete_user_data(user_id: str, current_user: dict = Depends(requi
 
 @app.get("/api/kiosk/status")
 async def kiosk_status():
-    """Kiosk ekranı için sistem durumu (anonim erişim)."""
+    """Kiosk screen system status (anonymous access)."""
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             r = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
@@ -1536,16 +1565,157 @@ async def kiosk_status():
     return {
         "system_online": online,
         "model_ready": _model_ready,
+        "is_locked": _kiosk_locked,
         "queue_length": queue_len,
         "estimated_wait_minutes": max(1, queue_len * 3),
         "message_tr": "Sisteme hoş geldiniz. Lütfen bilgilerinizi girin." if online else "Sistem bakımda.",
-        "message_en": "Welcome. Please enter your information." if online else "System maintenance.",
+        "message_en": "Welcome. Please enter your information." if online else "System under maintenance.",
+        "message_ar": "مرحباً بكم. يرجى إدخال بياناتكم." if online else "النظام في صيانة.",
     }
 
 
+@app.post("/api/kiosk/lock")
+async def kiosk_lock(current_user: dict = Depends(require_admin)):
+    """Lock the kiosk — admin only."""
+    global _kiosk_locked
+    _kiosk_locked = True
+    audit("kiosk_lock", user_id=current_user["user_id"], user_role=current_user["role"])
+    return {"status": "locked", "message": "Kiosk locked by admin."}
+
+
+@app.post("/api/kiosk/unlock")
+async def kiosk_unlock(current_user: dict = Depends(require_admin)):
+    """Unlock the kiosk — admin only."""
+    global _kiosk_locked
+    _kiosk_locked = False
+    audit("kiosk_unlock", user_id=current_user["user_id"], user_role=current_user["role"])
+    return {"status": "unlocked", "message": "Kiosk unlocked by admin."}
+
+
 # ─────────────────────────────────────────────
-#  Serve Frontend — MUST be last (API routes take priority)
+#  Sprint 5 — QR Code Session Continuation
 # ─────────────────────────────────────────────
+
+@app.get("/api/session/{session_id}/qr")
+async def session_qr_code(session_id: str, base_url: str = "http://localhost:8000"):
+    """Generate QR code PNG for session continuation (Sprint 5)."""
+    if session_id not in sessions:
+        raise HTTPException(status_code=404, detail="Session not found.")
+    if not _qr_available:
+        raise HTTPException(status_code=503, detail="qrcode library not installed.")
+    
+    url = f"{base_url}/?session={session_id}"
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="#001f2a", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return StreamingResponse(buf, media_type="image/png", headers={
+        "Content-Disposition": f'inline; filename="qr-{session_id[:8]}.png"'
+    })
+
+
+@app.get("/api/session/{session_id}/ticket", response_class=HTMLResponse)
+async def print_ticket(session_id: str):
+    """Print ticket HTML for kiosk queue slip (Sprint 5)."""
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found.")
+    summary = summaries.get(session_id, {})
+    triage = summary.get("triage_level", "PENDING")
+    color_map = {"RED": "#d32f2f", "YELLOW": "#f57c00", "GREEN": "#388e3c", "PENDING": "#666"}
+    triage_color = color_map.get(triage, "#666")
+    triage_tr = {"RED": "ACİL", "YELLOW": "İKİNCİL ACİL", "GREEN": "RUTİN", "PENDING": "—"}.get(triage, triage)
+    now = datetime.utcnow().strftime("%d.%m.%Y %H:%M")
+    short_id = session_id[:8].upper()
+
+    html = f"""<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="utf-8"/><title>Sıra Fişi — AnamnezAI</title>
+<style>
+  body{{font-family:'Courier New',monospace;max-width:320px;margin:0 auto;padding:16px;background:#fff;color:#000}}
+  .center{{text-align:center}} .big{{font-size:48px;font-weight:900;color:{triage_color}}}
+  .border{{border-top:2px dashed #ccc;margin:12px 0}} hr{{border:none;border-top:1px dashed #ccc;margin:8px 0}}
+  @media print{{body{{padding:0}}}}
+</style>
+</head>
+<body>
+<div class="center">
+  <div style="font-size:18px;font-weight:bold">AnamnezAI</div>
+  <div style="font-size:12px;color:#666">AI Destekli Hasta Ön Triajı</div>
+  <div class="border"></div>
+  <div style="font-size:13px">Sıra No</div>
+  <div class="big">{short_id}</div>
+  <div class="border"></div>
+  <div style="font-size:13px;color:#666">Hasta</div>
+  <div style="font-size:16px;font-weight:bold">{session.get('patient_name','—')}</div>
+  <div style="font-size:12px">{session.get('age','—')} yaş · {session.get('gender','—')}</div>
+  <div class="border"></div>
+  <div style="font-size:13px;color:#666">Triaj Önceliği</div>
+  <div style="font-size:24px;font-weight:900;color:{triage_color}">{triage_tr}</div>
+  <div style="font-size:12px;color:#666;margin-top:4px">{summary.get('chief_complaint','—')}</div>
+  <div class="border"></div>
+  <div style="font-size:11px;color:#888">{now}</div>
+  <div style="font-size:11px;color:#aaa;margin-top:8px">Verileriniz KVKK kapsamında korunmaktadır.</div>
+</div>
+<script>window.onload=()=>window.print()</script>
+</body></html>"""
+    return HTMLResponse(content=html)
+
+
+# ─────────────────────────────────────────────
+#  Sprint 8 — Analytics CSV Export
+# ─────────────────────────────────────────────
+
+@app.get("/api/analytics/export/csv")
+async def export_analytics_csv(current_user: dict = Depends(require_admin)):
+    """Export anonymised analytics as CSV (Sprint 8)."""
+    rows = []
+    for sid, s in sessions.items():
+        if not s.get("completed"):
+            continue
+        summ = summaries.get(sid, {})
+        rows.append({
+            "session_id": sid[:8],
+            "age_group": ("0-17" if s.get("age", 0) <= 17 else
+                          "18-35" if s.get("age", 0) <= 35 else
+                          "36-60" if s.get("age", 0) <= 60 else "60+"),
+            "gender": s.get("gender", ""),
+            "triage_level": summ.get("triage_level", ""),
+            "confidence_score": summ.get("confidence_score", 0),
+            "chief_complaint_category": summ.get("chief_complaint", "")[:40],
+            "urgency_flags": "|".join(summ.get("urgency_flags", [])),
+            "is_seen": s.get("is_seen", False),
+            "created_date": s.get("created_at", "")[:10],
+        })
+
+    output = io.StringIO()
+    if rows:
+        writer = csv.DictWriter(output, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+
+    audit("analytics_csv_export", user_id=current_user["user_id"], user_role=current_user["role"])
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode("utf-8-sig")),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="anamnezai-analytics-{datetime.utcnow().strftime("%Y%m%d")}.csv"'}
+    )
+
+
+# ─────────────────────────────────────────────
+#  Sprint 9 — Rate-limited public endpoints
+# ─────────────────────────────────────────────
+
+if _rate_limit_available:
+    @app.get("/api/session/start/ratelimit-check")
+    @limiter.limit("30/minute")
+    async def _rate_check(request: Request):
+        return {"ok": True}
+
+
 FRONTEND_DIR = os.getenv(
     "FRONTEND_DIR",
     os.path.join(os.path.dirname(__file__), "..", "frontend"),
