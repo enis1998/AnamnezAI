@@ -1,8 +1,8 @@
 """
-AnamnezAI — Backend v3.0
+AnamnezAI — Backend v4.0
 AI-Powered Patient Pre-Triage using Gemma 4 via Ollama
 Gemma 4 Good Hackathon — Health & Sciences + Ollama Prize Tracks
-v3.0: RAG (Retrieval-Augmented Generation) ile tıbbi bilgi tabanı entegrasyonu
+v4.0: SQLite kalıcılık + Multimodal görüntü analizi + Gerçek zamanlı SSE kuyruğu + Vital bulgular
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
@@ -16,6 +16,10 @@ import json
 import uuid
 import os
 import tempfile
+import sqlite3
+import threading
+import asyncio
+import base64
 from datetime import datetime
 
 # ─────────────────────────────────────────────
@@ -24,13 +28,13 @@ from datetime import datetime
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 GEMMA_MODEL     = os.getenv("GEMMA_MODEL", "gemma4:e4b")
 RAG_ENABLED     = os.getenv("RAG_ENABLED", "true").lower() == "true"
+DB_PATH         = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "anamnezai.db"))
 
 app = FastAPI(
     title="AnamnezAI",
-    description="AI-Powered Patient Pre-Triage using Gemma 4 via Ollama + RAG — Gemma 4 Good Hackathon",
-    version="3.0.0",
+    description="AI-Powered Patient Pre-Triage — Gemma 4 + RAG + Vision | Gemma 4 Good Hackathon",
+    version="4.0.0",
 )
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,9 +43,102 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory storage (Redis/DB for production)
+# In-memory storage (synced to SQLite)
 sessions:  dict[str, dict] = {}
-summaries: dict[str, dict] = {}   # session_id → full clinical summary cache
+summaries: dict[str, dict] = {}
+
+# SSE subscribers for real-time queue
+_queue_subscribers: list[asyncio.Queue] = []
+
+# ─────────────────────────────────────────────
+#  SQLite Persistence
+# ─────────────────────────────────────────────
+_db_lock = threading.Lock()
+
+def init_db():
+    """SQLite veritabanını başlatır ve tabloları oluşturur."""
+    with _db_lock:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS sessions (
+                    session_id TEXT PRIMARY KEY,
+                    data TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS summaries (
+                    session_id TEXT PRIMARY KEY,
+                    data TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """)
+            conn.commit()
+
+def db_save_session(session_id: str, data: dict):
+    """Oturumu SQLite'a kaydeder (INSERT OR REPLACE)."""
+    with _db_lock:
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                conn.execute(
+                    "INSERT OR REPLACE INTO sessions (session_id, data, created_at) VALUES (?, ?, ?)",
+                    (session_id, json.dumps(data, ensure_ascii=False),
+                     data.get("created_at", datetime.utcnow().isoformat()))
+                )
+                conn.commit()
+        except Exception as e:
+            print(f"[DB] Session save error: {e}")
+
+def db_save_summary(session_id: str, data: dict):
+    """Klinik özeti SQLite'a kaydeder."""
+    with _db_lock:
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                conn.execute(
+                    "INSERT OR REPLACE INTO summaries (session_id, data, created_at) VALUES (?, ?, ?)",
+                    (session_id, json.dumps(data, ensure_ascii=False),
+                     data.get("generated_at", datetime.utcnow().isoformat()))
+                )
+                conn.commit()
+        except Exception as e:
+            print(f"[DB] Summary save error: {e}")
+
+def db_delete_session(session_id: str):
+    """Oturumu ve özetini SQLite'tan siler."""
+    with _db_lock:
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                conn.execute("DELETE FROM sessions WHERE session_id=?", (session_id,))
+                conn.execute("DELETE FROM summaries WHERE session_id=?", (session_id,))
+                conn.commit()
+        except Exception as e:
+            print(f"[DB] Delete error: {e}")
+
+def db_load_all():
+    """Tüm oturum ve özetleri SQLite'tan belleğe yükler."""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            for sid, data_str in conn.execute("SELECT session_id, data FROM sessions").fetchall():
+                try:
+                    sessions[sid] = json.loads(data_str)
+                except Exception:
+                    pass
+            for sid, data_str in conn.execute("SELECT session_id, data FROM summaries").fetchall():
+                try:
+                    summaries[sid] = json.loads(data_str)
+                except Exception:
+                    pass
+        print(f"[DB] Yüklendi: {len(sessions)} oturum, {len(summaries)} özet")
+    except Exception as e:
+        print(f"[DB] Load error: {e}")
+
+async def notify_queue_update():
+    """Tüm SSE abonelerine kuyruk güncellemesi bildirir."""
+    for q in list(_queue_subscribers):
+        try:
+            await q.put("update")
+        except Exception:
+            pass
 
 # ─────────────────────────────────────────────
 #  RAG Init (lazy — sunucu başlangıcını yavaşlatmaz)
@@ -57,7 +154,6 @@ def _init_rag_if_needed():
         if rag_module.is_rag_available():
             stats = rag_module.get_db_stats()
             if stats.get("total_chunks", 0) == 0:
-                # İlk başlatma: yerleşik bilgi tabanını yükle
                 rag_module.ingest_builtin_knowledge()
             _rag_initialized = True
     except Exception as e:
@@ -66,15 +162,29 @@ def _init_rag_if_needed():
 # ─────────────────────────────────────────────
 #  Pydantic Models
 # ─────────────────────────────────────────────
+class VitalSigns(BaseModel):
+    blood_pressure: Optional[str] = None    # "120/80 mmHg"
+    pulse: Optional[int] = None             # bpm
+    temperature: Optional[float] = None    # °C
+    spo2: Optional[int] = None             # %
+    respiratory_rate: Optional[int] = None  # /dakika
+
 class StartSessionRequest(BaseModel):
     patient_name: str
     age: int
     gender: str
     language: str = "tr"
+    vitals: Optional[VitalSigns] = None    # Ön triaj vital bulguları
 
 class AnswerRequest(BaseModel):
     session_id: str
     answer: str
+
+class ImageAnalyzeRequest(BaseModel):
+    session_id: str
+    image_base64: str        # base64 kodlanmış görüntü (JPEG/PNG)
+    image_mime: str = "image/jpeg"
+    context: str = ""        # bağlam (örn: "yara fotoğrafı", "cilt döküntüsü", "EKG")
 
 class SessionResponse(BaseModel):
     session_id: str
@@ -96,13 +206,15 @@ class ClinicalSummaryResponse(BaseModel):
     urgency_flags: list[str] = []
     recommended_action: str
     clinical_notes: str
+    vitals: Optional[dict] = None
+    image_findings: Optional[str] = None
     generated_at: str
 
 # ─────────────────────────────────────────────
-#  Ollama /api/chat Helper
+#  Ollama /api/chat Helpers
 # ─────────────────────────────────────────────
 async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0) -> str:
-    """Ollama /api/chat üzerinden Gemma 4'e istek gönderir."""
+    """Ollama /api/chat üzerinden Gemma 4'e metin isteği gönderir."""
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
@@ -129,20 +241,45 @@ async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0) -> st
     except httpx.ConnectError:
         raise HTTPException(status_code=503, detail="Ollama çalışmıyor. Terminal'de: ollama serve")
     except httpx.ReadTimeout:
-        raise HTTPException(status_code=504, detail=f"Gemma 4 yanıt vermedi (timeout {int(timeout)}sn). Model yükleniyor olabilir, lütfen tekrar deneyin.")
+        raise HTTPException(status_code=504, detail=f"Gemma 4 yanıt vermedi (timeout {int(timeout)}sn). Model yükleniyor olabilir.")
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="Bağlantı zaman aşımı. Ollama servisini kontrol edin.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gemma 4 hatası: {str(e)}")
 
 
+async def ask_gemma_vision(prompt: str, image_base64: str, system: str = "", timeout: float = 180.0) -> str:
+    """Gemma 4 multimodal — görüntü + metin analizi (Ollama vision API)."""
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({
+        "role": "user",
+        "content": prompt,
+        "images": [image_base64],  # Ollama vision format: raw base64 string
+    })
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            resp = await client.post(
+                f"{OLLAMA_BASE_URL}/api/chat",
+                json={
+                    "model": GEMMA_MODEL,
+                    "messages": messages,
+                    "stream": False,
+                    "options": {"temperature": 0.2, "top_p": 0.9, "num_predict": 600},
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()["message"]["content"].strip()
+    except httpx.ConnectError:
+        raise HTTPException(status_code=503, detail="Ollama çalışmıyor.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Vision analizi hatası: {str(e)}")
+
+
 async def ask_gemma_rag(prompt: str, system: str = "", rag_query: str = "",
                         timeout: float = 180.0) -> str:
-    """RAG bağlamıyla güçlendirilmiş Gemma 4 isteği.
-
-    rag_query ile ilgili tıbbi referanslar otomatik olarak system prompt'a eklenir.
-    RAG mevcut değilse veya kayıt yoksa normal ask_gemma gibi davranır.
-    """
+    """RAG bağlamıyla güçlendirilmiş Gemma 4 isteği."""
     enriched_system = system
     if RAG_ENABLED and rag_query:
         try:
@@ -152,8 +289,7 @@ async def ask_gemma_rag(prompt: str, system: str = "", rag_query: str = "",
             if context:
                 enriched_system = system + "\n\n" + context if system else context
         except Exception:
-            pass  # RAG başarısız olursa sessizce devam et
-
+            pass
     return await ask_gemma(prompt, system=enriched_system, timeout=timeout)
 
 
@@ -273,7 +409,25 @@ RED = Life-threatening / immediate (AMI, stroke, anaphylaxis, respiratory failur
 YELLOW = Urgent, seen within 30min-2hrs (high fever, moderate pain, bradycardia, hypertensive urgency)
 GREEN = Routine outpatient (mild symptoms, chronic follow-up, URTI)"""
 
-# Triage renk palet
+VISION_SYSTEM_TR = """Sen klinik görüntü analizi yapan bir tıbbi asistansın (Gemma 4 multimodal).
+Sana gönderilen tıbbi görüntüyü (yara, cilt, EKG, röntgen vb.) dikkatle incele.
+KURALLAR:
+- Gözlemlediğin klinik bulguları net ve sade Türkçe ile açıkla.
+- Acil durum bulguları varsa (enfeksiyon, nekroz, MI paterni vb.) açıkça belirt.
+- Olası tanı seçeneklerini listele.
+- Kesin tanı koyma; "olası", "şüpheli" gibi ifadeler kullan.
+- Yanıtı 3-5 cümle ile sınırla."""
+
+VISION_SYSTEM_EN = """You are a medical image analysis assistant (Gemma 4 multimodal).
+Carefully examine the medical image (wound, skin, ECG, X-ray, etc.).
+RULES:
+- Describe clinical findings clearly in plain language.
+- If emergency findings are present (infection, necrosis, MI pattern etc.) state clearly.
+- List possible diagnoses.
+- Do not make definitive diagnoses; use terms like "possibly", "suspicious for".
+- Limit response to 3-5 sentences."""
+
+# Triage renk paleti
 TRIAGE_COLOR = {"RED": "#ba1a1a", "YELLOW": "#e07b26", "GREEN": "#006a68"}
 
 
@@ -283,6 +437,23 @@ def get_system_prompt(lang: str) -> str:
 
 def get_triage_system(lang: str) -> str:
     return TRIAGE_SYSTEM_TR if lang == "tr" else TRIAGE_SYSTEM_EN
+
+
+def vitals_to_dict(v: Optional[VitalSigns]) -> Optional[dict]:
+    if not v:
+        return None
+    d = v.model_dump()
+    return {k: val for k, val in d.items() if val is not None} or None
+
+# ─────────────────────────────────────────────
+#  Startup Event
+# ─────────────────────────────────────────────
+@app.on_event("startup")
+async def startup_event():
+    """Uygulama başladığında DB'yi başlat ve geçmiş verileri yükle."""
+    init_db()
+    db_load_all()
+    print(f"[AnamnezAI v4.0] DB hazır: {DB_PATH}")
 
 # ─────────────────────────────────────────────
 #  Endpoints
@@ -295,12 +466,7 @@ async def warmup_model():
         async with httpx.AsyncClient(timeout=200.0) as client:
             resp = await client.post(
                 f"{OLLAMA_BASE_URL}/api/generate",
-                json={
-                    "model": GEMMA_MODEL,
-                    "prompt": "Hi",
-                    "stream": False,
-                    "options": {"num_predict": 1},
-                },
+                json={"model": GEMMA_MODEL, "prompt": "Hi", "stream": False, "options": {"num_predict": 1}},
             )
             resp.raise_for_status()
         return {"status": "warmed_up", "model": GEMMA_MODEL}
@@ -314,7 +480,6 @@ async def warmup_model():
 
 @app.get("/api/rag/status")
 async def rag_status():
-    """RAG bilgi tabanı durumunu döndürür."""
     if not RAG_ENABLED:
         return {"enabled": False, "reason": "RAG_ENABLED=false"}
     try:
@@ -323,44 +488,34 @@ async def rag_status():
             return {"enabled": False, "reason": "chromadb veya sentence-transformers kurulu değil"}
         _init_rag_if_needed()
         stats = rag_module.get_db_stats()
-        return {
-            "enabled": True,
-            "initialized": _rag_initialized,
-            **stats,
-        }
+        return {"enabled": True, "initialized": _rag_initialized, **stats}
     except Exception as e:
         return {"enabled": False, "error": str(e)}
 
 
 @app.post("/api/rag/ingest/text")
 async def rag_ingest_text(body: dict):
-    """Ham metin veya Q&A çiftlerini bilgi tabanına ekler."""
     text = body.get("text", "")
     source = body.get("source", "user_upload")
     category = body.get("category", "custom")
-
     if not text or len(text.strip()) < 20:
         raise HTTPException(status_code=400, detail="Metin çok kısa (min 20 karakter).")
-
     try:
         import rag as rag_module
         _init_rag_if_needed()
         added = rag_module.ingest_text(text, source=source, category=category)
         return {"added_chunks": added, "source": source}
     except ImportError:
-        raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil. pip install chromadb sentence-transformers")
+        raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil.")
 
 
 @app.post("/api/rag/ingest/pdf")
 async def rag_ingest_pdf(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
-    """PDF dosyasını yükler ve bilgi tabanına ekler (arka planda)."""
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Sadece PDF dosyası kabul edilir.")
-
     try:
         import rag as rag_module
         contents = await file.read()
-        # Geçici dosyaya yaz
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(contents)
             tmp_path = tmp.name
@@ -369,7 +524,6 @@ async def rag_ingest_pdf(file: UploadFile = File(...), background_tasks: Backgro
             try:
                 _init_rag_if_needed()
                 count = rag_module.ingest_pdf(tmp_path, source_name=file.filename[:40])
-                import os
                 os.unlink(tmp_path)
                 print(f"[RAG] PDF yüklendi: {file.filename} — {count} chunk")
             except Exception as e:
@@ -377,36 +531,28 @@ async def rag_ingest_pdf(file: UploadFile = File(...), background_tasks: Backgro
 
         if background_tasks:
             background_tasks.add_task(_ingest)
-            return {"status": "processing", "filename": file.filename,
-                    "message": "PDF arka planda işleniyor. /api/rag/status ile kontrol edin."}
+            return {"status": "processing", "filename": file.filename}
         else:
             _ingest()
             stats = rag_module.get_db_stats()
             return {"status": "done", "filename": file.filename, "total_chunks": stats.get("total_chunks")}
-
     except ImportError:
         raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil.")
 
 
 @app.post("/api/rag/ingest/builtin")
 async def rag_ingest_builtin():
-    """Yerleşik tıbbi bilgi tabanını (MTS, kardiyak, nörolojik vb.) yükler."""
     try:
         import rag as rag_module
         added = rag_module.ingest_builtin_knowledge()
         stats = rag_module.get_db_stats()
-        return {
-            "added_chunks": added,
-            "total_chunks": stats.get("total_chunks", 0),
-            "sources": stats.get("sources", {}),
-        }
+        return {"added_chunks": added, "total_chunks": stats.get("total_chunks", 0), "sources": stats.get("sources", {})}
     except ImportError:
         raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil.")
 
 
 @app.get("/api/rag/query")
 async def rag_query(q: str, n: int = 4):
-    """RAG retrieval test endpoint — hangi bağlamın alındığını gösterir."""
     if not q:
         raise HTTPException(status_code=400, detail="q parametresi gerekli.")
     try:
@@ -424,7 +570,6 @@ async def rag_query(q: str, n: int = 4):
 
 @app.get("/health")
 async def health_check():
-    """Ollama bağlantısı ve Gemma 4 model durumunu kontrol eder."""
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
@@ -432,7 +577,6 @@ async def health_check():
             model_base = GEMMA_MODEL.split(":")[0]
             gemma_available = any(model_base in m for m in models)
 
-        # RAG durumu
         rag_info = {"rag_enabled": RAG_ENABLED, "rag_chunks": 0}
         if RAG_ENABLED:
             try:
@@ -443,18 +587,19 @@ async def health_check():
                     rag_info["rag_available"] = True
                 else:
                     rag_info["rag_available"] = False
-                    rag_info["rag_note"] = "pip install chromadb sentence-transformers"
             except Exception:
                 rag_info["rag_available"] = False
 
         return {
             "status": "ok",
+            "version": "4.0.0",
             "ollama": "connected",
             "gemma_model": GEMMA_MODEL,
             "gemma_available": gemma_available,
             "available_models": models,
             "sessions_active": len(sessions),
             "summaries_cached": len(summaries),
+            "db_path": DB_PATH,
             **rag_info,
         }
     except Exception as e:
@@ -463,26 +608,32 @@ async def health_check():
 
 @app.post("/api/session/start", response_model=SessionResponse)
 async def start_session(req: StartSessionRequest):
-    """Yeni hasta mülakatı başlatır — ilk soruyu Gemma 4 + RAG ile üretir."""
+    """Yeni hasta mülakatı başlatır — ilk soruyu Gemma 4 + RAG ile üretir. Vital bulgular kaydedilir."""
     session_id = str(uuid.uuid4())
     lang = req.language
 
+    vitals_dict = vitals_to_dict(req.vitals)
+    vitals_ctx = ""
+    if vitals_dict:
+        parts = []
+        if req.vitals.blood_pressure: parts.append(f"KB: {req.vitals.blood_pressure}")
+        if req.vitals.pulse: parts.append(f"Nabız: {req.vitals.pulse} bpm")
+        if req.vitals.temperature: parts.append(f"Ateş: {req.vitals.temperature}°C")
+        if req.vitals.spo2: parts.append(f"SpO2: {req.vitals.spo2}%")
+        if req.vitals.respiratory_rate: parts.append(f"SS: {req.vitals.respiratory_rate}/dk")
+        if parts:
+            vitals_ctx = f"\nVital bulgular: {', '.join(parts)}" if lang == "tr" else f"\nVitals: {', '.join(parts)}"
+
     opening_prompt = (
-        f"Hasta: {req.patient_name}, {req.age} yaşında, {req.gender}.\n"
-        f"Bu ilk görüşme. Hastanın bugünkü ana şikayetini öğrenmek için samimi, "
-        f"empatik bir açılış sorusu sor. Soru 1/5."
+        f"Hasta: {req.patient_name}, {req.age} yaşında, {req.gender}.{vitals_ctx}\n"
+        f"Bu ilk görüşme. Hastanın bugünkü ana şikayetini öğrenmek için samimi, empatik bir açılış sorusu sor. Soru 1/5."
     ) if lang == "tr" else (
-        f"Patient: {req.patient_name}, {req.age}y, {req.gender}.\n"
+        f"Patient: {req.patient_name}, {req.age}y, {req.gender}.{vitals_ctx}\n"
         f"First visit. Ask a warm, empathetic opening question to learn their main complaint. Q1/5."
     )
 
-    # RAG ile açılış sorusu — genel triaj bilgisi ile güçlendir
-    rag_query = f"medical triage first question patient interview clinical assessment"
-    first_question = await ask_gemma_rag(
-        opening_prompt,
-        system=get_system_prompt(lang),
-        rag_query=rag_query,
-    )
+    rag_query = "medical triage first question patient interview clinical assessment"
+    first_question = await ask_gemma_rag(opening_prompt, system=get_system_prompt(lang), rag_query=rag_query)
 
     sessions[session_id] = {
         "patient_name": req.patient_name,
@@ -493,8 +644,12 @@ async def start_session(req: StartSessionRequest):
         "total_steps": 5,
         "qa_history": [{"question": first_question, "answer": None}],
         "completed": False,
+        "vitals": vitals_dict,
+        "image_analyses": [],
         "created_at": datetime.utcnow().isoformat(),
     }
+    db_save_session(session_id, sessions[session_id])
+    await notify_queue_update()
 
     return SessionResponse(session_id=session_id, question=first_question, step=1, total_steps=5)
 
@@ -514,12 +669,9 @@ async def submit_answer(req: AnswerRequest):
 
     if current_step >= total_steps:
         session["completed"] = True
-        return SessionResponse(
-            session_id=req.session_id,
-            question="__COMPLETED__",
-            step=current_step,
-            total_steps=total_steps,
-        )
+        db_save_session(req.session_id, session)
+        await notify_queue_update()
+        return SessionResponse(session_id=req.session_id, question="__COMPLETED__", step=current_step, total_steps=total_steps)
 
     lang = session["language"]
     history_text = "\n".join(
@@ -543,22 +695,14 @@ async def submit_answer(req: AnswerRequest):
             f"If emergency signs present, explore further. Q{current_step+1}/{total_steps}."
         )
 
-    # Hastanın cevaplarından RAG sorgu metni oluştur (semptom kelimelerini çıkar)
-    rag_query = req.answer + " " + history_text[-300:]  # Son 300 karakter
-    next_question = await ask_gemma_rag(
-        next_prompt,
-        system=get_system_prompt(lang),
-        rag_query=rag_query,
-    )
+    rag_query = req.answer + " " + history_text[-300:]
+    next_question = await ask_gemma_rag(next_prompt, system=get_system_prompt(lang), rag_query=rag_query)
     session["step"] += 1
     session["qa_history"].append({"question": next_question, "answer": None})
 
-    return SessionResponse(
-        session_id=req.session_id,
-        question=next_question,
-        step=session["step"],
-        total_steps=total_steps,
-    )
+    db_save_session(req.session_id, session)
+
+    return SessionResponse(session_id=req.session_id, question=next_question, step=session["step"], total_steps=total_steps)
 
 
 @app.get("/api/session/{session_id}/summary", response_model=ClinicalSummaryResponse)
@@ -570,7 +714,6 @@ async def get_clinical_summary(session_id: str):
     if not session["completed"]:
         raise HTTPException(status_code=400, detail="Mülakat henüz tamamlanmadı.")
 
-    # Return cached if exists
     if session_id in summaries:
         return ClinicalSummaryResponse(**summaries[session_id])
 
@@ -580,12 +723,25 @@ async def get_clinical_summary(session_id: str):
         for i, qa in enumerate(session["qa_history"])
     )
 
+    # Vital bulgular varsa triaj prompt'una ekle
+    vitals_dict = session.get("vitals") or {}
+    vitals_ctx = ""
+    if vitals_dict:
+        vitals_ctx = "\nVital bulgular: " + ", ".join(f"{k}: {v}" for k, v in vitals_dict.items())
+
+    # Görüntü analizi varsa ekle
+    image_analyses = session.get("image_analyses", [])
+    image_ctx = ""
+    if image_analyses:
+        last = image_analyses[-1]
+        image_ctx = f"\nGörüntü analizi (Gemma 4 Vision): {last['analysis'][:400]}"
+
     triage_prompt = (
-        f"HASTA: {session['patient_name']}, {session['age']} yaş, {session['gender']}\n\n"
+        f"HASTA: {session['patient_name']}, {session['age']} yaş, {session['gender']}{vitals_ctx}{image_ctx}\n\n"
         f"5 TURLU MÜLAKAT:\n{history_text}\n\n"
         f"Bu hastayı triaj et. Sadece JSON döndür."
     ) if lang == "tr" else (
-        f"PATIENT: {session['patient_name']}, {session['age']}y, {session['gender']}\n\n"
+        f"PATIENT: {session['patient_name']}, {session['age']}y, {session['gender']}{vitals_ctx}{image_ctx}\n\n"
         f"5-TURN INTERVIEW:\n{history_text}\n\n"
         f"Triage this patient. Return ONLY JSON."
     )
@@ -598,25 +754,21 @@ async def get_clinical_summary(session_id: str):
         parts = cleaned.split("```")
         for part in parts:
             if part.startswith("json"):
-                cleaned = part[4:].strip()
-                break
+                cleaned = part[4:].strip(); break
             elif "{" in part:
-                cleaned = part.strip()
-                break
+                cleaned = part.strip(); break
     try:
         start = cleaned.find("{")
         end   = cleaned.rfind("}") + 1
         triage_data = json.loads(cleaned[start:end])
     except Exception:
         triage_data = {
-            "triage_level": "YELLOW",
-            "confidence_score": 70,
+            "triage_level": "YELLOW", "confidence_score": 70,
             "chief_complaint": "Değerlendirme tamamlandı",
             "symptoms_summary": raw[:300],
             "possible_conditions": ["Doktor değerlendirmesi gerekli"],
             "recommended_action": "Doktor muayenesi önerilir",
-            "clinical_notes": raw[:400],
-            "urgency_flags": [],
+            "clinical_notes": raw[:400], "urgency_flags": [],
         }
 
     level = triage_data.get("triage_level", "YELLOW").upper()
@@ -625,6 +777,11 @@ async def get_clinical_summary(session_id: str):
 
     flags = [f for f in triage_data.get("urgency_flags", [])
              if f and len(f) > 3 and "boş" not in f.lower() and "empty" not in f.lower()]
+
+    # Son görüntü analiz bulgusunu ekle
+    image_findings = None
+    if image_analyses:
+        image_findings = image_analyses[-1].get("analysis", "")[:500]
 
     result = ClinicalSummaryResponse(
         session_id=session_id,
@@ -640,11 +797,14 @@ async def get_clinical_summary(session_id: str):
         urgency_flags=flags,
         recommended_action=triage_data.get("recommended_action", ""),
         clinical_notes=triage_data.get("clinical_notes", ""),
+        vitals=vitals_dict or None,
+        image_findings=image_findings,
         generated_at=datetime.utcnow().isoformat() + "Z",
     )
 
-    # Cache for doctor queue
     summaries[session_id] = result.model_dump()
+    db_save_summary(session_id, summaries[session_id])
+    await notify_queue_update()
     return result
 
 
@@ -659,18 +819,73 @@ async def stream_summary(session_id: str):
         f"Q{i+1}: {qa['question']}\nA: {qa.get('answer','')}"
         for i, qa in enumerate(session["qa_history"])
     )
+    vitals_dict = session.get("vitals") or {}
+    vitals_ctx = ""
+    if vitals_dict:
+        vitals_ctx = "\nVitals: " + ", ".join(f"{k}: {v}" for k, v in vitals_dict.items())
+
     prompt = (
-        f"Hasta: {session['patient_name']}, {session['age']} yaş, {session['gender']}.\n"
-        f"Mülakat:\n{history_text}\n\nDoktor için kısa klinik özet yaz (3-4 cümle)."
+        f"Hasta: {session['patient_name']}, {session['age']} yaş, {session['gender']}.{vitals_ctx}\n"
+        f"Mülakat:\n{history_text}\n\nDoktor için kısa klinik özet yaz (3-4 cümle). Triaj seviyesini ve acil uyarıları vurgula."
     ) if lang == "tr" else (
-        f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n"
-        f"Interview:\n{history_text}\n\nWrite a brief clinical summary for the doctor (3-4 sentences)."
+        f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.{vitals_ctx}\n"
+        f"Interview:\n{history_text}\n\nWrite a brief clinical summary for the doctor (3-4 sentences). Highlight triage level and urgent findings."
     )
     return StreamingResponse(
         stream_gemma(prompt, get_system_prompt(lang)),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@app.post("/api/session/image-analyze")
+async def image_analyze(req: ImageAnalyzeRequest):
+    """Gemma 4 Multimodal — Yara, cilt döküntüsü, EKG, röntgen görüntüsü analizi."""
+    session = sessions.get(req.session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+
+    lang = session.get("language", "tr")
+    patient_ctx = f"{session['patient_name']}, {session['age']} yaş, {session['gender']}"
+    vitals_dict = session.get("vitals") or {}
+    vitals_ctx = ""
+    if vitals_dict:
+        vitals_ctx = "\nVital bulgular: " + ", ".join(f"{k}: {v}" for k, v in vitals_dict.items())
+
+    context_label = req.context or ("tıbbi görüntü" if lang == "tr" else "medical image")
+
+    if lang == "tr":
+        prompt = (
+            f"Hasta: {patient_ctx}{vitals_ctx}\n"
+            f"Görüntü türü: {context_label}\n\n"
+            f"Bu görüntüyü klinik olarak değerlendir. Gördüğün bulguları, olası tanıları ve acil durum varsa belirt."
+        )
+    else:
+        prompt = (
+            f"Patient: {patient_ctx}{vitals_ctx}\n"
+            f"Image type: {context_label}\n\n"
+            f"Clinically evaluate this image. Describe findings, possible diagnoses, and any emergency indicators."
+        )
+
+    system = VISION_SYSTEM_TR if lang == "tr" else VISION_SYSTEM_EN
+    analysis = await ask_gemma_vision(prompt, req.image_base64, system=system)
+
+    # Analizi oturuma kaydet
+    if "image_analyses" not in session:
+        session["image_analyses"] = []
+    session["image_analyses"].append({
+        "analysis": analysis,
+        "context": context_label,
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+    db_save_session(req.session_id, session)
+
+    return {
+        "analysis": analysis,
+        "session_id": req.session_id,
+        "context": context_label,
+        "image_count": len(session["image_analyses"]),
+    }
 
 
 @app.get("/api/patients/queue")
@@ -686,6 +901,7 @@ async def get_patient_queue():
                 "age": s["age"],
                 "gender": s["gender"],
                 "created_at": s.get("created_at", ""),
+                "vitals": s.get("vitals"),
                 "triage_level": "PENDING",
                 "triage_color": "#8c9499",
                 "confidence_score": 0,
@@ -695,6 +911,7 @@ async def get_patient_queue():
                 "symptoms_summary": "",
                 "possible_conditions": [],
                 "clinical_notes": "",
+                "image_findings": None,
                 "generated_at": "",
             }
             if sid in summaries:
@@ -714,12 +931,50 @@ async def get_patient_queue():
     }
 
 
+@app.get("/api/patients/stream")
+async def stream_patient_queue():
+    """Gerçek zamanlı hasta kuyruğu — SSE (Server-Sent Events)."""
+    q: asyncio.Queue = asyncio.Queue()
+    _queue_subscribers.append(q)
+
+    async def event_generator():
+        try:
+            # İlk bağlantıda anlık verileri gönder
+            queue_data = await get_patient_queue()
+            yield f"data: {json.dumps({'type': 'connected', 'data': queue_data})}\n\n"
+
+            while True:
+                try:
+                    await asyncio.wait_for(q.get(), timeout=25.0)
+                    # Kuyruk güncellendi — anlık veri gönder
+                    queue_data = await get_patient_queue()
+                    yield f"data: {json.dumps({'type': 'update', 'data': queue_data})}\n\n"
+                except asyncio.TimeoutError:
+                    # 25sn'de bir heartbeat — bağlantıyı canlı tut
+                    yield f"data: {json.dumps({'type': 'heartbeat', 'ts': datetime.utcnow().isoformat()})}\n\n"
+        except asyncio.CancelledError:
+            pass
+        finally:
+            try:
+                _queue_subscribers.remove(q)
+            except ValueError:
+                pass
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
+    )
+
+
 @app.delete("/api/session/{session_id}")
 async def delete_session(session_id: str):
     """Oturumu siler (HIPAA uyumu için)."""
     if session_id in sessions:
         del sessions[session_id]
         summaries.pop(session_id, None)
+        db_delete_session(session_id)
+        await notify_queue_update()
         return {"message": "Oturum silindi."}
     raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
 
@@ -736,29 +991,33 @@ if os.path.exists(FRONTEND_DIR):
 
 if __name__ == "__main__":
     import uvicorn
-    print(f"\n{'='*55}")
-    print(f"  AnamnezAI v3 — Gemma 4 Medical Pre-Triage + RAG")
-    print(f"  Model  : {GEMMA_MODEL} (via Ollama)")
-    print(f"  Ollama : {OLLAMA_BASE_URL}")
-    print(f"  RAG    : {'Aktif' if RAG_ENABLED else 'Devre Disi'}")
-    print(f"  API    : http://localhost:8000")
-    print(f"  Docs   : http://localhost:8000/docs")
-    print(f"{'='*55}\n")
+    print(f"\n{'='*60}")
+    print(f"  AnamnezAI v4.0 — Gemma 4 Medical Pre-Triage")
+    print(f"  Model    : {GEMMA_MODEL} (via Ollama)")
+    print(f"  Ollama   : {OLLAMA_BASE_URL}")
+    print(f"  RAG      : {'Aktif' if RAG_ENABLED else 'Devre Dışı'}")
+    print(f"  DB       : {DB_PATH}")
+    print(f"  API      : http://localhost:8000")
+    print(f"  Docs     : http://localhost:8000/docs")
+    print(f"  Features : Multimodal Vision | SSE Kuyruk | SQLite | Vital Bulgular")
+    print(f"{'='*60}\n")
 
-    # RAG bilgi tabanını arka planda yükle (ilk başlatmada)
+    init_db()
+    db_load_all()
+
     if RAG_ENABLED:
         try:
             import rag as rag_module
             if rag_module.is_rag_available():
                 stats = rag_module.get_db_stats()
                 if stats.get("total_chunks", 0) == 0:
-                    print("  RAG: Yerlesik tibbi bilgi tabani yukleniyor...")
+                    print("  RAG: Yerleşik tıbbi bilgi tabanı yükleniyor...")
                     rag_module.ingest_builtin_knowledge()
                     print(f"  RAG: HAZIR ({rag_module.get_db_stats().get('total_chunks')} chunk)")
                 else:
                     print(f"  RAG: HAZIR ({stats.get('total_chunks')} chunk, {len(stats.get('sources', {}))} kaynak)")
             else:
-                print("  RAG: chromadb/sentence-transformers kurulu degil (pip install ile eklenebilir)")
+                print("  RAG: chromadb/sentence-transformers kurulu değil")
         except Exception as e:
             print(f"  RAG: Atıldı — {e}")
 

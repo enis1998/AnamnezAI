@@ -5,6 +5,435 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AnamnezAI — Klinik Özet Raporu</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config={theme:{extend:{colors:{
+  pri:"#002f40",pric:"#00475e",sec:"#006a68",secc:"#a0f1ed",
+  surf:"#f4f7f9",surfc:"#e8ecee",ons:"#191c1d",onsv:"#3f4749",
+  ouv:"#bfc7ca",err:"#ba1a1a",errc:"#ffdad6",warn:"#e07b26"
+},fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}}}}
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#eef4f7 0%,#f4f7f9 50%,#ebf4f3 100%);min-height:100vh;color:#191c1d}
+  h1,h2,h3{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  .glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(24px)}
+  .card{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 8px 32px rgba(0,47,64,0.07)}
+  .fade{animation:fadeUp .5s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .ring-anim{animation:ringDraw 1.2s ease-out both}
+  @keyframes ringDraw{from{stroke-dashoffset:var(--full)}to{stroke-dashoffset:var(--offset)}}
+  .stream-cursor::after{content:'▌';animation:blink .7s step-end infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  @media print{
+    header,#print-btn,#actions-bar,#pdf-btn{display:none!important}
+    body{background:white}
+    main{padding-top:0!important}
+    .card{box-shadow:none!important;border:1px solid #e8ecee}
+    #stream-section{display:block!important}
+  }
+</style>
+</head>
+<body>
+
+<header class="fixed top-0 w-full z-50 glass border-b border-white/30 px-5 py-3 flex justify-between items-center h-14">
+  <a href="index.html" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-[18px]">monitor_heart</span>
+    </div>
+    <span class="font-head font-bold text-pri text-[15px]">AnamnezAI</span>
+  </a>
+  <div class="flex items-center gap-2">
+    <button id="pdf-btn" onclick="exportPDF()"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sec text-white hover:opacity-90 transition-all text-[12px] font-bold">
+      <span class="material-symbols-outlined msym text-[15px]">picture_as_pdf</span>PDF İndir
+    </button>
+    <button id="print-btn" onclick="window.print()"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
+      <span class="material-symbols-outlined msym text-[15px]">print</span>Yazdır
+    </button>
+    <a href="index.html"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
+      <span class="material-symbols-outlined msym text-[15px]">add</span>Yeni Hasta
+    </a>
+  </div>
+</header>
+
+<main class="pt-16 pb-16 px-4 max-w-3xl mx-auto" id="main-content">
+
+  <!-- Loading state -->
+  <div id="loading-state" class="text-center py-24">
+    <span class="material-symbols-outlined msym text-5xl text-sec block mb-4" style="animation:spin .8s linear infinite;display:inline-block">refresh</span>
+    <p class="text-onsv text-sm">Rapor yükleniyor...</p>
+  </div>
+
+</main>
+
+<script>
+const API = 'http://localhost:8000';
+const raw = localStorage.getItem('anamnez_summary');
+const data = raw ? JSON.parse(raw) : null;
+
+const TRIAGE = {
+  RED:   {bg:'#fff5f5',border:'#ba1a1a',badge:'background:#ba1a1a',icon:'emergency',   ltr:'ACİL',         len:'EMERGENCY'},
+  YELLOW:{bg:'#fff8f0',border:'#e07b26',badge:'background:#e07b26',icon:'warning',     ltr:'ACİL/BEKLEYEBİLİR',len:'URGENT'},
+  GREEN: {bg:'#f0faf9',border:'#006a68',badge:'background:#006a68',icon:'check_circle',ltr:'RUTİN',         len:'ROUTINE'},
+};
+
+function circum(r){return 2*Math.PI*r;}
+
+function render(d){
+  const lv = TRIAGE[d.triage_level] || TRIAGE.YELLOW;
+  const r = 44, C = circum(r);
+  const offset = C * (1 - d.confidence_score/100);
+  const color  = d.triage_color;
+  const dt = new Date(d.generated_at).toLocaleString('tr-TR');
+
+  const urgHtml = d.urgency_flags && d.urgency_flags.length ? `
+    <div class="card p-5 mb-4 border-l-4" style="border-left-color:#ba1a1a;background:#fff5f5">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-symbols-outlined msym-fill text-err text-[18px]">warning</span>
+        <p class="text-[11px] font-bold text-err uppercase tracking-wider">Acil Uyarı Bayrakları</p>
+      </div>
+      <ul class="space-y-1.5">
+        ${d.urgency_flags.map(f=>`<li class="flex items-start gap-2 text-[13px] font-semibold text-red-700">
+          <span class="material-symbols-outlined msym text-err text-[14px] mt-0.5 flex-shrink-0">error</span>${f}</li>`).join('')}
+      </ul>
+    </div>` : '';
+
+  // Vital bulgular kartı
+  const vitalsHtml = d.vitals && Object.keys(d.vitals).length ? `
+    <div class="card p-5 mb-4">
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">Vital Bulgular</p>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        ${d.vitals.blood_pressure ? `<div class="bg-surfc rounded-xl p-3 text-center"><p class="text-[9px] font-bold text-onsv uppercase mb-1">Tansiyon</p><p class="text-[16px] font-bold text-pri">${d.vitals.blood_pressure}</p></div>` : ''}
+        ${d.vitals.pulse ? `<div class="bg-surfc rounded-xl p-3 text-center"><p class="text-[9px] font-bold text-onsv uppercase mb-1">Nabız</p><p class="text-[16px] font-bold text-pri">${d.vitals.pulse} <span class="text-[11px]">bpm</span></p></div>` : ''}
+        ${d.vitals.temperature ? `<div class="bg-surfc rounded-xl p-3 text-center"><p class="text-[9px] font-bold text-onsv uppercase mb-1">Ateş</p><p class="text-[16px] font-bold ${d.vitals.temperature>=38.5?'text-err':'text-pri'}">${d.vitals.temperature}°C</p></div>` : ''}
+        ${d.vitals.spo2 ? `<div class="bg-surfc rounded-xl p-3 text-center"><p class="text-[9px] font-bold text-onsv uppercase mb-1">SpO2</p><p class="text-[16px] font-bold ${d.vitals.spo2<95?'text-err':'text-pri'}">${d.vitals.spo2}%</p></div>` : ''}
+        ${d.vitals.respiratory_rate ? `<div class="bg-surfc rounded-xl p-3 text-center"><p class="text-[9px] font-bold text-onsv uppercase mb-1">Solunum</p><p class="text-[16px] font-bold text-pri">${d.vitals.respiratory_rate}/dk</p></div>` : ''}
+      </div>
+    </div>` : '';
+
+  // Görüntü analizi kartı
+  const imageHtml = d.image_findings ? `
+    <div class="card p-5 mb-4 border-l-4" style="border-left-color:#006a68;background:#f0faf9">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-symbols-outlined msym-fill text-sec text-[18px]">biotech</span>
+        <p class="text-[11px] font-bold text-sec uppercase tracking-wider">Gemma 4 Vision — Görüntü Bulguları</p>
+      </div>
+      <p class="text-[13px] text-ons leading-relaxed">${d.image_findings}</p>
+    </div>` : '';
+
+  const condHtml = d.possible_conditions.map((c,i)=>`
+    <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-[12px] font-bold
+      ${i===0?'text-white':'text-sec bg-secc/60'}"
+      ${i===0?`style="background:${color}"`:''}>${i===0?'#1 ':i===1?'#2 ':'#3 '}${c}</span>`).join('');
+
+  document.getElementById('loading-state').remove();
+  document.getElementById('main-content').insertAdjacentHTML('beforeend',`
+  <div class="fade" id="report-content">
+
+    <!-- Header -->
+    <div class="mb-6 pt-2">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Klinik Özet Raporu</span>
+        <span class="text-[11px] text-onsv">·</span>
+        <span class="text-[11px] text-onsv">${dt}</span>
+      </div>
+      <h1 class="text-[28px] font-head font-bold text-pri mb-0.5">${d.patient_name}</h1>
+      <p class="text-onsv text-[13px]">${d.age} yaşında · ${d.gender}</p>
+    </div>
+
+    <!-- Triage Banner -->
+    <div class="card p-5 mb-5 flex items-center justify-between gap-4" style="background:${lv.bg};border-left:4px solid ${lv.border}">
+      <div class="flex items-center gap-4">
+        <span class="material-symbols-outlined msym-fill text-[40px]" style="color:${color}">${lv.icon}</span>
+        <div>
+          <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1">Triaj Seviyesi</p>
+          <span class="px-4 py-1.5 rounded-full text-[12px] font-bold text-white" style="background:${color}">${lv.ltr}</span>
+        </div>
+      </div>
+      <!-- Confidence Ring -->
+      <div class="relative w-20 h-20 flex-shrink-0">
+        <svg viewBox="0 0 100 100" class="w-20 h-20 -rotate-90">
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="#e8ecee" stroke-width="10"/>
+          <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="10"
+            stroke-linecap="round"
+            stroke-dasharray="${C}" stroke-dashoffset="${C}"
+            style="--full:${C};--offset:${offset};animation:ringDraw 1.2s ease-out .3s both"/>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-[18px] font-head font-bold text-pri leading-none">${d.confidence_score}%</span>
+          <span class="text-[9px] text-onsv font-bold uppercase mt-0.5">AI Skoru</span>
+        </div>
+      </div>
+    </div>
+
+    ${urgHtml}
+    ${vitalsHtml}
+    ${imageHtml}
+
+    <!-- Chief Complaint -->
+    <div class="card p-5 mb-4">
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Ana Şikayet</p>
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined msym-fill text-pric text-[20px] mt-0.5 flex-shrink-0">medical_information</span>
+        <p class="text-[15px] font-semibold text-pri leading-relaxed">${d.chief_complaint}</p>
+      </div>
+    </div>
+
+    <!-- SSE Streaming Narrative -->
+    <div id="stream-section" class="card p-5 mb-4 border-l-4" style="border-left-color:#00475e">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-symbols-outlined msym-fill text-pric text-[16px]">smart_toy</span>
+        <p class="text-[10px] font-bold text-pric uppercase tracking-widest">Gemma 4 Klinik Anlatı</p>
+        <span id="stream-badge" class="text-[9px] bg-secc text-sec px-2 py-0.5 rounded-full font-bold">Yükleniyor...</span>
+      </div>
+      <p id="stream-text" class="text-[13px] text-ons leading-relaxed stream-cursor"></p>
+    </div>
+
+    <!-- 2-col grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div class="card p-5">
+        <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">Semptom Özeti</p>
+        <p class="text-[13px] text-ons leading-relaxed">${d.symptoms_summary}</p>
+      </div>
+      <div class="card p-5">
+        <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">Doktor için Notlar</p>
+        <p class="text-[13px] text-ons leading-relaxed">${d.clinical_notes}</p>
+      </div>
+    </div>
+
+    <!-- Possible conditions -->
+    <div class="card p-5 mb-4">
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">Olası Tanılar</p>
+      <div class="flex flex-wrap gap-2">${condHtml}</div>
+    </div>
+
+    <!-- Recommended action -->
+    <div class="rounded-2xl p-5 mb-6 text-white" style="background:${color}">
+      <p class="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Önerilen Eylem</p>
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined msym-fill text-[22px] flex-shrink-0 mt-0.5">recommend</span>
+        <p class="text-[14px] font-semibold leading-relaxed">${d.recommended_action}</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div id="actions-bar" class="flex flex-wrap gap-3">
+      <button onclick="exportPDF()" id="pdf-btn-bottom"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sec text-white text-[13px] font-bold hover:opacity-90 transition-all shadow-sm">
+        <span class="material-symbols-outlined msym text-[16px]">picture_as_pdf</span>PDF İndir
+      </button>
+      <button onclick="window.print()"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-pri border border-ouv/40 text-[13px] font-bold hover:bg-surfc transition-all shadow-sm">
+        <span class="material-symbols-outlined msym text-[16px]">print</span>Yazdır
+      </button>
+      <a href="doctor.html"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-secc text-sec text-[13px] font-bold hover:opacity-80 transition-all shadow-sm">
+        <span class="material-symbols-outlined msym text-[16px]">dashboard</span>Doktor Paneli
+      </a>
+      <a href="index.html"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-[13px] font-bold hover:opacity-90 transition-all shadow-sm" style="background:#00475e">
+        <span class="material-symbols-outlined msym text-[16px]">add</span>Yeni Hasta
+      </a>
+    </div>
+
+    <p class="mt-8 text-[11px] text-onsv text-center opacity-60">
+      ⚠️ Bu rapor Gemma 4 AI tarafından üretilmiştir. Tıbbi teşhis yerine geçmez. Kesin tanı için doktorunuza başvurun.
+    </p>
+  </div>`);
+
+  // Mülakat tamamlandıysa SSE streaming başlat
+  if(d.session_id && !d.session_id.startsWith('demo-')){
+    startStreamingNarrative(d.session_id);
+  } else {
+    // Demo veya localStorage'dan gelen summary için narratif yok
+    document.getElementById('stream-text').textContent = d.symptoms_summary || '—';
+    document.getElementById('stream-text').classList.remove('stream-cursor');
+    document.getElementById('stream-badge').textContent = 'Gemma 4';
+  }
+}
+
+// ── SSE Streaming Narrative ──
+function startStreamingNarrative(sessionId){
+  const textEl = document.getElementById('stream-text');
+  const badge  = document.getElementById('stream-badge');
+  let fullText = '';
+
+  const es = new EventSource(`${API}/api/session/${sessionId}/stream-summary`);
+
+  es.onmessage = e => {
+    if(e.data === '[DONE]'){
+      es.close();
+      textEl.classList.remove('stream-cursor');
+      badge.textContent = 'Gemma 4 ✓';
+      badge.className = 'text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold';
+      return;
+    }
+    try {
+      const chunk = JSON.parse(e.data);
+      if(chunk.token){
+        fullText += chunk.token;
+        textEl.textContent = fullText;
+        badge.textContent = 'Streaming...';
+      }
+      if(chunk.error){
+        textEl.textContent = 'Streaming bağlantısı kurulamadı. Semptom özeti görüntüleniyor.';
+        textEl.classList.remove('stream-cursor');
+        es.close();
+      }
+    } catch {}
+  };
+
+  es.onerror = () => {
+    es.close();
+    if(!fullText){
+      textEl.textContent = 'Narrative akışı başlatılamadı.';
+      textEl.classList.remove('stream-cursor');
+    }
+    badge.textContent = 'Tamamlandı';
+  };
+}
+
+// ── PDF Export (jsPDF) ──
+async function exportPDF(){
+  const d = data;
+  if(!d){ alert('Rapor verisi bulunamadı.'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const TRIAGE_COLORS = { RED: [186,26,26], YELLOW: [224,123,38], GREEN: [0,106,104] };
+  const tc = TRIAGE_COLORS[d.triage_level] || [100,100,100];
+  const dt = new Date(d.generated_at).toLocaleString('tr-TR');
+
+  let y = 15;
+
+  // Header bar
+  doc.setFillColor(...tc);
+  doc.rect(0, 0, 210, 12, 'F');
+  doc.setFontSize(9); doc.setTextColor(255,255,255);
+  doc.text('AnamnezAI — Klinik Ozet Raporu', 10, 8);
+  doc.text(dt, 160, 8);
+
+  y = 22;
+  // Patient name
+  doc.setFontSize(20); doc.setFont('helvetica','bold'); doc.setTextColor(0,47,64);
+  doc.text(d.patient_name, 10, y); y += 7;
+  doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(63,71,73);
+  doc.text(`${d.age} yas  |  ${d.gender}`, 10, y); y += 10;
+
+  // Triage badge
+  doc.setFillColor(...tc);
+  doc.roundedRect(10, y, 55, 10, 3, 3, 'F');
+  doc.setFontSize(9); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold');
+  doc.text(`${d.triage_level} — AI Skoru: ${d.confidence_score}%`, 12, y+6.5); y += 14;
+
+  // Vitals row
+  if(d.vitals && Object.keys(d.vitals).length){
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(63,71,73);
+    doc.text('VITAL BULGULAR', 10, y); y += 4;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(25,28,29);
+    const vParts = [];
+    if(d.vitals.blood_pressure) vParts.push(`KB: ${d.vitals.blood_pressure}`);
+    if(d.vitals.pulse) vParts.push(`Nabiz: ${d.vitals.pulse} bpm`);
+    if(d.vitals.temperature) vParts.push(`Ates: ${d.vitals.temperature}C`);
+    if(d.vitals.spo2) vParts.push(`SpO2: ${d.vitals.spo2}%`);
+    if(d.vitals.respiratory_rate) vParts.push(`SS: ${d.vitals.respiratory_rate}/dk`);
+    doc.text(vParts.join('   |   '), 10, y); y += 8;
+  }
+
+  // Section helper
+  const addSection = (title, content) => {
+    if(y > 250){ doc.addPage(); y = 15; }
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(63,71,73);
+    doc.text(title, 10, y); y += 4;
+    doc.setFillColor(244,247,249);
+    const lines = doc.splitTextToSize(content || '—', 185);
+    const bh = lines.length * 5 + 4;
+    doc.roundedRect(10, y, 190, bh, 2, 2, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(25,28,29);
+    doc.text(lines, 13, y+4.5); y += bh + 5;
+  };
+
+  addSection('ANA SIKAYET', d.chief_complaint);
+  addSection('SEMPTOM OZETI', d.symptoms_summary);
+  addSection('KLINIK NOTLAR', d.clinical_notes);
+
+  // Possible conditions
+  if(y > 250){ doc.addPage(); y = 15; }
+  doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(63,71,73);
+  doc.text('OLASI TANILAR', 10, y); y += 4;
+  let cx = 10;
+  (d.possible_conditions||[]).forEach((c, i) => {
+    doc.setFillColor(i===0?tc[0]:232, i===0?tc[1]:241, i===0?tc[2]:237);
+    const cw = Math.min(doc.getTextWidth(c)+8, 80);
+    doc.roundedRect(cx, y, cw, 7, 2, 2, 'F');
+    doc.setFontSize(8); doc.setTextColor(i===0?255:0, i===0?255:106, i===0?255:104);
+    doc.text(c, cx+4, y+4.8);
+    cx += cw + 4;
+    if(cx > 170){ cx = 10; y += 10; }
+  }); y += 12;
+
+  // Urgency flags
+  if(d.urgency_flags && d.urgency_flags.length){
+    if(y > 250){ doc.addPage(); y = 15; }
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(186,26,26);
+    doc.text('ACİL UYARI BAYRAKLARI', 10, y); y += 4;
+    d.urgency_flags.forEach(f => {
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(186,26,26);
+      doc.text('! ' + f, 12, y); y += 5;
+    }); y += 3;
+  }
+
+  addSection('ONERILEN EYLEM', d.recommended_action);
+
+  // Image findings
+  if(d.image_findings){
+    addSection('GEMMA 4 VISION — GORUNTU BULGULARI', d.image_findings);
+  }
+
+  // Streaming narrative
+  const narrativeEl = document.getElementById('stream-text');
+  if(narrativeEl && narrativeEl.textContent && narrativeEl.textContent.length > 10){
+    addSection('GEMMA 4 KLINIK ANLATI', narrativeEl.textContent);
+  }
+
+  // Footer
+  const totalPages = doc.internal.getNumberOfPages();
+  for(let i=1;i<=totalPages;i++){
+    doc.setPage(i);
+    doc.setFontSize(7); doc.setTextColor(140,148,153);
+    doc.text('AnamnezAI — AI destekli on triaj sistemi. Tibbi teshis yerine gecmez. Doktor degerlendirmesi gereklidir.', 10, 290);
+    doc.text(`Sayfa ${i}/${totalPages}`, 185, 290, {align:'right'});
+  }
+
+  const fname = `AnamnezAI_${d.patient_name.replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`;
+  doc.save(fname);
+}
+
+if(data) render(data);
+else {
+  document.getElementById('loading-state').innerHTML=`
+    <div class="text-center py-20">
+      <span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span>
+      <p class="text-err font-bold mb-4">Özet bulunamadı.</p>
+      <a href="index.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Anasayfaya Dön</a>
+    </div>`;
+}
+</script>
+</body>
+</html>
+
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — Klinik Özet Raporu</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
 <script>

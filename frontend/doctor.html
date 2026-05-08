@@ -367,6 +367,16 @@ function showDetail(sid){
       <span class="font-bold text-[15px]" style="color:${cfg.color}">${p.confidence_score||'—'}%</span>
     </div>
     ${flagsHtml}
+    ${p.vitals && Object.keys(p.vitals||{}).length ? `
+    <div class="rounded-xl p-3.5 bg-surfc">
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Vital Bulgular</p>
+      <div class="grid grid-cols-2 gap-1.5">
+        ${p.vitals.blood_pressure?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">KB</p><p class="text-[12px] font-bold text-pri">${p.vitals.blood_pressure}</p></div>`:''}
+        ${p.vitals.pulse?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">NABIZ</p><p class="text-[12px] font-bold text-pri">${p.vitals.pulse} bpm</p></div>`:''}
+        ${p.vitals.temperature?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">ATEŞ</p><p class="text-[12px] font-bold ${p.vitals.temperature>=38.5?'text-err':'text-pri'}">${p.vitals.temperature}°C</p></div>`:''}
+        ${p.vitals.spo2?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">SpO2</p><p class="text-[12px] font-bold ${p.vitals.spo2<95?'text-err':'text-pri'}">${p.vitals.spo2}%</p></div>`:''}
+      </div>
+    </div>` : ''}
     <!-- Chief Complaint -->
     <div class="rounded-xl p-3.5 bg-surfc">
       <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">Ana Şikayet</p>
@@ -382,6 +392,11 @@ function showDetail(sid){
       <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Olası Tanılar</p>
       <div class="flex flex-wrap gap-1.5">${condHtml}</div>
     </div>
+    ${p.image_findings ? `
+    <div class="rounded-xl p-3.5" style="background:#f0faf9;border-left:3px solid #006a68">
+      <p class="text-[10px] font-bold uppercase tracking-widest mb-1.5" style="color:#006a68">Vision Bulguları</p>
+      <p class="text-[11px] text-ons leading-relaxed">${p.image_findings}</p>
+    </div>` : ''}
     <!-- Clinical Notes -->
     <div class="rounded-xl p-3.5 bg-surfc">
       <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">Doktor Notları</p>
@@ -420,9 +435,58 @@ function closePanel(){
 
 // Init
 checkStatus();
-loadQueue();
-setInterval(loadQueue, 30000);
+loadQueue();  // İlk yükleme
+
+// SSE ile gerçek zamanlı kuyruk güncellemeleri
+let sseConnection = null;
+
+function connectSSE(){
+  if(sseConnection){ sseConnection.close(); }
+
+  sseConnection = new EventSource(`${API}/api/patients/stream`);
+
+  sseConnection.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if(msg.type === 'connected' || msg.type === 'update'){
+        const qData = msg.data;
+        if(!qData) return;
+        qData.patients.forEach(p=>{ allPatients[p.session_id]=p; });
+        updateStats(qData.stats || calcStats(qData.patients));
+        renderTable(qData.patients,'live-table',true);
+        document.getElementById('txt-queue-sub').textContent = `${qData.total} tamamlanan mülakat`;
+        document.getElementById('txt-queue-count').textContent = `${qData.total} hasta`;
+        if(msg.type === 'update'){
+          // Yeni hasta bildirimi
+          const liveInd = document.getElementById('live-indicator');
+          liveInd.classList.remove('hidden'); liveInd.style.display='flex';
+          liveInd.style.background='#ecfdf5';
+          setTimeout(()=>{ liveInd.style.background=''; },2000);
+        }
+      }
+      // heartbeat — bağlantı canlı, sessizce geç
+    } catch {}
+  };
+
+  sseConnection.onopen = () => {
+    document.getElementById('live-indicator').classList.remove('hidden');
+    document.getElementById('live-indicator').style.display='flex';
+    DEMO.forEach(p=>{ allPatients[p.session_id]=p; });
+    renderTable(DEMO,'demo-table',false);
+  };
+
+  sseConnection.onerror = () => {
+    sseConnection.close();
+    sseConnection = null;
+    document.getElementById('live-indicator').classList.add('hidden');
+    // SSE başarısız — polling'e geri dön
+    setTimeout(connectSSE, 5000);
+  };
+}
+
+connectSSE();
 setInterval(checkStatus, 15000);
+// SSE yoksa backup polling (sadece retry bağlantıda)
 </script>
 </body>
 </html>
