@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — Kayıt Ol</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      pri:"#002f40", pric:"#00475e", sec:"#006a68", secc:"#a0f1ed",
+      surf:"#f4f7f9", surfc:"#e8ecee", surfcl:"#eef1f3", surflow:"#ffffff",
+      surfch:"#dde1e3", ons:"#191c1d", onsv:"#3f4749",
+      ouv:"#bfc7ca", err:"#ba1a1a", errc:"#ffdad6", warn:"#e07b26"
+    },
+    fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}
+  }}
+}
+</script>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#eef4f7 0%,#f4f7f9 60%,#ebf4f3 100%);min-height:100vh;color:#191c1d}
+  h1,h2,h3{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  .glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+  .card{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 8px 32px rgba(0,47,64,0.07)}
+  .fade{animation:fadeUp .4s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  input:focus,select:focus{outline:none;box-shadow:0 0 0 2px #006a68}
+  .tab-active{background:#002f40;color:#fff}
+</style>
+</head>
+<body>
+<header class="fixed top-0 w-full z-50 glass border-b border-white/30 px-5 py-3 flex justify-between items-center h-14">
+  <a href="index.html" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-[18px]">monitor_heart</span>
+    </div>
+    <span class="font-head font-bold text-pri text-[15px]">AnamnezAI</span>
+  </a>
+  <a href="login.html" class="text-sm text-onsv hover:text-pri font-medium">Giriş Yap</a>
+</header>
+
+<main class="pt-14 min-h-screen flex items-center justify-center px-4 py-8">
+<div class="w-full max-w-md fade">
+
+  <div class="text-center mb-6">
+    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sec to-pric flex items-center justify-center mx-auto mb-4 shadow-lg">
+      <span class="material-symbols-outlined msym-fill text-white text-3xl">person_add</span>
+    </div>
+    <h1 class="text-2xl font-head font-bold text-pri">Hesap Oluştur</h1>
+    <p class="text-sm text-onsv mt-1">AnamnezAI'ya ücretsiz kaydolun</p>
+  </div>
+
+  <div class="flex bg-surfc rounded-full p-1 mb-6 gap-1">
+    <button onclick="setTab('patient')" id="tab-patient"
+      class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-semibold transition-all tab-active">
+      <span class="material-symbols-outlined msym text-[17px]">person</span>Hasta
+    </button>
+    <button onclick="setTab('doctor')" id="tab-doctor"
+      class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-semibold transition-all text-onsv">
+      <span class="material-symbols-outlined msym text-[17px]">stethoscope</span>Doktor
+    </button>
+  </div>
+
+  <div class="card p-6">
+    <div id="err-msg" class="hidden flex items-center gap-2 p-3 rounded-xl bg-errc text-err text-sm mb-4 font-medium">
+      <span class="material-symbols-outlined msym text-[17px]">error</span>
+      <span id="err-text"></span>
+    </div>
+    <div id="success-msg" class="hidden flex items-center gap-2 p-3 rounded-xl bg-green-50 text-green-700 text-sm mb-4 font-medium">
+      <span class="material-symbols-outlined msym-fill text-[17px]">check_circle</span>
+      <span>Hesabınız oluşturuldu! Yönlendiriliyorsunuz...</span>
+    </div>
+
+    <form id="reg-form" onsubmit="doRegister(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">Ad Soyad</label>
+        <div class="relative">
+          <span class="material-symbols-outlined msym absolute left-3 top-1/2 -translate-y-1/2 text-ouv text-[18px]">badge</span>
+          <input id="inp-name" type="text" placeholder="Ad Soyad" required
+            class="w-full pl-10 pr-4 py-2.5 border border-surfc rounded-xl text-sm focus:border-sec transition-all bg-surf"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">E-posta</label>
+        <div class="relative">
+          <span class="material-symbols-outlined msym absolute left-3 top-1/2 -translate-y-1/2 text-ouv text-[18px]">mail</span>
+          <input id="inp-email" type="email" placeholder="ornek@mail.com" required
+            class="w-full pl-10 pr-4 py-2.5 border border-surfc rounded-xl text-sm focus:border-sec transition-all bg-surf"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">Şifre</label>
+        <div class="relative">
+          <span class="material-symbols-outlined msym absolute left-3 top-1/2 -translate-y-1/2 text-ouv text-[18px]">lock</span>
+          <input id="inp-pass" type="password" placeholder="En az 8 karakter" required minlength="8"
+            class="w-full pl-10 pr-12 py-2.5 border border-surfc rounded-xl text-sm focus:border-sec transition-all bg-surf"/>
+          <button type="button" onclick="togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-ouv hover:text-onsv">
+            <span id="eye-icon" class="material-symbols-outlined msym text-[18px]">visibility</span>
+          </button>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">Şifre Tekrar</label>
+        <div class="relative">
+          <span class="material-symbols-outlined msym absolute left-3 top-1/2 -translate-y-1/2 text-ouv text-[18px]">lock_reset</span>
+          <input id="inp-pass2" type="password" placeholder="Şifrenizi tekrar girin" required
+            class="w-full pl-10 pr-4 py-2.5 border border-surfc rounded-xl text-sm focus:border-sec transition-all bg-surf"/>
+        </div>
+      </div>
+
+      <div id="doctor-fields" class="hidden space-y-4">
+        <div class="h-px bg-surfc"></div>
+        <p class="text-xs font-semibold text-onsv uppercase tracking-wide">Doktor Bilgileri</p>
+        <div>
+          <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">Uzmanlık Alanı</label>
+          <div class="relative">
+            <span class="material-symbols-outlined msym absolute left-3 top-1/2 -translate-y-1/2 text-ouv text-[18px]">medical_services</span>
+            <select id="inp-specialty"
+              class="w-full pl-10 pr-4 py-2.5 border border-surfc rounded-xl text-sm focus:border-sec transition-all bg-surf appearance-none">
+              <option value="">-- Seçiniz --</option>
+              <option>Acil Tıp</option><option>Dahiliye</option><option>Kardiyoloji</option>
+              <option>Nöroloji</option><option>Ortopedi</option><option>Pediatri</option>
+              <option>Genel Cerrahi</option><option>Psikiyatri</option>
+              <option>Aile Hekimliği</option><option>Diğer</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">Klinik Kayıt Kodu</label>
+          <div class="relative">
+            <span class="material-symbols-outlined msym absolute left-3 top-1/2 -translate-y-1/2 text-ouv text-[18px]">vpn_key</span>
+            <input id="inp-clinic-code" type="text" placeholder="Kurumunuzdan aldığınız kod"
+              class="w-full pl-10 pr-4 py-2.5 border border-surfc rounded-xl text-sm focus:border-sec transition-all bg-surf"/>
+          </div>
+          <p class="text-[11px] text-ouv mt-1">Demo kodu: <span class="font-mono font-semibold text-sec">DEMO2026</span></p>
+        </div>
+      </div>
+
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input id="inp-kvkk" type="checkbox" required class="mt-0.5 w-4 h-4 rounded accent-sec flex-shrink-0"/>
+        <span class="text-xs text-onsv">
+          <a href="#" class="text-sec hover:underline">KVKK Aydınlatma Metni</a>'ni okudum ve onay veriyorum.
+        </span>
+      </label>
+
+      <button type="submit" id="btn-reg"
+        class="w-full py-3 bg-sec hover:bg-pri text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined msym-fill text-[18px]">how_to_reg</span>
+        <span id="btn-reg-text">Hesap Oluştur</span>
+      </button>
+    </form>
+
+    <div class="mt-5 text-center text-sm text-onsv">
+      Zaten hesabınız var mı?
+      <a href="login.html" class="text-sec font-semibold hover:underline underline-offset-2 ml-1">Giriş Yap</a>
+    </div>
+  </div>
+
+  <p class="text-center text-xs text-ouv mt-6">
+    <span class="material-symbols-outlined msym text-[13px] align-middle">shield</span>
+    Verileriniz KVKK kapsamında korunmaktadır · AnamnezAI v4.0
+  </p>
+</div>
+</main>
+
+<script>
+const API = '';
+let currentTab = 'patient';
+
+function setTab(tab) {
+  currentTab = tab;
+  const isDoc = tab === 'doctor';
+  document.getElementById('tab-patient').className = `flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-semibold transition-all ${isDoc ? 'text-onsv' : 'tab-active'}`;
+  document.getElementById('tab-doctor').className = `flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-semibold transition-all ${isDoc ? 'tab-active' : 'text-onsv'}`;
+  document.getElementById('doctor-fields').className = `space-y-4 ${isDoc ? '' : 'hidden'}`;
+  document.getElementById('inp-clinic-code').required = isDoc;
+  document.getElementById('inp-specialty').required = isDoc;
+  hideErr();
+}
+
+function togglePass() {
+  const inp = document.getElementById('inp-pass');
+  const icon = document.getElementById('eye-icon');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  icon.textContent = inp.type === 'password' ? 'visibility' : 'visibility_off';
+}
+
+function showErr(msg) {
+  document.getElementById('err-text').textContent = msg;
+  document.getElementById('err-msg').classList.remove('hidden');
+}
+function hideErr() { document.getElementById('err-msg').classList.add('hidden'); }
+
+async function doRegister(e) {
+  e.preventDefault(); hideErr();
+  const password = document.getElementById('inp-pass').value;
+  const password2 = document.getElementById('inp-pass2').value;
+  if (password !== password2) { showErr('Şifreler eşleşmiyor.'); return; }
+  if (password.length < 8) { showErr('Şifre en az 8 karakter olmalıdır.'); return; }
+
+  const isDoc = currentTab === 'doctor';
+  const body = {
+    name: document.getElementById('inp-name').value.trim(),
+    email: document.getElementById('inp-email').value.trim(),
+    password,
+    role: isDoc ? 'doctor' : 'patient',
+    specialty: isDoc ? document.getElementById('inp-specialty').value : null,
+    clinic_code: isDoc ? document.getElementById('inp-clinic-code').value.trim() : null,
+  };
+
+  const btn = document.getElementById('btn-reg');
+  document.getElementById('btn-reg-text').textContent = 'Kaydediliyor...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API}/auth/register`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) { showErr(data.detail || 'Kayıt başarısız.'); return; }
+
+    localStorage.setItem('anamnez_token', data.access_token);
+    localStorage.setItem('anamnez_user', JSON.stringify(data.user));
+    document.getElementById('success-msg').classList.remove('hidden');
+    document.getElementById('reg-form').classList.add('hidden');
+
+    setTimeout(() => {
+      const role = data.user.role;
+      window.location.href = ['doctor','admin','personnel'].includes(role) ? 'doctor.html' : 'index.html';
+    }, 1500);
+  } catch(err) {
+    showErr('Sunucuya bağlanılamadı.');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btn-reg-text').textContent = 'Hesap Oluştur';
+  }
+}
+
+(function() {
+  const token = localStorage.getItem('anamnez_token');
+  const user = JSON.parse(localStorage.getItem('anamnez_user') || 'null');
+  if (token && user) {
+    window.location.href = ['doctor','admin','personnel'].includes(user.role) ? 'doctor.html' : 'index.html';
+  }
+})();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — Profilim</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      pri:"#002f40", pric:"#00475e", sec:"#006a68", secc:"#a0f1ed",
+      surf:"#f4f7f9", surfc:"#e8ecee", surfcl:"#eef1f3", surflow:"#ffffff",
+      surfch:"#dde1e3", ons:"#191c1d", onsv:"#3f4749",
+      ouv:"#bfc7ca", err:"#ba1a1a", errc:"#ffdad6", warn:"#e07b26"
+    },
+    fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}
+  }}
+}
+</script>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#eef4f7 0%,#f4f7f9 60%,#ebf4f3 100%);min-height:100vh;color:#191c1d}
+  h1,h2,h3{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  .glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+  .card{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 8px 32px rgba(0,47,64,0.07)}
+  .fade{animation:fadeUp .4s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px #006a68}
+  .triage-red{background:#fff5f5;color:#ba1a1a;border-color:#ffa8a8}
+  .triage-yellow{background:#fff8f0;color:#b05508;border-color:#ffcf8b}
+  .triage-green{background:#f0faf9;color:#006a68;border-color:#a0f1ed}
+  .triage-pending{background:#f4f7f9;color:#8c9499;border-color:#c5cdd1}
+  .scroll{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#c0c7cd transparent}
+  .spin{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#f0faf9;color:#006a68;border-radius:100px;font-size:11px;font-weight:600}
+  .tag-red{background:#fff5f5;color:#ba1a1a}
+  .tag-blue{background:#eff6ff;color:#1d4ed8}
+  .tag-input{cursor:pointer}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="fixed top-0 w-full z-50 glass border-b border-white/30 px-5 py-3 flex justify-between items-center h-14">
+  <a href="index.html" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-[18px]">monitor_heart</span>
+    </div>
+    <span class="font-head font-bold text-pri text-[15px]">AnamnezAI</span>
+  </a>
+  <div class="flex items-center gap-3">
+    <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sec text-white text-[12px] font-bold hover:bg-pri transition-all">
+      <span class="material-symbols-outlined msym text-[15px]">add_circle</span>
+      Yeni Mülakat
+    </a>
+    <button onclick="doLogout()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surf border border-surfc text-[12px] font-semibold text-onsv hover:bg-surfc transition-all">
+      <span class="material-symbols-outlined msym text-[15px]">logout</span>
+      <span id="nav-user-name">Çıkış</span>
+    </button>
+  </div>
+</header>
+
+<main class="pt-14 min-h-screen px-4 py-8 max-w-4xl mx-auto">
+
+  <!-- Profil Başlığı -->
+  <div class="fade mb-6 flex items-center gap-4">
+    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-pric to-sec flex items-center justify-center shadow-lg flex-shrink-0">
+      <span class="material-symbols-outlined msym-fill text-white text-3xl">account_circle</span>
+    </div>
+    <div>
+      <h1 class="text-2xl font-head font-bold text-pri" id="profile-name">Yükleniyor...</h1>
+      <p class="text-sm text-onsv" id="profile-email">—</p>
+      <span class="inline-flex items-center gap-1 mt-0.5 px-2.5 py-0.5 rounded-full bg-secc/50 text-sec text-[11px] font-bold uppercase tracking-wide">
+        <span class="material-symbols-outlined msym-fill text-[11px]">verified_user</span>
+        <span id="profile-role">Hasta</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-5">
+
+    <!-- Sol Kolon: Tıbbi Profil -->
+    <div class="space-y-5">
+
+      <!-- Temel Bilgiler -->
+      <div class="card p-5 fade">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined msym-fill text-sec text-[18px]">medical_information</span>
+          <h2 class="font-head font-bold text-pri text-[15px]">Tıbbi Profil</h2>
+          <button onclick="saveProfile()" id="btn-save"
+            class="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-sec text-white rounded-xl text-[12px] font-bold hover:bg-pri transition-all">
+            <span class="material-symbols-outlined msym text-[14px]">save</span>
+            Kaydet
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Doğum Yılı</label>
+              <input id="inp-birth-year" type="number" min="1920" max="2020" placeholder="1990"
+                class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all"/>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Cinsiyet</label>
+              <select id="inp-gender" class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all appearance-none">
+                <option value="">-- Seçin --</option>
+                <option>Erkek</option><option>Kadın</option><option>Belirtmek İstemiyorum</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Kan Grubu</label>
+            <select id="inp-blood" class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all appearance-none">
+              <option value="">-- Seçin --</option>
+              <option>A Rh+</option><option>A Rh-</option><option>B Rh+</option><option>B Rh-</option>
+              <option>AB Rh+</option><option>AB Rh-</option><option>O Rh+</option><option>O Rh-</option>
+            </select>
+          </div>
+
+          <!-- Kronik Hastalıklar -->
+          <div>
+            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Kronik Hastalıklar</label>
+            <div id="chronic-tags" class="flex flex-wrap gap-1.5 min-h-[32px] p-2 border border-surfc rounded-xl bg-surf mb-1.5"></div>
+            <div class="flex gap-2">
+              <input id="inp-chronic" type="text" placeholder="Hastalık ekle... (Enter)"
+                class="flex-1 px-3 py-1.5 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all"
+                onkeydown="addTag(event,'chronic')"/>
+              <button onclick="addTagBtn('chronic')" class="px-3 py-1.5 bg-surfc rounded-xl text-sm text-onsv hover:bg-ouv/40 transition-all">
+                <span class="material-symbols-outlined msym text-[15px]">add</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- İlaçlar -->
+          <div>
+            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Sürekli Kullanılan İlaçlar</label>
+            <div id="medication-tags" class="flex flex-wrap gap-1.5 min-h-[32px] p-2 border border-surfc rounded-xl bg-surf mb-1.5"></div>
+            <div class="flex gap-2">
+              <input id="inp-medication" type="text" placeholder="İlaç ekle... (Enter)"
+                class="flex-1 px-3 py-1.5 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all"
+                onkeydown="addTag(event,'medication')"/>
+              <button onclick="addTagBtn('medication')" class="px-3 py-1.5 bg-surfc rounded-xl text-sm text-onsv hover:bg-ouv/40 transition-all">
+                <span class="material-symbols-outlined msym text-[15px]">add</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Alerjiler -->
+          <div>
+            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Alerjiler</label>
+            <div id="allergy-tags" class="flex flex-wrap gap-1.5 min-h-[32px] p-2 border border-surfc rounded-xl bg-surf mb-1.5"></div>
+            <div class="flex gap-2">
+              <input id="inp-allergy" type="text" placeholder="Alerji ekle... (Enter)"
+                class="flex-1 px-3 py-1.5 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all"
+                onkeydown="addTag(event,'allergy')"/>
+              <button onclick="addTagBtn('allergy')" class="px-3 py-1.5 bg-surfc rounded-xl text-sm text-onsv hover:bg-ouv/40 transition-all">
+                <span class="material-symbols-outlined msym text-[15px]">add</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Notlar -->
+          <div>
+            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Ek Notlar</label>
+            <textarea id="inp-notes" rows="2" placeholder="Genel sağlık notu, ameliyat geçmişi vb."
+              class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all resize-none"></textarea>
+          </div>
+        </div>
+
+        <div id="save-msg" class="hidden mt-3 flex items-center gap-2 p-2.5 rounded-xl bg-green-50 text-green-700 text-sm font-medium">
+          <span class="material-symbols-outlined msym-fill text-[16px]">check_circle</span>
+          Profil kaydedildi ✓
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sağ Kolon: Geçmiş Raporlar -->
+    <div class="space-y-5">
+
+      <!-- İstatistik Özeti -->
+      <div class="grid grid-cols-3 gap-3 fade">
+        <div class="card p-4 text-center">
+          <p class="text-[28px] font-head font-bold text-pri" id="stat-total">—</p>
+          <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mt-0.5">Toplam</p>
+        </div>
+        <div class="card p-4 text-center" style="background:#fff5f5">
+          <p class="text-[28px] font-head font-bold text-err" id="stat-red">—</p>
+          <p class="text-[10px] font-bold uppercase tracking-wide mt-0.5" style="color:#ba1a1a">Acil</p>
+        </div>
+        <div class="card p-4 text-center" style="background:#f0faf9">
+          <p class="text-[28px] font-head font-bold text-sec" id="stat-green">—</p>
+          <p class="text-[10px] font-bold text-sec uppercase tracking-wide mt-0.5">Rutin</p>
+        </div>
+      </div>
+
+      <!-- Geçmiş Ziyaretler -->
+      <div class="card overflow-hidden fade">
+        <div class="px-5 py-4 border-b border-surfc flex justify-between items-center">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined msym text-sec text-[17px]">history</span>
+            <h2 class="font-head font-bold text-pri text-[14px]">Geçmiş Ziyaretler</h2>
+          </div>
+          <span id="history-count" class="text-[11px] font-bold text-onsv bg-surfc px-2.5 py-1 rounded-full">0 kayıt</span>
+        </div>
+
+        <div id="history-loading" class="p-6 text-center">
+          <span class="material-symbols-outlined msym text-ouv text-3xl spin">refresh</span>
+          <p class="text-sm text-onsv mt-2">Yükleniyor...</p>
+        </div>
+
+        <div id="history-empty" class="hidden p-8 text-center">
+          <span class="material-symbols-outlined msym text-ouv text-4xl">folder_open</span>
+          <p class="text-sm font-semibold text-onsv mt-2">Henüz tamamlanmış mülakat yok</p>
+          <p class="text-xs text-ouv mt-1">İlk mülakatınızı başlatmak için aşağıdaki butona tıklayın</p>
+          <a href="index.html" class="inline-flex items-center gap-2 mt-4 px-4 py-2.5 bg-sec text-white rounded-xl text-sm font-bold hover:bg-pri transition-all">
+            <span class="material-symbols-outlined msym text-[15px]">play_arrow</span>
+            Mülakat Başlat
+          </a>
+        </div>
+
+        <div id="history-list" class="hidden divide-y divide-surfc scroll max-h-[480px]"></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold shadow-lg text-white max-w-xs"></div>
+
+<script>
+const API = '';
+const TRIAGE_CFG = {
+  RED:    {bg:'#fff5f5',color:'#ba1a1a',label:'🔴 ACİL',border:'#ffa8a8'},
+  YELLOW: {bg:'#fff8f0',color:'#b05508',label:'🟡 ACIL',border:'#ffcf8b'},
+  GREEN:  {bg:'#f0faf9',color:'#006a68',label:'🟢 RUTİN',border:'#a0f1ed'},
+  PENDING:{bg:'#f4f7f9',color:'#8c9499',label:'⏳ BEKL',border:'#c5cdd1'},
+};
+
+// Per-category state
+const profileTags = { chronic: [], medication: [], allergy: [] };
+
+function getToken() { return localStorage.getItem('anamnez_token'); }
+function getUser()  { return JSON.parse(localStorage.getItem('anamnez_user') || 'null'); }
+function authHeaders() {
+  const t = getToken();
+  return t ? {'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json'} : {'Content-Type': 'application/json'};
+}
+
+function doLogout() {
+  localStorage.removeItem('anamnez_token');
+  localStorage.removeItem('anamnez_user');
+  window.location.href = 'login.html';
+}
+
+// Guard
+(function() {
+  const token = getToken(); const user = getUser();
+  if (!token || !user) { window.location.href = 'login.html'; return; }
+  document.getElementById('profile-name').textContent = user.name || 'Kullanıcı';
+  document.getElementById('profile-email').textContent = user.email || '';
+  document.getElementById('nav-user-name').textContent = user.name?.split(' ')[0] || 'Çıkış';
+  const roleMap = {patient:'Hasta', doctor:'Doktor', admin:'Admin', personnel:'Personel'};
+  document.getElementById('profile-role').textContent = roleMap[user.role] || user.role;
+})();
+
+function showToast(msg, isErr=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isErr ? '#ba1a1a' : '#006a68';
+  el.classList.remove('hidden'); el.classList.add('flex');
+  setTimeout(() => { el.classList.add('hidden'); el.classList.remove('flex'); }, 3000);
+}
+
+// Tag management
+function renderTags(category) {
+  const container = document.getElementById(`${category}-tags`);
+  const colorMap = { chronic: 'tag-blue', medication: 'tag', allergy: 'tag-red' };
+  container.innerHTML = profileTags[category].map((t, i) =>
+    `<span class="tag ${colorMap[category]}">
+      ${t}
+      <button onclick="removeTag('${category}',${i})" class="ml-1 hover:opacity-70 transition-opacity text-current">
+        <span class="material-symbols-outlined msym text-[11px]">close</span>
+      </button>
+    </span>`
+  ).join('');
+}
+
+function addTag(event, category) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  const inp = document.getElementById(`inp-${category === 'chronic' ? 'chronic' : category === 'medication' ? 'medication' : 'allergy'}`);
+  const val = inp.value.trim();
+  if (val && !profileTags[category].includes(val)) {
+    profileTags[category].push(val);
+    renderTags(category);
+  }
+  inp.value = '';
+}
+
+function addTagBtn(category) {
+  const idMap = {chronic:'inp-chronic', medication:'inp-medication', allergy:'inp-allergy'};
+  const inp = document.getElementById(idMap[category]);
+  const val = inp.value.trim();
+  if (val && !profileTags[category].includes(val)) {
+    profileTags[category].push(val);
+    renderTags(category);
+  }
+  inp.value = '';
+}
+
+function removeTag(category, idx) {
+  profileTags[category].splice(idx, 1);
+  renderTags(category);
+}
+
+async function loadProfile() {
+  try {
+    const res = await fetch(`${API}/auth/profile`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const p = data.profile || {};
+    if (p.birth_year) document.getElementById('inp-birth-year').value = p.birth_year;
+    if (p.gender)     document.getElementById('inp-gender').value = p.gender;
+    if (p.blood_type) document.getElementById('inp-blood').value = p.blood_type;
+    if (p.notes)      document.getElementById('inp-notes').value = p.notes;
+    if (Array.isArray(p.chronic_diseases)) { profileTags.chronic = p.chronic_diseases; renderTags('chronic'); }
+    if (Array.isArray(p.medications))      { profileTags.medication = p.medications;   renderTags('medication'); }
+    if (Array.isArray(p.allergies))        { profileTags.allergy = p.allergies;        renderTags('allergy'); }
+  } catch(e) {
+    showToast('Profil yüklenemedi.', true);
+  }
+}
+
+async function saveProfile() {
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined msym spin text-[14px]">refresh</span> Kaydediliyor...';
+  const body = {
+    birth_year: parseInt(document.getElementById('inp-birth-year').value) || null,
+    gender: document.getElementById('inp-gender').value || null,
+    blood_type: document.getElementById('inp-blood').value || null,
+    chronic_diseases: profileTags.chronic,
+    medications: profileTags.medication,
+    allergies: profileTags.allergy,
+    notes: document.getElementById('inp-notes').value.trim(),
+  };
+  try {
+    const res = await fetch(`${API}/auth/profile`, {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error();
+    document.getElementById('save-msg').classList.remove('hidden');
+    document.getElementById('save-msg').classList.add('flex');
+    showToast('Profil kaydedildi ✓');
+    setTimeout(() => {
+      document.getElementById('save-msg').classList.add('hidden');
+      document.getElementById('save-msg').classList.remove('flex');
+    }, 3000);
+  } catch(e) {
+    showToast('Kayıt başarısız.', true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined msym text-[14px]">save</span> Kaydet';
+  }
+}
+
+async function loadHistory() {
+  try {
+    const res = await fetch(`${API}/api/patient/history`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const history = data.history || [];
+
+    document.getElementById('history-loading').classList.add('hidden');
+    document.getElementById('stat-total').textContent = data.total || 0;
+    document.getElementById('stat-red').textContent = history.filter(h=>h.triage_level==='RED').length;
+    document.getElementById('stat-green').textContent = history.filter(h=>h.triage_level==='GREEN').length;
+    document.getElementById('history-count').textContent = `${history.length} kayıt`;
+
+    if (history.length === 0) {
+      document.getElementById('history-empty').classList.remove('hidden');
+      return;
+    }
+
+    const list = document.getElementById('history-list');
+    list.classList.remove('hidden');
+    list.innerHTML = history.map(h => {
+      const cfg = TRIAGE_CFG[h.triage_level] || TRIAGE_CFG.PENDING;
+      const date = h.created_at ? new Date(h.created_at).toLocaleDateString('tr-TR', {day:'2-digit',month:'short',year:'numeric'}) : '—';
+      const time = h.created_at ? new Date(h.created_at).toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'}) : '';
+      return `
+      <div class="px-5 py-4 hover:bg-surf transition-colors cursor-pointer" onclick="openSummary('${h.session_id}')">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:${cfg.bg}">
+            <span class="material-symbols-outlined msym text-[18px]" style="color:${cfg.color}">clinical_notes</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full border" style="background:${cfg.bg};color:${cfg.color};border-color:${cfg.border}">${cfg.label}</span>
+              <span class="text-[10px] text-ouv">${date} ${time}</span>
+            </div>
+            <p class="text-sm font-semibold text-pri truncate">${h.chief_complaint || 'Şikayet bilgisi yok'}</p>
+            ${h.symptoms_summary ? `<p class="text-xs text-onsv mt-0.5 line-clamp-2">${h.symptoms_summary}</p>` : ''}
+            ${h.recommended_action ? `<p class="text-xs text-sec mt-1 font-medium">→ ${h.recommended_action}</p>` : ''}
+          </div>
+          <div class="text-center flex-shrink-0">
+            <div class="text-[20px] font-head font-bold" style="color:${cfg.color}">${h.confidence_score || '—'}</div>
+            <div class="text-[9px] text-ouv font-bold">% GÜVENCİ</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('history-loading').classList.add('hidden');
+    document.getElementById('history-empty').classList.remove('hidden');
+    showToast('Geçmiş yüklenemedi.', true);
+  }
+}
+
+function openSummary(sessionId) {
+  // Özeti localStorage'a kaydet ve summary.html'e git
+  fetch(`${API}/api/session/${sessionId}/summary`, { headers: authHeaders() })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data) {
+        localStorage.setItem('anamnez_summary', JSON.stringify(data));
+        window.location.href = 'summary.html';
+      } else {
+        showToast('Rapor yüklenemedi.', true);
+      }
+    })
+    .catch(() => showToast('Rapor yüklenemedi.', true));
+}
+
+// Init
+loadProfile();
+loadHistory();
+</script>
+</body>
+</html>
+

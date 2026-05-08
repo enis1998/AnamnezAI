@@ -5,10 +5,11 @@ Gemma 4 Good Hackathon — Health & Sciences + Ollama Prize Tracks
 v4.0: SQLite kalıcılık + Multimodal görüntü analizi + Gerçek zamanlı SSE kuyruğu + Vital bulgular
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import AsyncGenerator, Optional
 import httpx
@@ -22,6 +23,15 @@ import asyncio
 import base64
 import re
 from datetime import datetime
+
+# Auth modülü
+from auth import (
+    init_auth_tables, create_user, get_user_by_email,
+    verify_password, create_access_token, get_current_user,
+    require_auth, require_doctor, require_admin,
+    get_patient_profile, upsert_patient_profile,
+    UserCreate, UserLogin, Token, UserOut, Role
+)
 
 # ─────────────────────────────────────────────
 #  Config
@@ -516,10 +526,79 @@ def clean_gemma_response(text: str) -> str:
 async def startup_event():
     """Uygulama başladığında DB'yi başlat, geçmiş verileri yükle ve modeli önceden ısıt."""
     init_db()
+    init_auth_tables()      # ← Kullanıcı tablolarını oluştur (+ demo doktor)
     db_load_all()
     print(f"[AnamnezAI v4.0] DB hazır: {DB_PATH}")
     # Modeli arka planda ısıt — ilk hasta gelene kadar hazır olsun
     asyncio.create_task(_background_warmup())
+
+# ─────────────────────────────────────────────
+#  Auth Endpoints
+# ─────────────────────────────────────────────
+
+@app.post("/auth/register", response_model=Token)
+async def register(data: UserCreate):
+    """Yeni kullanıcı kaydı (varsayılan: hasta). Doktor kaydı için clinic_code gerekli."""
+    user = create_user(data)
+    token = create_access_token({"sub": user["user_id"], "role": user["role"]})
+    return Token(
+        access_token=token,
+        user=UserOut(**user)
+    )
+
+
+@app.post("/auth/login", response_model=Token)
+async def login(data: UserLogin):
+    """E-posta + şifre ile giriş — JWT token döndürür."""
+    user = get_user_by_email(data.email.lower().strip())
+    if not user or not verify_password(data.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="E-posta veya şifre hatalı.")
+    token = create_access_token({"sub": user["user_id"], "role": user["role"]})
+    return Token(
+        access_token=token,
+        user=UserOut(
+            user_id=user["user_id"], name=user["name"], email=user["email"],
+            role=user["role"], specialty=user.get("specialty"),
+            created_at=user["created_at"]
+        )
+    )
+
+
+@app.get("/auth/me", response_model=UserOut)
+async def me(current_user: dict = Depends(require_auth)):
+    """Mevcut oturum bilgisini döndürür."""
+    return UserOut(
+        user_id=current_user["user_id"], name=current_user["name"],
+        email=current_user["email"], role=current_user["role"],
+        specialty=current_user.get("specialty"), created_at=current_user["created_at"]
+    )
+
+
+@app.get("/auth/profile")
+async def get_my_profile(current_user: dict = Depends(require_auth)):
+    """Hasta profilini döndürür (sadece hasta rolü için)."""
+    profile = get_patient_profile(current_user["user_id"])
+    return {"user": {k: current_user[k] for k in ("user_id","name","email","role","specialty")},
+            "profile": profile or {}}
+
+
+@app.put("/auth/profile")
+async def update_my_profile(body: dict, current_user: dict = Depends(require_auth)):
+    """Hasta profilini günceller."""
+    upsert_patient_profile(current_user["user_id"], body)
+    return {"status": "ok", "message": "Profil güncellendi."}
+
+
+@app.get("/auth/patients")
+async def list_patients(current_user: dict = Depends(require_doctor)):
+    """Doktor/admin için kayıtlı hasta listesi."""
+    import sqlite3 as _sq3
+    with _sq3.connect(DB_PATH) as conn:
+        conn.row_factory = _sq3.Row
+        rows = conn.execute(
+            "SELECT user_id,name,email,created_at FROM users WHERE role='patient' AND is_active=1 ORDER BY created_at DESC"
+        ).fetchall()
+    return {"patients": [dict(r) for r in rows]}
 
 # ─────────────────────────────────────────────
 #  Endpoints
@@ -675,7 +754,7 @@ async def health_check():
 
 
 @app.post("/api/session/start", response_model=SessionResponse)
-async def start_session(req: StartSessionRequest):
+async def start_session(req: StartSessionRequest, current_user: Optional[dict] = Depends(get_current_user)):
     """Yeni hasta mülakatı başlatır — ilk soruyu Gemma 4 + RAG ile üretir. Vital bulgular kaydedilir."""
     session_id = str(uuid.uuid4())
     lang = req.language
@@ -714,6 +793,7 @@ async def start_session(req: StartSessionRequest):
         "completed": False,
         "vitals": vitals_dict,
         "image_analyses": [],
+        "patient_id": current_user["user_id"] if current_user else None,
         "created_at": datetime.utcnow().isoformat(),
     }
     db_save_session(session_id, sessions[session_id])
@@ -1036,8 +1116,8 @@ async def stream_patient_queue():
 
 
 @app.delete("/api/session/{session_id}")
-async def delete_session(session_id: str):
-    """Oturumu siler (HIPAA uyumu için)."""
+async def delete_session(session_id: str, current_user: dict = Depends(require_doctor)):
+    """Oturumu siler (HIPAA uyumu için). Sadece doktor/admin yapabilir."""
     if session_id in sessions:
         del sessions[session_id]
         summaries.pop(session_id, None)
@@ -1045,6 +1125,238 @@ async def delete_session(session_id: str):
         await notify_queue_update()
         return {"message": "Oturum silindi."}
     raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+
+
+# ─────────────────────────────────────────────
+#  Sprint 2 — Hasta Geçmişi
+# ─────────────────────────────────────────────
+
+@app.get("/api/patient/history")
+async def get_patient_history(current_user: dict = Depends(require_auth)):
+    """Mevcut hastanın tüm tamamlanmış oturumlarını ve özetlerini döndürür."""
+    patient_id = current_user["user_id"]
+    history = []
+    for sid, s in sessions.items():
+        if s.get("patient_id") == patient_id and s.get("completed"):
+            entry = {
+                "session_id": sid,
+                "created_at": s.get("created_at", ""),
+                "patient_name": s.get("patient_name"),
+                "age": s.get("age"),
+                "gender": s.get("gender"),
+                "vitals": s.get("vitals"),
+                "triage_level": "PENDING",
+                "triage_color": "#8c9499",
+                "chief_complaint": "Özet bekleniyor...",
+                "confidence_score": 0,
+            }
+            if sid in summaries:
+                entry.update({
+                    "triage_level": summaries[sid].get("triage_level", "PENDING"),
+                    "triage_color": summaries[sid].get("triage_color", "#8c9499"),
+                    "chief_complaint": summaries[sid].get("chief_complaint", ""),
+                    "confidence_score": summaries[sid].get("confidence_score", 0),
+                    "symptoms_summary": summaries[sid].get("symptoms_summary", ""),
+                    "recommended_action": summaries[sid].get("recommended_action", ""),
+                    "generated_at": summaries[sid].get("generated_at", ""),
+                })
+            history.append(entry)
+    history.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    return {"history": history[:20], "total": len(history)}
+
+
+# ─────────────────────────────────────────────
+#  Sprint 3 — Doktor İş Akışı
+# ─────────────────────────────────────────────
+
+@app.post("/api/session/{session_id}/note")
+async def add_doctor_note(session_id: str, body: dict, current_user: dict = Depends(require_doctor)):
+    """Doktor notu ekler / günceller."""
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+    note_text = body.get("note", "").strip()
+    if not note_text:
+        raise HTTPException(status_code=400, detail="Not metni boş olamaz.")
+    
+    note = {
+        "text": note_text,
+        "doctor_id": current_user["user_id"],
+        "doctor_name": current_user["name"],
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    if "doctor_notes" not in session:
+        session["doctor_notes"] = []
+    session["doctor_notes"].append(note)
+    db_save_session(session_id, session)
+    
+    # Özet varsa oraya da kaydet
+    if session_id in summaries:
+        summaries[session_id]["doctor_notes"] = session["doctor_notes"]
+        db_save_summary(session_id, summaries[session_id])
+    
+    await notify_queue_update()
+    return {"status": "ok", "note": note, "total_notes": len(session["doctor_notes"])}
+
+
+@app.put("/api/session/{session_id}/triage")
+async def override_triage(session_id: str, body: dict, current_user: dict = Depends(require_doctor)):
+    """Doktor triaj seviyesini değiştirir."""
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+    new_level = body.get("triage_level", "").upper()
+    if new_level not in ("RED", "YELLOW", "GREEN"):
+        raise HTTPException(status_code=400, detail="Geçersiz triaj seviyesi. RED / YELLOW / GREEN olmalı.")
+    
+    session["triage_override"] = {
+        "level": new_level,
+        "original_level": summaries.get(session_id, {}).get("triage_level"),
+        "doctor_id": current_user["user_id"],
+        "doctor_name": current_user["name"],
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    db_save_session(session_id, session)
+    
+    if session_id in summaries:
+        summaries[session_id]["triage_level"] = new_level
+        summaries[session_id]["triage_color"] = TRIAGE_COLOR[new_level]
+        summaries[session_id]["triage_override"] = session["triage_override"]
+        db_save_summary(session_id, summaries[session_id])
+    
+    await notify_queue_update()
+    return {"status": "ok", "new_level": new_level, "override": session["triage_override"]}
+
+
+@app.put("/api/session/{session_id}/seen")
+async def mark_as_seen(session_id: str, current_user: dict = Depends(require_doctor)):
+    """Hasta 'Görüldü' olarak işaretler — kuyruktan çıkarır."""
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+    session["seen_by"] = {
+        "doctor_id": current_user["user_id"],
+        "doctor_name": current_user["name"],
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    session["is_seen"] = True
+    db_save_session(session_id, session)
+    if session_id in summaries:
+        summaries[session_id]["is_seen"] = True
+        db_save_summary(session_id, summaries[session_id])
+    await notify_queue_update()
+    return {"status": "ok", "seen_by": session["seen_by"]}
+
+
+@app.get("/api/session/{session_id}/icd10")
+async def suggest_icd10(session_id: str, current_user: dict = Depends(require_doctor)):
+    """Gemma 4 ile otomatik ICD-10 kod önerisi üretir."""
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+    
+    summary = summaries.get(session_id, {})
+    complaint = summary.get("chief_complaint", "")
+    conditions = summary.get("possible_conditions", [])
+    
+    if not complaint and not conditions:
+        raise HTTPException(status_code=400, detail="Özet henüz oluşturulmamış.")
+    
+    prompt = (
+        f"Klinik bulgular:\n"
+        f"Ana şikayet: {complaint}\n"
+        f"Olası tanılar: {', '.join(conditions)}\n\n"
+        f"Bu bulgular için en uygun ICD-10 kodlarını (maksimum 3 adet) öner. "
+        f"Format: [{{'code': 'X00.0', 'description': 'Tanı açıklaması', 'confidence': 'yüksek/orta/düşük'}}] "
+        f"sadece JSON döndür."
+    )
+    system = "Sen ICD-10 kodlama uzmanısın. Verilen klinik tanılara göre doğru ICD-10 kodlarını JSON formatında öner. Sadece JSON döndür."
+    
+    raw = await ask_gemma(prompt, system)
+    try:
+        start = raw.find("[")
+        end = raw.rfind("]") + 1
+        codes = json.loads(raw[start:end])
+    except Exception:
+        codes = [{"code": "Z03.89", "description": "Diğer şüpheli hastalıklar için gözlem", "confidence": "düşük"}]
+    
+    return {"session_id": session_id, "icd10_suggestions": codes, "generated_by": "gemma4"}
+
+
+# ─────────────────────────────────────────────
+#  Sprint 8 — Analitik
+# ─────────────────────────────────────────────
+
+@app.get("/api/analytics")
+async def get_analytics(current_user: dict = Depends(require_doctor)):
+    """Temel triaj istatistikleri ve analitik verileri döndürür."""
+    all_summaries = list(summaries.values())
+    all_sessions_list = list(sessions.values())
+    
+    total = len([s for s in all_sessions_list if s.get("completed")])
+    red = sum(1 for s in all_summaries if s.get("triage_level") == "RED")
+    yellow = sum(1 for s in all_summaries if s.get("triage_level") == "YELLOW")
+    green = sum(1 for s in all_summaries if s.get("triage_level") == "GREEN")
+    seen = sum(1 for s in all_sessions_list if s.get("is_seen"))
+    
+    # Ortalama güven skoru
+    scores = [s.get("confidence_score", 0) for s in all_summaries if s.get("confidence_score")]
+    avg_confidence = round(sum(scores) / len(scores), 1) if scores else 0
+    
+    # Cinsiyet dağılımı
+    genders = {}
+    for s in all_sessions_list:
+        g = s.get("gender", "Bilinmiyor")
+        genders[g] = genders.get(g, 0) + 1
+    
+    # Yaş grupları
+    age_groups = {"0-17": 0, "18-35": 0, "36-60": 0, "60+": 0}
+    for s in all_sessions_list:
+        age = s.get("age", 0)
+        if age <= 17: age_groups["0-17"] += 1
+        elif age <= 35: age_groups["18-35"] += 1
+        elif age <= 60: age_groups["36-60"] += 1
+        else: age_groups["60+"] += 1
+    
+    # Son 7 gün günlük triaj sayıları (basit)
+    from datetime import timedelta
+    daily = {}
+    today = datetime.utcnow().date()
+    for s in all_sessions_list:
+        ct = s.get("created_at", "")
+        if ct:
+            try:
+                d = datetime.fromisoformat(ct).date()
+                delta = (today - d).days
+                if 0 <= delta <= 6:
+                    key = d.isoformat()
+                    daily[key] = daily.get(key, 0) + 1
+            except Exception:
+                pass
+    
+    # En sık semptomlar (urgency flags)
+    flag_count = {}
+    for s in all_summaries:
+        for flag in s.get("urgency_flags", []):
+            flag_count[flag] = flag_count.get(flag, 0) + 1
+    top_flags = sorted(flag_count.items(), key=lambda x: -x[1])[:5]
+    
+    return {
+        "summary": {
+            "total_completed": total,
+            "red": red, "yellow": yellow, "green": green,
+            "seen": seen, "pending": total - seen,
+            "avg_confidence": avg_confidence,
+        },
+        "distributions": {
+            "gender": genders,
+            "age_groups": age_groups,
+            "triage": {"RED": red, "YELLOW": yellow, "GREEN": green},
+        },
+        "daily_activity": daily,
+        "top_urgency_flags": [{"flag": f, "count": c} for f, c in top_flags],
+        "generated_at": datetime.utcnow().isoformat(),
+    }
 
 
 # ─────────────────────────────────────────────

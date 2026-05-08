@@ -68,11 +68,14 @@ tailwind.config={theme:{extend:{colors:{
         <div class="w-8 h-8 rounded-full bg-pric/10 flex items-center justify-center">
           <span class="material-symbols-outlined msym text-pric text-[16px]">stethoscope</span>
         </div>
-        <div>
-          <p class="text-[12px] font-bold text-pri">Dr. Kullanıcı</p>
-          <p class="text-[10px] text-onsv">Klinik Yöneticisi</p>
+        <div class="flex-1 min-w-0">
+          <p class="text-[12px] font-bold text-pri truncate" id="doctor-name-sidebar">Dr. Kullanıcı</p>
+          <p class="text-[10px] text-onsv truncate" id="doctor-spec-sidebar">Klinik Yöneticisi</p>
         </div>
       </div>
+      <button onclick="doLogout()" class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-onsv hover:bg-errc hover:text-err transition-all text-[12px] font-medium mt-1">
+        <span class="material-symbols-outlined msym text-[16px]">logout</span>Çıkış Yap
+      </button>
     </div>
   </aside>
 
@@ -140,6 +143,20 @@ tailwind.config={theme:{extend:{colors:{
         <div id="live-table"></div>
       </div>
 
+      <!-- Analytics Panel (hidden by default) -->
+      <div id="analytics-panel" class="hidden card mb-5 p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined msym text-sec text-[17px]">bar_chart</span>
+          <h2 class="font-head font-bold text-pri text-[14px]">Triaj Analitik</h2>
+          <button onclick="hideAnalytics()" class="ml-auto w-7 h-7 rounded-lg bg-surfc hover:bg-ouv/30 flex items-center justify-center">
+            <span class="material-symbols-outlined msym text-onsv text-[15px]">close</span>
+          </button>
+        </div>
+        <div id="analytics-content">
+          <div class="text-center py-6"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>
+        </div>
+      </div>
+
       <!-- Demo Patients -->
       <div class="card overflow-hidden">
         <div class="px-5 py-4 border-b border-surfc flex items-center gap-2">
@@ -169,6 +186,42 @@ tailwind.config={theme:{extend:{colors:{
 <script>
 const API = 'http://localhost:8000';
 let allPatients = {};
+let currentDetailSid = null;
+
+// ── Auth Guard ──
+function getToken() { return localStorage.getItem('anamnez_token'); }
+function getUser() { return JSON.parse(localStorage.getItem('anamnez_user') || 'null'); }
+
+function authHeaders(extra={}) {
+  const t = getToken();
+  return t ? {'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json', ...extra}
+           : {'Content-Type': 'application/json', ...extra};
+}
+
+function doLogout() {
+  localStorage.removeItem('anamnez_token');
+  localStorage.removeItem('anamnez_user');
+  window.location.href = 'login.html';
+}
+
+// Doktor auth kontrolü
+(function doctorGuard() {
+  const user = getUser();
+  const token = getToken();
+  if (!token || !user) {
+    window.location.href = 'login.html?next=doctor';
+    return;
+  }
+  if (!['doctor','admin','personnel'].includes(user.role)) {
+    window.location.href = 'index.html';
+    return;
+  }
+  // Sidebar'a isim/unvan yaz
+  const nameEl = document.getElementById('doctor-name-sidebar');
+  const specEl = document.getElementById('doctor-spec-sidebar');
+  if (nameEl) nameEl.textContent = user.name || 'Dr. Kullanıcı';
+  if (specEl) specEl.textContent = user.specialty || (user.role === 'admin' ? 'Admin' : 'Sağlık Personeli');
+})();
 
 // Demo data — Gemma 4 örnek çıktısı
 const DEMO = [
@@ -249,7 +302,7 @@ async function loadQueue(){
       <p class="text-[12px]">Hasta kuyruğu yükleniyor...</p>
     </div>`;
   try {
-    const r = await fetch(`${API}/api/patients/queue`);
+    const r = await fetch(`${API}/api/patients/queue`, {headers: authHeaders()});
     if(!r.ok) throw new Error();
     const data = await r.json();
     data.patients.forEach(p=>{allPatients[p.session_id]=p;});
@@ -348,6 +401,7 @@ function renderTable(patients, containerId, live){
 function showDetail(sid){
   const p = allPatients[sid];
   if(!p) return;
+  currentDetailSid = sid;
   const cfg = TCFG[p.triage_level]||TCFG.PENDING;
   const init = p.patient_name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
   const flagsHtml = p.urgency_flags&&p.urgency_flags.length?`
@@ -359,6 +413,14 @@ function showDetail(sid){
     p.possible_conditions.map((c,i)=>`<span class="px-2.5 py-1 rounded-xl text-[11px] font-bold
       ${i===0?'text-white':'text-sec bg-secc/60'}"
       ${i===0?`style="${cfg.badge}"`:''}>${c}</span>`).join(''):'—';
+  const existingNotes = (p.doctor_notes||[]).map(n=>
+    `<div class="bg-blue-50 rounded-lg p-2.5 mb-2">
+      <p class="text-[11px] text-ons">${n.text}</p>
+      <p class="text-[10px] text-ouv mt-1">${n.doctor_name} · ${new Date(n.timestamp).toLocaleString('tr-TR')}</p>
+    </div>`
+  ).join('');
+  const seenBadge = p.is_seen ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">✓ Görüldü</span>` : '';
+  const overrideBadge = p.triage_override ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">✎ Override</span>` : '';
 
   document.getElementById('detail-content').innerHTML=`
     <!-- Patient Header -->
@@ -366,7 +428,10 @@ function showDetail(sid){
       <div class="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
            style="background:${cfg.color}">${init}</div>
       <div class="flex-1">
-        <p class="font-head font-bold text-pri text-[15px]">${p.patient_name}</p>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <p class="font-head font-bold text-pri text-[15px]">${p.patient_name}</p>
+          ${seenBadge}${overrideBadge}
+        </div>
         <p class="text-[11px] text-onsv">${p.age} yaş · ${p.gender}</p>
       </div>
       <span class="px-2.5 py-1 rounded-full text-[10px] font-bold text-white" style="${cfg.badge}">${cfg.lbl}</span>
@@ -407,10 +472,44 @@ function showDetail(sid){
       <p class="text-[10px] font-bold uppercase tracking-widest mb-1.5" style="color:#006a68">Vision Bulguları</p>
       <p class="text-[11px] text-ons leading-relaxed">${p.image_findings}</p>
     </div>` : ''}
-    <!-- Clinical Notes -->
+    <!-- Clinical Notes (AI) -->
     <div class="rounded-xl p-3.5 bg-surfc">
-      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">Doktor Notları</p>
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">Klinik Notlar (AI)</p>
       <p class="text-[12px] text-ons leading-relaxed">${p.clinical_notes||'—'}</p>
+    </div>
+    <!-- ICD-10 Öneri -->
+    <div class="rounded-xl p-3.5 bg-surfc">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] font-bold text-onsv uppercase tracking-widest">ICD-10 Kod Önerisi</p>
+        <button onclick="suggestICD10('${sid}')" id="btn-icd10-${sid}"
+          class="flex items-center gap-1 px-2.5 py-1 bg-pric text-white rounded-lg text-[10px] font-bold hover:bg-pri transition-all">
+          <span class="material-symbols-outlined msym text-[12px]">psychology</span>Gemma 4 ile Öner
+        </button>
+      </div>
+      <div id="icd10-result-${sid}" class="text-[11px] text-onsv">Henüz öneride bulunulmadı.</div>
+    </div>
+    <!-- Doktor Notları -->
+    <div class="rounded-xl p-3.5 bg-blue-50 border border-blue-100">
+      <p class="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-2">Doktor Notları</p>
+      <div id="notes-container-${sid}">${existingNotes || '<p class="text-[11px] text-ouv">Not yok.</p>'}</div>
+      <div class="flex gap-2 mt-2">
+        <textarea id="inp-note-${sid}" rows="2" placeholder="Doktor notu ekle..."
+          class="flex-1 px-3 py-2 border border-blue-200 rounded-xl text-[12px] bg-white focus:border-blue-400 transition-all resize-none"
+          style="outline:none"></textarea>
+        <button onclick="addNote('${sid}')"
+          class="px-3 py-2 bg-pric text-white rounded-xl text-[11px] font-bold hover:bg-pri transition-all self-end">
+          <span class="material-symbols-outlined msym text-[14px]">send</span>
+        </button>
+      </div>
+    </div>
+    <!-- Triaj Override -->
+    <div class="rounded-xl p-3.5 bg-surfc">
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Triaj Seviyesini Değiştir</p>
+      <div class="flex gap-2">
+        <button onclick="overrideTriage('${sid}','RED')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#ba1a1a">🔴 ACİL</button>
+        <button onclick="overrideTriage('${sid}','YELLOW')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#e07b26">🟡 İKİNCİL</button>
+        <button onclick="overrideTriage('${sid}','GREEN')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#006a68">🟢 RUTİN</button>
+      </div>
     </div>
     <!-- Recommendation -->
     <div class="rounded-xl p-3.5 text-white" style="background:${cfg.color}">
@@ -419,6 +518,11 @@ function showDetail(sid){
     </div>
     <!-- Actions -->
     <div class="flex gap-2 pt-1">
+      <button onclick="markSeen('${sid}')" ${p.is_seen?'disabled':''} id="btn-seen-${sid}"
+        class="flex-1 py-2.5 rounded-xl text-[12px] font-bold transition-all border-2 flex items-center justify-center gap-1.5 ${p.is_seen?'bg-green-50 text-green-600 border-green-200 cursor-not-allowed':'border-sec text-sec hover:bg-sec hover:text-white'}">
+        <span class="material-symbols-outlined msym text-[14px]">done_all</span>
+        ${p.is_seen ? 'Görüldü ✓' : 'Görüldü İşaretle'}
+      </button>
       <button onclick="openFullReport('${sid}')"
         class="flex-1 py-2.5 rounded-xl text-white text-[12px] font-bold hover:opacity-90 transition-all" style="background:${cfg.color}">
         Tam Raporu Aç
@@ -428,6 +532,161 @@ function showDetail(sid){
   document.getElementById('detail-panel').classList.remove('hidden');
   document.getElementById('detail-panel').style.display='flex';
   document.getElementById('detail-panel').style.flexDirection='column';
+}
+
+async function addNote(sid) {
+  const inp = document.getElementById(`inp-note-${sid}`);
+  const note = inp.value.trim();
+  if (!note) return;
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/note`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({note})
+    });
+    if(!res.ok) throw new Error();
+    const data = await res.json();
+    inp.value = '';
+    // Not konteynırını güncelle
+    const container = document.getElementById(`notes-container-${sid}`);
+    const notes = data.note ? allPatients[sid]?.doctor_notes || [] : [];
+    if (data.note) {
+      const noteHtml = `<div class="bg-blue-50 rounded-lg p-2.5 mb-2">
+        <p class="text-[11px] text-ons">${data.note.text}</p>
+        <p class="text-[10px] text-ouv mt-1">${data.note.doctor_name} · ${new Date(data.note.timestamp).toLocaleString('tr-TR')}</p>
+      </div>`;
+      if (container.querySelector('p')) container.innerHTML = '';
+      container.insertAdjacentHTML('beforeend', noteHtml);
+      if (!allPatients[sid].doctor_notes) allPatients[sid].doctor_notes = [];
+      allPatients[sid].doctor_notes.push(data.note);
+    }
+  } catch(e) {
+    alert('Not eklenemedi.');
+  }
+}
+
+async function overrideTriage(sid, newLevel) {
+  if (!confirm(`Triaj seviyesini ${newLevel} olarak değiştirmek istediğinize emin misiniz?`)) return;
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/triage`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({triage_level: newLevel})
+    });
+    if (!res.ok) throw new Error();
+    if (allPatients[sid]) {
+      allPatients[sid].triage_level = newLevel;
+      allPatients[sid].triage_color = {RED:'#ba1a1a',YELLOW:'#e07b26',GREEN:'#006a68'}[newLevel];
+      allPatients[sid].triage_override = true;
+    }
+    showDetail(sid);
+  } catch(e) {
+    alert('Triaj değiştirilemedi.');
+  }
+}
+
+async function markSeen(sid) {
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/seen`, {
+      method: 'PUT', headers: authHeaders()
+    });
+    if (!res.ok) throw new Error();
+    if (allPatients[sid]) allPatients[sid].is_seen = true;
+    const btn = document.getElementById(`btn-seen-${sid}`);
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-symbols-outlined msym text-[14px]">done_all</span> Görüldü ✓';
+      btn.className = 'flex-1 py-2.5 rounded-xl text-[12px] font-bold border-2 flex items-center justify-center gap-1.5 bg-green-50 text-green-600 border-green-200 cursor-not-allowed';
+    }
+  } catch(e) {
+    alert('İşlem başarısız.');
+  }
+}
+
+async function suggestICD10(sid) {
+  const btn = document.getElementById(`btn-icd10-${sid}`);
+  const resultEl = document.getElementById(`icd10-result-${sid}`);
+  if (!btn || !resultEl) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined msym spin text-[12px]">refresh</span> Analiz...';
+  resultEl.innerHTML = '<span class="text-ouv">Gemma 4 ICD-10 kodları hesaplıyor...</span>';
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/icd10`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const codes = data.icd10_suggestions || [];
+    const confColor = {yüksek:'text-green-600', orta:'text-amber-600', düşük:'text-ouv'};
+    resultEl.innerHTML = codes.map(c =>
+      `<div class="flex items-start gap-2 mb-1.5">
+        <span class="font-mono font-bold text-[12px] text-pric bg-surf px-2 py-0.5 rounded-lg flex-shrink-0">${c.code}</span>
+        <span class="text-[11px] text-ons">${c.description}</span>
+        <span class="text-[10px] ${confColor[c.confidence]||'text-ouv'} font-semibold ml-auto flex-shrink-0">${c.confidence}</span>
+      </div>`
+    ).join('') || '<span class="text-ouv">Öneride bulunulamadı.</span>';
+  } catch(e) {
+    resultEl.innerHTML = '<span class="text-err text-[11px]">ICD-10 önerisi başarısız.</span>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined msym text-[12px]">psychology</span>Yeniden Öner';
+  }
+}
+
+async function showAnalytics() {
+  document.getElementById('analytics-panel').classList.remove('hidden');
+  const content = document.getElementById('analytics-content');
+  content.innerHTML = '<div class="text-center py-6"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>';
+  try {
+    const res = await fetch(`${API}/api/analytics`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+    const s = d.summary;
+    const dist = d.distributions || {};
+    const ageDist = dist.age_groups || {};
+    const flagsHtml = (d.top_urgency_flags||[]).map(f=>
+      `<div class="flex items-center justify-between text-[12px] py-1 border-b border-surfc">
+        <span class="text-ons truncate flex-1">${f.flag}</span>
+        <span class="font-bold text-err ml-2 flex-shrink-0">${f.count}x</span>
+      </div>`
+    ).join('') || '<p class="text-[12px] text-ouv">Henüz veri yok.</p>';
+    content.innerHTML = `
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="rounded-xl p-3 bg-surfc text-center"><p class="text-[22px] font-head font-bold text-pri">${s.total_completed}</p><p class="text-[10px] text-onsv">Toplam</p></div>
+        <div class="rounded-xl p-3 text-center" style="background:#fff5f5"><p class="text-[22px] font-head font-bold" style="color:#ba1a1a">${s.red}</p><p class="text-[10px]" style="color:#ba1a1a">Acil</p></div>
+        <div class="rounded-xl p-3 text-center" style="background:#f0faf9"><p class="text-[22px] font-head font-bold text-sec">${s.green}</p><p class="text-[10px] text-sec">Rutin</p></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="rounded-xl p-3 bg-surfc">
+          <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-2">Yaş Grupları</p>
+          ${Object.entries(ageDist).map(([k,v])=>`
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[11px] text-onsv w-12 flex-shrink-0">${k}</span>
+              <div class="flex-1 bg-surfc rounded-full h-2 overflow-hidden">
+                <div class="h-2 rounded-full bg-sec" style="width:${s.total_completed?Math.round(v/s.total_completed*100):0}%"></div>
+              </div>
+              <span class="text-[11px] font-bold text-pri w-6 text-right flex-shrink-0">${v}</span>
+            </div>`).join('')}
+        </div>
+        <div class="rounded-xl p-3 bg-surfc">
+          <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-2">Ortalama Güven</p>
+          <p class="text-[36px] font-head font-bold text-sec text-center mt-2">${s.avg_confidence}<span class="text-[18px]">%</span></p>
+          <p class="text-[10px] text-ouv text-center">AI Triage Accuracy</p>
+          <div class="mt-3 flex items-center justify-between text-[11px]">
+            <span class="text-onsv">Görüldü</span>
+            <span class="font-bold text-sec">${s.seen}/${s.total_completed}</span>
+          </div>
+        </div>
+      </div>
+      <div class="rounded-xl p-3 bg-surfc">
+        <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-2">En Sık Acil Bulgular</p>
+        ${flagsHtml}
+      </div>`;
+  } catch(e) {
+    content.innerHTML = '<p class="text-[12px] text-err text-center py-4">Analitik yüklenemedi.</p>';
+  }
+}
+
+function hideAnalytics() {
+  document.getElementById('analytics-panel').classList.add('hidden');
 }
 
 function openFullReport(sid){

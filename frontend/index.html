@@ -62,9 +62,25 @@ tailwind.config = {
       <div id="conn-dot" class="w-1.5 h-1.5 rounded-full"></div>
       <span id="conn-text"></span>
     </div>
-    <a href="doctor.html" class="flex items-center gap-1.5 text-[13px] text-onsv hover:text-pri transition-colors font-medium">
-      <span class="material-symbols-outlined msym text-[16px]">stethoscope</span>
-      <span class="hidden sm:inline">Doktor Paneli</span>
+    <!-- Kullanıcı Pill -->
+    <div id="user-pill" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-surf border border-surfc text-[12px] font-semibold text-pri cursor-pointer hover:bg-surfc transition-all group relative">
+      <span class="material-symbols-outlined msym-fill text-[15px] text-sec">account_circle</span>
+      <span id="user-name-pill">Kullanıcı</span>
+      <span class="material-symbols-outlined msym text-[13px] text-ouv">expand_more</span>
+      <!-- Dropdown -->
+      <div class="absolute top-full right-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-surfc hidden group-hover:block z-50 py-1">
+        <a href="profile.html" class="flex items-center gap-2 px-4 py-2.5 hover:bg-surf text-[12px] font-medium text-ons transition-colors">
+          <span class="material-symbols-outlined msym text-[15px] text-sec">manage_accounts</span>Profilim & Geçmiş
+        </a>
+        <div class="h-px bg-surfc mx-2"></div>
+        <button onclick="doLogout()" class="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-surf text-[12px] font-medium text-err transition-colors">
+          <span class="material-symbols-outlined msym text-[15px]">logout</span>Çıkış Yap
+        </button>
+      </div>
+    </div>
+    <a id="nav-login-btn" href="login.html" class="hidden items-center gap-1.5 text-[13px] text-onsv hover:text-pri transition-colors font-medium">
+      <span class="material-symbols-outlined msym text-[16px]">login</span>
+      <span class="hidden sm:inline">Giriş Yap</span>
     </a>
     <!-- Lang toggle -->
     <div class="flex bg-surfc rounded-full p-0.5 gap-0.5">
@@ -368,10 +384,43 @@ let lastStartParams = null;
 let prepTimerRef = null;
 let prepElapsedRef = null;
 let warmupDone = false;
-let currentImageBase64 = null; // Yüklenen görüntünün base64'ü
+let currentImageBase64 = null;
 
-// Preparing screen cycling tips
-const PREP_TIPS_TR = [
+// ── Auth Helpers ──
+function getToken() { return localStorage.getItem('anamnez_token'); }
+function getUser()  { return JSON.parse(localStorage.getItem('anamnez_user') || 'null'); }
+
+function authHeaders(extra={}) {
+  const t = getToken();
+  return t ? { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json', ...extra }
+           : { 'Content-Type': 'application/json', ...extra };
+}
+
+function doLogout() {
+  localStorage.removeItem('anamnez_token');
+  localStorage.removeItem('anamnez_user');
+  window.location.href = 'login.html';
+}
+
+function initAuthNav() {
+  const user = getUser();
+  const pill = document.getElementById('user-pill');
+  const loginBtn = document.getElementById('nav-login-btn');
+  if (user && getToken()) {
+    document.getElementById('user-name-pill').textContent = user.name?.split(' ')[0] || 'Kullanıcı';
+    pill.classList.remove('hidden');
+    pill.classList.add('flex');
+    if (loginBtn) { loginBtn.classList.add('hidden'); loginBtn.classList.remove('flex'); }
+    // Hasta adını forma doldur
+    const nameInp = document.getElementById('inp-name');
+    if (nameInp && !nameInp.value) nameInp.value = user.name || '';
+  } else {
+    if (pill) { pill.classList.add('hidden'); pill.classList.remove('flex'); }
+    if (loginBtn) { loginBtn.classList.remove('hidden'); loginBtn.classList.add('flex'); }
+  }
+}
+
+
   '⏱ Model ilk yüklemede 30–90 saniye sürebilir',
   '🧠 Gemma 4 tıbbi dil modelini hafızaya yüklüyor...',
   '💡 Yerel AI — verileriniz sunucuya gönderilmez',
@@ -680,7 +729,7 @@ async function _doStartInterview(name, age, gender, vitals=null){
   try {
     const res = await fetch(`${API}/api/session/start`,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers: authHeaders(),
       body:JSON.stringify({patient_name:name,age,gender,language:lang, vitals: vitals||undefined}),
       signal: AbortSignal.timeout(190000)
     });
@@ -884,8 +933,10 @@ async function analyzeImage(){
 }
 
 // ── Init ──
+initAuthNav();
 checkHealth();
 setInterval(checkHealth, 30000);
+
 </script>
 </body>
 </html>
