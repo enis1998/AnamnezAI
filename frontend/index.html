@@ -439,7 +439,7 @@ function initAuthNav() {
   }
 }
 
-
+const PREP_TIPS_TR = [
   '⏱ Model ilk yüklemede 30–90 saniye sürebilir',
   '🧠 Gemma 4 tıbbi dil modelini hafızaya yüklüyor...',
   '💡 Yerel AI — verileriniz sunucuya gönderilmez',
@@ -456,6 +456,15 @@ const PREP_TIPS_EN = [
   '⚕ Preparing MTS triage criteria...',
   '🩺 Building clinical question set...',
   '🤔 First response is slowest — subsequent ones are much faster',
+];
+const PREP_TIPS_AR = [
+  '⏱ قد يستغرق التحميل الأول 30–90 ثانية',
+  '🧠 Gemma 4 يحمّل نموذج اللغة الطبية...',
+  '💡 ذكاء اصطناعي محلي — لا ترسل البيانات إلى الخوادم',
+  '🔒 تتم جميع العمليات على هذا الجهاز',
+  '⚕ جارٍ تحضير معايير الفرز MTS...',
+  '🩺 جارٍ بناء مجموعة الأسئلة السريرية...',
+  '🤔 الاستجابة الأولى هي الأبطأ — التالية أسرع بكثير',
 ];
 
 // ── i18n ──
@@ -738,7 +747,7 @@ async function _doStartInterview(name, age, gender, vitals=null){
   document.getElementById('prep-retry').classList.add('hidden');
   document.getElementById('prep-progress').style.width='0%';
 
-  const tips = lang==='tr' ? PREP_TIPS_TR : PREP_TIPS_EN;
+  const tips = lang==='tr' ? PREP_TIPS_TR : lang==='ar' ? PREP_TIPS_AR : PREP_TIPS_EN;
   let tipIdx=0;
 
   prepElapsedRef = setInterval(()=>{
