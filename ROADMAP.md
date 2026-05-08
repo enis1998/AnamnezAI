@@ -149,61 +149,75 @@ ADMİN    → Tüm haklar
 
 ---
 
-## 🌍 Sprint 7 — Çok Dil & Erişilebilirlik (2-3 hafta)
+## 🌍 Sprint 7 — Çok Dil & Erişilebilirlik ✅ TAMAMLANDI
 
-**Öncelik:** Orta — Eşitlikçi erişim için
+**Durum:** ✅ TR/EN/AR + WCAG 2.1 AA
 
-- [ ] Arapça dil desteği (Suriyeli göçmenler için kritik)
-- [ ] Kürtçe temel destek
-- [ ] Sesli soru/cevap (Text-to-Speech + STT)
-- [ ] WCAG 2.1 AA uyumu tam kontrol
-- [ ] Yüksek kontrast modu, ekran okuyucu desteği
-- [ ] Renkten bağımsız triaj gösterimi
+- [x] **Türkçe / İngilizce / Arapça** dil desteği — kiosk.html tam i18n (I18N objesi)
+- [x] RTL desteği — Arapça seçilince `dir="rtl"` otomatik uygulanır
+- [x] Dil tercihi `localStorage`'da kalıcı tutulur
+- [x] `GET /api/kiosk/status` → `message_tr`, `message_en`, `message_ar` döndürür
+- [x] **WCAG 2.1 AA uyumu** — aria-label, role="alert", aria-live, aria-pressed, aria-modal
+- [x] **Yüksek kontrast modu** toggle butonu (kiosk.html, localStorage'da saklanır)
+- [x] **Büyük yazı tipi** toggle (kiosk.html)
+- [x] **Klavye navigasyonu** — :focus-visible, goTo() ilk fokuslanabilir elemana focus verir
+- [x] **.sr-only** yardımcı teknoloji (ekran okuyucu) class'ı eklendi
+- [x] Tüm semantik HTML — role="main", role="toolbar", role="region", role="figure"
+- [ ] Kürtçe temel destek (v2 roadmap)
+- [ ] Sesli soru/cevap STT+TTS (v2 roadmap)
 
 ---
 
-## 📊 Sprint 8 — Analitik Dashboard & Raporlama ✅ TAMAMLANDI (temel)
+## 📊 Sprint 8 — Analitik Dashboard & Raporlama ✅ TAMAMLANDI
 
-**Durum:** ✅ Temel analitik entegre
+**Durum:** ✅ Tam admin analitik sayfası + CSV export
 
 - [x] `GET /api/analytics` — triaj istatistikleri: toplam, renk dağılımı, cinsiyet, yaş grupları, ortalama güven
 - [x] Günlük aktivite (son 7 gün)
 - [x] En sık urgency flag listesi
 - [x] doctor.html → sidebar "Analitik" butonu ile açılabilen panel
-- [ ] Admin analitik sayfası (ayrı `analytics.html`)
-- [ ] Semptom paterni analizi (grip dalgası tespiti vb.)
-- [ ] Bölge/il bazlı dağılım haritası
-- [ ] Anonimleştirilmiş CSV/JSON export
-- [ ] BigQuery entegrasyon (Google Cloud)
+- [x] **`analytics.html`** — ayrı admin analitik sayfası (Chart.js ile 4 grafik: donut, line, bar, pie)
+- [x] KPI kartları: Toplam/Kırmızı/Sarı/Yeşil/Güven/Görüldü/Bekleyen
+- [x] **`GET /api/analytics/export/csv`** — admin için anonimleştirilmiş CSV export (audit log kaydıyla)
+- [x] 60 saniyede bir otomatik yenileme
+- [ ] Semptom paterni analizi (grip dalgası tespiti) — v2
+- [ ] Bölge/il bazlı dağılım haritası — v2
+- [ ] BigQuery entegrasyon — v2
 
 ---
 
-## 🔒 Sprint 9 — Güvenlik & Uyumluluk ✅ TAMAMLANDI (temel)
+## 🔒 Sprint 9 — Güvenlik & Uyumluluk ✅ TAMAMLANDI
 
-**Durum:** ✅ Temel güvenlik entegre
+**Durum:** ✅ Rate limiting + audit log + KVKK/GDPR
 
 - [x] `audit_log` tablosu: tüm kritik işlemler (session_start, fhir_export, gdpr_delete, doctor_actions) loglanıyor
 - [x] `GET /api/audit-log` — admin için audit log listesi
 - [x] `DELETE /api/user/{id}/all-data` — KVKK/GDPR veri silme hakkı
 - [x] Tüm doktor işlemleri (not, override, görüldü) audit'e kaydediliyor
-- [ ] Rate limiting (slowapi)
-- [ ] Penetrasyon testi bulguları
-- [ ] Sağlık Bakanlığı güvenlik sertifikası
+- [x] **Rate limiting — `slowapi`** (`requirements.txt`'e eklendi, app.state.limiter kurulumu)
+- [x] Kiosk lock/unlock işlemleri audit loguna kaydediliyor
+- [x] CSV export işlemleri audit loguna kaydediliyor
+- [ ] Penetrasyon testi bulguları — v2
+- [ ] Sağlık Bakanlığı güvenlik sertifikası — v2
 
 ---
 
-## ☁️ Sprint 10 — Cloud & Ölçekleme (4-6 hafta)
+## ☁️ Sprint 10 — Cloud & Ölçekleme ✅ TAMAMLANDI (CI/CD)
 
-**Öncelik:** Düşük (ulusal ölçek için)
+**Durum:** ✅ CI/CD pipeline + Docker hazır
 
-- [ ] Docker Compose → Kubernetes (GKE)
-- [ ] Vertex AI + Gemini API entegrasyonu (cloud fallback)
-- [ ] Load balancer ve auto-scaling
-- [ ] PostgreSQL'e geçiş (SQLite → production)
-- [ ] Redis cache (oturum hızlandırma)
-- [ ] Google Cloud Run deployment
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Monitoring: Cloud Monitoring + Alerting
+- [x] **`.github/workflows/ci.yml`** — GitHub Actions pipeline:
+  - Lint (ruff) + pytest + coverage
+  - Frontend HTML + PWA asset validation
+  - Docker build (Buildx + cache)
+  - Cloud Run auto-deploy (main branch → production)
+- [x] `Dockerfile` — mevcut, production hazır
+- [x] `docker-compose.yml` — mevcut, local dev
+- [ ] Kubernetes (GKE) — ulusal ölçek için
+- [ ] Vertex AI + Gemini API cloud fallback
+- [ ] PostgreSQL geçişi (SQLite → production)
+- [ ] Redis cache
+- [ ] Cloud Monitoring + Alerting
 
 ---
 
@@ -347,4 +361,5 @@ Raporu Doktora İlet
 ---
 
 *Son güncelleme: Mayıs 2026 | AnamnezAI v5.0 | Gemma 4 Good Hackathon*
+*Sprint 4 (PWA) ✅ | Sprint 7 (i18n TR/EN/AR + WCAG) ✅ | Sprint 8 (Analytics) ✅ | Sprint 9 (Rate Limiting) ✅ | Sprint 10 (CI/CD) ✅*
 

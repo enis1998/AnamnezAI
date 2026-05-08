@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-AnamnezAI — UTF-8 Git Commit Yardımcısı
-PowerShell'de Türkçe karakter sorununun çözümü.
-Kullanım: python commit.py "Commit mesajı Türkçe"
+AnamnezAI — UTF-8 Git Commit Helper
+Solves Turkish/Arabic character encoding issues in PowerShell.
+Usage: python commit.py "Commit message"
+       python commit.py "Message" --no-push
 """
 import sys
 import os
@@ -10,13 +11,13 @@ import subprocess
 import tempfile
 
 def git_commit(message: str, push: bool = True):
-    """Commit mesajını dosya üzerinden Git'e iletir (UTF-8 encoding)."""
+    """Passes commit message to Git via temp file (UTF-8 encoding)."""
     repo_dir = os.path.dirname(os.path.abspath(__file__))
 
     # git add -A
     subprocess.run(["git", "add", "-A"], cwd=repo_dir, check=True)
 
-    # Commit mesajını geçici dosyaya yaz (UTF-8)
+    # Write commit message to temp file (UTF-8)
     with tempfile.NamedTemporaryFile(
         mode='w', encoding='utf-8', suffix='.txt', delete=False
     ) as f:
@@ -47,9 +48,13 @@ def git_commit(message: str, push: bool = True):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Kullanım: python commit.py 'Commit mesajı'")
+        print("Usage: python commit.py 'Commit message' [--no-push]")
         sys.exit(1)
-    message = " ".join(sys.argv[1:])
-    success = git_commit(message, push="--no-push" not in sys.argv)
+    args = [a for a in sys.argv[1:] if a != '--no-push']
+    message = " ".join(args)
+    no_push = "--no-push" in sys.argv
+    success = git_commit(message, push=not no_push)
     sys.exit(0 if success else 1)
+
+
 
