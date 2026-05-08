@@ -576,6 +576,66 @@ async def register(data: UserCreate):
     )
 
 
+@app.post("/auth/google", response_model=Token)
+async def google_auth(body: dict):
+    """Google OAuth2 ID token ile giriş / otomatik kayıt (sadece hasta rolü)."""
+    import os as _os
+    credential = body.get("credential", "")
+    if not credential:
+        raise HTTPException(status_code=400, detail="Google credential eksik.")
+
+    GOOGLE_CLIENT_ID = _os.getenv("GOOGLE_CLIENT_ID", "")
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(
+            status_code=501,
+            detail="Google OAuth yapılandırılmamış. GOOGLE_CLIENT_ID env değişkenini ayarlayın."
+        )
+
+    try:
+        from google.oauth2 import id_token as _gid
+        from google.auth.transport import requests as _greq
+        id_info = _gid.verify_oauth2_token(credential, _greq.Request(), GOOGLE_CLIENT_ID)
+    except Exception as exc:
+        raise HTTPException(status_code=401, detail=f"Google token doğrulama başarısız: {exc}")
+
+    email = id_info.get("email", "").lower().strip()
+    name  = id_info.get("name") or email.split("@")[0]
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Google hesabından e-posta alınamadı.")
+
+    # Kullanıcı var mı? Yoksa otomatik oluştur
+    user = get_user_by_email(email)
+    if not user:
+        import uuid as _uuid, sqlite3 as _sq
+        from datetime import datetime as _dt
+        user_id = str(_uuid.uuid4())
+        now = _dt.utcnow().isoformat()
+        with threading.Lock():
+            with _sq.connect(DB_PATH) as conn:
+                try:
+                    conn.execute(
+                        "INSERT INTO users (user_id,name,email,password_hash,role,created_at) VALUES (?,?,?,?,?,?)",
+                        (user_id, name, email, hash_password(str(_uuid.uuid4())), "patient", now)
+                    )
+                    conn.commit()
+                except _sq.IntegrityError:
+                    pass
+        user = get_user_by_email(email)
+        if not user:
+            raise HTTPException(status_code=500, detail="Kullanıcı oluşturulamadı.")
+
+    token = create_access_token({"sub": user["user_id"], "role": user["role"]})
+    return Token(
+        access_token=token,
+        user=UserOut(
+            user_id=user["user_id"], name=user["name"], email=user["email"],
+            role=user["role"], specialty=user.get("specialty"),
+            created_at=user["created_at"]
+        )
+    )
+
+
 @app.post("/auth/login", response_model=Token)
 async def login(data: UserLogin):
     """E-posta + şifre ile giriş — JWT token döndürür."""
