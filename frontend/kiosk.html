@@ -4,6 +4,11 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AnamnezAI — Kiosk</title>
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#006a68"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="AnamnezAI"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
@@ -41,35 +46,61 @@ tailwind.config = {
   input:focus,select:focus{outline:none;box-shadow:0 0 0 3px rgba(0,106,104,.5)}
   .num-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:16px;font-size:28px;font-weight:700;height:72px;transition:all .1s;cursor:pointer;user-select:none}
   .num-btn:active{background:rgba(0,106,104,.4);transform:scale(0.95)}
+  /* Sprint 7 — Accessibility */
+  .lang-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:6px 14px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;color:#fff}
+  .lang-btn.active,.lang-btn:hover{background:rgba(0,106,104,.5);border-color:#006a68}
+  .high-contrast body{background:#000!important;color:#fff!important}
+  body.high-contrast .card-kiosk{background:#111;border-color:#fff}
+  body.high-contrast .btn-kiosk{outline:2px solid #fff}
+  /* RTL support for Arabic */
+  [dir="rtl"] .flex{flex-direction:row-reverse}
+  [dir="rtl"] .text-left{text-align:right}
+  :focus-visible{outline:3px solid #a0f1ed;outline-offset:3px;border-radius:8px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
 </style>
 </head>
 <body>
 
 <!-- ── SCREEN: WELCOME ── -->
-<div id="scr-welcome" class="screen active min-h-screen items-center justify-center px-8 py-12">
+<div id="scr-welcome" class="screen active min-h-screen items-center justify-center px-8 py-12" role="main">
+
+  <!-- Language & Accessibility Bar (Sprint 7) -->
+  <div class="fixed top-4 right-4 flex items-center gap-2 z-50" role="toolbar" aria-label="Dil ve erişilebilirlik seçenekleri">
+    <button class="lang-btn active" onclick="setLang('tr')" id="lang-tr" aria-label="Türkçe" aria-pressed="true">TR</button>
+    <button class="lang-btn" onclick="setLang('en')" id="lang-en" aria-label="English" aria-pressed="false">EN</button>
+    <button class="lang-btn" onclick="setLang('ar')" id="lang-ar" aria-label="عربي" aria-pressed="false">AR</button>
+    <button onclick="toggleContrast()" class="lang-btn" aria-label="Yüksek kontrast modu" id="btn-contrast" title="High contrast">
+      <span class="material-symbols-outlined msym" style="font-size:16px;vertical-align:middle">contrast</span>
+    </button>
+    <button onclick="toggleFontSize()" class="lang-btn" aria-label="Büyük yazı tipi" id="btn-font" title="Larger text">
+      <span class="material-symbols-outlined msym" style="font-size:16px;vertical-align:middle">text_increase</span>
+    </button>
+  </div>
+
   <div class="max-w-2xl w-full mx-auto text-center fade">
-    <div class="w-28 h-28 rounded-3xl bg-sec pulse glow flex items-center justify-center mx-auto mb-8">
+    <div class="w-28 h-28 rounded-3xl bg-sec pulse glow flex items-center justify-center mx-auto mb-8" aria-hidden="true">
       <span class="material-symbols-outlined msym-fill text-white" style="font-size:56px">monitor_heart</span>
     </div>
     <h1 class="text-[56px] font-head font-black leading-none mb-4">AnamnezAI</h1>
-    <p class="text-[22px] text-white/70 mb-2" id="kiosk-subtitle">Yapay Zeka Destekli Hasta Ön Triajı</p>
-    <p class="text-[16px] text-white/50 mb-12">AI-Powered Patient Pre-Triage</p>
+    <p class="text-[22px] text-white/70 mb-2" id="kiosk-subtitle" aria-live="polite">Yapay Zeka Destekli Hasta Ön Triajı</p>
+    <p class="text-[16px] text-white/50 mb-12" id="kiosk-subtitle2">AI-Powered Patient Pre-Triage</p>
 
     <!-- Status -->
-    <div id="kiosk-status" class="card-kiosk p-4 mb-10 flex items-center justify-center gap-3">
-      <div class="w-3 h-3 rounded-full bg-ouv"></div>
-      <span class="text-[16px] text-white/60">Sistem durumu kontrol ediliyor...</span>
+    <div id="kiosk-status" class="card-kiosk p-4 mb-10 flex items-center justify-center gap-3" role="status" aria-live="polite">
+      <div class="w-3 h-3 rounded-full bg-ouv" aria-hidden="true"></div>
+      <span class="text-[16px] text-white/60" id="status-text">Sistem durumu kontrol ediliyor...</span>
     </div>
 
     <!-- Queue info -->
-    <div class="grid grid-cols-2 gap-4 mb-10">
+    <div class="grid grid-cols-2 gap-4 mb-10" role="region" aria-label="Kuyruk bilgisi">
       <div class="card-kiosk p-5 text-center">
-        <p class="text-[48px] font-head font-bold text-secc" id="kiosk-queue">—</p>
-        <p class="text-[14px] text-white/60">Bekleyen Hasta</p>
+        <p class="text-[48px] font-head font-bold text-secc" id="kiosk-queue" aria-label="Bekleyen hasta sayısı">—</p>
+        <p class="text-[14px] text-white/60" id="queue-label">Bekleyen Hasta</p>
       </div>
       <div class="card-kiosk p-5 text-center">
-        <p class="text-[48px] font-head font-bold text-secc" id="kiosk-wait">—</p>
-        <p class="text-[14px] text-white/60">Tahmini Bekleme (dk)</p>
+        <p class="text-[48px] font-head font-bold text-secc" id="kiosk-wait" aria-label="Tahmini bekleme dakikası">—</p>
+        <p class="text-[14px] text-white/60" id="wait-label">Tahmini Bekleme (dk)</p>
       </div>
     </div>
 
@@ -77,20 +108,21 @@ tailwind.config = {
     <div class="space-y-4 mb-8">
       <button onclick="goTo('scr-form')" id="btn-start"
         class="btn-kiosk w-full py-6 rounded-2xl bg-sec hover:bg-pric flex items-center justify-center gap-4 text-[24px] font-bold glow"
-        style="disabled:opacity-50">
-        <span class="material-symbols-outlined msym-fill" style="font-size:32px">play_circle</span>
-        Mülakatı Başlat
+        aria-label="Mülakatı başlat">
+        <span class="material-symbols-outlined msym-fill" style="font-size:32px" aria-hidden="true">play_circle</span>
+        <span id="btn-start-text">Mülakatı Başlat</span>
       </button>
       <button onclick="goTo('scr-login')"
-        class="btn-kiosk w-full py-5 rounded-2xl card-kiosk hover:bg-white/10 flex items-center justify-center gap-3 text-[20px] font-semibold text-white/80">
-        <span class="material-symbols-outlined msym" style="font-size:28px">login</span>
-        Hesabımla Giriş Yap
+        class="btn-kiosk w-full py-5 rounded-2xl card-kiosk hover:bg-white/10 flex items-center justify-center gap-3 text-[20px] font-semibold text-white/80"
+        aria-label="Hesabımla giriş yap">
+        <span class="material-symbols-outlined msym" style="font-size:28px" aria-hidden="true">login</span>
+        <span id="btn-login-text">Hesabımla Giriş Yap</span>
       </button>
     </div>
 
-    <div class="flex items-center justify-center gap-2 text-[13px] text-white/40">
-      <span class="material-symbols-outlined msym" style="font-size:16px">shield</span>
-      Verileriniz KVKK kapsamında korunmaktadır · AnamnezAI v5.0
+    <div class="flex items-center justify-center gap-2 text-[13px] text-white/40" role="contentinfo">
+      <span class="material-symbols-outlined msym" style="font-size:16px" aria-hidden="true">shield</span>
+      <span id="footer-text">Verileriniz KVKK kapsamında korunmaktadır · AnamnezAI v5.0</span>
     </div>
   </div>
 </div>
@@ -185,8 +217,8 @@ tailwind.config = {
     <h2 class="text-[40px] font-head font-bold mb-3">Mülakat Tamamlandı</h2>
     <p class="text-[18px] text-white/60 mb-8">Yapay zeka semptomlarınızı değerlendiriyor.<br/>Lütfen triaj personelini bekleyiniz.</p>
 
-    <div id="done-triage" class="card-kiosk p-6 mb-8 hidden">
-      <p class="text-[12px] text-white/40 uppercase tracking-widest mb-2">Triaj Sonucu</p>
+    <div id="done-triage" class="card-kiosk p-6 mb-8 hidden" role="region" aria-label="Triaj sonucu">
+      <p class="text-[12px] text-white/40 uppercase tracking-widest mb-2" id="done-triage-label">Triaj Sonucu</p>
       <p class="text-[32px] font-head font-bold" id="done-level">—</p>
       <p class="text-[16px] text-white/60 mt-1" id="done-complaint">—</p>
     </div>
@@ -203,9 +235,40 @@ tailwind.config = {
     </div>
 
     <button onclick="goTo('scr-welcome')"
-      class="btn-kiosk w-full py-5 rounded-2xl card-kiosk text-[20px] font-bold">
-      Ana Ekrana Dön
+      class="btn-kiosk w-full py-5 rounded-2xl card-kiosk text-[20px] font-bold" aria-label="Ana ekrana dön">
+      <span id="btn-home-text">Ana Ekrana Dön</span>
     </button>
+
+    <!-- Sprint 5 — Print ticket + QR code -->
+    <div class="grid grid-cols-2 gap-3 mt-3">
+      <button onclick="printTicket()" id="btn-print"
+        class="btn-kiosk py-4 rounded-2xl card-kiosk flex items-center justify-center gap-2 text-[16px] font-semibold text-white/80"
+        aria-label="Sıra fişi yazdır">
+        <span class="material-symbols-outlined msym" style="font-size:22px" aria-hidden="true">print</span>
+        <span id="btn-print-text">Sıra Fişi Yazdır</span>
+      </button>
+      <button onclick="showQR()" id="btn-qr"
+        class="btn-kiosk py-4 rounded-2xl card-kiosk flex items-center justify-center gap-2 text-[16px] font-semibold text-white/80"
+        aria-label="QR kod ile devam et">
+        <span class="material-symbols-outlined msym" style="font-size:22px" aria-hidden="true">qr_code</span>
+        <span id="btn-qr-text">QR ile Devam</span>
+      </button>
+    </div>
+
+    <!-- QR display modal -->
+    <div id="qr-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="QR kod">
+      <div class="card-kiosk p-8 text-center max-w-sm mx-4 fade">
+        <h3 class="text-[20px] font-bold mb-4" id="qr-title">Telefon ile Tara</h3>
+        <div id="qr-img-container" class="flex justify-center mb-4">
+          <div class="w-16 h-16 flex items-center justify-center">
+            <span class="material-symbols-outlined msym spin text-secc" style="font-size:40px">refresh</span>
+          </div>
+        </div>
+        <p class="text-[14px] text-white/60 mb-6" id="qr-desc">Oturumunuza telefonunuzdan devam etmek için QR kodu tarayın.</p>
+        <button onclick="document.getElementById('qr-modal').classList.add('hidden')"
+          class="btn-kiosk px-8 py-3 rounded-2xl bg-sec text-white font-semibold">Kapat</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -237,10 +300,214 @@ let kioskSessionId = null;
 let kioskStep = 1;
 const TOTAL_STEPS = 5;
 
+// ── Sprint 7: i18n ───────────────────────────────────────────────────────────
+let currentLang = localStorage.getItem('kiosk_lang') || 'tr';
+const I18N = {
+  tr: {
+    subtitle: 'Yapay Zeka Destekli Hasta Ön Triajı',
+    subtitle2: 'AI-Powered Patient Pre-Triage',
+    statusChecking: 'Sistem durumu kontrol ediliyor...',
+    statusReady: 'Sistem Hazır ✓',
+    statusLoading: 'Model Yükleniyor...',
+    statusMaint: 'Sistem Bakımda',
+    statusOffline: 'Backend bağlantısı yok',
+    statusLocked: '🔒 Kiosk geçici olarak kapalı',
+    queueLabel: 'Bekleyen Hasta',
+    waitLabel: 'Tahmini Bekleme (dk)',
+    btnStart: 'Mülakatı Başlat',
+    btnLogin: 'Hesabımla Giriş Yap',
+    footer: 'Verileriniz KVKK kapsamında korunmaktadır · AnamnezAI v5.0',
+    formTitle: 'Hasta Bilgileri',
+    formDesc: 'Lütfen bilgilerinizi giriniz',
+    labelName: 'Ad Soyad',
+    placeholderName: 'Adınız Soyadınız',
+    labelAge: 'Yaş',
+    labelGender: 'Cinsiyet',
+    optMale: 'Erkek', optFemale: 'Kadın', optOther: 'Belirtmek İstemiyorum',
+    btnAI: 'AI Mülakatı Başlat',
+    errName: 'Lütfen adınızı girin.',
+    errAge: 'Lütfen geçerli bir yaş girin.',
+    errConn: 'Bağlantı hatası.',
+    chatLabel: 'Mülakat devam ediyor',
+    placeholder: 'Cevabınızı yazın...',
+    thinking: 'Gemma 4 düşünüyor...',
+    completed: 'Teşekkürler! Cevaplarınız kaydedildi. Triaj değerlendirmesi yapılıyor...',
+    errRetry: 'Bir hata oluştu. Lütfen tekrar deneyin.',
+    doneTitle: 'Mülakat Tamamlandı',
+    doneDesc: 'Yapay zeka semptomlarınızı değerlendiriyor.<br/>Lütfen triaj personelini bekleyiniz.',
+    triageLabel: 'Triaj Sonucu',
+    btnHome: 'Ana Ekrana Dön',
+    btnPrint: 'Sıra Fişi Yazdır',
+    btnQR: 'QR ile Devam',
+    qrTitle: 'Telefon ile Tara',
+    qrDesc: 'Oturumunuza telefonunuzdan devam etmek için QR kodu tarayın.',
+    loginTitle: 'Giriş Yap',
+    loginDesc: 'Kayıtlı hesabınızla devam edin',
+    loginErr: 'E-posta veya şifre hatalı.',
+    loginConnErr: 'Sunucuya bağlanılamadı.',
+    btnBack: 'Geri',
+    roomInfo: 'Size atanan oda bilgisi için<br/>triaj personelini bekleyiniz',
+    waitInfo: 'Tahmini bekleme süresi için<br/>ekrana dikkat ediniz',
+  },
+  en: {
+    subtitle: 'AI-Powered Patient Pre-Triage',
+    subtitle2: 'Yapay Zeka Destekli Hasta Ön Triajı',
+    statusChecking: 'Checking system status...',
+    statusReady: 'System Ready ✓',
+    statusLoading: 'Model Loading...',
+    statusMaint: 'System Under Maintenance',
+    statusOffline: 'No backend connection',
+    statusLocked: '🔒 Kiosk temporarily closed',
+    queueLabel: 'Patients Waiting',
+    waitLabel: 'Est. Wait (min)',
+    btnStart: 'Start Interview',
+    btnLogin: 'Login with My Account',
+    footer: 'Your data is protected under GDPR · AnamnezAI v5.0',
+    formTitle: 'Patient Information',
+    formDesc: 'Please enter your details',
+    labelName: 'Full Name',
+    placeholderName: 'Your Full Name',
+    labelAge: 'Age',
+    labelGender: 'Gender',
+    optMale: 'Male', optFemale: 'Female', optOther: 'Prefer not to say',
+    btnAI: 'Start AI Interview',
+    errName: 'Please enter your name.',
+    errAge: 'Please enter a valid age.',
+    errConn: 'Connection error.',
+    chatLabel: 'Interview in progress',
+    placeholder: 'Type your answer...',
+    thinking: 'Gemma 4 is thinking...',
+    completed: 'Thank you! Your answers have been recorded. Triage assessment in progress...',
+    errRetry: 'An error occurred. Please try again.',
+    doneTitle: 'Interview Complete',
+    doneDesc: 'AI is evaluating your symptoms.<br/>Please wait for triage staff.',
+    triageLabel: 'Triage Result',
+    btnHome: 'Return to Home',
+    btnPrint: 'Print Queue Ticket',
+    btnQR: 'Continue via QR',
+    qrTitle: 'Scan with Phone',
+    qrDesc: 'Scan the QR code to continue your session on your phone.',
+    loginTitle: 'Log In',
+    loginDesc: 'Continue with your registered account',
+    loginErr: 'Invalid email or password.',
+    loginConnErr: 'Could not connect to server.',
+    btnBack: 'Back',
+    roomInfo: 'For your assigned room,<br/>please wait for triage staff',
+    waitInfo: 'Check the screen for<br/>estimated wait time',
+  },
+  ar: {
+    subtitle: 'الفرز الطبي المسبق بالذكاء الاصطناعي',
+    subtitle2: 'AI-Powered Patient Pre-Triage',
+    statusChecking: 'جارٍ التحقق من حالة النظام...',
+    statusReady: 'النظام جاهز ✓',
+    statusLoading: 'جارٍ تحميل النموذج...',
+    statusMaint: 'النظام في صيانة',
+    statusOffline: 'لا يوجد اتصال بالخادم',
+    statusLocked: '🔒 الكشك مغلق مؤقتاً',
+    queueLabel: 'المرضى المنتظرون',
+    waitLabel: 'الانتظار المتوقع (د)',
+    btnStart: 'بدء المقابلة',
+    btnLogin: 'تسجيل الدخول',
+    footer: 'بياناتك محمية وفق KVKK · AnamnezAI v5.0',
+    formTitle: 'بيانات المريض',
+    formDesc: 'يرجى إدخال بياناتك',
+    labelName: 'الاسم الكامل',
+    placeholderName: 'اسمك الكامل',
+    labelAge: 'العمر',
+    labelGender: 'الجنس',
+    optMale: 'ذكر', optFemale: 'أنثى', optOther: 'أفضل عدم الإفصاح',
+    btnAI: 'بدء مقابلة الذكاء الاصطناعي',
+    errName: 'الرجاء إدخال اسمك.',
+    errAge: 'الرجاء إدخال عمر صحيح.',
+    errConn: 'خطأ في الاتصال.',
+    chatLabel: 'المقابلة جارية',
+    placeholder: 'اكتب إجابتك...',
+    thinking: 'Gemma 4 يفكر...',
+    completed: 'شكراً! تم تسجيل إجاباتك. جارٍ تقييم الفرز...',
+    errRetry: 'حدث خطأ. الرجاء المحاولة مجدداً.',
+    doneTitle: 'اكتملت المقابلة',
+    doneDesc: 'يقيّم الذكاء الاصطناعي أعراضك.<br/>يرجى انتظار موظفي الفرز.',
+    triageLabel: 'نتيجة الفرز',
+    btnHome: 'العودة للرئيسية',
+    btnPrint: 'طباعة تذكرة الدور',
+    btnQR: 'المتابعة عبر QR',
+    qrTitle: 'امسح بهاتفك',
+    qrDesc: 'امسح رمز QR لمواصلة جلستك على هاتفك.',
+    loginTitle: 'تسجيل الدخول',
+    loginDesc: 'تابع بحسابك المسجل',
+    loginErr: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+    loginConnErr: 'تعذر الاتصال بالخادم.',
+    btnBack: 'رجوع',
+    roomInfo: 'للحصول على رقم غرفتك،<br/>يرجى انتظار موظفي الفرز',
+    waitInfo: 'راقب الشاشة لمعرفة<br/>وقت الانتظار المتوقع',
+  }
+};
+
+function t(key) { return (I18N[currentLang] || I18N.tr)[key] || I18N.tr[key] || key; }
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('kiosk_lang', lang);
+  // Update button states
+  ['tr','en','ar'].forEach(l => {
+    const btn = document.getElementById('lang-'+l);
+    if (btn) { btn.classList.toggle('active', l === lang); btn.setAttribute('aria-pressed', l === lang); }
+  });
+  // Direction
+  document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = lang;
+  // Re-render all text
+  applyTranslations();
+  // Re-run status display
+  loadStatus();
+}
+
+function applyTranslations() {
+  const ids = {
+    'kiosk-subtitle': 'subtitle', 'kiosk-subtitle2': 'subtitle2',
+    'queue-label': 'queueLabel', 'wait-label': 'waitLabel',
+    'btn-start-text': 'btnStart', 'btn-login-text': 'btnLogin',
+    'footer-text': 'footer',
+    'btn-home-text': 'btnHome', 'btn-print-text': 'btnPrint', 'btn-qr-text': 'btnQR',
+    'qr-title': 'qrTitle', 'qr-desc': 'qrDesc',
+  };
+  Object.entries(ids).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
+  // Input placeholders
+  const nameInput = document.getElementById('k-name');
+  if (nameInput) nameInput.placeholder = t('placeholderName');
+  const answerInput = document.getElementById('k-answer');
+  if (answerInput) answerInput.placeholder = t('placeholder');
+  // Form labels
+  const formTitle = document.querySelector('#scr-form h2');
+  if (formTitle) formTitle.textContent = t('formTitle');
+  const formDesc = document.querySelector('#scr-form p');
+  if (formDesc) formDesc.textContent = t('formDesc');
+}
+
+// ── Sprint 7: High contrast + font size ─────────────────────────────────────
+function toggleContrast() {
+  document.body.classList.toggle('high-contrast');
+  localStorage.setItem('kiosk_contrast', document.body.classList.contains('high-contrast') ? '1' : '0');
+}
+function toggleFontSize() {
+  document.body.classList.toggle('text-lg');
+  document.body.style.fontSize = document.body.classList.contains('text-lg') ? '120%' : '';
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
 function goTo(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(screenId).classList.add('active');
+  const target = document.getElementById(screenId);
+  target.classList.add('active');
   window.scrollTo(0, 0);
+  // Focus first focusable element for a11y
+  requestAnimationFrame(() => {
+    const focusable = target.querySelector('button,input,a,[tabindex]:not([tabindex="-1"])');
+    if (focusable) focusable.focus();
+  });
 }
 
 function addMessage(text, isAI = true) {
@@ -248,6 +515,7 @@ function addMessage(text, isAI = true) {
   const div = document.createElement('div');
   div.className = `flex ${isAI ? 'justify-start' : 'justify-end'}`;
   const bg = isAI ? 'rgba(255,255,255,0.1)' : 'rgba(0,106,104,0.6)';
+  div.setAttribute('role', isAI ? 'status' : 'none');
   div.innerHTML = `<div style="background:${bg};border-radius:20px;padding:16px 20px;max-width:75%;font-size:18px;line-height:1.5">${text}</div>`;
   el.appendChild(div);
   el.scrollTop = el.scrollHeight;
@@ -256,7 +524,7 @@ function addMessage(text, isAI = true) {
 function updateSteps(step) {
   const container = document.getElementById('chat-steps');
   container.innerHTML = Array.from({length: TOTAL_STEPS}, (_, i) =>
-    `<div style="width:10px;height:10px;border-radius:50%;background:${i < step ? '#006a68' : 'rgba(255,255,255,0.2)'}"></div>`
+    `<div style="width:10px;height:10px;border-radius:50%;background:${i < step ? '#006a68' : 'rgba(255,255,255,0.2)'}" aria-hidden="true"></div>`
   ).join('');
   document.getElementById('chat-step-text').textContent = `${step}/${TOTAL_STEPS}`;
 }
@@ -268,20 +536,28 @@ async function loadStatus() {
     const d = await r.json();
     const statusEl = document.getElementById('kiosk-status');
     const startBtn = document.getElementById('btn-start');
-    if (d.system_online && d.model_ready) {
-      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#006a68"></div><span style="color:#a0f1ed;font-size:16px;font-weight:600">Sistem Hazır ✓</span>`;
+
+    if (d.is_locked) {
+      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#e07b26" aria-hidden="true"></div><span style="color:#ffd06f;font-size:16px">${t('statusLocked')}</span>`;
+      startBtn.disabled = true; startBtn.style.opacity = '0.4';
+    } else if (d.system_online && d.model_ready) {
+      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#006a68" aria-hidden="true"></div><span style="color:#a0f1ed;font-size:16px;font-weight:600">${t('statusReady')}</span>`;
       startBtn.disabled = false; startBtn.style.opacity = '1';
     } else if (d.system_online) {
-      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#e07b26;animation:pulse 1s ease infinite"></div><span style="color:#ffd06f;font-size:16px">Model Yükleniyor...</span>`;
+      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#e07b26;animation:pulse 1s ease infinite" aria-hidden="true"></div><span style="color:#ffd06f;font-size:16px">${t('statusLoading')}</span>`;
       startBtn.disabled = false; startBtn.style.opacity = '0.8';
     } else {
-      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#ba1a1a"></div><span style="color:#ffa8a8;font-size:16px">Sistem Bakımda</span>`;
+      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#ba1a1a" aria-hidden="true"></div><span style="color:#ffa8a8;font-size:16px">${t('statusMaint')}</span>`;
       startBtn.disabled = true; startBtn.style.opacity = '0.4';
     }
     document.getElementById('kiosk-queue').textContent = d.queue_length ?? 0;
     document.getElementById('kiosk-wait').textContent = d.estimated_wait_minutes ?? '—';
+    // Kiosk subtitle from backend
+    const msgKey = currentLang === 'ar' ? 'message_ar' : currentLang === 'en' ? 'message_en' : 'message_tr';
+    if (d[msgKey]) document.getElementById('kiosk-subtitle').textContent = d[msgKey];
   } catch(e) {
-    document.getElementById('kiosk-status').innerHTML = `<span style="color:rgba(255,255,255,0.4)">Backend bağlantısı yok</span>`;
+    const statusEl = document.getElementById('kiosk-status');
+    if (statusEl) statusEl.innerHTML = `<span style="color:rgba(255,255,255,0.4)">${t('statusOffline')}</span>`;
   }
 }
 
@@ -289,12 +565,12 @@ async function startKioskSession() {
   const name = document.getElementById('k-name').value.trim();
   const age  = parseInt(document.getElementById('k-age').value);
   const gender = document.getElementById('k-gender').value;
-  if (!name) { showFormErr('Lütfen adınızı girin.'); return; }
-  if (!age || age < 1 || age > 120) { showFormErr('Lütfen geçerli bir yaş girin.'); return; }
+  if (!name) { showFormErr(t('errName')); return; }
+  if (!age || age < 1 || age > 120) { showFormErr(t('errAge')); return; }
 
   const btn = document.getElementById('btn-kiosk-start');
   btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-outlined msym spin" style="font-size:28px">refresh</span> Başlatılıyor...';
+  btn.innerHTML = `<span class="material-symbols-outlined msym spin" style="font-size:28px">refresh</span> ${t('statusLoading')}`;
 
   try {
     const token = localStorage.getItem('anamnez_token');
@@ -303,31 +579,33 @@ async function startKioskSession() {
 
     const res = await fetch(`${API}/api/session/start`, {
       method: 'POST', headers,
-      body: JSON.stringify({patient_name: name, age, gender, language: 'tr'})
+      body: JSON.stringify({patient_name: name, age, gender, language: currentLang})
     });
-    if (!res.ok) throw new Error('Başlatılamadı');
+    if (!res.ok) throw new Error(t('errConn'));
     const data = await res.json();
     kioskSessionId = data.session_id;
     kioskStep = 1;
 
-    document.getElementById('chat-patient-label').textContent = `${name} · ${age} yaşında`;
+    document.getElementById('chat-patient-label').textContent = `${name} · ${age} ${currentLang === 'ar' ? 'سنة' : (currentLang === 'en' ? 'years old' : 'yaşında')}`;
     document.getElementById('chat-messages').innerHTML = '';
     updateSteps(1);
     addMessage(data.question, true);
     goTo('scr-chat');
     document.getElementById('k-answer').focus();
   } catch(e) {
-    showFormErr(e.message || 'Bağlantı hatası.');
+    showFormErr(e.message || t('errConn'));
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<span class="material-symbols-outlined msym-fill" style="font-size:32px">psychology</span> AI Mülakatı Başlat';
+    btn.innerHTML = `<span class="material-symbols-outlined msym-fill" style="font-size:32px">psychology</span> ${t('btnAI')}`;
   }
 }
 
 function showFormErr(msg) {
+  const el = document.getElementById('form-err');
   document.getElementById('form-err-text').textContent = msg;
-  document.getElementById('form-err').classList.remove('hidden');
-  document.getElementById('form-err').classList.add('flex');
+  el.classList.remove('hidden');
+  el.classList.add('flex');
+  el.setAttribute('role', 'alert');
 }
 
 async function sendKioskAnswer() {
@@ -338,13 +616,14 @@ async function sendKioskAnswer() {
   const btn = document.getElementById('btn-kiosk-send');
   btn.disabled = true;
   inp.disabled = true;
+  inp.setAttribute('aria-busy', 'true');
   addMessage(answer, false);
   inp.value = '';
 
   // Typing indicator
   const typingId = 'typing-' + Date.now();
   const el = document.getElementById('chat-messages');
-  el.insertAdjacentHTML('beforeend', `<div id="${typingId}" class="flex justify-start"><div style="background:rgba(255,255,255,0.1);border-radius:20px;padding:16px 20px;font-size:18px;color:rgba(255,255,255,0.5)">Gemma 4 düşünüyor...</div></div>`);
+  el.insertAdjacentHTML('beforeend', `<div id="${typingId}" class="flex justify-start" role="status" aria-live="polite"><div style="background:rgba(255,255,255,0.1);border-radius:20px;padding:16px 20px;font-size:18px;color:rgba(255,255,255,0.5)">${t('thinking')}</div></div>`);
   el.scrollTop = el.scrollHeight;
 
   try {
@@ -361,8 +640,7 @@ async function sendKioskAnswer() {
     updateSteps(kioskStep);
 
     if (data.question === '__COMPLETED__') {
-      // Mülakat bitti - özet al
-      addMessage('Teşekkürler! Cevaplarınız kaydedildi. Triaj değerlendirmesi yapılıyor...', true);
+      addMessage(t('completed'), true);
       await fetchKioskSummary();
     } else {
       addMessage(data.question, true);
@@ -370,10 +648,11 @@ async function sendKioskAnswer() {
     }
   } catch(e) {
     document.getElementById(typingId)?.remove();
-    addMessage('Bir hata oluştu. Lütfen tekrar deneyin.', true);
+    addMessage(t('errRetry'), true);
   } finally {
     btn.disabled = false;
     inp.disabled = false;
+    inp.removeAttribute('aria-busy');
   }
 }
 
@@ -384,17 +663,49 @@ async function fetchKioskSummary() {
     if (!res.ok) throw new Error();
     const data = await res.json();
 
-    const levelMap = {RED:'🔴 ACİL', YELLOW:'🟡 İKİNCİL ACİL', GREEN:'🟢 RUTİN'};
+    const levelMap = {
+      RED: currentLang === 'ar' ? '🔴 طارئ' : currentLang === 'en' ? '🔴 EMERGENCY' : '🔴 ACİL',
+      YELLOW: currentLang === 'ar' ? '🟡 عاجل' : currentLang === 'en' ? '🟡 URGENT' : '🟡 İKİNCİL ACİL',
+      GREEN: currentLang === 'ar' ? '🟢 روتيني' : currentLang === 'en' ? '🟢 ROUTINE' : '🟢 RUTİN',
+    };
     document.getElementById('done-level').textContent = levelMap[data.triage_level] || data.triage_level;
     document.getElementById('done-level').style.color = data.triage_color || '#fff';
     document.getElementById('done-complaint').textContent = data.chief_complaint || '';
     document.getElementById('done-triage').classList.remove('hidden');
+    document.getElementById('done-triage-label').textContent = t('triageLabel');
 
     localStorage.setItem('anamnez_summary', JSON.stringify(data));
-  } catch(e) { /* sessizce devam */ }
+  } catch(e) { /* silently continue */ }
   goTo('scr-done');
 }
 
+// ── Sprint 5: Print ticket ───────────────────────────────────────────────────
+function printTicket() {
+  if (!kioskSessionId) return;
+  window.open(`${API}/api/session/${kioskSessionId}/ticket`, '_blank');
+}
+
+// ── Sprint 5: QR code ────────────────────────────────────────────────────────
+async function showQR() {
+  if (!kioskSessionId) return;
+  document.getElementById('qr-modal').classList.remove('hidden');
+  const container = document.getElementById('qr-img-container');
+  container.innerHTML = `<div class="w-16 h-16 flex items-center justify-center"><span class="material-symbols-outlined msym spin text-secc" style="font-size:40px">refresh</span></div>`;
+  try {
+    const baseUrl = window.location.origin;
+    const url = `${API}/api/session/${kioskSessionId}/qr?base_url=${encodeURIComponent(baseUrl)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error();
+    const blob = await res.blob();
+    const imgSrc = URL.createObjectURL(blob);
+    container.innerHTML = `<img src="${imgSrc}" alt="QR kod — oturumu telefonla devam ettirmek için tarayın" style="width:200px;height:200px;border-radius:12px"/>`;
+  } catch(e) {
+    // Fallback: show session URL
+    container.innerHTML = `<div class="p-4 text-[13px] text-white/60 break-all">${window.location.origin}/?session=${kioskSessionId}</div>`;
+  }
+}
+
+// ── Login ────────────────────────────────────────────────────────────────────
 async function kioskLogin() {
   const email = document.getElementById('k-email').value.trim();
   const password = document.getElementById('k-pass').value;
@@ -405,22 +716,42 @@ async function kioskLogin() {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email, password})
     });
-    if (!res.ok) { document.getElementById('login-err').textContent = 'E-posta veya şifre hatalı.'; document.getElementById('login-err').classList.remove('hidden'); return; }
+    if (!res.ok) {
+      const errEl = document.getElementById('login-err');
+      errEl.textContent = t('loginErr');
+      errEl.classList.remove('hidden');
+      errEl.setAttribute('role', 'alert');
+      return;
+    }
     const data = await res.json();
     localStorage.setItem('anamnez_token', data.access_token);
     localStorage.setItem('anamnez_user', JSON.stringify(data.user));
     goTo('scr-welcome');
   } catch(e) {
-    document.getElementById('login-err').textContent = 'Sunucuya bağlanılamadı.';
-    document.getElementById('login-err').classList.remove('hidden');
+    const errEl = document.getElementById('login-err');
+    errEl.textContent = t('loginConnErr');
+    errEl.classList.remove('hidden');
+    errEl.setAttribute('role', 'alert');
   }
 }
 
-// Init
+// ── PWA Service Worker (Sprint 4) ────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      console.log('[SW] Registered:', reg.scope);
+    }).catch(err => console.log('[SW] Registration failed:', err));
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+// Restore preferences
+if (localStorage.getItem('kiosk_contrast') === '1') document.body.classList.add('high-contrast');
+setLang(currentLang);
 loadStatus();
 setInterval(loadStatus, 30000);
 
-// İnaktiflik durumunda 3 dk sonra welcome'a dön
+// Inactivity timer: 3min → return to welcome
 let inactiveTimer;
 function resetTimer() {
   clearTimeout(inactiveTimer);
@@ -431,7 +762,7 @@ function resetTimer() {
     }
   }, 180000);
 }
-document.addEventListener('touchstart', resetTimer);
+document.addEventListener('touchstart', resetTimer, {passive: true});
 document.addEventListener('click', resetTimer);
 document.addEventListener('keydown', resetTimer);
 resetTimer();
