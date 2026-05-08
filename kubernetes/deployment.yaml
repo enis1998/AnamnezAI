@@ -1,0 +1,288 @@
+# AnamnezAI — Kubernetes Deployment Manifests
+# Apply: kubectl apply -f kubernetes/
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: anamnezai
+  labels:
+    app: anamnezai
+    team: health-ai
+
+---
+# ─────────────────────────────────────────────
+#  ConfigMap — App Configuration
+# ─────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: anamnezai-config
+  namespace: anamnezai
+data:
+  GEMMA_MODEL: "gemma4:e4b"
+  OLLAMA_BASE_URL: "http://ollama-service:11434"
+  RAG_ENABLED: "true"
+  DB_PATH: "/data/anamnezai.db"
+
+---
+# ─────────────────────────────────────────────
+#  Secret — JWT Secret Key
+# ─────────────────────────────────────────────
+apiVersion: v1
+kind: Secret
+metadata:
+  name: anamnezai-secrets
+  namespace: anamnezai
+type: Opaque
+stringData:
+  SECRET_KEY: "CHANGE_ME_IN_PRODUCTION_USE_STRONG_RANDOM_KEY"
+  # In production: kubectl create secret generic anamnezai-secrets \
+  #   --from-literal=SECRET_KEY=$(openssl rand -hex 32)
+
+---
+# ─────────────────────────────────────────────
+#  PersistentVolumeClaim — SQLite DB Storage
+# ─────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: anamnezai-db-pvc
+  namespace: anamnezai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+# ─────────────────────────────────────────────
+#  Deployment — AnamnezAI Backend
+# ─────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anamnezai-backend
+  namespace: anamnezai
+  labels:
+    app: anamnezai-backend
+    version: v5.0
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: anamnezai-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: anamnezai-backend
+        version: v5.0
+    spec:
+      containers:
+        - name: anamnezai
+          image: ghcr.io/enis1998/anamnezai:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: anamnezai-config
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: anamnezai-secrets
+                  key: SECRET_KEY
+          volumeMounts:
+            - name: db-storage
+              mountPath: /app/backend/data
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+      volumes:
+        - name: db-storage
+          persistentVolumeClaim:
+            claimName: anamnezai-db-pvc
+
+---
+# ─────────────────────────────────────────────
+#  Service — AnamnezAI Backend
+# ─────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: anamnezai-service
+  namespace: anamnezai
+  labels:
+    app: anamnezai-backend
+spec:
+  selector:
+    app: anamnezai-backend
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP
+
+---
+# ──��──────────────────────────────────────────
+#  Deployment — Ollama (Gemma 4 Local LLM)
+# ─────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: anamnezai
+  labels:
+    app: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          ports:
+            - containerPort: 11434
+              name: ollama-api
+          env:
+            - name: OLLAMA_MODELS
+              value: "/models"
+          volumeMounts:
+            - name: ollama-models
+              mountPath: /models
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "1000m"
+            limits:
+              memory: "16Gi"
+              cpu: "4000m"
+          # For GPU nodes, add:
+          # limits:
+          #   nvidia.com/gpu: 1
+      volumes:
+        - name: ollama-models
+          emptyDir:
+            sizeLimit: 20Gi
+          # For production, use PVC:
+          # persistentVolumeClaim:
+          #   claimName: ollama-models-pvc
+
+---
+# ─────────────────────────────────────────────
+#  Service — Ollama
+# ─────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-service
+  namespace: anamnezai
+spec:
+  selector:
+    app: ollama
+  ports:
+    - name: ollama-api
+      protocol: TCP
+      port: 11434
+      targetPort: 11434
+  type: ClusterIP
+
+---
+# ─────────────────────────────────────────────
+#  Ingress — HTTPS with TLS
+# ─────────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: anamnezai-ingress
+  namespace: anamnezai
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/client-max-body-size: "50m"
+spec:
+  tls:
+    - hosts:
+        - anamnezai.tr
+        - www.anamnezai.tr
+      secretName: anamnezai-tls
+  rules:
+    - host: anamnezai.tr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: anamnezai-service
+                port:
+                  number: 80
+
+---
+# ─────────────────────────────────────────────
+#  HorizontalPodAutoscaler
+# ─────────────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: anamnezai-hpa
+  namespace: anamnezai
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: anamnezai-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+

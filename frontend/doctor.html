@@ -534,7 +534,12 @@ function showDetail(sid){
       <button onclick="exportFHIR('${sid}')"
         class="flex-1 py-2.5 rounded-xl border-2 border-pric text-pric text-[12px] font-bold hover:bg-pric hover:text-white transition-all flex items-center justify-center gap-1.5">
         <span class="material-symbols-outlined msym text-[14px]">download</span>
-        FHIR R4 Export
+        FHIR R4
+      </button>
+      <button onclick="openClinicalReview('${sid}')"
+        class="flex-1 py-2.5 rounded-xl border-2 border-sec text-sec text-[12px] font-bold hover:bg-sec hover:text-white transition-all flex items-center justify-center gap-1.5">
+        <span class="material-symbols-outlined msym text-[14px]">folder_shared</span>
+        Klinik İnceleme
       </button>
     </div>`;
 
@@ -716,6 +721,10 @@ function openFullReport(sid){
   if(!p) return;
   localStorage.setItem('anamnez_summary', JSON.stringify(p));
   window.open('summary.html','_blank');
+}
+
+function openClinicalReview(sid){
+  window.open(`clinical_review.html?id=${sid}`, '_blank');
 }
 
 function closePanel(){

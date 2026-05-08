@@ -153,8 +153,8 @@ ADMİN    → Tüm haklar
 
 **Durum:** ✅ TR/EN/AR + WCAG 2.1 AA
 
-- [x] **Türkçe / İngilizce / Arapça** dil desteği — kiosk.html tam i18n (I18N objesi)
-- [x] RTL desteği — Arapça seçilince `dir="rtl"` otomatik uygulanır
+- [x] **Türkçe / İngilizce / Arapça** dil desteği — kiosk.html + index.html tam i18n
+- [x] RTL desteği — Arapça seçilince `dir="rtl"` + `lang="ar"` otomatik uygulanır
 - [x] Dil tercihi `localStorage`'da kalıcı tutulur
 - [x] `GET /api/kiosk/status` → `message_tr`, `message_en`, `message_ar` döndürür
 - [x] **WCAG 2.1 AA uyumu** — aria-label, role="alert", aria-live, aria-pressed, aria-modal
@@ -163,6 +163,7 @@ ADMİN    → Tüm haklar
 - [x] **Klavye navigasyonu** — :focus-visible, goTo() ilk fokuslanabilir elemana focus verir
 - [x] **.sr-only** yardımcı teknoloji (ekran okuyucu) class'ı eklendi
 - [x] Tüm semantik HTML — role="main", role="toolbar", role="region", role="figure"
+- [x] index.html AR butonu + setLang() RTL/LTR toggle
 - [ ] Kürtçe temel destek (v2 roadmap)
 - [ ] Sesli soru/cevap STT+TTS (v2 roadmap)
 
@@ -202,9 +203,9 @@ ADMİN    → Tüm haklar
 
 ---
 
-## ☁️ Sprint 10 — Cloud & Ölçekleme ✅ TAMAMLANDI (CI/CD)
+## ☁️ Sprint 10 — Cloud & Ölçekleme ✅ TAMAMLANDI
 
-**Durum:** ✅ CI/CD pipeline + Docker hazır
+**Durum:** ✅ CI/CD pipeline + Docker + Kubernetes hazır
 
 - [x] **`.github/workflows/ci.yml`** — GitHub Actions pipeline:
   - Lint (ruff) + pytest + coverage
@@ -213,7 +214,14 @@ ADMİN    → Tüm haklar
   - Cloud Run auto-deploy (main branch → production)
 - [x] `Dockerfile` — mevcut, production hazır
 - [x] `docker-compose.yml` — mevcut, local dev
-- [ ] Kubernetes (GKE) — ulusal ölçek için
+- [x] **`kubernetes/deployment.yaml`** — tam Kubernetes manifests:
+  - Namespace, ConfigMap, Secret
+  - Backend Deployment (2 replicas, rolling update)
+  - Ollama Deployment
+  - Services (ClusterIP)
+  - Ingress (HTTPS + TLS + cert-manager)
+  - HorizontalPodAutoscaler (2–10 replicas, CPU/Memory)
+  - PersistentVolumeClaim (5Gi SQLite storage)
 - [ ] Vertex AI + Gemini API cloud fallback
 - [ ] PostgreSQL geçişi (SQLite → production)
 - [ ] Redis cache

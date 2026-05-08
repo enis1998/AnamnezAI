@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — Hasta Paneli</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config={theme:{extend:{colors:{pri:"#002f40",pric:"#00475e",sec:"#006a68",secc:"#a0f1ed",surf:"#f4f7f9",surfc:"#e8ecee",surflow:"#ffffff",ons:"#191c1d",onsv:"#3f4749",ouv:"#bfc7ca",err:"#ba1a1a",errc:"#ffdad6",warn:"#e07b26"},fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}}}}
+</script>
+<style>
+*{box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f4f7f9;color:#191c1d}
+h1,h2,h3,h4{font-family:'Manrope',sans-serif}
+.msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.msymf{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+.glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.card{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 8px 32px rgba(0,47,64,0.07)}
+.fade{animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.badge-RED{background:#ffdad6;color:#ba1a1a}
+.badge-YELLOW{background:#fff3e0;color:#e07b26}
+.badge-GREEN{background:#e8f5e9;color:#006a68}
+.tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500}
+</style>
+</head>
+<body>
+<header class="fixed top-0 w-full z-50 glass border-b border-white/30 px-5 py-3 flex justify-between items-center h-14">
+  <a href="index.html" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msymf text-white text-[18px]">ecg_heart</span>
+    </div>
+    <span class="font-head font-bold text-pri text-[17px]">AnamnezAI</span>
+  </a>
+  <button onclick="logout()" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surf border border-surfc text-sm hover:bg-surfc transition-colors">
+    <span class="material-symbols-outlined msym text-[18px] text-sec">account_circle</span>
+    <span id="userName" class="text-ons font-medium hidden sm:inline">Yükleniyor...</span>
+    <span class="material-symbols-outlined msym text-[16px] text-onsv">logout</span>
+  </button>
+</header>
+
+<div class="pt-14 flex min-h-screen">
+  <aside class="hidden md:flex flex-col w-60 sticky top-14 bg-white border-r border-surfc py-6" style="height:calc(100vh - 56px)">
+    <div class="px-6 mb-8">
+      <div class="flex flex-col items-center py-5 bg-surf rounded-2xl">
+        <div class="w-16 h-16 rounded-full bg-pric flex items-center justify-center text-white font-bold text-2xl mb-3" id="avatarInitial">H</div>
+        <p class="font-bold text-pri text-sm" id="sidebarName">—</p>
+        <p class="text-xs text-onsv mt-0.5">Hasta</p>
+      </div>
+    </div>
+    <nav class="flex-1 px-3 space-y-1 text-sm">
+      <a href="#top" class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-surf text-sec font-semibold">
+        <span class="material-symbols-outlined msym text-[20px]">dashboard</span>Genel Bakış
+      </a>
+      <a href="#historySection" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
+        <span class="material-symbols-outlined msym text-[20px]">history</span>Ziyaret Geçmişi
+      </a>
+      <a href="#medSection" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
+        <span class="material-symbols-outlined msym text-[20px]">medication</span>İlaçlar
+      </a>
+      <a href="profile.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
+        <span class="material-symbols-outlined msym text-[20px]">manage_accounts</span>Profil Düzenle
+      </a>
+    </nav>
+    <div class="px-3 mt-auto space-y-2">
+      <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-sec text-white hover:bg-pric transition-colors text-sm font-semibold">
+        <span class="material-symbols-outlined msym text-[20px]">add_circle</span>Yeni Mülakat
+      </a>
+      <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-errc hover:text-err transition-colors text-sm">
+        <span class="material-symbols-outlined msym text-[20px]">logout</span>Çıkış
+      </button>
+    </div>
+  </aside>
+
+  <main class="flex-1 p-5 lg:p-8 pb-20 md:pb-8">
+    <div id="loadingState" class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <div class="w-10 h-10 rounded-full border-4 border-secc border-t-sec animate-spin"></div>
+      <p class="text-onsv text-sm">Panel yükleniyor...</p>
+    </div>
+
+    <div id="mainContent" class="hidden space-y-8">
+      <!-- Hero Banner -->
+      <div id="top" class="card p-6 lg:p-8 bg-gradient-to-br from-pric to-pri text-white fade">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 rounded-full text-xs font-semibold mb-3">
+              <span class="material-symbols-outlined msymf text-[14px]">health_and_safety</span>
+              HASTA PANELİ
+            </div>
+            <h1 class="text-2xl font-bold mb-1">Hoş geldiniz, <span id="welcomeName">—</span> 👋</h1>
+            <p class="text-white/70 text-sm">Sağlık kaydınız güvende ve gizlidir.</p>
+          </div>
+          <a href="index.html" class="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-white text-pri rounded-xl font-semibold text-sm hover:bg-secc transition-colors">
+            <span class="material-symbols-outlined msym text-[20px]">add_circle</span>
+            Yeni Mülakat Başlat
+          </a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="card p-4 text-center fade" style="animation-delay:.05s">
+          <p class="text-3xl font-extrabold text-pri mb-1" id="statTotal">0</p>
+          <p class="text-xs text-onsv">Toplam Ziyaret</p>
+        </div>
+        <div class="card p-4 text-center fade" style="animation-delay:.1s">
+          <p class="text-3xl font-extrabold text-err mb-1" id="statRed">0</p>
+          <p class="text-xs text-onsv">Acil</p>
+        </div>
+        <div class="card p-4 text-center fade" style="animation-delay:.15s">
+          <p class="text-3xl font-extrabold text-warn mb-1" id="statYellow">0</p>
+          <p class="text-xs text-onsv">Kritik</p>
+        </div>
+        <div class="card p-4 text-center fade" style="animation-delay:.2s">
+          <p class="text-3xl font-extrabold text-sec mb-1" id="statGreen">0</p>
+          <p class="text-xs text-onsv">Rutin</p>
+        </div>
+      </div>
+
+      <!-- Health snapshot -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="bg-errc rounded-2xl p-5 fade" style="animation-delay:.25s">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined msymf text-err text-[20px]">warning</span>
+            <h2 class="font-bold text-err text-sm">Alerjiler</h2>
+          </div>
+          <div id="allergyTags" class="flex flex-wrap gap-2">
+            <span class="text-err/70 text-sm">Alerji kaydı yok</span>
+          </div>
+        </div>
+        <div class="card p-5 fade" style="animation-delay:.3s">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined msym text-pri text-[20px]">medical_information</span>
+            <h2 class="font-bold text-ons text-sm">Kronik Hastalıklar</h2>
+          </div>
+          <div id="chronicTags" class="flex flex-wrap gap-2">
+            <span class="text-onsv text-sm">Kayıtlı hastalık yok</span>
+          </div>
+        </div>
+        <div class="card p-5 fade" style="animation-delay:.35s">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined msym text-pri text-[20px]">medication</span>
+            <h2 class="font-bold text-ons text-sm">İlaçlar</h2>
+          </div>
+          <div id="medTagsSmall" class="flex flex-wrap gap-2">
+            <span class="text-onsv text-sm">Kayıtlı ilaç yok</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visit History -->
+      <section id="historySection">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-ons flex items-center gap-2">
+            <span class="material-symbols-outlined msym text-pri">history</span>
+            Ziyaret Geçmişi
+          </h2>
+          <span id="visitCount" class="text-sm text-onsv"></span>
+        </div>
+        <div id="visitList" class="space-y-3">
+          <div class="card p-6 text-center">
+            <span class="material-symbols-outlined msym text-[40px] text-ouv mb-2 block">inbox</span>
+            <p class="text-onsv text-sm">Henüz tamamlanmış ziyaret yok.</p>
+            <a href="index.html" class="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-sm font-semibold hover:bg-pric transition-colors">
+              <span class="material-symbols-outlined msym text-[18px]">add_circle</span>
+              İlk Mülakatı Başlat
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Medications detail -->
+      <section id="medSection">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-ons flex items-center gap-2">
+            <span class="material-symbols-outlined msym text-pri">medication</span>
+            İlaç Listesi
+          </h2>
+          <a href="profile.html" class="text-sm text-sec hover:underline">Düzenle →</a>
+        </div>
+        <div id="medDetailList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="card p-4 text-center text-onsv text-sm col-span-full">
+            Kayıtlı ilaç yok. <a href="profile.html" class="text-sec hover:underline">Profilinizden</a> ekleyebilirsiniz.
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-surfc flex items-center justify-around py-2 z-50">
+  <a href="#top" class="flex flex-col items-center gap-0.5 text-sec">
+    <span class="material-symbols-outlined msymf text-[24px]">dashboard</span>
+    <span class="text-[10px] font-medium">Panel</span>
+  </a>
+  <a href="#historySection" class="flex flex-col items-center gap-0.5 text-onsv">
+    <span class="material-symbols-outlined msym text-[24px]">history</span>
+    <span class="text-[10px]">Geçmiş</span>
+  </a>
+  <a href="index.html" class="flex flex-col items-center gap-0.5">
+    <div class="w-12 h-12 rounded-full bg-sec -mt-4 flex items-center justify-center shadow-lg">
+      <span class="material-symbols-outlined msym text-white text-[24px]">add</span>
+    </div>
+    <span class="text-[10px] text-onsv mt-0.5">Mülakat</span>
+  </a>
+  <a href="profile.html" class="flex flex-col items-center gap-0.5 text-onsv">
+    <span class="material-symbols-outlined msym text-[24px]">manage_accounts</span>
+    <span class="text-[10px]">Profil</span>
+  </a>
+  <button onclick="logout()" class="flex flex-col items-center gap-0.5 text-onsv">
+    <span class="material-symbols-outlined msym text-[24px]">logout</span>
+    <span class="text-[10px]">Çıkış</span>
+  </button>
+</nav>
+
+<script>
+const API='';let token,visitHistory=[];
+async function init(){
+  token=localStorage.getItem('token');
+  if(!token){location.href='login.html';return;}
+  try{
+    const me=await fetch(`${API}/auth/me`,{headers:{Authorization:`Bearer ${token}`}});
+    if(!me.ok){location.href='login.html';return;}
+    const u=await me.json();
+    if(u.role!=='HASTA'){location.href='index.html';return;}
+    const n=u.full_name||u.email;
+    document.getElementById('userName').textContent=n;
+    document.getElementById('welcomeName').textContent=n.split(' ')[0];
+    document.getElementById('sidebarName').textContent=n;
+    document.getElementById('avatarInitial').textContent=n.charAt(0).toUpperCase();
+    const[pr,hr]=await Promise.all([
+      fetch(`${API}/auth/profile`,{headers:{Authorization:`Bearer ${token}`}}),
+      fetch(`${API}/api/patient/history`,{headers:{Authorization:`Bearer ${token}`}})
+    ]);
+    if(pr.ok){renderProfile(await pr.json());}
+    if(hr.ok){const d=await hr.json();visitHistory=d.sessions||d||[];renderVisits(visitHistory);}
+    renderStats();
+  }catch(e){console.error(e);}
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+}
+function renderProfile(p){
+  renderTags('allergyTags',p.allergies||[],'tag bg-errc text-err','Alerji kaydı yok');
+  renderTags('chronicTags',p.chronic_diseases||[],'tag bg-secc text-sec','Kayıtlı hastalık yok');
+  renderTags('medTagsSmall',p.medications||[],'tag bg-surf text-ons border border-surfc','Kayıtlı ilaç yok');
+  const mdl=document.getElementById('medDetailList');
+  if((p.medications||[]).length){
+    mdl.innerHTML=p.medications.map(m=>`<div class="card p-4 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-secc flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined msym text-sec text-[18px]">pill</span>
+      </div>
+      <div><p class="font-semibold text-ons text-sm">${esc(m)}</p><p class="text-xs text-onsv">Düzenli kullanım</p></div>
+    </div>`).join('');
+  }
+}
+function renderTags(id,items,cls,empty){
+  const el=document.getElementById(id);
+  el.innerHTML=items.length?items.map(i=>`<span class="${cls}">${esc(i)}</span>`).join(''):`<span class="text-onsv text-sm">${empty}</span>`;
+}
+function renderVisits(visits){
+  document.getElementById('visitCount').textContent=`${visits.length} ziyaret`;
+  if(!visits.length)return;
+  const lbl={RED:'🔴 ACİL',YELLOW:'🟡 KRİTİK',GREEN:'🟢 RUTİN'};
+  document.getElementById('visitList').innerHTML=visits.slice().reverse().map((v,i)=>{
+    const tl=v.triage_level||v.summary?.triage_level||'GREEN';
+    const date=v.created_at?new Date(v.created_at).toLocaleString('tr-TR'):'—';
+    const complaint=v.chief_complaint||v.summary?.chief_complaint||'Belirtilmemiş';
+    return `<div class="card p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 fade" style="animation-delay:${i*0.05}s">
+      <div class="flex items-start gap-4">
+        <div class="w-10 h-10 rounded-xl badge-${tl} flex items-center justify-center flex-shrink-0 font-bold text-sm">${tl[0]}</div>
+        <div><p class="font-semibold text-ons text-sm">${esc(complaint)}</p><p class="text-xs text-onsv mt-0.5">${date}</p></div>
+      </div>
+      <div class="flex items-center gap-3 ml-14 sm:ml-0">
+        <span class="tag badge-${tl} text-xs font-bold">${lbl[tl]||tl}</span>
+        ${v.id?`<a href="summary.html?id=${v.id}" class="text-xs text-sec hover:underline flex items-center gap-1"><span class="material-symbols-outlined msym text-[14px]">open_in_new</span>Rapor</a>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderStats(){
+  const t=visitHistory.length;
+  document.getElementById('statTotal').textContent=t;
+  document.getElementById('statRed').textContent=visitHistory.filter(v=>(v.triage_level||'GREEN')==='RED').length;
+  document.getElementById('statYellow').textContent=visitHistory.filter(v=>(v.triage_level||'GREEN')==='YELLOW').length;
+  document.getElementById('statGreen').textContent=visitHistory.filter(v=>(v.triage_level||'GREEN')==='GREEN').length;
+}
+function logout(){localStorage.removeItem('token');location.href='login.html';}
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
+

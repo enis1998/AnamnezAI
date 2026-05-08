@@ -144,30 +144,34 @@ Mevcut sağlık teknolojilerinin soğuk, klinik, bunaltıcı görünümünü red
 
 ---
 
-### SPRINT 6 — Mobil UI (PLANLI)
+### SPRINT 6 — Mobil UI ✅ TAMAMLANDI
 **Hedef:** Stitch AI Interview Mobile ekranını uygula
 
-- [ ] `frontend/index.html` → tamamen responsive
+- [x] `frontend/index.html` → tamamen responsive
   - Stitch `ai_interview_mobile` referansı
-  - Alt sabit cevap girişi (bottom sheet)
+  - Alt sabit cevap girişi (bottom sheet style)
   - Büyük dokunma hedefleri (min 56px)
-- [ ] Progress dots stepper (5 adım görsel göstergesi)
-- [ ] `frontend/patient_home_mobile.html` — hasta ana ekranı
+- [x] Progress dots stepper (5 adım görsel göstergesi)
+- [x] `frontend/patient_dashboard.html` — hasta paneli (sidebar + mobil bottom nav)
 
 ---
 
-### SPRINT 7 — Clinical Review + Hasta Geçmişi (PLANLI)
+### SPRINT 7 �� Clinical Review + Hasta Geçmişi ✅ TAMAMLANDI
 **Hedef:** Doktor panelini stitch tasarımlarıyla tam eşleştir
 
-- [ ] `frontend/clinical_review.html`
+- [x] `frontend/clinical_review.html`
   - Stitch `clinical_review_web` referansı
-  - Soru-cevap transkripti
-  - Doktor notları ekleme alanı
-- [ ] `frontend/clinical_summary.html`
-  - Stitch `clinical_summary_web` referansı
-  - PDF export (`window.print`)
-- [ ] Backend: `PUT /api/session/{id}/doctor-notes`
-- [ ] Son 20 tamamlanan mülakatın listesi
+  - Q&A transkripti, ICD-10 tablo, vital bulgular
+  - Doktor notları ekleme alanı, "Görüldü" işareti
+  - FHIR R4 export butonu, PDF print
+- [x] `frontend/patient_dashboard.html`
+  - Stitch `patient_dashboard_web` referansı
+  - Ziyaret geçmişi, kronik hastalık/ilaç/alerji kartları
+  - İstatistik kartları (toplam/acil/kritik/rutin)
+  - Mobil bottom nav, sidebar layout
+- [x] Backend: `PUT /api/session/{id}/note` — doktor notu ekleme (✅)
+- [x] `GET /api/patient/history` — tüm ziyaret geçmişi (✅)
+- [x] doctor.html → "Klinik İnceleme" butonu eklendi
 
 ---
 
@@ -201,13 +205,14 @@ Health & Sciences ($10K) + Ollama ($10K) ödülleri zero-shot ile yeterince dest
 
 ---
 
-### SPRINT 9 — Production Hazırlık (PLANLI)
+### SPRINT 9 — Production Hazırlık ✅ TAMAMLANDI
 
-- [ ] Rate limiting (slowapi)
-- [ ] Session TTL (24 saat sonra otomatik temizle)
-- [ ] Retry logic (3 deneme, exponential backoff)
-- [ ] `/api/session/{id}` GET — session durumu sorgula
-- [ ] KVKK uyumu: veri işleme bildirimi
+- [x] Rate limiting (slowapi) — app.state.limiter, 200/min default
+- [x] Session TTL — SQLite persistence, 24h cleanup logic
+- [x] Retry logic — backend warmup + exponential backoff
+- [x] `/api/session/{id}` GET — session durumu sorgula (queue endpoint)
+- [x] KVKK uyumu: audit_log tablosu, GDPR veri silme hakkı
+- [x] `kubernetes/deployment.yaml` — Kubernetes Deployment + HPA + Ingress (Sprint 10)
 
 ---
 

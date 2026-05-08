@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — Klinik İnceleme</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      pri:"#002f40", pric:"#00475e", sec:"#006a68", secc:"#a0f1ed",
+      surf:"#f4f7f9", surfc:"#e8ecee", surflow:"#ffffff",
+      ons:"#191c1d", onsv:"#3f4749", ouv:"#bfc7ca",
+      err:"#ba1a1a", errc:"#ffdad6", warn:"#e07b26"
+    },
+    fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}
+  }}
+}
+</script>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#f4f7f9;color:#191c1d}
+  h1,h2,h3,h4{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  .glass{background:rgba(255,255,255,0.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+  .card{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 8px 32px rgba(0,47,64,0.07)}
+  .editorial-shadow{box-shadow:0 12px 40px rgba(25,28,29,0.06)}
+  .fade{animation:fadeUp .4s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .triage-RED{background:#ffdad6;color:#ba1a1a;border:1.5px solid #ba1a1a}
+  .triage-YELLOW{background:#fff3e0;color:#e07b26;border:1.5px solid #e07b26}
+  .triage-GREEN{background:#e8f5e9;color:#006a68;border:1.5px solid #006a68}
+  .qa-bubble{background:#f4f7f9;border-radius:12px;padding:12px 16px;margin-bottom:8px}
+  @media print {
+    .no-print{display:none!important}
+    .card{box-shadow:none!important;border:1px solid #e0e0e0}
+    body{background:#fff!important}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="fixed top-0 w-full z-50 glass border-b border-white/30 px-5 py-3 flex justify-between items-center h-14 no-print">
+  <a href="doctor.html" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-[18px]">ecg_heart</span>
+    </div>
+    <span class="font-head font-bold text-pri text-[17px]">AnamnezAI</span>
+  </a>
+  <div class="flex items-center gap-2">
+    <button onclick="window.print()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ouv text-onsv text-sm hover:bg-surfc transition-colors">
+      <span class="material-symbols-outlined msym text-[18px]">print</span>
+      <span class="hidden sm:inline">Yazdır</span>
+    </button>
+    <button onclick="exportPDF()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pri text-white text-sm hover:bg-pric transition-colors">
+      <span class="material-symbols-outlined msym text-[18px]">picture_as_pdf</span>
+      <span class="hidden sm:inline">PDF İndir</span>
+    </button>
+    <a href="doctor.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ouv text-onsv text-sm hover:bg-surfc transition-colors">
+      <span class="material-symbols-outlined msym text-[18px]">arrow_back</span>
+      <span class="hidden sm:inline">Panele Dön</span>
+    </a>
+  </div>
+</header>
+
+<div class="pt-14 flex min-h-screen">
+  <!-- SIDEBAR -->
+  <aside class="hidden lg:flex flex-col w-64 min-h-screen sticky top-14 bg-white border-r border-surfc py-6 no-print" style="height:calc(100vh - 56px)">
+    <!-- Doctor info -->
+    <div id="docInfo" class="px-6 mb-6 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-pric flex items-center justify-center text-white font-bold text-sm" id="docInitial">D</div>
+      <div>
+        <p id="docName" class="text-sm font-bold text-pri">Yükleniyor...</p>
+        <p id="docSpecialty" class="text-xs text-onsv">Doktor</p>
+      </div>
+    </div>
+    <nav class="flex-1 px-4 space-y-1 text-sm">
+      <a href="doctor.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
+        <span class="material-symbols-outlined msym text-[20px]">dashboard</span> Panel
+      </a>
+      <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-surf text-pri font-semibold">
+        <span class="material-symbols-outlined msym text-[20px]">folder_shared</span> Hasta Kaydı
+      </a>
+      <a href="analytics.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
+        <span class="material-symbols-outlined msym text-[20px]">bar_chart</span> Analitik
+      </a>
+    </nav>
+    <div class="px-4 mt-auto">
+      <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-errc hover:text-err transition-colors text-sm">
+        <span class="material-symbols-outlined msym text-[20px]">logout</span> Çıkış
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 p-6 lg:p-8">
+    <!-- Loading -->
+    <div id="loadingState" class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <div class="w-10 h-10 rounded-full border-4 border-secc border-t-sec animate-spin"></div>
+      <p class="text-onsv text-sm">Hasta kaydı yükleniyor...</p>
+    </div>
+
+    <!-- Error -->
+    <div id="errorState" class="hidden flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <span class="material-symbols-outlined msym-fill text-err text-[48px]">error</span>
+      <p class="text-ons font-semibold">Kayıt bulunamadı</p>
+      <a href="doctor.html" class="px-4 py-2 rounded-lg bg-pri text-white text-sm">Panele Dön</a>
+    </div>
+
+    <!-- Content -->
+    <div id="content" class="hidden fade">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-secc rounded-full text-[#006a68] text-xs font-semibold mb-3">
+            <span class="material-symbols-outlined msym-fill text-[14px]">auto_awesome</span>
+            YZ ANALİZİ TAMAMLANDI
+          </div>
+          <h1 class="text-3xl font-bold text-ons tracking-tight mb-1">Klinik İnceleme Raporu</h1>
+          <p id="caseId" class="text-onsv text-base">Case ID yükleniyor...</p>
+        </div>
+        <div id="triageBadge" class="px-5 py-2.5 rounded-xl font-bold text-lg triage-GREEN">YEŞİL</div>
+      </div>
+
+      <!-- BENTO GRID -->
+      <div class="grid grid-cols-12 gap-6">
+
+        <!-- LEFT: Clinical Summary + Q&A -->
+        <div class="col-span-12 lg:col-span-8 space-y-6">
+
+          <!-- AI Summary Card -->
+          <section class="card p-6 editorial-shadow fade">
+            <div class="flex justify-between items-start mb-6">
+              <h2 class="text-xl font-bold text-ons">Klinik YZ Özeti</h2>
+              <div class="text-right">
+                <p class="text-xs font-bold text-onsv uppercase tracking-widest mb-1">YZ Güven Skoru</p>
+                <div class="flex items-center gap-1 justify-end text-2xl font-extrabold text-sec" id="confScore">
+                  —%
+                  <span class="material-symbols-outlined msym-fill text-sec text-[22px]">verified</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chief Complaint -->
+            <div class="bg-surf p-4 rounded-xl mb-6 border-l-4 border-sec">
+              <p class="text-lg font-semibold text-pri leading-snug italic" id="chiefComplaint">"Yükleniyor..."</p>
+            </div>
+
+            <!-- Narrative -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 class="text-ons font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-symbols-outlined msym text-pri text-[18px]">schedule</span>
+                  Başlangıç & Süre
+                </h4>
+                <p class="text-onsv leading-relaxed text-sm" id="narrativeOnset">—</p>
+              </div>
+              <div>
+                <h4 class="text-ons font-semibold mb-2 flex items-center gap-2">
+                  <span class="material-symbols-outlined msym text-pri text-[18px]">analytics</span>
+                  Aciliyet Bayrakları
+                </h4>
+                <div id="urgencyFlags" class="space-y-1 text-sm">—</div>
+              </div>
+            </div>
+
+            <!-- Vital Signs -->
+            <div id="vitalSignsSection" class="hidden mt-6">
+              <h4 class="text-ons font-semibold mb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined msym text-pri text-[18px]">monitor_heart</span>
+                Hayati Bulgular
+              </h4>
+              <div id="vitalSignsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+            </div>
+          </section>
+
+          <!-- Q&A Transcript -->
+          <section class="card p-6 editorial-shadow fade">
+            <h2 class="text-xl font-bold text-ons mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-pri">chat</span>
+              Mülakat Transkripti
+            </h2>
+            <div id="qaTranscript" class="space-y-3 max-h-80 overflow-y-auto pr-1">
+              <p class="text-onsv text-sm">Yükleniyor...</p>
+            </div>
+          </section>
+
+          <!-- ICD-10 Table -->
+          <section class="bg-surf p-6 rounded-2xl border border-surfc editorial-shadow fade">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold text-ons flex items-center gap-2">
+                <span class="material-symbols-outlined msym text-pri">table_chart</span>
+                ICD-10 Kodlaması
+              </h2>
+              <button onclick="suggestICD10()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pric text-white text-xs hover:bg-pri transition-colors">
+                <span class="material-symbols-outlined msym text-[16px]">auto_awesome</span>
+                YZ Öner
+              </button>
+            </div>
+            <div class="overflow-hidden rounded-xl bg-white">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-surf">
+                    <th class="px-4 py-3 text-xs font-bold text-onsv uppercase">ICD-10 Kodu</th>
+                    <th class="px-4 py-3 text-xs font-bold text-onsv uppercase">Kategori</th>
+                    <th class="px-4 py-3 text-xs font-bold text-onsv uppercase">Açıklama</th>
+                  </tr>
+                </thead>
+                <tbody id="icd10TableBody" class="divide-y divide-surfc text-sm">
+                  <tr><td colspan="3" class="px-4 py-4 text-onsv text-center">Henüz ICD-10 kodu yok. "YZ Öner" butonuyla otomatik oluşturun.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Doctor Notes -->
+          <section class="card p-6 editorial-shadow fade no-print">
+            <h2 class="text-xl font-bold text-ons mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-pri">edit_note</span>
+              Doktor Notları
+            </h2>
+            <textarea id="doctorNotes" rows="4"
+              class="w-full border border-surfc rounded-xl p-3 text-sm resize-none bg-surf focus:ring-2 focus:ring-sec focus:outline-none"
+              placeholder="Hasta hakkında klinik notlarınızı buraya yazın..."></textarea>
+            <div class="flex gap-2 mt-3">
+              <button onclick="saveNote()" class="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sec text-white text-sm hover:bg-pric transition-colors">
+                <span class="material-symbols-outlined msym text-[18px]">save</span>
+                Notu Kaydet
+              </button>
+              <span id="noteSaved" class="hidden text-sec text-sm flex items-center gap-1">
+                <span class="material-symbols-outlined msym-fill text-[16px]">check_circle</span>
+                Kaydedildi
+              </span>
+            </div>
+          </section>
+        </div>
+
+        <!-- RIGHT: Patient Info + Allergies + Actions -->
+        <div class="col-span-12 lg:col-span-4 space-y-6">
+
+          <!-- Patient Info -->
+          <section class="card p-6 editorial-shadow fade">
+            <h2 class="text-lg font-bold text-ons mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-pri">person</span>
+              Hasta Bilgileri
+            </h2>
+            <div class="space-y-3 text-sm" id="patientInfo">
+              <div class="flex justify-between"><span class="text-onsv">Ad Soyad</span><span id="patName" class="font-semibold text-ons">—</span></div>
+              <div class="flex justify-between"><span class="text-onsv">Yaş</span><span id="patAge" class="font-semibold text-ons">—</span></div>
+              <div class="flex justify-between"><span class="text-onsv">Cinsiyet</span><span id="patGender" class="font-semibold text-ons">—</span></div>
+              <div class="flex justify-between"><span class="text-onsv">Dil</span><span id="patLang" class="font-semibold text-ons">—</span></div>
+              <div class="flex justify-between"><span class="text-onsv">Tarih</span><span id="patDate" class="font-semibold text-ons">—</span></div>
+            </div>
+          </section>
+
+          <!-- Critical Allergies -->
+          <section id="allergySection" class="bg-errc p-5 rounded-2xl border border-err/10 fade">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="material-symbols-outlined msym-fill text-err text-[22px]">warning</span>
+              <h2 class="text-base font-bold text-err">Kritik Alerjiler</h2>
+            </div>
+            <div id="allergyList" class="space-y-2">
+              <p class="text-sm text-err/70">Bilinen alerji yok</p>
+            </div>
+          </section>
+
+          <!-- Chronic Conditions -->
+          <section id="chronicSection" class="card p-5 editorial-shadow fade">
+            <h2 class="text-base font-bold text-ons mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-pri">medical_information</span>
+              Kronik Hastalıklar
+            </h2>
+            <div id="chronicList" class="space-y-3 text-sm">
+              <p class="text-onsv">Bilinen kronik hastalık yok</p>
+            </div>
+          </section>
+
+          <!-- Medications -->
+          <section id="medSection" class="card p-5 editorial-shadow fade">
+            <h2 class="text-base font-bold text-ons mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-pri">medication</span>
+              Kullandığı İlaçlar
+            </h2>
+            <div id="medList" class="space-y-2 text-sm">
+              <p class="text-onsv">Bilinen ilaç yok</p>
+            </div>
+          </section>
+
+          <!-- Quick Actions -->
+          <section class="card p-5 editorial-shadow fade no-print">
+            <h2 class="text-base font-bold text-ons mb-4">Hızlı İşlemler</h2>
+            <div class="space-y-2">
+              <a id="summaryLink" href="summary.html" class="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surf text-ons text-sm hover:bg-secc transition-colors">
+                <span class="material-symbols-outlined msym text-sec text-[20px]">summarize</span>
+                Klinik Özeti Görüntüle
+              </a>
+              <button onclick="exportFHIR()" class="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surf text-ons text-sm hover:bg-secc transition-colors">
+                <span class="material-symbols-outlined msym text-sec text-[20px]">share</span>
+                FHIR R4 Dışa Aktar
+              </button>
+              <button onclick="markSeen()" class="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sec text-white text-sm hover:bg-pric transition-colors">
+                <span class="material-symbols-outlined msym text-[20px]">check_circle</span>
+                Görüldü İşaretle
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const API = '';
+let sessionId = null;
+let token = null;
+let sessionData = null;
+let summaryData = null;
+
+async function init() {
+  token = localStorage.getItem('token');
+  if (!token) { location.href = 'login.html'; return; }
+
+  // Auth check
+  try {
+    const me = await fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!me.ok) { location.href = 'login.html'; return; }
+    const user = await me.json();
+    if (user.role !== 'DOKTOR' && user.role !== 'ADMİN' && user.role !== 'PERSONEL') {
+      location.href = 'index.html'; return;
+    }
+    const name = user.full_name || user.email;
+    document.getElementById('docName').textContent = name;
+    document.getElementById('docSpecialty').textContent = user.specialty || user.role;
+    document.getElementById('docInitial').textContent = name.charAt(0).toUpperCase();
+  } catch(e) { location.href = 'login.html'; return; }
+
+  // Get session ID from URL
+  const params = new URLSearchParams(location.search);
+  sessionId = params.get('id');
+  if (!sessionId) { showError(); return; }
+
+  // Update summary link
+  document.getElementById('summaryLink').href = `summary.html?id=${sessionId}`;
+
+  await loadData();
+}
+
+async function loadData() {
+  try {
+    const [queueRes, summaryRes] = await Promise.all([
+      fetch(`${API}/api/patients/queue`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API}/api/session/${sessionId}/summary`, { headers: { Authorization: `Bearer ${token}` } }),
+    ]);
+
+    if (!queueRes.ok || !summaryRes.ok) { showError(); return; }
+
+    const queue = await queueRes.json();
+    summaryData = await summaryRes.json();
+    sessionData = queue.patients?.find(p => p.id === sessionId);
+
+    if (!summaryData && !sessionData) { showError(); return; }
+
+    renderPage();
+  } catch(e) { showError(); }
+}
+
+function renderPage() {
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('content').classList.remove('hidden');
+
+  const s = summaryData || {};
+  const sess = sessionData || {};
+
+  // Case ID
+  document.getElementById('caseId').textContent = `Case ID: #${sessionId.slice(0,8).toUpperCase()} · ${sess.patient_name || s.patient_name || '—'}, ${sess.age || '—'} yaş`;
+
+  // Triage badge
+  const tl = s.triage_level || sess.triage_level || 'GREEN';
+  const badge = document.getElementById('triageBadge');
+  badge.className = `px-5 py-2.5 rounded-xl font-bold text-lg triage-${tl}`;
+  badge.textContent = { RED: '🔴 KIRMIZI', YELLOW: '🟡 SARI', GREEN: '🟢 YEŞİL' }[tl] || tl;
+
+  // Confidence score
+  document.getElementById('confScore').childNodes[0].textContent = `${Math.round((s.confidence_score || 0) * 100)}%`;
+
+  // Chief complaint
+  document.getElementById('chiefComplaint').textContent = `"${s.chief_complaint || sess.chief_complaint || '—'}"`;
+
+  // Narrative onset
+  document.getElementById('narrativeOnset').textContent = s.clinical_narrative || s.narrative || '—';
+
+  // Urgency flags
+  const flags = s.urgency_flags || [];
+  const uf = document.getElementById('urgencyFlags');
+  if (flags.length) {
+    uf.innerHTML = flags.map(f =>
+      `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${f.toLowerCase().includes('alerji') || f.toLowerCase().includes('anafilaksi') ? 'bg-errc text-err' : 'bg-secc text-sec'}">
+        <span class="material-symbols-outlined msym-fill text-[12px]">warning</span>${f}
+      </span>`
+    ).join('');
+  } else { uf.textContent = 'Acil bayrak yok'; }
+
+  // Vital signs
+  const vitals = s.vital_signs || sess.vital_signs;
+  if (vitals && Object.keys(vitals).length > 0) {
+    document.getElementById('vitalSignsSection').classList.remove('hidden');
+    const labelMap = { blood_pressure:'Tansiyon', pulse:'Nabız', temperature:'Ateş', oxygen_saturation:'SpO2', respiratory_rate:'Solunum', blood_sugar:'Kan Şekeri' };
+    const grid = document.getElementById('vitalSignsGrid');
+    grid.innerHTML = Object.entries(vitals).filter(([,v])=>v).map(([k,v]) =>
+      `<div class="bg-surf rounded-xl p-3 text-center">
+        <p class="text-xs text-onsv mb-1">${labelMap[k]||k}</p>
+        <p class="font-bold text-pri text-sm">${v}</p>
+      </div>`
+    ).join('');
+  }
+
+  // Patient info
+  document.getElementById('patName').textContent = sess.patient_name || s.patient_name || '—';
+  document.getElementById('patAge').textContent = sess.age ? `${sess.age} yaş` : '—';
+  document.getElementById('patGender').textContent = sess.gender || '—';
+  document.getElementById('patLang').textContent = sess.language === 'en' ? 'İngilizce' : 'Türkçe';
+  document.getElementById('patDate').textContent = sess.created_at ? new Date(sess.created_at).toLocaleString('tr-TR') : '—';
+
+  // Profile data (allergies, chronic, meds)
+  const profile = s.patient_profile || sess.patient_profile || {};
+  const allergies = profile.allergies || s.allergies || [];
+  const chronic = profile.chronic_diseases || s.chronic_diseases || [];
+  const meds = profile.medications || s.medications || [];
+
+  renderTags('allergyList', allergies, 'text-err', 'Bilinen alerji yok');
+  renderConditions('chronicList', chronic);
+  renderTags('medList', meds, 'text-sec', 'Bilinen ilaç yok');
+
+  // Q&A transcript
+  const history = sess.history || s.history || [];
+  const qa = document.getElementById('qaTranscript');
+  if (history.length) {
+    qa.innerHTML = history.map((msg, i) => {
+      const isDoc = msg.role === 'assistant';
+      return `<div class="qa-bubble ${isDoc ? 'bg-surf border-l-4 border-sec ml-0' : 'bg-white border-l-4 border-ouv ml-4'}">
+        <p class="text-xs font-bold mb-1 ${isDoc ? 'text-sec' : 'text-onsv'}">${isDoc ? '🤖 YZ Doktor' : '👤 Hasta'}</p>
+        <p class="text-sm text-ons leading-relaxed">${escapeHtml(msg.content)}</p>
+      </div>`;
+    }).join('');
+  } else {
+    qa.innerHTML = '<p class="text-onsv text-sm">Mülakat transkripti bulunamadı.</p>';
+  }
+
+  // Existing doctor note
+  if (sess.doctor_note) {
+    document.getElementById('doctorNotes').value = sess.doctor_note;
+  }
+
+  // ICD-10 codes
+  const icd = s.icd10_codes || [];
+  if (icd.length) renderICD10(icd);
+}
+
+function renderTags(containerId, items, colorClass, emptyMsg) {
+  const el = document.getElementById(containerId);
+  if (!items || !items.length) { el.innerHTML = `<p class="text-onsv">${emptyMsg}</p>`; return; }
+  el.innerHTML = items.map(item =>
+    `<div class="flex items-center gap-2 bg-white/50 rounded-xl px-3 py-2">
+      <span class="inline-block w-2 h-2 rounded-full bg-current ${colorClass}"></span>
+      <span class="${colorClass} font-medium">${escapeHtml(item)}</span>
+    </div>`
+  ).join('');
+}
+
+function renderConditions(containerId, items) {
+  const el = document.getElementById(containerId);
+  const icons = ['water_drop','speed','monitor_heart','medication','psychiatry','healing'];
+  if (!items || !items.length) { el.innerHTML = '<p class="text-onsv">Bilinen kronik hastalık yok</p>'; return; }
+  el.innerHTML = items.map((item, i) =>
+    `<div class="flex items-start gap-3">
+      <div class="w-8 h-8 rounded-full bg-secc flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined msym text-sec text-[16px]">${icons[i%icons.length]}</span>
+      </div>
+      <p class="text-ons font-medium pt-1.5">${escapeHtml(item)}</p>
+    </div>`
+  ).join('');
+}
+
+function renderICD10(codes) {
+  const tbody = document.getElementById('icd10TableBody');
+  tbody.innerHTML = codes.map(c =>
+    `<tr>
+      <td class="px-4 py-3 font-mono text-sm text-pri font-bold">${escapeHtml(c.code || c)}</td>
+      <td class="px-4 py-3"><span class="px-2 py-0.5 bg-secc text-sec rounded-full text-xs font-semibold">${escapeHtml(c.category || 'Genel')}</span></td>
+      <td class="px-4 py-3 text-sm text-onsv">${escapeHtml(c.description || c.display || '—')}</td>
+    </tr>`
+  ).join('');
+}
+
+async function suggestICD10() {
+  if (!sessionId || !token) return;
+  const btn = event.target.closest('button');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined msym text-[16px] animate-spin">autorenew</span> Öneriliyor...';
+  try {
+    const res = await fetch(`${API}/api/session/${sessionId}/icd10`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.icd10_codes?.length) renderICD10(data.icd10_codes);
+    }
+  } catch(e) {}
+  btn.disabled = false;
+  btn.innerHTML = '<span class="material-symbols-outlined msym text-[16px]">auto_awesome</span> YZ Öner';
+}
+
+async function saveNote() {
+  if (!sessionId || !token) return;
+  const note = document.getElementById('doctorNotes').value.trim();
+  try {
+    const res = await fetch(`${API}/api/session/${sessionId}/note`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ note })
+    });
+    if (res.ok) {
+      const saved = document.getElementById('noteSaved');
+      saved.classList.remove('hidden');
+      setTimeout(() => saved.classList.add('hidden'), 3000);
+    }
+  } catch(e) {}
+}
+
+async function markSeen() {
+  if (!sessionId || !token) return;
+  try {
+    await fetch(`${API}/api/session/${sessionId}/seen`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    alert('Hasta görüldü olarak işaretlendi.');
+  } catch(e) {}
+}
+
+async function exportFHIR() {
+  if (!sessionId || !token) return;
+  try {
+    const res = await fetch(`${API}/api/session/${sessionId}/fhir`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fhir-${sessionId.slice(0,8)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  } catch(e) {}
+}
+
+function exportPDF() {
+  window.print();
+}
+
+function showError() {
+  document.getElementById('loadingState').classList.add('hidden');
+  document.getElementById('errorState').classList.remove('hidden');
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  location.href = 'login.html';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
+

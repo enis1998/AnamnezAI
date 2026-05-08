@@ -74,7 +74,10 @@ tailwind.config = {
       <span id="user-name-pill">Kullanıcı</span>
       <span class="material-symbols-outlined msym text-[13px] text-ouv">expand_more</span>
       <!-- Dropdown -->
-      <div class="absolute top-full right-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-surfc hidden group-hover:block z-50 py-1">
+      <div class="absolute top-full right-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-surfc hidden group-hover:block z-50 py-1">
+        <a href="patient_dashboard.html" class="flex items-center gap-2 px-4 py-2.5 hover:bg-surf text-[12px] font-medium text-ons transition-colors">
+          <span class="material-symbols-outlined msym text-[15px] text-sec">dashboard</span>Hasta Panelim
+        </a>
         <a href="profile.html" class="flex items-center gap-2 px-4 py-2.5 hover:bg-surf text-[12px] font-medium text-ons transition-colors">
           <span class="material-symbols-outlined msym text-[15px] text-sec">manage_accounts</span>Profilim & Geçmiş
         </a>
@@ -92,6 +95,7 @@ tailwind.config = {
     <div class="flex bg-surfc rounded-full p-0.5 gap-0.5">
       <button onclick="setLang('tr')" id="btn-tr" class="px-3 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white">TR</button>
       <button onclick="setLang('en')" id="btn-en" class="px-3 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">EN</button>
+      <button onclick="setLang('ar')" id="btn-ar" class="px-3 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">AR</button>
     </div>
   </div>
 </header>
@@ -283,6 +287,14 @@ tailwind.config = {
         </div>
       </div>
     </div>
+    <!-- Progress dots stepper (Sprint 6) -->
+    <div class="flex justify-center gap-2 mb-2">
+      <div id="dot-1" class="w-2 h-2 rounded-full bg-sec transition-all duration-300"></div>
+      <div id="dot-2" class="w-2 h-2 rounded-full bg-surfc transition-all duration-300"></div>
+      <div id="dot-3" class="w-2 h-2 rounded-full bg-surfc transition-all duration-300"></div>
+      <div id="dot-4" class="w-2 h-2 rounded-full bg-surfc transition-all duration-300"></div>
+      <div id="dot-5" class="w-2 h-2 rounded-full bg-surfc transition-all duration-300"></div>
+    </div>
     <div class="w-full h-1.5 bg-surfc rounded-full overflow-hidden">
       <div id="prog-bar" class="prog-bar h-full bg-sec rounded-full" style="width:20%"></div>
     </div>
@@ -304,10 +316,11 @@ tailwind.config = {
     </div>
   </div>
 
-  <!-- Answer Input -->
+  <!-- Answer Input — Mobile bottom sheet style on small screens -->
   <div class="card p-4 flex-shrink-0 mb-3">
     <textarea id="inp-answer" rows="3" placeholder="Cevabınızı buraya yazın..."
-      class="w-full rounded-xl bg-surfc px-4 py-3 text-[14px] resize-none border border-transparent transition-all mb-3"
+      aria-label="Cevap giriş alanı" role="textbox" aria-multiline="true"
+      class="w-full rounded-xl bg-surfc px-4 py-3 text-[14px] resize-none border border-transparent transition-all mb-3 min-h-[56px]"
       onkeydown="handleKey(event)"></textarea>
 
     <!-- Image upload (Gemma 4 Multimodal) -->
@@ -482,18 +495,39 @@ const T = {
     errAns:'Please write an answer.', errConn:'Backend connection failed.',
     listening:'Listening...', stopRec:'Stop',
     connOk:'Gemma 4 Ready', connOff:'Offline Mode'
+  },
+  ar:{
+    powered:'مدعوم بـ Gemma 4',
+    hero:'قبل أن يراك طبيبك،', hero2:'الذكاء الاصطناعي يستمع إليك.',
+    sub:'يطرح الذكاء الاصطناعي 5 أسئلة ذكية، ويحلل أعراضك، ويقدم ملخصاً سريرياً جاهزاً لطبيبك.',
+    formTitle:'بيانات المريض', lblName:'الاسم الكامل', lblAge:'العمر', lblGender:'الجنس',
+    optM:'ذكر', optF:'أنثى', optO:'لا أرغب في الإفصاح',
+    btnStart:'بدء المقابلة', privacy:'🔒 بياناتك محفوظة محلياً ولا تُشارك مطلقاً.',
+    s1t:'أخبر', s1d:'شارك أعراضك', s2t:'تحليل', s2d:'يقيّم Gemma 4', s3t:'تقرير', s3d:'ملخص جاهز للطبيب',
+    lblProg:'تقدم المقابلة', lblAns:'إجابتك', ansPh:'اكتب إجابتك هنا...',
+    voiceBtn:'صوت', sendBtn:'إرسال', finishBtn:'إنهاء',
+    prep:'AnamnezAI يستعد', prepSub:'Gemma 4 يعد سؤالك الأول...',
+    typing:'Gemma 4 يفكر...',
+    analyzing:'التحليل السريري', analyzingSub:'Gemma 4 يقيّم أعراضك...',
+    errName:'الرجاء إدخال اسمك.', errAge:'الرجاء إدخال عمرك.',
+    errAns:'الرجاء كتابة إجابة.', errConn:'فشل الاتصال بالخادم.',
+    listening:'يستمع...', stopRec:'إيقاف',
+    connOk:'Gemma 4 جاهز', connOff:'وضع بدون إنترنت'
   }
 };
 const t = k => T[lang][k] ?? k;
 
 function setLang(l){
   lang = l;
-  document.getElementById('btn-tr').className = l==='tr'
-    ? 'px-3 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white'
-    : 'px-3 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
-  document.getElementById('btn-en').className = l==='en'
-    ? 'px-3 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white'
-    : 'px-3 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
+  // RTL support for Arabic
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = l;
+  ['btn-tr','btn-en','btn-ar'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.className = id.endsWith(l)
+      ? 'px-3 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white'
+      : 'px-3 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
+  });
   applyT();
 }
 
@@ -766,6 +800,13 @@ async function _doStartInterview(name, age, gender, vitals=null){
 function updateProgress(step, total){
   document.getElementById('txt-step').textContent=`${step}/${total}`;
   document.getElementById('prog-bar').style.width=`${(step/total)*100}%`;
+  // Update progress dots
+  for(let i=1;i<=5;i++){
+    const dot = document.getElementById(`dot-${i}`);
+    if(dot) dot.className = i <= step
+      ? 'w-2.5 h-2.5 rounded-full bg-sec transition-all duration-300'
+      : 'w-2 h-2 rounded-full bg-surfc transition-all duration-300';
+  }
   const isLast = step >= total;
   document.getElementById('txt-btn-next').textContent = isLast ? t('finishBtn') : t('sendBtn');
 }
