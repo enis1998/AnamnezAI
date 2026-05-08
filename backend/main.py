@@ -26,6 +26,15 @@ import io
 import csv
 from datetime import datetime
 
+# Load .env file if present
+try:
+    from dotenv import load_dotenv
+    _env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.exists(_env_path):
+        load_dotenv(_env_path)
+except ImportError:
+    pass
+
 # Sprint 9 — Rate limiting
 try:
     from slowapi import Limiter, _rate_limit_exceeded_handler
