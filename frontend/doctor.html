@@ -215,9 +215,19 @@ async function checkStatus(){
     const r = await fetch(`${API}/health`,{signal:AbortSignal.timeout(3000)});
     const d = await r.json();
     const ok = d.ollama==='connected'&&d.gemma_available;
+    const modelReady   = d.model_ready   === true;
+    const modelWarming = d.model_warming === true;
     const ss = document.getElementById('sidebar-status');
     const li = document.getElementById('live-indicator');
-    if(ok){
+    if(ok && modelReady){
+      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div><span class="text-emerald-700 font-bold">Gemma 4 Hazır ✓</span>`;
+      ss.className='flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-[11px]';
+      li.classList.remove('hidden'); li.style.display='flex';
+    } else if(ok && modelWarming){
+      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-amber-400 dot-pulse"></div><span class="text-amber-700 font-bold">Model Isınıyor...</span>`;
+      ss.className='flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-[11px]';
+      li.classList.remove('hidden'); li.style.display='flex';
+    } else if(ok){
       ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div><span class="text-emerald-700 font-bold">Gemma 4 Aktif</span>`;
       ss.className='flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-[11px]';
       li.classList.remove('hidden'); li.style.display='flex';

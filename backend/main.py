@@ -50,6 +50,10 @@ summaries: dict[str, dict] = {}
 # SSE subscribers for real-time queue
 _queue_subscribers: list[asyncio.Queue] = []
 
+# Model warmup durumu — tüm hastalar bu bayrağı görür
+_model_ready = False
+_model_warming = False
+
 # ─────────────────────────────────────────────
 #  SQLite Persistence
 # ─────────────────────────────────────────────
@@ -139,6 +143,38 @@ async def notify_queue_update():
             await q.put("update")
         except Exception:
             pass
+
+
+async def _background_warmup():
+    """Sunucu başlayınca modeli arka planda VRAM'e yükler.
+    Bu sayede ilk hasta geldiğinde model zaten hazırdır — 90sn bekleme olmaz."""
+    global _model_ready, _model_warming
+    _model_warming = True
+    print("[AnamnezAI] Model ısıtılıyor (arka plan)...")
+    try:
+        # Ollama başlayana kadar bekle (Docker/yeni başlatma durumları için)
+        for attempt in range(12):  # max 60sn bekle
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    r = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+                    if r.status_code == 200:
+                        break
+            except Exception:
+                pass
+            await asyncio.sleep(5)
+
+        # Model warmup
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            await client.post(
+                f"{OLLAMA_BASE_URL}/api/generate",
+                json={"model": GEMMA_MODEL, "prompt": "Hi", "stream": False, "options": {"num_predict": 1}},
+            )
+        _model_ready = True
+        print(f"[AnamnezAI] ✓ Model hazır: {GEMMA_MODEL} — Artık tüm hastalar hızlı yanıt alır")
+    except Exception as e:
+        print(f"[AnamnezAI] Warmup başarısız (model manual tetiklenecek): {e}")
+    finally:
+        _model_warming = False
 
 # ─────────────────────────────────────────────
 #  RAG Init (lazy — sunucu başlangıcını yavaşlatmaz)
@@ -450,10 +486,12 @@ def vitals_to_dict(v: Optional[VitalSigns]) -> Optional[dict]:
 # ─────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_event():
-    """Uygulama başladığında DB'yi başlat ve geçmiş verileri yükle."""
+    """Uygulama başladığında DB'yi başlat, geçmiş verileri yükle ve modeli önceden ısıt."""
     init_db()
     db_load_all()
     print(f"[AnamnezAI v4.0] DB hazır: {DB_PATH}")
+    # Modeli arka planda ısıt — ilk hasta gelene kadar hazır olsun
+    asyncio.create_task(_background_warmup())
 
 # ─────────────────────────────────────────────
 #  Endpoints
@@ -596,6 +634,8 @@ async def health_check():
             "ollama": "connected",
             "gemma_model": GEMMA_MODEL,
             "gemma_available": gemma_available,
+            "model_ready": _model_ready,       # ← warmup tamamlandı mı?
+            "model_warming": _model_warming,   # ← warmup devam ediyor mu?
             "available_models": models,
             "sessions_active": len(sessions),
             "summaries_cached": len(summaries),

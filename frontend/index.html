@@ -96,6 +96,16 @@ tailwind.config = {
 
   <!-- Form Card -->
   <div class="card p-7 mb-6">
+
+    <!-- Model Durum Banner — sadece ısınırken görünür -->
+    <div id="model-status-banner" class="hidden mb-4 flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
+      <span class="material-symbols-outlined msym text-warn text-[18px] flex-shrink-0 mt-0.5">pending</span>
+      <div>
+        <p id="banner-text" class="text-[12px] font-semibold text-amber-800 leading-relaxed"></p>
+        <p class="text-[10px] text-amber-600 mt-0.5">Mülakatı şimdi başlatabilirsiniz — ilk yanıt modelin yüklenmesini bekler.</p>
+      </div>
+    </div>
+
     <h2 class="font-head font-bold text-pri text-[17px] mb-5" id="txt-form-title">Hasta Bilgileri</h2>
     <div class="space-y-4">
       <div>
@@ -481,16 +491,45 @@ async function checkHealth(){
     const r = await fetch(`${API}/health`,{signal:AbortSignal.timeout(5000)});
     const d = await r.json();
     const ok = d.ollama==='connected' && d.gemma_available;
+    const modelReady   = d.model_ready   === true;
+    const modelWarming = d.model_warming === true;
+
     const pill = document.getElementById('conn-pill');
     const dot  = document.getElementById('conn-dot');
     const txt  = document.getElementById('conn-text');
+    const btn  = document.getElementById('btn-start');
+    const statusBanner = document.getElementById('model-status-banner');
+
     pill.classList.remove('hidden');
     pill.style.display='flex';
-    if(ok){
+
+    if(ok && modelReady){
+      // Model VRAM'de — tam hazır
       pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700';
       dot.className='w-1.5 h-1.5 rounded-full bg-emerald-500';
       txt.textContent=t('connOk');
-      // Warmup model in background (silently, one time)
+      if(btn){ btn.disabled=false; btn.classList.remove('opacity-50','cursor-not-allowed'); }
+      if(statusBanner) statusBanner.classList.add('hidden');
+    } else if(ok && modelWarming){
+      // Bağlantı var ama model VRAM'e yükleniyor
+      pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700';
+      dot.className='w-1.5 h-1.5 rounded-full bg-amber-400 dot-pulse';
+      txt.textContent=lang==='tr'?'Model Isınıyor...':'Model Loading...';
+      if(btn){ btn.disabled=false; } // Kullanıcı yine de başlatabilir
+      if(statusBanner){
+        statusBanner.classList.remove('hidden');
+        document.getElementById('banner-text').textContent = lang==='tr'
+          ? '⏳ Gemma 4 modeli arka planda yükleniyor — ilk mülakatınız biraz daha uzun sürebilir.'
+          : '⏳ Gemma 4 is loading in the background — your first interview may take a bit longer.';
+      }
+    } else if(ok && !modelReady && !modelWarming){
+      // Bağlı ama warmup henüz başlamadı (eski backend ile uyumluluk)
+      pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700';
+      dot.className='w-1.5 h-1.5 rounded-full bg-emerald-500';
+      txt.textContent=t('connOk');
+      if(btn){ btn.disabled=false; btn.classList.remove('opacity-50','cursor-not-allowed'); }
+      if(statusBanner) statusBanner.classList.add('hidden');
+      // Warmup tetikle (tek seferlik)
       if(!warmupDone){
         warmupDone=true;
         fetch(`${API}/api/warmup`,{method:'POST',signal:AbortSignal.timeout(200000)}).catch(()=>{});
@@ -499,6 +538,7 @@ async function checkHealth(){
       pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700';
       dot.className='w-1.5 h-1.5 rounded-full bg-amber-500';
       txt.textContent=t('connOff');
+      if(statusBanner) statusBanner.classList.add('hidden');
     }
   } catch {
     const pill=document.getElementById('conn-pill');
