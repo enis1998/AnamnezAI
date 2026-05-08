@@ -884,12 +884,16 @@ async def get_clinical_summary(session_id: str):
         last = image_analyses[-1]
         image_ctx = f"\nGörüntü analizi (Gemma 4 Vision): {last['analysis'][:400]}"
 
+    # Hasta profil bağlamı (kronik hastalık, ilaç, alerji)
+    profile_ctx = session.get("patient_profile_ctx", "")
+    profile_section = f"\nHASTA PROFİLİ: {profile_ctx}" if profile_ctx else ""
+
     triage_prompt = (
-        f"HASTA: {session['patient_name']}, {session['age']} yaş, {session['gender']}{vitals_ctx}{image_ctx}\n\n"
+        f"HASTA: {session['patient_name']}, {session['age']} yaş, {session['gender']}{vitals_ctx}{profile_section}{image_ctx}\n\n"
         f"5 TURLU MÜLAKAT:\n{history_text}\n\n"
         f"Bu hastayı triaj et. Sadece JSON döndür."
     ) if lang == "tr" else (
-        f"PATIENT: {session['patient_name']}, {session['age']}y, {session['gender']}{vitals_ctx}{image_ctx}\n\n"
+        f"PATIENT: {session['patient_name']}, {session['age']}y, {session['gender']}{vitals_ctx}{profile_section}{image_ctx}\n\n"
         f"5-TURN INTERVIEW:\n{history_text}\n\n"
         f"Triage this patient. Return ONLY JSON."
     )
@@ -925,6 +929,13 @@ async def get_clinical_summary(session_id: str):
 
     flags = [f for f in triage_data.get("urgency_flags", [])
              if f and len(f) > 3 and "boş" not in f.lower() and "empty" not in f.lower()]
+
+    # Alerji bayraklarını urgency flags'e ekle
+    allergy_flags = session.get("allergy_flags", [])
+    for alg in allergy_flags:
+        flag_msg = f"⚠️ Alerji geçmişi: {alg}" if session.get("language") == "tr" else f"⚠️ Known allergy: {alg}"
+        if flag_msg not in flags:
+            flags.insert(0, flag_msg)  # Alerjiler her zaman en üste
 
     # Son görüntü analiz bulgusunu ekle
     image_findings = None
@@ -1037,12 +1048,12 @@ async def image_analyze(req: ImageAnalyzeRequest):
 
 
 @app.get("/api/patients/queue")
-async def get_patient_queue():
+async def get_patient_queue(current_user: Optional[dict] = Depends(get_current_user)):
     """Triaj önceliğine göre tam veriyle hasta kuyruğunu döndürür."""
     priority = {"RED": 0, "YELLOW": 1, "GREEN": 2, "PENDING": 3}
     patients = []
     for sid, s in sessions.items():
-        if s["completed"]:
+        if s["completed"] and not s.get("is_seen"):  # Görüldü işaretliler kuyruğa dahil değil
             p = {
                 "session_id": sid,
                 "patient_name": s["patient_name"],
@@ -1060,6 +1071,7 @@ async def get_patient_queue():
                 "possible_conditions": [],
                 "clinical_notes": "",
                 "image_findings": None,
+                "allergy_flags": s.get("allergy_flags", []),
                 "generated_at": "",
             }
             if sid in summaries:
@@ -1356,6 +1368,178 @@ async def get_analytics(current_user: dict = Depends(require_doctor)):
         "daily_activity": daily,
         "top_urgency_flags": [{"flag": f, "count": c} for f, c in top_flags],
         "generated_at": datetime.utcnow().isoformat(),
+    }
+
+
+# ─────────────────────────────────────────────
+#  Sprint 6 — FHIR R4 Export
+# ─────────────────────────────────────────────
+
+@app.get("/api/session/{session_id}/fhir")
+async def fhir_export(session_id: str, current_user: dict = Depends(require_doctor)):
+    """FHIR R4 ClinicalImpression + Patient resource döndürür."""
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+    summary = summaries.get(session_id, {})
+    
+    fhir_bundle = {
+        "resourceType": "Bundle",
+        "id": session_id,
+        "type": "collection",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "entry": [
+            {
+                "resource": {
+                    "resourceType": "Patient",
+                    "id": session.get("patient_id") or session_id,
+                    "name": [{"use": "official", "text": session["patient_name"]}],
+                    "gender": "male" if session["gender"] in ("Erkek", "Male") else "female",
+                    "birthDate": str(datetime.utcnow().year - session["age"]),
+                }
+            },
+            {
+                "resource": {
+                    "resourceType": "ClinicalImpression",
+                    "id": f"ci-{session_id}",
+                    "status": "completed",
+                    "subject": {"reference": f"Patient/{session.get('patient_id') or session_id}"},
+                    "date": session.get("created_at", datetime.utcnow().isoformat()),
+                    "description": summary.get("chief_complaint", ""),
+                    "summary": summary.get("clinical_notes", ""),
+                    "finding": [
+                        {"itemCodeableConcept": {"text": cond}}
+                        for cond in summary.get("possible_conditions", [])
+                    ],
+                    "note": [{"text": summary.get("symptoms_summary", "")}],
+                    "extension": [
+                        {
+                            "url": "https://anamnezai.tr/fhir/StructureDefinition/triage-level",
+                            "valueString": summary.get("triage_level", "PENDING")
+                        },
+                        {
+                            "url": "https://anamnezai.tr/fhir/StructureDefinition/ai-confidence",
+                            "valueInteger": summary.get("confidence_score", 0)
+                        },
+                        {
+                            "url": "https://anamnezai.tr/fhir/StructureDefinition/recommended-action",
+                            "valueString": summary.get("recommended_action", "")
+                        },
+                    ],
+                }
+            }
+        ]
+    }
+
+    # Vital signs — FHIR Observation
+    vitals = session.get("vitals") or {}
+    if vitals:
+        obs_components = []
+        if vitals.get("blood_pressure"):
+            obs_components.append({
+                "code": {"coding": [{"system": "http://loinc.org", "code": "55284-4", "display": "Blood pressure"}]},
+                "valueString": vitals["blood_pressure"]
+            })
+        if vitals.get("pulse"):
+            obs_components.append({
+                "code": {"coding": [{"system": "http://loinc.org", "code": "8867-4", "display": "Heart rate"}]},
+                "valueQuantity": {"value": vitals["pulse"], "unit": "/min"}
+            })
+        if vitals.get("temperature"):
+            obs_components.append({
+                "code": {"coding": [{"system": "http://loinc.org", "code": "8310-5", "display": "Body temperature"}]},
+                "valueQuantity": {"value": vitals["temperature"], "unit": "Cel"}
+            })
+        if vitals.get("spo2"):
+            obs_components.append({
+                "code": {"coding": [{"system": "http://loinc.org", "code": "2708-6", "display": "Oxygen saturation"}]},
+                "valueQuantity": {"value": vitals["spo2"], "unit": "%"}
+            })
+        fhir_bundle["entry"].append({
+            "resource": {
+                "resourceType": "Observation",
+                "id": f"obs-{session_id}",
+                "status": "final",
+                "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/observation-category", "code": "vital-signs"}]}],
+                "subject": {"reference": f"Patient/{session.get('patient_id') or session_id}"},
+                "effectiveDateTime": session.get("created_at", ""),
+                "component": obs_components,
+            }
+        })
+
+    audit("fhir_export", user_id=current_user["user_id"], user_role=current_user["role"],
+          resource=session_id)
+    return fhir_bundle
+
+
+# ─────────────────────────────────────────────
+#  Sprint 9 — Güvenlik & KVKK/GDPR
+# ─────────────────────────────────────────────
+
+@app.get("/api/audit-log")
+async def get_audit_log(limit: int = 50, current_user: dict = Depends(require_admin)):
+    """Audit log listesi — sadece admin."""
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT * FROM audit_log ORDER BY created_at DESC LIMIT ?", (limit,)
+        ).fetchall()
+    return {"logs": [dict(r) for r in rows], "total": len(rows)}
+
+
+@app.delete("/api/user/{user_id}/all-data")
+async def gdpr_delete_user_data(user_id: str, current_user: dict = Depends(require_auth)):
+    """KVKK/GDPR hakkı: kullanıcının tüm verilerini siler. Sadece kendi verisi veya admin."""
+    if current_user["user_id"] != user_id and current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Sadece kendi verinizi silebilirsiniz.")
+    
+    deleted_sessions = 0
+    to_delete = [sid for sid, s in sessions.items() if s.get("patient_id") == user_id]
+    for sid in to_delete:
+        del sessions[sid]
+        summaries.pop(sid, None)
+        db_delete_session(sid)
+        deleted_sessions += 1
+    
+    # Kullanıcı profilini ve hesabını kaldır (is_active = 0)
+    with _db_lock:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute("UPDATE users SET is_active=0 WHERE user_id=?", (user_id,))
+            conn.execute("DELETE FROM patient_profiles WHERE user_id=?", (user_id,))
+            conn.commit()
+    
+    audit("gdpr_delete", user_id=current_user["user_id"], user_role=current_user["role"],
+          resource=user_id, details=f"{deleted_sessions} sessions deleted")
+    await notify_queue_update()
+    return {
+        "status": "ok",
+        "message": f"Tüm veriler silindi. {deleted_sessions} oturum kaldırıldı.",
+        "deleted_sessions": deleted_sessions
+    }
+
+
+# ─────────────────────────────────────────────
+#  Sprint 5 — Kiosk Modu
+# ─────────────────────────────────────────────
+
+@app.get("/api/kiosk/status")
+async def kiosk_status():
+    """Kiosk ekranı için sistem durumu (anonim erişim)."""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            r = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+            online = r.status_code == 200
+    except Exception:
+        online = False
+    
+    queue_len = len([s for s in sessions.values() if s.get("completed") and not s.get("is_seen")])
+    return {
+        "system_online": online,
+        "model_ready": _model_ready,
+        "queue_length": queue_len,
+        "estimated_wait_minutes": max(1, queue_len * 3),
+        "message_tr": "Sisteme hoş geldiniz. Lütfen bilgilerinizi girin." if online else "Sistem bakımda.",
+        "message_en": "Welcome. Please enter your information." if online else "System maintenance.",
     }
 
 

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — Kiosk</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      pri:"#002f40", pric:"#00475e", sec:"#006a68", secc:"#a0f1ed",
+      surf:"#f4f7f9", surfc:"#e8ecee", ons:"#191c1d", onsv:"#3f4749",
+      ouv:"#bfc7ca", err:"#ba1a1a", errc:"#ffdad6"
+    },
+    fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}
+  }}
+}
+</script>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Inter',sans-serif;background:linear-gradient(160deg,#001f2a 0%,#002f40 40%,#003d4f 100%);min-height:100vh;color:#fff;overflow-x:hidden}
+  h1,h2,h3{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 48}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 48}
+  .card-kiosk{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:24px;backdrop-filter:blur(20px)}
+  .btn-kiosk{transition:all .15s ease;transform:scale(1);user-select:none;cursor:pointer}
+  .btn-kiosk:active{transform:scale(0.96)}
+  .glow{box-shadow:0 0 40px rgba(0,106,104,.35),0 8px 32px rgba(0,0,0,.3)}
+  .pulse{animation:pulse 2.5s ease infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,106,104,.5)}50%{box-shadow:0 0 0 20px rgba(0,106,104,0)}}
+  .fade{animation:fadeUp .5s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .spin{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .screen{display:none}
+  .screen.active{display:flex;flex-direction:column}
+  input,select{color:#191c1d!important}
+  input:focus,select:focus{outline:none;box-shadow:0 0 0 3px rgba(0,106,104,.5)}
+  .num-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:16px;font-size:28px;font-weight:700;height:72px;transition:all .1s;cursor:pointer;user-select:none}
+  .num-btn:active{background:rgba(0,106,104,.4);transform:scale(0.95)}
+</style>
+</head>
+<body>
+
+<!-- ── SCREEN: WELCOME ── -->
+<div id="scr-welcome" class="screen active min-h-screen items-center justify-center px-8 py-12">
+  <div class="max-w-2xl w-full mx-auto text-center fade">
+    <div class="w-28 h-28 rounded-3xl bg-sec pulse glow flex items-center justify-center mx-auto mb-8">
+      <span class="material-symbols-outlined msym-fill text-white" style="font-size:56px">monitor_heart</span>
+    </div>
+    <h1 class="text-[56px] font-head font-black leading-none mb-4">AnamnezAI</h1>
+    <p class="text-[22px] text-white/70 mb-2" id="kiosk-subtitle">Yapay Zeka Destekli Hasta Ön Triajı</p>
+    <p class="text-[16px] text-white/50 mb-12">AI-Powered Patient Pre-Triage</p>
+
+    <!-- Status -->
+    <div id="kiosk-status" class="card-kiosk p-4 mb-10 flex items-center justify-center gap-3">
+      <div class="w-3 h-3 rounded-full bg-ouv"></div>
+      <span class="text-[16px] text-white/60">Sistem durumu kontrol ediliyor...</span>
+    </div>
+
+    <!-- Queue info -->
+    <div class="grid grid-cols-2 gap-4 mb-10">
+      <div class="card-kiosk p-5 text-center">
+        <p class="text-[48px] font-head font-bold text-secc" id="kiosk-queue">—</p>
+        <p class="text-[14px] text-white/60">Bekleyen Hasta</p>
+      </div>
+      <div class="card-kiosk p-5 text-center">
+        <p class="text-[48px] font-head font-bold text-secc" id="kiosk-wait">—</p>
+        <p class="text-[14px] text-white/60">Tahmini Bekleme (dk)</p>
+      </div>
+    </div>
+
+    <!-- Main Buttons -->
+    <div class="space-y-4 mb-8">
+      <button onclick="goTo('scr-form')" id="btn-start"
+        class="btn-kiosk w-full py-6 rounded-2xl bg-sec hover:bg-pric flex items-center justify-center gap-4 text-[24px] font-bold glow"
+        style="disabled:opacity-50">
+        <span class="material-symbols-outlined msym-fill" style="font-size:32px">play_circle</span>
+        Mülakatı Başlat
+      </button>
+      <button onclick="goTo('scr-login')"
+        class="btn-kiosk w-full py-5 rounded-2xl card-kiosk hover:bg-white/10 flex items-center justify-center gap-3 text-[20px] font-semibold text-white/80">
+        <span class="material-symbols-outlined msym" style="font-size:28px">login</span>
+        Hesabımla Giriş Yap
+      </button>
+    </div>
+
+    <div class="flex items-center justify-center gap-2 text-[13px] text-white/40">
+      <span class="material-symbols-outlined msym" style="font-size:16px">shield</span>
+      Verileriniz KVKK kapsamında korunmaktadır · AnamnezAI v5.0
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: FORM ── -->
+<div id="scr-form" class="screen min-h-screen items-center justify-center px-8 py-12">
+  <div class="max-w-xl w-full mx-auto fade">
+    <button onclick="goTo('scr-welcome')" class="flex items-center gap-2 text-white/50 hover:text-white mb-8 btn-kiosk transition-colors">
+      <span class="material-symbols-outlined msym" style="font-size:28px">arrow_back</span>
+      <span class="text-[18px]">Geri</span>
+    </button>
+    <h2 class="text-[36px] font-head font-bold mb-2">Hasta Bilgileri</h2>
+    <p class="text-[16px] text-white/60 mb-8">Lütfen bilgilerinizi giriniz</p>
+
+    <div class="space-y-5">
+      <div>
+        <label class="block text-[14px] font-bold text-white/70 uppercase tracking-wider mb-2">Ad Soyad</label>
+        <input id="k-name" type="text" placeholder="Adınız Soyadınız"
+          class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-2xl font-semibold focus:border-sec transition-all"/>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-[14px] font-bold text-white/70 uppercase tracking-wider mb-2">Yaş</label>
+          <input id="k-age" type="number" min="1" max="120" placeholder="—"
+            class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-2xl font-semibold text-center focus:border-sec transition-all"/>
+        </div>
+        <div>
+          <label class="block text-[14px] font-bold text-white/70 uppercase tracking-wider mb-2">Cinsiyet</label>
+          <select id="k-gender" class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-xl font-semibold focus:border-sec transition-all">
+            <option value="Erkek">Erkek</option>
+            <option value="Kadın">Kadın</option>
+            <option value="Belirtmek İstemiyorum">Belirtmemi</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="form-err" class="hidden p-4 rounded-2xl bg-errc text-err text-[16px] font-semibold flex items-center gap-3">
+        <span class="material-symbols-outlined msym" style="font-size:24px">error</span>
+        <span id="form-err-text"></span>
+      </div>
+
+      <button onclick="startKioskSession()" id="btn-kiosk-start"
+        class="btn-kiosk w-full py-6 rounded-2xl bg-sec hover:bg-pric flex items-center justify-center gap-4 text-[24px] font-bold mt-4">
+        <span class="material-symbols-outlined msym-fill" style="font-size:32px">psychology</span>
+        AI Mülakatı Başlat
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: CHAT ── -->
+<div id="scr-chat" class="screen min-h-screen flex-col">
+  <!-- Header -->
+  <div class="flex items-center gap-4 px-8 py-5 border-b border-white/10">
+    <div class="w-12 h-12 rounded-xl bg-sec flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white" style="font-size:24px">psychology</span>
+    </div>
+    <div class="flex-1">
+      <p class="text-[13px] text-white/50 uppercase tracking-widest">AnamnezAI</p>
+      <p class="text-[16px] font-bold" id="chat-patient-label">Mülakat devam ediyor</p>
+    </div>
+    <!-- Progress -->
+    <div class="flex items-center gap-3">
+      <div class="flex gap-1.5" id="chat-steps"></div>
+      <span class="text-[14px] text-white/50" id="chat-step-text">1/5</span>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="flex-1 overflow-y-auto px-8 py-6 space-y-6" id="chat-messages" style="max-height:calc(100vh - 280px)"></div>
+
+  <!-- Input -->
+  <div class="px-8 py-5 border-t border-white/10">
+    <div class="flex gap-3">
+      <input id="k-answer" type="text" placeholder="Cevabınızı yazın..."
+        class="flex-1 px-6 py-4 rounded-2xl border-2 border-white/20 bg-white text-[18px] focus:border-sec transition-all"
+        onkeydown="if(event.key==='Enter') sendKioskAnswer()"/>
+      <button onclick="sendKioskAnswer()" id="btn-kiosk-send"
+        class="btn-kiosk px-6 py-4 rounded-2xl bg-sec flex items-center gap-2 text-[18px] font-bold">
+        <span class="material-symbols-outlined msym" style="font-size:24px">send</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: DONE ── -->
+<div id="scr-done" class="screen min-h-screen items-center justify-center px-8 py-12">
+  <div class="max-w-lg w-full mx-auto text-center fade">
+    <div class="w-24 h-24 rounded-full bg-sec flex items-center justify-center mx-auto mb-6 glow">
+      <span class="material-symbols-outlined msym-fill text-white" style="font-size:48px">check_circle</span>
+    </div>
+    <h2 class="text-[40px] font-head font-bold mb-3">Mülakat Tamamlandı</h2>
+    <p class="text-[18px] text-white/60 mb-8">Yapay zeka semptomlarınızı değerlendiriyor.<br/>Lütfen triaj personelini bekleyiniz.</p>
+
+    <div id="done-triage" class="card-kiosk p-6 mb-8 hidden">
+      <p class="text-[12px] text-white/40 uppercase tracking-widest mb-2">Triaj Sonucu</p>
+      <p class="text-[32px] font-head font-bold" id="done-level">—</p>
+      <p class="text-[16px] text-white/60 mt-1" id="done-complaint">—</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-8">
+      <div class="card-kiosk p-4 text-center">
+        <span class="material-symbols-outlined msym text-secc block mb-2" style="font-size:32px">location_on</span>
+        <p class="text-[14px] text-white/60">Size atanan oda bilgisi için<br/>triaj personelini bekleyiniz</p>
+      </div>
+      <div class="card-kiosk p-4 text-center">
+        <span class="material-symbols-outlined msym text-secc block mb-2" style="font-size:32px">schedule</span>
+        <p class="text-[14px] text-white/60">Tahmini bekleme süresi için<br/>ekrana dikkat ediniz</p>
+      </div>
+    </div>
+
+    <button onclick="goTo('scr-welcome')"
+      class="btn-kiosk w-full py-5 rounded-2xl card-kiosk text-[20px] font-bold">
+      Ana Ekrana Dön
+    </button>
+  </div>
+</div>
+
+<!-- ── SCREEN: LOGIN ── -->
+<div id="scr-login" class="screen min-h-screen items-center justify-center px-8 py-12">
+  <div class="max-w-md w-full mx-auto fade">
+    <button onclick="goTo('scr-welcome')" class="flex items-center gap-2 text-white/50 hover:text-white mb-8 btn-kiosk transition-colors">
+      <span class="material-symbols-outlined msym" style="font-size:28px">arrow_back</span>
+      <span class="text-[18px]">Geri</span>
+    </button>
+    <h2 class="text-[36px] font-head font-bold mb-2">Giriş Yap</h2>
+    <p class="text-[16px] text-white/60 mb-8">Kayıtlı hesabınızla devam edin</p>
+    <div class="space-y-4">
+      <input id="k-email" type="email" placeholder="E-posta adresiniz"
+        class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-[18px] focus:border-sec transition-all"/>
+      <input id="k-pass" type="password" placeholder="••••••••"
+        class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-[18px] focus:border-sec transition-all"/>
+      <div id="login-err" class="hidden p-4 rounded-2xl bg-errc text-err text-[16px] font-semibold"></div>
+      <button onclick="kioskLogin()" class="btn-kiosk w-full py-5 rounded-2xl bg-sec text-[22px] font-bold mt-2">
+        <span style="vertical-align:middle">Giriş Yap</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let kioskSessionId = null;
+let kioskStep = 1;
+const TOTAL_STEPS = 5;
+
+function goTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function addMessage(text, isAI = true) {
+  const el = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `flex ${isAI ? 'justify-start' : 'justify-end'}`;
+  const bg = isAI ? 'rgba(255,255,255,0.1)' : 'rgba(0,106,104,0.6)';
+  div.innerHTML = `<div style="background:${bg};border-radius:20px;padding:16px 20px;max-width:75%;font-size:18px;line-height:1.5">${text}</div>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function updateSteps(step) {
+  const container = document.getElementById('chat-steps');
+  container.innerHTML = Array.from({length: TOTAL_STEPS}, (_, i) =>
+    `<div style="width:10px;height:10px;border-radius:50%;background:${i < step ? '#006a68' : 'rgba(255,255,255,0.2)'}"></div>`
+  ).join('');
+  document.getElementById('chat-step-text').textContent = `${step}/${TOTAL_STEPS}`;
+}
+
+async function loadStatus() {
+  try {
+    const r = await fetch(`${API}/api/kiosk/status`);
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const statusEl = document.getElementById('kiosk-status');
+    const startBtn = document.getElementById('btn-start');
+    if (d.system_online && d.model_ready) {
+      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#006a68"></div><span style="color:#a0f1ed;font-size:16px;font-weight:600">Sistem Hazır ✓</span>`;
+      startBtn.disabled = false; startBtn.style.opacity = '1';
+    } else if (d.system_online) {
+      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#e07b26;animation:pulse 1s ease infinite"></div><span style="color:#ffd06f;font-size:16px">Model Yükleniyor...</span>`;
+      startBtn.disabled = false; startBtn.style.opacity = '0.8';
+    } else {
+      statusEl.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:#ba1a1a"></div><span style="color:#ffa8a8;font-size:16px">Sistem Bakımda</span>`;
+      startBtn.disabled = true; startBtn.style.opacity = '0.4';
+    }
+    document.getElementById('kiosk-queue').textContent = d.queue_length ?? 0;
+    document.getElementById('kiosk-wait').textContent = d.estimated_wait_minutes ?? '—';
+  } catch(e) {
+    document.getElementById('kiosk-status').innerHTML = `<span style="color:rgba(255,255,255,0.4)">Backend bağlantısı yok</span>`;
+  }
+}
+
+async function startKioskSession() {
+  const name = document.getElementById('k-name').value.trim();
+  const age  = parseInt(document.getElementById('k-age').value);
+  const gender = document.getElementById('k-gender').value;
+  if (!name) { showFormErr('Lütfen adınızı girin.'); return; }
+  if (!age || age < 1 || age > 120) { showFormErr('Lütfen geçerli bir yaş girin.'); return; }
+
+  const btn = document.getElementById('btn-kiosk-start');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined msym spin" style="font-size:28px">refresh</span> Başlatılıyor...';
+
+  try {
+    const token = localStorage.getItem('anamnez_token');
+    const headers = {'Content-Type': 'application/json'};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API}/api/session/start`, {
+      method: 'POST', headers,
+      body: JSON.stringify({patient_name: name, age, gender, language: 'tr'})
+    });
+    if (!res.ok) throw new Error('Başlatılamadı');
+    const data = await res.json();
+    kioskSessionId = data.session_id;
+    kioskStep = 1;
+
+    document.getElementById('chat-patient-label').textContent = `${name} · ${age} yaşında`;
+    document.getElementById('chat-messages').innerHTML = '';
+    updateSteps(1);
+    addMessage(data.question, true);
+    goTo('scr-chat');
+    document.getElementById('k-answer').focus();
+  } catch(e) {
+    showFormErr(e.message || 'Bağlantı hatası.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined msym-fill" style="font-size:32px">psychology</span> AI Mülakatı Başlat';
+  }
+}
+
+function showFormErr(msg) {
+  document.getElementById('form-err-text').textContent = msg;
+  document.getElementById('form-err').classList.remove('hidden');
+  document.getElementById('form-err').classList.add('flex');
+}
+
+async function sendKioskAnswer() {
+  const inp = document.getElementById('k-answer');
+  const answer = inp.value.trim();
+  if (!answer) return;
+
+  const btn = document.getElementById('btn-kiosk-send');
+  btn.disabled = true;
+  inp.disabled = true;
+  addMessage(answer, false);
+  inp.value = '';
+
+  // Typing indicator
+  const typingId = 'typing-' + Date.now();
+  const el = document.getElementById('chat-messages');
+  el.insertAdjacentHTML('beforeend', `<div id="${typingId}" class="flex justify-start"><div style="background:rgba(255,255,255,0.1);border-radius:20px;padding:16px 20px;font-size:18px;color:rgba(255,255,255,0.5)">Gemma 4 düşünüyor...</div></div>`);
+  el.scrollTop = el.scrollHeight;
+
+  try {
+    const res = await fetch(`${API}/api/session/answer`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({session_id: kioskSessionId, answer})
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    document.getElementById(typingId)?.remove();
+
+    kioskStep = data.step;
+    updateSteps(kioskStep);
+
+    if (data.question === '__COMPLETED__') {
+      // Mülakat bitti - özet al
+      addMessage('Teşekkürler! Cevaplarınız kaydedildi. Triaj değerlendirmesi yapılıyor...', true);
+      await fetchKioskSummary();
+    } else {
+      addMessage(data.question, true);
+      inp.focus();
+    }
+  } catch(e) {
+    document.getElementById(typingId)?.remove();
+    addMessage('Bir hata oluştu. Lütfen tekrar deneyin.', true);
+  } finally {
+    btn.disabled = false;
+    inp.disabled = false;
+  }
+}
+
+async function fetchKioskSummary() {
+  try {
+    await new Promise(r => setTimeout(r, 1000));
+    const res = await fetch(`${API}/api/session/${kioskSessionId}/summary`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    const levelMap = {RED:'🔴 ACİL', YELLOW:'🟡 İKİNCİL ACİL', GREEN:'🟢 RUTİN'};
+    document.getElementById('done-level').textContent = levelMap[data.triage_level] || data.triage_level;
+    document.getElementById('done-level').style.color = data.triage_color || '#fff';
+    document.getElementById('done-complaint').textContent = data.chief_complaint || '';
+    document.getElementById('done-triage').classList.remove('hidden');
+
+    localStorage.setItem('anamnez_summary', JSON.stringify(data));
+  } catch(e) { /* sessizce devam */ }
+  goTo('scr-done');
+}
+
+async function kioskLogin() {
+  const email = document.getElementById('k-email').value.trim();
+  const password = document.getElementById('k-pass').value;
+  if (!email || !password) return;
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
+    });
+    if (!res.ok) { document.getElementById('login-err').textContent = 'E-posta veya şifre hatalı.'; document.getElementById('login-err').classList.remove('hidden'); return; }
+    const data = await res.json();
+    localStorage.setItem('anamnez_token', data.access_token);
+    localStorage.setItem('anamnez_user', JSON.stringify(data.user));
+    goTo('scr-welcome');
+  } catch(e) {
+    document.getElementById('login-err').textContent = 'Sunucuya bağlanılamadı.';
+    document.getElementById('login-err').classList.remove('hidden');
+  }
+}
+
+// Init
+loadStatus();
+setInterval(loadStatus, 30000);
+
+// İnaktiflik durumunda 3 dk sonra welcome'a dön
+let inactiveTimer;
+function resetTimer() {
+  clearTimeout(inactiveTimer);
+  inactiveTimer = setTimeout(() => {
+    const active = document.querySelector('.screen.active');
+    if (active && active.id !== 'scr-welcome' && active.id !== 'scr-chat') {
+      goTo('scr-welcome');
+    }
+  }, 180000);
+}
+document.addEventListener('touchstart', resetTimer);
+document.addEventListener('click', resetTimer);
+document.addEventListener('keydown', resetTimer);
+resetTimer();
+</script>
+</body>
+</html>
+

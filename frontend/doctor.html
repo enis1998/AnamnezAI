@@ -355,6 +355,8 @@ function renderTable(patients, containerId, live){
     const score = p.confidence_score ? `${p.confidence_score}%` : '—';
     const flags = p.urgency_flags&&p.urgency_flags.length
       ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-err ml-2"><span class="material-symbols-outlined msym text-[12px]">warning</span>${p.urgency_flags.length}</span>`:'';
+    const allergyBadge = p.allergy_flags&&p.allergy_flags.length
+      ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 ml-1" title="Alerji: ${p.allergy_flags.join(', ')}"><span class="material-symbols-outlined msym text-[12px]">vaccines</span>Alerji</span>`:'';
     return `
     <tr class="row-hover border-b border-surfc" onclick="showDetail('${p.session_id}')">
       <td class="px-5 py-3.5">
@@ -362,7 +364,7 @@ function renderTable(patients, containerId, live){
           <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0"
                style="background:${cfg.color}">${init}</div>
           <div>
-            <p class="text-[13px] font-bold text-ons">${p.patient_name}${flags}</p>
+            <p class="text-[13px] font-bold text-ons">${p.patient_name}${flags}${allergyBadge}</p>
             <p class="text-[11px] text-onsv">${p.age} yaş · ${p.gender}</p>
           </div>
         </div>
@@ -527,6 +529,13 @@ function showDetail(sid){
         class="flex-1 py-2.5 rounded-xl text-white text-[12px] font-bold hover:opacity-90 transition-all" style="background:${cfg.color}">
         Tam Raporu Aç
       </button>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="exportFHIR('${sid}')"
+        class="flex-1 py-2.5 rounded-xl border-2 border-pric text-pric text-[12px] font-bold hover:bg-pric hover:text-white transition-all flex items-center justify-center gap-1.5">
+        <span class="material-symbols-outlined msym text-[14px]">download</span>
+        FHIR R4 Export
+      </button>
     </div>`;
 
   document.getElementById('detail-panel').classList.remove('hidden');
@@ -687,6 +696,19 @@ async function showAnalytics() {
 
 function hideAnalytics() {
   document.getElementById('analytics-panel').classList.add('hidden');
+}
+
+async function exportFHIR(sid) {
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/fhir`, { headers: authHeaders() });
+    if (!res.ok) throw new Error('FHIR export başarısız.');
+    const data = await res.json();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `fhir_${sid.slice(0,8)}.json`;
+    a.click(); URL.revokeObjectURL(url);
+  } catch(e) { alert(e.message || 'FHIR export başarısız.'); }
 }
 
 function openFullReport(sid){

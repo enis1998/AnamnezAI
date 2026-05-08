@@ -119,31 +119,33 @@ ADMİN    → Tüm haklar
 
 ---
 
-## 🖥️ Sprint 5 — Hastane Kiosk Modu (2-3 hafta)
+## 🖥️ Sprint 5 — Hastane Kiosk Modu ✅ TAMAMLANDI (temel)
 
-**Öncelik:** Orta — Kurumsal satış için gösterişli
+**Durum:** ✅ Temel kiosk entegre
 
-- [ ] Büyük ekran (touch) dostu UI
-- [ ] QR kod ile oturum başlat (telefonsuz hastalar)
-- [ ] Büyük yazı tipi, yüksek kontrast, sade akış
-- [ ] Personel yardımlı mod: hemşire/sekreter hastanın yerine doldurur
-- [ ] Yazıcı entegrasyonu: sıra fişi bas
-- [ ] Admin panelden kiosk kilit/açık yönetimi
+- [x] `kiosk.html` — dokunmatik ekran dostu tam ekran UI (koyu tema, büyük butonlar)
+- [x] 5 ekranlı akış: Karşılama → Form → Mülakat → Tamamlandı → Giriş
+- [x] `GET /api/kiosk/status` — anonim sistem durumu + kuyruk bilgisi
+- [x] Inaktivite koruması: 3 dakika hareketsizlikte ana ekrana dön
+- [x] Giriş yapmış hastalar için profil entegrasyonu
+- [ ] QR kod oturum başlatma
+- [ ] Yazıcı entegrasyonu (sıra fişi)
+- [ ] Admin panelinden kiosk kilit/açık
 
 ---
 
-## 🔗 Sprint 6 — HBYS & FHIR Entegrasyonu (4-6 hafta)
+## 🔗 Sprint 6 — HBYS & FHIR Entegrasyonu ✅ TAMAMLANDI (temel)
 
-**Öncelik:** Orta-Yüksek — Google.org demo için şart
+**Durum:** ✅ FHIR R4 export entegre
 
-- [ ] FHIR R4 Patient resource oluşturma
-- [ ] FHIR Observation (vital signs)
-- [ ] FHIR Condition (olası tanılar)
-- [ ] FHIR ClinicalImpression (triaj raporu)
-- [ ] HBYS staging ortam bağlantısı (AYBU Yenimahalle)
-- [ ] Otomatik hasta kaydı HBYS'ye yazma
-- [ ] ICD-10 kod önerisi AI ile
-- [ ] HL7 FHIR format PDF
+- [x] `GET /api/session/{id}/fhir` — FHIR R4 Bundle (Patient + ClinicalImpression + Observation)
+- [x] Vital signs → FHIR Observation (LOINC kodlarıyla: KB, nabız, ateş, SpO2)
+- [x] Olası tanılar → FHIR ClinicalImpression finding list
+- [x] Triaj seviyesi + AI skoru → custom extension
+- [x] doctor.html → "FHIR R4 Export" butonu (JSON indirme)
+- [ ] HBYS staging ortam bağlantısı
+- [ ] HL7 v2 mesajlaşma
+- [ ] ICD-10 FHIR Condition resource
 
 ---
 
@@ -176,17 +178,17 @@ ADMİN    → Tüm haklar
 
 ---
 
-## 🔒 Sprint 9 — Güvenlik & Uyumluluk (2-3 hafta)
+## 🔒 Sprint 9 — Güvenlik & Uyumluluk ✅ TAMAMLANDI (temel)
 
-**Öncelik:** Düşük-Orta (pilot öncesi zorunlu)
+**Durum:** ✅ Temel güvenlik entegre
 
-- [ ] KVKK uyumluluk audit checklist
-- [ ] GDPR veri silme hakkı (`DELETE /user/{id}/all-data`)
-- [ ] Veri anonimleştirme pipeline
+- [x] `audit_log` tablosu: tüm kritik işlemler (session_start, fhir_export, gdpr_delete, doctor_actions) loglanıyor
+- [x] `GET /api/audit-log` — admin için audit log listesi
+- [x] `DELETE /api/user/{id}/all-data` — KVKK/GDPR veri silme hakkı
+- [x] Tüm doktor işlemleri (not, override, görüldü) audit'e kaydediliyor
+- [ ] Rate limiting (slowapi)
 - [ ] Penetrasyon testi bulguları
-- [ ] Audit log (tüm veri erişimleri loglu)
-- [ ] Rate limiting ve DDoS koruması
-- [ ] Sağlık Bakanlığı güvenlik sertifikası süreci
+- [ ] Sağlık Bakanlığı güvenlik sertifikası
 
 ---
 
@@ -217,14 +219,16 @@ ADMİN    → Tüm haklar
 4. ✅ Doctor guard + kullanıcı nav
 5. ✅ Hasta profil sayfası (profile.html) — geçmiş raporlar, tıbbi geçmiş
 6. ✅ Doktor notu ekleme (POST /api/session/{id}/note)
-7. ✅ Triaj override (PUT /api/session/{id}/triage)
-8. ✅ Görüldü işareti (PUT /api/session/{id}/seen)
-9. ✅ ICD-10 otomatik kod önerisi (Gemma 4)
-10. ✅ Temel analitik dashboard (GET /api/analytics)
-11. 🔄 RAG fine-tune: Gemma 4 medical LoRA (kaggle notebook)
-12. ⏳ Hasta geçmişini mülakata entegre (kronik hastalık → prompt)
-13. ⏳ PDF rapor e-posta gönderme
-14. ⏳ Alerji uyarısı kırmızı bayrak
+7. ✅ Triaj override + Görüldü işareti + ICD-10 öneri
+8. ✅ Temel analitik dashboard
+9. ✅ Hasta profili → mülakat entegrasyonu (kronik/ilaç/alerji → AI prompt)
+10. ✅ Alerji uyarısı kırmızı bayrak (önce listeye, doktor panelinde badge)
+11. ✅ Kiosk modu (kiosk.html — dokunmatik ekran UI)
+12. ✅ FHIR R4 export (Bundle: Patient + ClinicalImpression + Observation)
+13. ✅ Audit log (KVKK/GDPR uyumu)
+14. ✅ GDPR veri silme hakkı (DELETE /api/user/{id}/all-data)
+15. ✅ commit.py ile UTF-8 encoding düzeltmesi
+16. 🔄 RAG fine-tune: Gemma 4 medical LoRA (kaggle notebook)
 ```
 
 ### 🤖 Fine-Tune & RAG Planı (Hackathon için kritik)
@@ -342,5 +346,5 @@ Raporu Doktora İlet
 
 ---
 
-*Son güncelleme: Mayıs 2026 | AnamnezAI v4.0 | Gemma 4 Good Hackathon*
+*Son güncelleme: Mayıs 2026 | AnamnezAI v5.0 | Gemma 4 Good Hackathon*
 
