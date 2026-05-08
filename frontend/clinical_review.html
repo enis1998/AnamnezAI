@@ -323,7 +323,7 @@ let sessionData = null;
 let summaryData = null;
 
 async function init() {
-  token = localStorage.getItem('token');
+  token = localStorage.getItem('anamnez_token');
   if (!token) { location.href = 'login.html'; return; }
 
   // Auth check
@@ -331,10 +331,10 @@ async function init() {
     const me = await fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
     if (!me.ok) { location.href = 'login.html'; return; }
     const user = await me.json();
-    if (user.role !== 'DOKTOR' && user.role !== 'ADMİN' && user.role !== 'PERSONEL') {
+    if (user.role !== 'doctor' && user.role !== 'admin' && user.role !== 'personnel') {
       location.href = 'index.html'; return;
     }
-    const name = user.full_name || user.email;
+    const name = user.name || user.email;
     document.getElementById('docName').textContent = name;
     document.getElementById('docSpecialty').textContent = user.specialty || user.role;
     document.getElementById('docInitial').textContent = name.charAt(0).toUpperCase();
@@ -573,7 +573,8 @@ function showError() {
 }
 
 function logout() {
-  localStorage.removeItem('token');
+  localStorage.removeItem('anamnez_token');
+  localStorage.removeItem('anamnez_user');
   location.href = 'login.html';
 }
 

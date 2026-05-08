@@ -219,14 +219,14 @@ h1,h2,h3,h4{font-family:'Manrope',sans-serif}
 <script>
 const API='';let token,visitHistory=[];
 async function init(){
-  token=localStorage.getItem('token');
+  token=localStorage.getItem('anamnez_token');
   if(!token){location.href='login.html';return;}
   try{
     const me=await fetch(`${API}/auth/me`,{headers:{Authorization:`Bearer ${token}`}});
     if(!me.ok){location.href='login.html';return;}
     const u=await me.json();
-    if(u.role!=='HASTA'){location.href='index.html';return;}
-    const n=u.full_name||u.email;
+    if(u.role!=='patient'){location.href='index.html';return;}
+    const n=u.name||u.email;
     document.getElementById('userName').textContent=n;
     document.getElementById('welcomeName').textContent=n.split(' ')[0];
     document.getElementById('sidebarName').textContent=n;
@@ -287,7 +287,7 @@ function renderStats(){
   document.getElementById('statYellow').textContent=visitHistory.filter(v=>(v.triage_level||'GREEN')==='YELLOW').length;
   document.getElementById('statGreen').textContent=visitHistory.filter(v=>(v.triage_level||'GREEN')==='GREEN').length;
 }
-function logout(){localStorage.removeItem('token');location.href='login.html';}
+function logout(){localStorage.removeItem('anamnez_token');localStorage.removeItem('anamnez_user');location.href='login.html';}
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
 document.addEventListener('DOMContentLoaded',init);
 </script>

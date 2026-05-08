@@ -237,7 +237,7 @@ let analyticsData = null;
 function checkAuth() {
   const token = localStorage.getItem('anamnez_token');
   const user = JSON.parse(localStorage.getItem('anamnez_user') || '{}');
-  if (!token || !['doctor','admin','personel'].includes(user.role)) {
+  if (!token || !['doctor','admin','personnel'].includes(user.role)) {
     document.getElementById('auth-guard').classList.remove('hidden');
     return false;
   }
