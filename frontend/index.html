@@ -551,6 +551,16 @@ async function checkHealth(){
 }
 
 // ── Chat UI ──
+function escapeHtml(text){
+  // HTML özel karakterleri güvenli şekilde encode et
+  return String(text)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/\n/g,'<br>');
+}
+
 function addAIMessage(text){
   chatHistory.push({role:'ai',text});
   renderChat();
@@ -569,14 +579,14 @@ function renderChat(){
       <div class="max-w-[82%]">
         <p class="text-[10px] font-bold text-sec uppercase tracking-wider mb-1">AnamnezAI · Gemma 4</p>
         <div class="bg-white rounded-2xl rounded-tl-sm px-4 py-3 text-[14px] text-ons leading-relaxed shadow-sm border border-surfc">
-          ${m.text}
+          ${escapeHtml(m.text)}
         </div>
       </div>
     </div>` : `
     <div class="flex items-start gap-3 justify-end slide">
       <div class="max-w-[82%]">
         <div class="bg-pric rounded-2xl rounded-tr-sm px-4 py-3 text-[14px] text-white leading-relaxed">
-          ${m.text}
+          ${escapeHtml(m.text)}
         </div>
       </div>
       <div class="w-8 h-8 rounded-full bg-pric flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -734,7 +744,11 @@ async function submitAnswer(){
       showView('view-analyzing');
       await fetchSummary();
     } else {
-      addAIMessage(data.question);
+      // Boş yanıt gelirse varsayılan mesaj göster
+      const q = data.question && data.question.trim()
+        ? data.question
+        : (lang==='tr' ? 'Anlıyorum, devam edin lütfen.' : 'I see, please continue.');
+      addAIMessage(q);
       updateProgress(data.step, data.total_steps);
     }
   } catch(e) {

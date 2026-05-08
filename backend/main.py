@@ -20,6 +20,7 @@ import sqlite3
 import threading
 import asyncio
 import base64
+import re
 from datetime import datetime
 
 # ─────────────────────────────────────────────
@@ -263,6 +264,7 @@ async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0) -> st
                     "model": GEMMA_MODEL,
                     "messages": messages,
                     "stream": False,
+                    "think": False,          # ← Gemma 4 thinking modunu kapat
                     "options": {
                         "temperature": 0.25,
                         "top_p": 0.85,
@@ -273,7 +275,8 @@ async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0) -> st
                 },
             )
             resp.raise_for_status()
-            return resp.json()["message"]["content"].strip()
+            raw = resp.json()["message"]["content"].strip()
+            return clean_gemma_response(raw)   # ← Think bloklarını temizle
     except httpx.ConnectError:
         raise HTTPException(status_code=503, detail="Ollama çalışmıyor. Terminal'de: ollama serve")
     except httpx.ReadTimeout:
@@ -292,7 +295,7 @@ async def ask_gemma_vision(prompt: str, image_base64: str, system: str = "", tim
     messages.append({
         "role": "user",
         "content": prompt,
-        "images": [image_base64],  # Ollama vision format: raw base64 string
+        "images": [image_base64],
     })
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -302,11 +305,13 @@ async def ask_gemma_vision(prompt: str, image_base64: str, system: str = "", tim
                     "model": GEMMA_MODEL,
                     "messages": messages,
                     "stream": False,
+                    "think": False,          # ← Thinking modunu kapat
                     "options": {"temperature": 0.2, "top_p": 0.9, "num_predict": 600},
                 },
             )
             resp.raise_for_status()
-            return resp.json()["message"]["content"].strip()
+            raw = resp.json()["message"]["content"].strip()
+            return clean_gemma_response(raw)
     except httpx.ConnectError:
         raise HTTPException(status_code=503, detail="Ollama çalışmıyor.")
     except Exception as e:
@@ -344,15 +349,24 @@ async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, Non
                     "model": GEMMA_MODEL,
                     "messages": messages,
                     "stream": True,
+                    "think": False,          # ← Thinking modunu kapat
                     "options": {"temperature": 0.25, "top_p": 0.85, "num_predict": 512},
                 },
             ) as resp:
+                in_think_block = False   # Think bloğu içinde miyiz?
                 async for line in resp.aiter_lines():
                     if line.strip():
                         try:
                             chunk = json.loads(line)
                             token = chunk.get("message", {}).get("content", "")
                             if token:
+                                # Streaming'de think bloğu filtresi
+                                if "<think" in token.lower():
+                                    in_think_block = True
+                                if in_think_block:
+                                    if "</think>" in token.lower():
+                                        in_think_block = False
+                                    continue  # Think token'larını atla
                                 yield f"data: {json.dumps({'token': token})}\n\n"
                             if chunk.get("done"):
                                 yield "data: [DONE]\n\n"
@@ -480,6 +494,20 @@ def vitals_to_dict(v: Optional[VitalSigns]) -> Optional[dict]:
         return None
     d = v.model_dump()
     return {k: val for k, val in d.items() if val is not None} or None
+
+
+def clean_gemma_response(text: str) -> str:
+    """Gemma 4 thinking bloklarını ve gereksiz içerikleri temizler.
+
+    Gemma 4 (gemma4:e4b) bazen <think>...</think> blokları üretir.
+    Bu bloklar HTML'de görünmez etiket olarak işlenir → cevap boş görünür.
+    """
+    # <think>...</think> veya <thinking>...</thinking> bloklarını kaldır
+    text = re.sub(r'<think(?:ing)?>.*?</think(?:ing)?>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    # Baştaki/sondaki markdown code fence varsa kaldır
+    text = re.sub(r'^```(?:json)?\s*', '', text.strip())
+    text = re.sub(r'\s*```$', '', text.strip())
+    return text.strip()
 
 # ─────────────────────────────────────────────
 #  Startup Event
