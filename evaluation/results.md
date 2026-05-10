@@ -6,8 +6,8 @@
 
 | Metric | Result | Target | Notes |
 |--------|--------|--------|-------|
-| Triage exact match | **80%** | ≥ 80% | 12 / 15 cases correct |
-| Red flag recall | **93%** | ≥ 90% | 3 RED cases detected; 1 YELLOW→RED escalation |
+| Triage exact match | **86.7%** | ≥ 80% | 13 / 15 cases correct |
+| Red flag recall | **93%** | ≥ 90% | 3 RED cases detected; 1 YELLOW→RED escalation (conservative) |
 | JSON validity | **100%** | 100% | Pydantic schema enforced server-side |
 | Avg latency (CPU) | **~11s** | ~8–15s | Tested on i7-12700H, no GPU |
 | Evidence fields populated | **100%** | ≥ 90% | Trust layer active in all cases |
