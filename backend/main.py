@@ -2202,21 +2202,16 @@ if _rate_limit_available:
         return {"ok": True}
 
 
-FRONTEND_DIR = os.getenv(
-    "FRONTEND_DIR",
-    os.path.join(os.path.dirname(__file__), "..", "frontend"),
-)
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
-
-
 # ─────────────────────────────────────────────
 #  Offline Proof & Trust Endpoints
+#  IMPORTANT: Must be defined BEFORE static files mount.
+#  app.mount("/", StaticFiles(...)) captures ALL routes — any route
+#  defined after the mount will never be reached (returns 404).
 # ─────────────────────────────────────────────
 
 @app.get("/api/offline-proof")
 async def offline_proof():
-    """Ollama ödülü için: tüm AI işlemlerinin locally çalıştığını kanıtlar."""
+    """Ollama prize proof: shows all AI inference runs locally, zero cloud API."""
     try:
         async with httpx.AsyncClient(timeout=5.0) as c:
             r = await c.get(f"{OLLAMA_BASE_URL}/api/tags")
@@ -2246,6 +2241,20 @@ async def offline_proof():
             "All clinical decisions require physician review."
         ),
     }
+
+
+# ─────────────────────────────────────────────
+#  Static Files — MUST be mounted LAST.
+#  Mounting at "/" captures every unmatched route.
+#  All API endpoints must be registered above this line.
+# ─────────────────────────────────────────────
+
+FRONTEND_DIR = os.getenv(
+    "FRONTEND_DIR",
+    os.path.join(os.path.dirname(__file__), "..", "frontend"),
+)
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn

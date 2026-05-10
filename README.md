@@ -143,6 +143,25 @@ Every clinical summary includes structured evidence fields for transparency:
 
 ---
 
+## ✅ Evidence Checklist
+
+Every claim in this README can be verified independently:
+
+| Claim | How to Verify |
+|-------|---------------|
+| Local Gemma 4 (no cloud) | `GET /api/offline-proof` → `cloud_api_keys_required: false` |
+| RAG enabled (~810 chunks) | `GET /api/rag/status` → `total_chunks`, `enabled: true` |
+| FHIR R4 export | `GET /api/session/{id}/fhir` → FHIR Bundle JSON |
+| ICD-10 auto-coding | `GET /api/session/{id}/icd10` → `icd10_suggestions[]` |
+| Doctor triage override | `/clinical_review.html` → Override panel (doctor login) |
+| 4-role JWT auth | `POST /auth/login` with doctor / admin / patient accounts |
+| Google OAuth2 | Click **Sign in with Google** on login page |
+| Trust Layer (evidence) | `GET /api/session/{id}/summary` → `evidence[]`, `guideline_sources[]` |
+| Offline PWA | Chrome DevTools → Network → Offline → reload page |
+| Evaluation results | `python evaluation/run_eval.py --verbose` |
+
+---
+
 ## 🧪 Evaluation & Testing
 
 ```bash
