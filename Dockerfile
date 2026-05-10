@@ -5,7 +5,7 @@ WORKDIR /app
 # Sistem bağımlılıkları
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Kalıcı veri dizini oluştur
+# Kalıcı veri dizini oluştur (DB + ChromaDB mount noktaları)
 RUN mkdir -p /app/data /app/chroma_db
 
 # Python bağımlılıkları — önce CPU-only torch yükle (CUDA sürümü ~1.5GB yerine ~200MB)
@@ -18,22 +18,18 @@ COPY backend/main.py ./main.py
 COPY backend/auth.py ./auth.py
 COPY backend/rag.py ./rag.py
 
-# .env dosyası (opsiyonel — yoksa ortam değişkenleri docker-compose'dan gelir)
-COPY backend/.env ./.env
-
-# Veritabanını kalıcı klasöre kopyala (ilk başlatma için seed)
-COPY backend/anamnezai.db /app/data/anamnezai.db
-
-# ChromaDB verileri (RAG vektör deposu)
-COPY chroma_db/ /app/chroma_db/
-
 # Frontend statik dosyaları
 COPY frontend/ /app/frontend/
 
 EXPOSE 8000
 
-# DB_PATH kalıcı veri dizinini göstersin
+# DB_PATH kalıcı veri dizinini göstersin (volume mount'tan gelir)
 ENV DB_PATH=/app/data/anamnezai.db
+ENV CHROMA_DIR=/app/chroma_db
+
+# Docker healthcheck — /healthz lightweight endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8000/healthz || exit 1
 
 # Uvicorn doğrudan çalıştır (production modu — no reload)
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

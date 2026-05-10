@@ -35,7 +35,21 @@ COLLECTION_NAME = "medical_knowledge"
 EMBED_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 CHUNK_SIZE = 400      # kelime
 CHUNK_OVERLAP = 60    # kelime
-TOP_K = 4             # Varsayılan retrieval sayısı
+TOP_K = 6             # Varsayılan retrieval sayısı (artırıldı: 4→6)
+
+# Kategori öncelik sırası (düşük sayı = yüksek öncelik)
+CATEGORY_PRIORITY = {
+    "triage_protocol": 1,
+    "emergency_protocol": 2,
+    "clinical_guideline": 3,
+    "icd10_codes": 4,
+    "icd10_coding": 4,
+    "clinical_reference": 5,
+    "epidemiology": 6,
+    "terminology": 7,
+    "qa": 8,
+    "general": 9,
+}
 
 
 # ─────────────────────────────────────────────
@@ -236,7 +250,7 @@ def retrieve(query: str, n_results: int = TOP_K, category_filter: Optional[str] 
 
 
 def get_context_for_prompt(query: str, n_results: int = TOP_K,
-                           min_relevance: float = 0.30) -> str:
+                           min_relevance: float = 0.35) -> str:
     """
     Sorguyla ilgili tıbbi bağlamı prompt'a hazır formatta döndürür.
     Düşük relevance'lı sonuçları filtreler.
@@ -255,6 +269,12 @@ def get_context_for_prompt(query: str, n_results: int = TOP_K,
         if not relevant:
             return ""
 
+        # Kategori önceliğine göre sırala
+        relevant.sort(key=lambda h: (
+            CATEGORY_PRIORITY.get(h.get("category", "general"), 9),
+            -h["relevance"]
+        ))
+
         lines = ["=== Tıbbi Referans Bilgisi ==="]
         for h in relevant:
             lines.append(f"[{h['source']}] {h['document']}")
@@ -262,6 +282,119 @@ def get_context_for_prompt(query: str, n_results: int = TOP_K,
         return "\n".join(lines)
     except Exception as e:
         logger.warning(f"RAG retrieval hatası (önemsiz): {e}")
+        return ""
+
+
+def get_medical_context_for_triage(
+    chief_complaint: str,
+    qa_history: str = "",
+    n_per_query: int = 5,
+    min_relevance: float = 0.38,
+    max_chunks: int = 8,
+) -> str:
+    """
+    Triaj kararı için optimize edilmiş multi-query RAG retrieval.
+
+    Strateji:
+    1. Ana şikayet ile genel arama
+    2. Triaj protokolü odaklı arama ("triage assessment " + şikayet)
+    3. Acil protokol odaklı arama ("emergency RED urgency " + şikayet)
+    4. Sonuçları de-duplicate + kategori önceliğine göre sırala
+    5. En alakalı max_chunks chunk'ı yapılandırılmış formatta döndür
+
+    Bu sayede:
+    - Genel vektör araması gözden kaçırabileceği protokol chunk'ları yakalanır
+    - Emergency/triage kategorileri her zaman üste gelir
+    - Doğruluk artar, gürültü azalır
+    """
+    if not is_rag_available():
+        return ""
+
+    try:
+        collection = _get_collection()
+        if collection.count() == 0:
+            return ""
+
+        complaint_lower = chief_complaint.lower().strip()
+
+        # Multi-query stratejisi
+        queries = [
+            chief_complaint,
+            f"triage assessment {complaint_lower} emergency severity",
+            f"Manchester Triage System {complaint_lower} red flags urgency",
+        ]
+        if qa_history:
+            # Q&A geçmişinin ilk 200 karakterini 4. sorgu olarak ekle
+            queries.append(qa_history[:200])
+
+        # Tüm query'lerden sonuç topla, ID'ye göre de-duplicate
+        seen_docs: dict[str, dict] = {}  # doc_text → hit
+        for q in queries:
+            try:
+                hits = retrieve(q, n_results=n_per_query)
+                for h in hits:
+                    if h["relevance"] < min_relevance:
+                        continue
+                    key = h["document"][:80]  # İçerik prefix'i ile de-dup
+                    if key not in seen_docs or h["relevance"] > seen_docs[key]["relevance"]:
+                        seen_docs[key] = h
+            except Exception:
+                continue
+
+        if not seen_docs:
+            return ""
+
+        # Kategori önceliği + relevance ile sırala
+        ranked = sorted(
+            seen_docs.values(),
+            key=lambda h: (
+                CATEGORY_PRIORITY.get(h.get("category", "general"), 9),
+                -h["relevance"],
+            )
+        )
+
+        # En fazla max_chunks chunk al
+        top = ranked[:max_chunks]
+
+        # Yapılandırılmış prompt bağlamı oluştur
+        lines = [
+            "=== Klinik Karar Destek Bağlamı (RAG) ===",
+            f"Şikayet: {chief_complaint}",
+            "Aşağıdaki klinik kılavuz bilgileri bu triaj kararına yardımcı olmak için getirilmiştir:",
+            "",
+        ]
+        # Kategorilere göre grupla
+        by_cat: dict[str, list] = {}
+        for h in top:
+            cat = h.get("category", "general")
+            by_cat.setdefault(cat, []).append(h)
+
+        cat_labels = {
+            "triage_protocol": "📋 TRİAJ PROTOKOLÜ",
+            "emergency_protocol": "🚨 ACİL PROTOKOL",
+            "clinical_guideline": "📖 KLİNİK KILAVUZ",
+            "clinical_reference": "🔬 KLİNİK REFERANS",
+            "icd10_codes": "🏷 ICD-10",
+            "icd10_coding": "🏷 ICD-10",
+            "epidemiology": "📊 EPİDEMİYOLOJİ",
+            "terminology": "📝 TERMİNOLOJİ",
+        }
+
+        for cat_key in sorted(by_cat.keys(), key=lambda k: CATEGORY_PRIORITY.get(k, 9)):
+            label = cat_labels.get(cat_key, f"[{cat_key}]")
+            lines.append(f"{label}:")
+            for h in by_cat[cat_key]:
+                lines.append(f"  [{h['source']}] {h['document']}")
+            lines.append("")
+
+        lines.append(
+            "⚕️ GÜVENLİK NOTU: Şüphe durumunda daima daha yüksek triaj seviyesi seç."
+        )
+
+        return "\n".join(lines)
+
+    except Exception as e:
+        logger.warning(f"get_medical_context_for_triage hatası: {e}")
         return ""
 
 

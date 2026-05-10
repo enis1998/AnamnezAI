@@ -471,18 +471,31 @@ async def ask_gemma_vision(prompt: str, image_base64: str, system: str = "", tim
 
 
 async def ask_gemma_rag(prompt: str, system: str = "", rag_query: str = "",
-                        timeout: float = 180.0, model: Optional[str] = None) -> str:
-    """RAG bağlamıyla güçlendirilmiş model isteği."""
+                        timeout: float = 180.0, model: Optional[str] = None,
+                        rag_mode: str = "interview") -> str:
+    """RAG bağlamıyla güçlendirilmiş model isteği.
+    rag_mode: 'interview' (soru üretimi) | 'triage' (triaj kararı)
+    """
     enriched_system = system
     if RAG_ENABLED and rag_query:
         try:
             _init_rag_if_needed()
             import rag as rag_module
-            context = rag_module.get_context_for_prompt(rag_query, n_results=4, min_relevance=0.3)
+            if rag_mode == "triage":
+                # Triaj için daha kapsamlı, kategori öncelikli retrieval
+                context = rag_module.get_medical_context_for_triage(
+                    chief_complaint=rag_query,
+                    min_relevance=0.38,
+                )
+            else:
+                # Mülakat sorularında genel retrieval (hızlı)
+                context = rag_module.get_context_for_prompt(
+                    rag_query, n_results=5, min_relevance=0.35
+                )
             if context:
                 enriched_system = system + "\n\n" + context if system else context
-        except Exception:
-            pass
+        except Exception as _e:
+            pass  # RAG başarısız olsa da model çalışmaya devam eder
     return await ask_gemma(prompt, system=enriched_system, timeout=timeout, model=model)
 
 
@@ -573,11 +586,17 @@ KURALLAR:
 - Her seferinde SADECE 1 soru sor (maksimum 2 cümle).
 - Önceki cevapları dikkate alarak soru üret (bağlamsal mülakat).
 - Tıbbi jargon kullanma, halkın anlayacağı dil kullan.
-- ACİL semptomlar (göğüs ağrısı, nefes darlığı, bilinç kaybı, felç bulguları) görürsen hemen o yönde detaylandır.
-- MTS (Manchester Triage System) kriterlerine göre değerlendir: yayılım, şiddet (1-10), süre, tetikleyici, eşlik eden bulgular.
+- ACİL semptomlar VARSA ÖNCE BUNLARI DETAYLANDIR:
+  * Göğüs ağrısı/baskısı → sol kol/çene/sırt yayılımı, terleme, nefes darlığı?
+  * Nefes darlığı → ani mi, SpO2 ölçüldü mü, önceki akciğer hastalığı?
+  * Bilinç değişikliği/bayılma → kaç saniye sürdü, öncesinde çarpıntı/terleme?
+  * Felç bulguları (yüz asimetrisi, kol güçsüzlüğü, konuşma bozukluğu) → tam olarak ne zaman başladı?
+  * Şiddetli baş ağrısı → "hayatımın en kötüsü" mü, ense sertliği, ışık hassasiyeti?
+- OPQRST çerçevesini uygula: Başlangıç, Şiddet (1-10), Kalite, Yayılım, Tetikleyici, Süre.
+- MTS (Manchester Triage System) kriterlerine göre değerlendir.
 - Empatik, sakinleştirici ton. Soru işaretiyle bitir.
 
-ÖRNEK MÜLAKATİ:
+ÖRNEK MÜLAKAT:
 Hasta: Ali Yılmaz, 58 yaş, Erkek.
 S: "Merhaba Ali Bey, sizi bugün buraya getiren en önemli şikayetiniz nedir?"
 C: "Göğsümde baskı hissediyorum sabahtan beri."
@@ -595,9 +614,15 @@ RULES:
 - Ask ONLY ONE question at a time (max 2 sentences).
 - Generate questions based on ALL previous answers (contextual interview).
 - Avoid medical jargon, use plain language.
-- EMERGENCY signs (chest pain, breathing difficulty, loss of consciousness, stroke signs): explore FIRST.
-- Apply MTS (Manchester Triage System) criteria: radiation, severity (1-10), duration, triggers, associated symptoms.
-- Empathetic, calming tone. End with a question?
+- EMERGENCY signs — explore IMMEDIATELY if present:
+  * Chest pain/pressure → arm/jaw/back radiation, sweating, breathlessness?
+  * Dyspnea → sudden onset, SpO2 measured, prior lung disease?
+  * Altered consciousness/syncope → duration, prior palpitations/sweating?
+  * Stroke signs (facial droop, arm weakness, speech) → exact onset time?
+  * Severe headache → "worst of life", neck stiffness, photophobia?
+- Apply OPQRST: Onset, Quality, Radiation, Severity (1-10), Timing, Triggers.
+- Apply MTS (Manchester Triage System) criteria throughout.
+- Empathetic, calming tone. End with a question mark.
 
 EXAMPLE EXCHANGE:
 Patient: John Doe, 58y, Male.
@@ -610,7 +635,14 @@ Q: "On a scale of 1-10 how severe is it, and do you have any difficulty breathin
 FOLLOW THIS EXAMPLE — contextual, deepening, clinician-like questions."""
 
 TRIAGE_SYSTEM_TR = """Sen Manchester Triage System (MTS) ve CTAS standartlarına göre eğitilmiş klinik triaj uzmanısın (Gemma 4 tarafından güçlendirilmişsin).
-Hastanın semptom mülakat geçmişini analiz et.
+Hastanın semptom mülakat geçmişini dikkatle analiz et.
+
+GÜVENLİK KURALI (PATIENT SAFETY FIRST):
+- Şüphe halinde her zaman daha yüksek triaj seviyesi seç (GREEN yerine YELLOW, YELLOW yerine RED).
+- Yaşlı (≥65), diyabetik veya immünosüpresif hastalarda atipik sunum olabilir — RED eşiğini düşür.
+- Göğüs ağrısı + herhangi bir risk faktörü → en az YELLOW, kardiyak şüphe varsa RED.
+- "Hayatımın en kötü baş ağrısı" ifadesi → HEP RED (SAK dışlanana kadar).
+
 ÇIKTI: SADECE geçerli JSON döndür. Başka hiçbir metin veya markdown ekleme.
 {
   "triage_level": "RED veya YELLOW veya GREEN",
@@ -622,15 +654,33 @@ Hastanın semptom mülakat geçmişini analiz et.
   "clinical_notes": "Doktor için kritik gözlemler 2-3 cümle",
   "urgency_flags": ["Acil uyarı bayrakları — örn: Kardiyak risk faktörleri mevcut"],
   "evidence": ["Triaj kararını destekleyen klinik bulgu 1", "Bulgu 2", "Bulgu 3"],
-  "guideline_sources": ["MTS Göğüs Ağrısı Diskriminatörü", "CTAS Kardiyak Semptomlar"]
+  "guideline_sources": ["MTS Göğüs Ağrısı Diskriminatörü", "CTAS Kardiyak Semptomlar"],
+  "doctor_review_required": true veya false,
+  "unsafe_to_self_manage": true veya false
 }
-TRİAJ STANDARTLARI:
-RED = Hayati risk / derhal müdahale (AMI, inme, anafilaksi, solunum yetmezliği, GCS<8)
-YELLOW = Acil, 30dk-2saat içinde görülmeli (yüksek ateş, orta şiddetli ağrı, brakikardi, hipertansif acil)  
-GREEN = Rutin poliklinik (hafif semptom, kronik takip, üst solunum yolu enfeksiyonu)"""
+TRİAJ STANDARTLARI (MTS):
+RED = Hayati risk / derhal müdahale (AMI, inme, anafilaksi, solunum yetmezliği, GCS<8, şok, status epileptikus, aort diseksiyonu, SAK)
+YELLOW = Acil, 30dk-2saat içinde görülmeli (yüksek ateş ≥38.5°C, orta ağrı 4-6/10, taşikardi>130, hipertansif acil şüphesi, ilk konvülsiyon, ciddi dehidrasyon)
+GREEN = Rutin (hafif semptom 1-3/10, kronik takip, basit ÜSYE, hafif travma)
+
+KIRMIZI BAYRAKLAR — Bunların HERHANGİ BİRİ varsa RED zorunlu:
+- Göğüs ağrısı + sol kol/çene yayılımı + terleme
+- SpO2 <90% veya siyanoz
+- Bilinç değişikliği (GCS <15)
+- Sistolik KB <90 mmHg (hipotansiyon)
+- Solunum hızı >30/dk veya <8/dk
+- Ani başlayan en şiddetli baş ağrısı
+- Fokal nörolojik defisit (felç bulgusu)"""
 
 TRIAGE_SYSTEM_EN = """You are a clinical triage expert trained on Manchester Triage System (MTS) and CTAS standards (powered by Gemma 4).
-Analyze the patient's symptom interview history.
+Carefully analyze the patient's symptom interview history.
+
+PATIENT SAFETY RULE:
+- When in doubt, ALWAYS choose a higher triage level (GREEN→YELLOW, YELLOW→RED).
+- Elderly (≥65), diabetic, or immunosuppressed patients may present atypically — lower the RED threshold.
+- Chest pain + any risk factor → minimum YELLOW, RED if cardiac suspicion.
+- "Worst headache of my life" → ALWAYS RED (until SAH excluded).
+
 OUTPUT: Return ONLY valid JSON. No other text or markdown.
 {
   "triage_level": "RED or YELLOW or GREEN",
@@ -642,12 +692,23 @@ OUTPUT: Return ONLY valid JSON. No other text or markdown.
   "clinical_notes": "Critical notes for doctor 2-3 sentences",
   "urgency_flags": ["Emergency flags if any"],
   "evidence": ["Clinical finding supporting triage decision 1", "Finding 2", "Finding 3"],
-  "guideline_sources": ["MTS Chest Pain Discriminator", "CTAS Level 2 Cardiac Symptoms"]
+  "guideline_sources": ["MTS Chest Pain Discriminator", "CTAS Level 2 Cardiac Symptoms"],
+  "doctor_review_required": true or false,
+  "unsafe_to_self_manage": true or false
 }
-TRIAGE STANDARDS:
-RED = Life-threatening / immediate (AMI, stroke, anaphylaxis, respiratory failure, GCS<8)
-YELLOW = Urgent, seen within 30min-2hrs (high fever, moderate pain, bradycardia, hypertensive urgency)
-GREEN = Routine outpatient (mild symptoms, chronic follow-up, URTI)"""
+TRIAGE STANDARDS (MTS):
+RED = Life-threatening / immediate (AMI, stroke, anaphylaxis, respiratory failure, GCS<8, shock, SE, aortic dissection, SAH)
+YELLOW = Urgent, within 30min-2hrs (fever ≥38.5°C, moderate pain 4-6/10, tachycardia>130, hypertensive urgency, first seizure, severe dehydration)
+GREEN = Routine (mild symptoms 1-3/10, chronic follow-up, simple URTI, minor trauma)
+
+RED FLAGS — ANY of these requires RED:
+- Chest pain + left arm/jaw radiation + diaphoresis
+- SpO2 <90% or cyanosis
+- Altered consciousness (GCS <15)
+- Systolic BP <90 mmHg
+- RR >30/min or <8/min
+- Sudden worst-ever headache
+- Focal neurological deficit (stroke signs)"""
 
 VISION_SYSTEM_TR = """Sen klinik görüntü analizi yapan bir tıbbi asistansın (Gemma 4 multimodal).
 Sana gönderilen tıbbi görüntüyü (yara, cilt, EKG, röntgen vb.) dikkatle incele.
@@ -1038,6 +1099,12 @@ async def rag_query(q: str, n: int = 4):
         raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil.")
 
 
+@app.get("/healthz")
+async def healthz():
+    """Docker HEALTHCHECK için lightweight endpoint — Ollama'ya bağlanmadan sadece uygulama durumunu döndürür."""
+    return {"status": "ok", "version": "5.0.0"}
+
+
 @app.get("/health")
 async def health_check():
     try:
@@ -1254,7 +1321,13 @@ async def get_clinical_summary(session_id: str):
         f"Triage this patient. Return ONLY JSON."
     )
 
-    raw = await ask_gemma(triage_prompt, get_triage_system(lang))
+    raw = await ask_gemma_rag(
+        triage_prompt,
+        system=get_triage_system(lang),
+        rag_query=session.get("chief_complaint", "") or session.get("answers", [""])[0][:200],
+        rag_mode="triage",
+        timeout=200.0,
+    )
 
     # Robust JSON parse
     cleaned = raw.strip()

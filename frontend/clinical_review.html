@@ -190,16 +190,16 @@ tailwind.config = {
             </div>
           </section>
 
-          <!-- Sprint 15: AI Düşünce Süreci Paneli -->
+          <!-- Klinik Gerekçe Özeti Paneli -->
           <section class="bg-gradient-to-br from-[#001f2e] to-[#002f40] rounded-2xl border border-white/10 editorial-shadow fade text-white" id="thinkingPanel">
             <button onclick="toggleThinking()" class="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 rounded-2xl transition-colors">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-secc/20 flex items-center justify-center">
-                  <span class="material-symbols-outlined msym-fill text-secc text-[18px]">psychology</span>
+                  <span class="material-symbols-outlined msym-fill text-secc text-[18px]">clinical_notes</span>
                 </div>
                 <div class="text-left">
-                  <p class="font-bold text-[15px] text-white">AI Düşünce Süreci</p>
-                  <p class="text-[11px] text-white/50 font-normal">Gemma 4 e4b · Zincir-Düşünce analizi</p>
+                  <p class="font-bold text-[15px] text-white">Klinik Gerekçe Özeti</p>
+                  <p class="text-[11px] text-white/50 font-normal">Gemma 4 e4b · Triaj karar gerekçesi</p>
                 </div>
                 <span class="px-2 py-0.5 rounded-full bg-secc/20 text-secc text-[10px] font-bold uppercase tracking-wider ml-1">Gemma 4</span>
               </div>
@@ -208,9 +208,9 @@ tailwind.config = {
             <div id="thinking-body" class="hidden px-6 pb-5">
               <div class="border-t border-white/10 pt-4">
                 <div id="thinking-content" class="space-y-3 max-h-64 overflow-y-auto pr-1 scrollbar-thin">
-                  <p class="text-white/50 text-sm italic">Düşünce süreci verisi bulunamadı.</p>
+                  <p class="text-white/50 text-sm italic">Klinik gerekçe verisi bulunamadı.</p>
                 </div>
-                <p class="text-[10px] text-white/30 mt-3">Bu panel, Gemma 4'ün mülakat sırasında ürettiği iç düşünce bloklarını (Chain-of-Thought) gösterir. Hastaya gösterilmez.</p>
+                <p class="text-[10px] text-white/30 mt-3">Bu panel, Gemma 4'ün triaj kararına ulaşırken kullandığı klinik gerekçe adımlarını gösterir. Sadece yetkili sağlık personeline yöneliktir.</p>
               </div>
             </div>
           </section>
@@ -531,7 +531,7 @@ function renderPage() {
   if (thinkBlocks.length && thinkEl) {
     thinkEl.innerHTML = thinkBlocks.map((block, i) =>
       `<div class="bg-white/5 rounded-xl p-3">
-        <p class="text-[10px] font-bold text-secc uppercase tracking-wider mb-1.5">Düşünce Bloğu ${i+1}</p>
+        <p class="text-[10px] font-bold text-secc uppercase tracking-wider mb-1.5">Gerekçe Adımı ${i+1}</p>
         <p class="text-[12px] text-white/70 leading-relaxed whitespace-pre-wrap">${escapeHtml(block)}</p>
       </div>`
     ).join('');

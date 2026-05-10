@@ -1,0 +1,50 @@
+# Git
+.git
+.github
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Sensitive / persisted at runtime (NOT baked into image)
+backend/.env
+backend/anamnezai.db
+chroma_db/
+
+# Dev tools
+.idea/
+.vscode/
+*.log
+
+# Notebooks (heavy, not needed in container)
+notebooks/
+
+# Evaluation scripts (not needed at runtime)
+evaluation/
+
+# Design files
+taslak_ekran/
+
+# Misc
+*.zip
+*.pdf
+*.docx
+*.png
+*.jpg
+ROADMAP.md
+PROJECT_PLAN.md
+GEMMA4_MODEL_CARD.md
+commit.py
+setup.ps1
+

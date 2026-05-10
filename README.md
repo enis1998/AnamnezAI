@@ -19,14 +19,14 @@ AnamnezAI automates hospital pre-triage using **Gemma 4 (gemma4:e4b)** running f
 | **AI Interview** | 5-turn context-aware symptom interview powered by Gemma 4 |
 | **Triage Classification** | Manchester Triage System (MTS) — RED / YELLOW / GREEN |
 | **Trust Layer** | Clinical evidence list, guideline sources (MTS/CTAS), `doctor_review_required` flag |
-| **RAG Context** | ChromaDB + all-MiniLM-L6-v2 — ~810 chunks of medical guidelines |
+| **RAG Context** | ChromaDB + multilingual-MiniLM-L12-v2 — 60+ built-in medical guideline chunks (MTS, ICD-10, emergency protocols) |
 | **FHIR R4 Export** | Machine-readable clinical report export |
 | **ICD-10 Auto-coding** | Suggested diagnostic codes per session |
 | **Medical Image Analysis** | MedGemma Vision (`medgemma:4b`) — ECG, X-ray, skin conditions |
 | **SSE Streaming** | Real-time clinical summary streamed to doctor panel |
 | **Kiosk Mode** | Touch-optimised walk-in screen with QR queue ticket |
 | **Offline PWA** | Service Worker — works without internet after first load |
-| **4-Role Auth** | JWT — patient / doctor / nurse / admin + Google OAuth2 |
+| **4-Role Auth** | JWT — patient / doctor / staff / admin + Google OAuth2 |
 | **Bilingual** | Turkish 🇹🇷 and English 🇬🇧 throughout |
 
 ---
@@ -51,8 +51,8 @@ AnamnezAI automates hospital pre-triage using **Gemma 4 (gemma4:e4b)** running f
            │               │                  │
 ┌──────────▼────┐  ┌───────▼──────────┐  ┌───▼──────────────────┐
 │    Ollama     │  │    ChromaDB      │  │       SQLite         │
-│  gemma4:e4b   │  │  ~810 chunks     │  │  sessions            │
-│  medgemma:4b  │  │  all-MiniLM-L6   │  │  summaries           │
+│  gemma4:e4b   │  │  60+ chunks     │  │  sessions            │
+│  medgemma:4b  │  │  MiniLM-L12-v2  │  │  summaries           │
 │  (optional)   │  │  MTS / ICD-10    │  │  users + roles       │
 │               │  │  top-k cosine    │  │  audit_log           │
 └───────────────┘  └──────────────────┘  └──────────────────────┘
@@ -150,7 +150,7 @@ Every claim in this README can be verified independently:
 | Claim | How to Verify |
 |-------|---------------|
 | Local Gemma 4 (no cloud) | `GET /api/offline-proof` → `cloud_api_keys_required: false` |
-| RAG enabled (~810 chunks) | `GET /api/rag/status` → `total_chunks`, `enabled: true` |
+| RAG enabled (60+ chunks) | `GET /api/rag/status` → `total_chunks`, `enabled: true` |
 | FHIR R4 export | `GET /api/session/{id}/fhir` → FHIR Bundle JSON |
 | ICD-10 auto-coding | `GET /api/session/{id}/icd10` → `icd10_suggestions[]` |
 | Doctor triage override | `/clinical_review.html` → Override panel (doctor login) |
@@ -165,7 +165,7 @@ Every claim in this README can be verified independently:
 ## 🧪 Evaluation & Testing
 
 ```bash
-# Smoke tests (9 tests)
+# Smoke tests (10 tests)
 cd mediscreen
 pytest backend/tests/test_smoke.py -v
 
