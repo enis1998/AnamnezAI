@@ -243,6 +243,29 @@ tailwind.config = {
             </div>
           </section>
 
+          <!-- Sprint 20: Trust Layer — Klinik Kanıt & Kılavuz -->
+          <section class="card p-6 editorial-shadow fade" id="trustLayerSection" style="border-left:4px solid #00475e;background:#f0f4f7">
+            <h2 class="text-xl font-bold text-pri mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined msym-fill text-pric text-[22px]">verified</span>
+              Klinik Kanıt & Kılavuz Kaynakları
+              <span class="ml-auto text-[9px] bg-pric/10 text-pric px-2 py-0.5 rounded-full font-bold">Sprint 20 · Trust Layer</span>
+            </h2>
+            <div id="trustEvidenceSection" class="mb-4 hidden">
+              <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Triaj Kararını Destekleyen Klinik Bulgular</p>
+              <ul id="trustEvidenceList" class="space-y-1.5"></ul>
+            </div>
+            <div id="trustGuidelineSection" class="mb-4 hidden">
+              <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Kullanılan Klinik Kılavuzlar</p>
+              <div id="trustGuidelineList" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div id="trustDoctorBanner" class="hidden mt-2 flex items-start gap-2 text-[11px] font-semibold text-pric bg-pric/10 rounded-xl p-2.5">
+              ⚕️ Bu rapor yetkili bir doktor tarafından incelenmelidir. Yapay zeka triajı klinik değerlendirmenin yerini tutmaz.
+            </div>
+            <div id="trustSelfBanner" class="hidden mt-2 flex items-start gap-2 text-[11px] font-semibold text-err bg-errc rounded-xl p-2.5">
+              ⛔ Bu semptomları kendi kendinize yönetmek güvenli değildir. Doktor muayenesi zorunludur.
+            </div>
+          </section>
+
           <!-- Doctor Notes -->
           <section class="card p-6 editorial-shadow fade no-print">
             <h2 class="text-xl font-bold text-ons mb-4 flex items-center gap-2">
@@ -503,6 +526,38 @@ function renderPage() {
   // ICD-10 codes
   const icd = s.icd10_codes || [];
   if (icd.length) renderICD10(icd);
+
+  // Sprint 20: Trust Layer rendering
+  const evidence = (s.evidence || []).filter(e => e && e.length > 3);
+  const guidelines = (s.guideline_sources || []).filter(g => g && g.length > 2);
+
+  if (evidence.length > 0) {
+    const evSec = document.getElementById('trustEvidenceSection');
+    const evList = document.getElementById('trustEvidenceList');
+    if (evSec) evSec.classList.remove('hidden');
+    if (evList) evList.innerHTML = evidence.map(e =>
+      `<li class="flex items-start gap-2 text-[12px] text-ons">
+        <span class="material-symbols-outlined msym text-pric text-[13px] mt-0.5 flex-shrink-0">check_circle</span>
+        ${escapeHtml(e)}
+      </li>`
+    ).join('');
+  }
+
+  if (guidelines.length > 0) {
+    const glSec = document.getElementById('trustGuidelineSection');
+    const glList = document.getElementById('trustGuidelineList');
+    if (glSec) glSec.classList.remove('hidden');
+    if (glList) glList.innerHTML = guidelines.map(g =>
+      `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pric/10 text-pric">
+        <span class="material-symbols-outlined msym text-[11px]">menu_book</span>${escapeHtml(g)}
+      </span>`
+    ).join('');
+  }
+
+  const doctorBanner = document.getElementById('trustDoctorBanner');
+  const selfBanner = document.getElementById('trustSelfBanner');
+  if (doctorBanner && s.doctor_review_required !== false) doctorBanner.classList.remove('hidden');
+  if (selfBanner && s.unsafe_to_self_manage) selfBanner.classList.remove('hidden');
 }
 
 function renderTags(containerId, items, colorClass, emptyMsg) {

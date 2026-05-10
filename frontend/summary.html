@@ -119,6 +119,11 @@ const I18N = {
     narrative:'Gemma 4 Klinik Anlatı', loading2:'Yükleniyor...', streamDone:'Gemma 4 ✓',
     symptomsSummary:'Semptom Özeti', doctorNotes:'Doktor için Notlar',
     possibleConditions:'Olası Tanılar', recommendedAction:'Önerilen Eylem',
+    trustLayer:'Klinik Kanıt & Kılavuz Kaynakları',
+    trustEvidence:'Triaj Kararını Destekleyen Klinik Bulgular',
+    trustGuidelines:'Kullanılan Klinik Kılavuzlar',
+    trustDoctorWarn:'⚕️ Bu rapor yetkili bir doktor tarafından incelenmelidir. Yapay zeka triajı klinik değerlendirmenin yerini tutmaz.',
+    trustSelfWarn:'⛔ Bu semptomları kendi kendinize yönetmek güvenli değildir. Doktor muayenesi zorunludur.',
     steps:'Sıradaki Adımlar',
     step1:'Bu raporu PDF olarak indirin veya yazdırın — doktorunuza gösterin.',
     step2:'Triaj seviyenize göre acil servise veya randevu masasına başvurun.',
@@ -143,6 +148,11 @@ const I18N = {
     narrative:'Gemma 4 Clinical Narrative', loading2:'Loading...', streamDone:'Gemma 4 ✓',
     symptomsSummary:'Symptoms Summary', doctorNotes:'Notes for Doctor',
     possibleConditions:'Possible Conditions', recommendedAction:'Recommended Action',
+    trustLayer:'Clinical Evidence & Guideline Sources',
+    trustEvidence:'Clinical Findings Supporting Triage Decision',
+    trustGuidelines:'Clinical Guidelines Applied',
+    trustDoctorWarn:'⚕️ This report must be reviewed by a licensed physician. AI triage does not replace clinical judgment.',
+    trustSelfWarn:'⛔ Self-management of these symptoms is not safe. Physician evaluation is required.',
     steps:'Next Steps',
     step1:'Download or print this report and show it to your doctor.',
     step2:'Go to the emergency room or appointment desk based on your triage level.',
@@ -253,6 +263,39 @@ function render(d){
     </div>`;
   }).join('');
 
+  // Sprint 20 — Trust Layer: Klinik Kanıt & Kılavuz Kaynakları
+  const evidenceItems = (d.evidence||[]).filter(e=>e&&e.length>3);
+  const guidelineItems = (d.guideline_sources||[]).filter(g=>g&&g.length>2);
+  const hasTrust = evidenceItems.length>0 || guidelineItems.length>0;
+  const trustLayerHtml = hasTrust ? `
+    <div class="card p-5 mb-4 border-l-4" style="border-left-color:#00475e;background:#f0f4f7">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-symbols-outlined msym-fill text-pric text-[18px]">verified</span>
+        <p class="text-[11px] font-bold text-pric uppercase tracking-wider">${t('trustLayer')}</p>
+        <span class="ml-auto text-[9px] bg-pric/10 text-pric px-2 py-0.5 rounded-full font-bold">Sprint 20 · Trust Layer</span>
+      </div>
+      ${evidenceItems.length>0?`
+      <div class="mb-3">
+        <p class="text-[9px] font-bold text-onsv uppercase tracking-widest mb-2">${t('trustEvidence')}</p>
+        <ul class="space-y-1.5">
+          ${evidenceItems.map(e=>`<li class="flex items-start gap-2 text-[12px] text-ons"><span class="material-symbols-outlined msym text-pric text-[13px] mt-0.5 flex-shrink-0">check_circle</span>${escHtml(e)}</li>`).join('')}
+        </ul>
+      </div>`:''}
+      ${guidelineItems.length>0?`
+      <div class="mb-3">
+        <p class="text-[9px] font-bold text-onsv uppercase tracking-widest mb-2">${t('trustGuidelines')}</p>
+        <div class="flex flex-wrap gap-1.5">
+          ${guidelineItems.map(g=>`<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-pric/10 text-pric"><span class="material-symbols-outlined msym text-[11px]">menu_book</span>${escHtml(g)}</span>`).join('')}
+        </div>
+      </div>`:''}
+      ${d.doctor_review_required!==false?`<div class="mt-3 flex items-start gap-2 text-[11px] font-semibold text-pric bg-pric/10 rounded-xl p-2.5">${t('trustDoctorWarn')}</div>`:''}
+      ${d.unsafe_to_self_manage?`<div class="mt-2 flex items-start gap-2 text-[11px] font-semibold text-err bg-errc rounded-xl p-2.5">${t('trustSelfWarn')}</div>`:''}
+    </div>` : `
+    <div class="card p-4 mb-4 flex items-center gap-2 text-[11px] font-semibold text-pric bg-pric/5 border border-pric/20 rounded-2xl">
+      <span class="material-symbols-outlined msym text-[16px]">verified_user</span>
+      ${t('trustDoctorWarn')}
+    </div>`;
+
   document.getElementById('main-content').insertAdjacentHTML('beforeend',`
   <div class="fade" id="report-content">
     <div class="mb-6 pt-2">
@@ -321,6 +364,8 @@ function render(d){
       <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">${t('possibleConditions')}</p>
       <div class="flex flex-wrap gap-2">${condHtml}</div>
     </div>
+
+    ${trustLayerHtml}
 
     <div class="rounded-2xl p-5 mb-6 text-white" style="background:${color}">
       <p class="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">${t('recommendedAction')}</p>

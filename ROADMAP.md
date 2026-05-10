@@ -142,6 +142,39 @@
 
 ---
 
+### 🔵 SPRINT 20 — Trust Layer (Klinik Güven Katmanı) ✅ TAMAMLANDI
+
+**Hedef:** AI kararlarını destekleyen klinik kanıtları görsel olarak göster; şeffaflık ve güvenilirliği artır
+
+**Backend (`main.py`):**
+- [x] `ClinicalSummaryResponse` modeline Trust Layer alanları eklendi:
+  - `evidence: list[str]` — Triaj kararını destekleyen klinik bulgular
+  - `guideline_sources: list[str]` — MTS, CTAS kılavuz referansları
+  - `doctor_review_required: bool` — Doktor incelemesi zorunluluğu
+  - `unsafe_to_self_manage: bool` — Kendi kendine yönetim güvenliği
+- [x] `TRIAGE_SYSTEM_TR` ve `TRIAGE_SYSTEM_EN` promptları güncellendi — evidence ve guideline_sources alanları dahil edildi
+- [x] `get_clinical_summary` endpoint'i trust layer alanlarını response'a ekliyor
+
+**Frontend (`summary.html`):**
+- [x] Trust Layer kartı eklendi — Klinik Kanıt & Kılavuz Kaynakları bölümü
+  - Triajı destekleyen klinik bulgular (check_circle ikonlarıyla)
+  - Kılavuz kaynakları (renkli rozetlerle — MTS, CTAS)
+  - Doktor incelemesi zorunlu uyarı bandı
+  - Kendi kendine yönetim güvensizliği kırmızı uyarısı (RED triaj)
+- [x] TR/EN i18n çevirileri eklendi
+
+**Frontend (`clinical_review.html`):**
+- [x] "Klinik Kanıt & Kılavuz Kaynakları" bölümü eklendi (ICD-10 tablo sonrasına)
+  - Evidence listesi (klinik bulgular)
+  - Guideline rozetleri (MTS/CTAS)
+  - Doktor inceleme banner'ı
+  - Kendi kendine yönetim uyarısı
+
+**Test (`tests/test_smoke.py`):**
+- [x] `test_clinical_summary_has_trust_fields` — trust layer alanları smoke test ile doğrulandı
+
+---
+
 ## 📊 Puan Tahmini
 
 ```
