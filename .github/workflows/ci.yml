@@ -36,12 +36,15 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-asyncio httpx pytest-cov ruff
 
+      - name: Syntax check (critical — catches return-outside-function etc.)
+        run: python -m py_compile main.py auth.py rag.py && echo "✓ All Python files compile cleanly"
+
       - name: Lint with ruff
         run: ruff check . --select=E,F,W --ignore=E501 || true
 
       - name: Run unit tests
         run: |
-          pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing || echo "No tests found yet — skipping"
+          pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing
         env:
           DB_PATH: ":memory:"
           GEMMA_MODEL: "test"

@@ -47,3 +47,12 @@ backend/find_quotes.py
 backend/test_rag.py
 backend/srv_*.txt
 __pycache__/
+
+# Database — do NOT commit real data
+*.db
+backend/anamnezai.db
+
+# Build/deploy logs
+docker_build.log
+*.log
+

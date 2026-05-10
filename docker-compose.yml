@@ -8,15 +8,16 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
-      - GEMMA_MODEL=gemma4:e4b
-      - MEDGEMMA_MODEL=medgemma:4b
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - GEMMA_MODEL=${GEMMA_MODEL:-gemma4:e4b}
+      - MEDGEMMA_MODEL=${MEDGEMMA_MODEL:-medgemma:4b}
       - FRONTEND_DIR=/app/frontend
       - DB_PATH=/app/data/anamnezai.db
-      - RAG_ENABLED=true
-      - OLLAMA_NUM_GPU=0
-      - GOOGLE_CLIENT_ID=201244506846-m28jucbi8roj6io5126pabv8bmfcu71o.apps.googleusercontent.com
-      - GOOGLE_CLIENT_SECRET=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T
+      - RAG_ENABLED=${RAG_ENABLED:-true}
+      - OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU:-0}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_me_in_production}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
     volumes:
       # Veritabanını kalıcı tut (container silinse bile kaybolmaz)
       - anamnezai_db:/app/data
@@ -37,4 +38,6 @@ volumes:
   chroma_data:
 
 # Ollama host makinede çalışıyor (Docker içinde olmak zorunda değil)
-# Başlatmak için: docker compose up --build
+# Başlatmak için:
+#   cp .env.example .env   # edit with your values
+#   docker compose up --build

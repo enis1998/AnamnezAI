@@ -1,6 +1,11 @@
-﻿# AnamnezAI — Medical Pre-Triage Platform
+﻿# AnamnezAI — Local-First Clinical Intake & Pre-Triage Assistant
 
-**AI-powered patient anamnesis and triage for Turkey's 117M annual emergency visits — Gemma 4 (`gemma4:e4b`) turns a 15-minute doctor intake into a 4-minute AI interview, fully local via Ollama, zero cloud cost.**
+> **AnamnezAI is not a diagnostic or treatment system.**
+> It is a privacy-preserving clinical intake assistant that structures patient history,
+> flags urgency, and prepares a physician-reviewable summary.
+> All AI outputs require licensed physician review before any clinical decision.
+
+**AI-powered patient anamnesis and pre-triage for Turkey's 117M annual emergency visits — Gemma 4 (`gemma4:e4b`) turns a 15-minute doctor intake into a 4-minute AI interview, fully local via Ollama, zero cloud cost.**
 
 [![Built with Gemma 4](https://img.shields.io/badge/Powered%20by-Gemma%204%20(e4b)-4285F4?logo=google)](https://ollama.com/library/gemma4)
 [![MedGemma Vision](https://img.shields.io/badge/Vision-MedGemma%204b-34A853?logo=google)](https://ollama.com/library/medgemma)
@@ -10,18 +15,9 @@
 [![Hackathon](https://img.shields.io/badge/Gemma%204%20Good%20Hackathon-Health%20%26%20Ollama-orange)](https://www.kaggle.com/competitions/gemma-4-good-hackathon)
 [![License: CC-BY 4.0](https://img.shields.io/badge/License-CC--BY%204.0-green)](https://creativecommons.org/licenses/by/4.0/)
 
-> **3 Gemma model, 3 klinik görev:** `gemma4:e4b` bağlamsal anamnez + MTS triage + FHIR klinik raporu üretir. `medgemma:4b` yara/EKG/cilt görüntülerini analiz eder. `gemma3:1b` basit ilk adım sorularını Tier routing ile hızlı yanıtlar. Tüm modeller Ollama ile yerel çalışır — hasta verisi asla buluta gitmez.
+> **Primary model: `gemma4:e4b`** handles contextual anamnesis + MTS triage + FHIR clinical report. `medgemma:4b` (optional) analyzes wound/ECG/skin images. All models run locally via Ollama — patient data never leaves the device.
 
-> **Hedef:** Türkiye'deki 117 milyon yıllık acil servis başvurusunu daha verimli yönet; doktorun her başvurucuya harcadığı 15–20 dakikalık anamnez süresini ~4 dakikaya indir, köy kliniklerinde internet olmadan tam çalış.
----
-
-## 🏆 Hackathon Parçaları
-
-| Ödül Parkuru | Değer | Yeterlilik |
-|-------------|-------|-----------|
-| **🏥 Health & Sciences** | $10,000 | Türkiye kamu sağlık sisteminde Gemma 4 ile tıbbi ön-triaj |
-| **🦙 Ollama Prize** | $10,000 | `gemma4:e4b` + `medgemma:4b` + `gemma3:1b` tamamen yerel, sıfır API maliyeti |
-| **Genel** | $50,000 | RAG + FHIR R4 + MTS/CTAS + Tier routing + Vision — çok katmanlı klinik AI |
+> **Target:** Help nurses and clinicians in overloaded emergency departments and low-connectivity rural clinics collect structured patient history before doctor review. Reduce per-patient intake time from 15–20 min to ~4 min.
 
 ---
 
