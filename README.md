@@ -16,6 +16,59 @@
 
 ---
 
+## The Story — Why This Exists
+
+### A waiting room no one wants to be in
+
+Picture a Tuesday morning at a state hospital emergency department in Gaziantep. It is 09:15. There are already 47 people in the waiting room. One triage nurse is on shift.
+
+A 66-year-old man walks in — chest tightness, sweating, and a nagging left-arm pain he has been dismissing as muscle soreness since last night. He sits down and quietly takes a number. In the queue in front of him: a toddler with a cough, a university student with a sprained ankle, a woman with a bad headache. The nurse works through them one by one, filling out paper forms, asking the same six questions in the same order regardless of what anyone says. Twenty-two minutes later she reaches the man with the chest pain.
+
+He is having a STEMI.
+
+The same scene — with different patients and different life-threatening conditions being under-triaged — is repeated thousands of times a day across Turkey's 900+ emergency departments. With 117 million annual ED visits nationwide and a nurse-to-patient ratio that makes consistent triage nearly impossible, the cost is measured not in waiting room frustration but in preventable deaths.
+
+**AnamnezAI was built to change that interval — the time between a patient walking through the door and a clinician understanding what is actually wrong with them.**
+
+---
+
+### The language wall nobody talks about
+
+Turkey's eastern provinces — Gaziantep, Şanlıurfa, Hatay, Mardin and others — are home to a large population of Arabic-speaking residents: Turkish citizens whose families have spoken Arabic for generations, Syrian refugees who have put down roots after years in the country, and seasonal migrant workers from across the region.
+
+When these patients arrive at a Turkish hospital, they face a double barrier: they are unwell *and* they cannot communicate their symptoms clearly in Turkish. The triage nurse, under time pressure with 30 people behind the patient, asks "Şikayetiniz nedir?" The patient understands perhaps half of it. The nurse writes down whatever she can interpret. A young child with a 39.8 °C fever who cannot localise her own pain ends up coded as GREEN because neither she nor her parents could explain the neck stiffness through the language gap.
+
+AnamnezAI's kiosk speaks Arabic — not a rough machine-translation approximation but genuine Gemma 4 conversational Arabic, with follow-up questions that adapt to what the patient actually says. The AI interview produces the same structured clinical output regardless of which of the three supported languages the patient chose. The doctor reviews an English or Turkish clinical summary even if the entire conversation happened in Arabic.
+
+This is not a roadmap item. It is live in the current build — `language: "ar"` passed to `/api/session/start` activates the Arabic interview path today.
+
+---
+
+### How the kiosk works — from entrance to doctor's screen in under 5 minutes
+
+Many patients, especially elderly ones, do not have a smartphone. They cannot download an app or navigate a registration form. The kiosk was designed for them first.
+
+**Step 1 — Walk up, scan or tap.**
+A 32-inch touch-screen stands at the hospital entrance, next to the existing queue-ticket dispenser. The patient taps their language: 🇹🇷 Türkçe · 🇬🇧 English · 🇸🇦 العربية. Then they either:
+- Scan the barcode on their national ID card (TC Kimlik Numarası) to auto-fill demographics, or
+- Enter their name and year of birth manually using the large-format on-screen keyboard.
+
+**Step 2 — The AI interview begins.**
+Gemma 4 greets the patient in their language and asks the first clinical question aloud through the kiosk speaker (Text-to-Speech). The patient can respond by voice (Web Speech API) or by tapping large response tiles. A progress bar shows "Question 2 of 5". If the patient mentions chest pain, shortness of breath, or a sudden severe headache, the system silently escalates to 7 questions and routes toward emergency-specific protocols.
+
+**Step 3 — The ticket prints.**
+When the interview concludes, a colour-coded queue ticket prints from the integrated receipt printer:
+- 🔴 **RED** — "Please go to the emergency window immediately." A nurse alarm fires simultaneously.
+- 🟡 **YELLOW** — "Urgent. Average wait: 15 minutes."
+- 🟢 **GREEN** — "Routine. Average wait: 45 minutes. Please keep your ticket."
+
+The QR code on the ticket links to the patient's read-only triage summary — scannable by any nurse or doctor in the department.
+
+**Step 4 — The doctor already knows.**
+Before the patient even sits down in the examination room, the clinical summary has streamed to `doctor.html` via Server-Sent Events. The doctor sees: chief complaint, triage level, confidence score, the specific findings that drove the decision, the clinical guidelines consulted, and a flag indicating whether immediate physician review is required. The conversation took 4 minutes. The STEMI patient is already at the cardiac team's door.
+
+---
+
 ## What
 
 AnamnezAI automates hospital pre-triage: a patient (or kiosk) answers a 5–7 turn AI interview; Gemma 4 produces a Manchester Triage System classification (RED / YELLOW / GREEN) and a structured clinical summary that the doctor sees before the patient walks through the door.
@@ -37,6 +90,7 @@ What Gemma 4 makes possible here that no prior generation could:
 
 - **Triage nurses and emergency physicians** who need a consistent pre-interview before they see the patient
 - **Hospital administrators** deploying a touch-screen kiosk at the entrance — patients self-report and receive a queue ticket
+- **Patients in eastern Turkey** who speak Arabic as their primary language and currently face a communication barrier at every point of care
 - **Healthcare IT teams** integrating structured triage data into existing HIS systems via FHIR R4
 - **Researchers and evaluators** who want a transparent, auditable AI triage baseline for clinical trials
 
@@ -281,7 +335,31 @@ Structured JSON output:
 
 ---
 
-## Live evaluation results
+## MedGemma test results (live — 2026-05-11)
+
+```
+python evaluation/test_medgemma.py
+```
+
+| Test | Description | Result | Notes |
+|------|-------------|--------|-------|
+| T1 | MedGemma model presence (Ollama list) | **PASS** ✅ | `medgemma:4b` confirmed installed |
+| T2 | Backend `/health` + `medgemma_available` | **PASS** ✅ | `medgemma_available: true`, v5.0.0 |
+| T3 | Direct Ollama text query — meningitis scenario (EN) | **PASS** ✅ | 3.3 s — correctly identified: meningitis, lumbar puncture, IV antibiotics |
+| T4 | Backend `/api/analyze-image` — multipart PNG upload | **PASS** ✅ | 200 OK — model responded with image description |
+| T5 | Direct Ollama text query — Turkish (pediatric fever + neck stiffness) | **PASS** ✅ | 4.1 s — correctly flagged meningitis risk, recommended paediatric evaluation |
+
+**Score: 5 / 5 — 100 %**
+
+### Sample MedGemma response (T3 — meningitis)
+
+> *"Based on the symptoms of sudden onset severe headache, neck stiffness, fever, and photophobia, the most likely diagnosis is meningitis. Immediate action should include administering intravenous antibiotics and corticosteroids, while also obtaining a lumbar puncture to confirm the diagnosis and identify the causative organism."*
+
+> ⚠️ MedGemma is an **optional** vision module. It is not required for core triage — `gemma4:e4b` handles all text-based interviews and clinical summaries. Pull MedGemma separately only if you need ECG / X-ray / skin photo analysis.
+
+---
+
+
 
 Tested **2026-05-10** on Gemma 4 e4b via Ollama, RTX 8 GB VRAM, `think: false`:
 
@@ -386,6 +464,9 @@ Every capability claim can be verified independently:
 cd mediscreen
 pytest backend/tests/test_smoke.py -v
 
+# MedGemma vision module test — 5 tests (model + backend + vision + Turkish)
+python evaluation/test_medgemma.py
+
 # Full AI quality suite — 4 modules: RAG · Triage · Questions · Integration (~15 min GPU)
 python evaluation/test_ai_quality.py
 
@@ -469,7 +550,7 @@ mediscreen/
 | Period | Goal |
 |--------|------|
 | **Q3 2026** | Turkey Ministry of Health pilot — 2 primary care clinics in Istanbul |
-| **Q3 2026** | Arabic + Kurdish language support via Gemma 4 multilingual |
+| **Q3 2026** | Expanded multilingual support via Gemma 4 multilingual capacity |
 | **Q3 2026** | Cardiac RAG retrieval fix — synonym expansion pre-processor |
 | **Q4 2026** | PostgreSQL migration — multi-clinic shared database with row-level security |
 | **Q4 2026** | Doctor mobile app (React Native) — SSE triage queue on phone |

@@ -82,7 +82,7 @@ ESTIMATED TOTAL      ████████████ ~9.2/10 → 🏆 Top 3
 | Period | Goal |
 |--------|------|
 | **Q3 2026** | Turkey Ministry of Health pilot (2 primary care clinics) |
-| **Q3 2026** | Arabic + Kurdish language support via Gemma 4 multilingual capacity |
+| **Q3 2026** | Expanded multilingual support via Gemma 4 multilingual capacity |
 | **Q4 2026** | PostgreSQL migration — multi-clinic shared data |
 | **Q4 2026** | Doctor mobile app (React Native) — SSE queue on phone |
 | **Q1 2027** | Full FHIR R4 API server — hospital HIS system integration |
