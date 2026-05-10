@@ -102,6 +102,21 @@ tailwind.config = {
 
 <main class="pt-14 min-h-screen">
 
+<!-- ── ACİL UYARI BANNER ── -->
+<div id="emergency-banner" class="w-full bg-err text-white px-4 py-3 flex items-center justify-center gap-3 text-center" role="alert" aria-live="assertive">
+  <span class="material-symbols-outlined msym-fill flex-shrink-0" style="font-size:22px">emergency</span>
+  <p class="text-[13px] font-semibold leading-snug">
+    🚨 <strong>Acil durum mu?</strong> Bu uygulamayı kullanmayın — hemen
+    <a href="tel:112" class="underline font-bold hover:text-errc transition-colors">112'yi arayın</a>
+    veya en yakın acil servise gidin.
+  </p>
+  <button onclick="document.getElementById('emergency-banner').remove()"
+    class="ml-auto flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+    aria-label="Uyarıyı kapat">
+    <span class="material-symbols-outlined msym" style="font-size:18px">close</span>
+  </button>
+</div>
+
 <!-- ── VIEW: LANDING ── -->
 <div id="view-landing" class="max-w-xl mx-auto px-4 py-10 fade">
 

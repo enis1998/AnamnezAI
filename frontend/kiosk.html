@@ -255,64 +255,98 @@ tailwind.config = {
 <!-- ── SCREEN: DONE ── -->
 <div id="scr-done" class="screen min-h-screen items-center justify-center px-8 py-12">
   <div class="max-w-lg w-full mx-auto text-center fade">
+
+    <!-- Başarı ikonu -->
     <div class="w-24 h-24 rounded-full bg-sec flex items-center justify-center mx-auto mb-6 glow">
       <span class="material-symbols-outlined msym-fill text-white" style="font-size:48px">check_circle</span>
     </div>
-    <h2 class="text-[40px] font-head font-bold mb-3">Mülakat Tamamlandı</h2>
-    <p class="text-[18px] text-white/60 mb-8">Yapay zeka semptomlarınızı değerlendiriyor.<br/>Lütfen triaj personelini bekleyiniz.</p>
+    <h2 class="text-[40px] font-head font-bold mb-3" id="done-title-text">Mülakat Tamamlandı</h2>
+    <p class="text-[18px] text-white/60 mb-6" id="done-sub-text">Yapay zeka semptomlarınızı değerlendiriyor.<br/>Lütfen triaj personelini bekleyiniz.</p>
 
-    <div id="done-triage" class="card-kiosk p-6 mb-8 hidden" role="region" aria-label="Triaj sonucu">
-      <p class="text-[12px] text-white/40 uppercase tracking-widest mb-2" id="done-triage-label">Triaj Sonucu</p>
-      <p class="text-[32px] font-head font-bold" id="done-level">—</p>
-      <p class="text-[16px] text-white/60 mt-1" id="done-complaint">—</p>
+    <!-- 🎫 SIRA BİLETİ — büyük ve belirgin -->
+    <div id="done-ticket-card" class="card-kiosk border-2 border-secc/40 rounded-3xl p-6 mb-6" role="region" aria-label="Sıra bileti" style="background:rgba(0,106,104,0.25)">
+      <p class="text-[11px] text-white/50 uppercase tracking-widest mb-1" id="lbl-ticket">SIRA BİLETİNİZ</p>
+      <!-- Sıra numarası -->
+      <div class="flex items-center justify-center gap-3 mb-3">
+        <span class="material-symbols-outlined msym-fill text-secc" style="font-size:32px">confirmation_number</span>
+        <p class="text-[72px] font-head font-bold text-secc leading-none" id="done-ticket-no" aria-live="polite">—</p>
+      </div>
+      <!-- Triaj seviyesi -->
+      <div id="done-triage" class="hidden mb-3" role="region" aria-label="Triaj sonucu">
+        <div id="done-level-badge" class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[14px] font-bold">
+          <span id="done-level-icon" class="material-symbols-outlined msym-fill" style="font-size:18px">circle</span>
+          <span id="done-level">—</span>
+        </div>
+        <p class="text-[14px] text-white/50 mt-1" id="done-complaint">—</p>
+      </div>
+      <!-- Zaman damgası -->
+      <p class="text-[12px] text-white/40 mt-2" id="done-timestamp"></p>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 mb-8">
+    <!-- Info grid -->
+    <div class="grid grid-cols-2 gap-4 mb-6">
       <div class="card-kiosk p-4 text-center">
         <span class="material-symbols-outlined msym text-secc block mb-2" style="font-size:32px">location_on</span>
-        <p class="text-[14px] text-white/60">Size atanan oda bilgisi için<br/>triaj personelini bekleyiniz</p>
+        <p class="text-[14px] text-white/60" id="done-room-txt">Oda bilgisi için<br/>triaj personelini bekleyiniz</p>
       </div>
       <div class="card-kiosk p-4 text-center">
         <span class="material-symbols-outlined msym text-secc block mb-2" style="font-size:32px">schedule</span>
-        <p class="text-[14px] text-white/60">Tahmini bekleme süresi için<br/>ekrana dikkat ediniz</p>
+        <p class="text-[14px] text-white/60" id="done-wait-txt">Bekleme süresi için<br/>ekrana dikkat ediniz</p>
       </div>
     </div>
 
-    <button onclick="goTo('scr-welcome')"
-      class="btn-kiosk w-full py-5 rounded-2xl card-kiosk text-[20px] font-bold" aria-label="Ana ekrana dön">
-      <span id="btn-home-text">Ana Ekrana Dön</span>
+    <!-- 📱 QR Butonu — büyük ve öne çıkmış -->
+    <button onclick="showQR()" id="btn-qr"
+      class="btn-kiosk w-full py-5 rounded-2xl mb-3 flex items-center justify-center gap-3 text-[20px] font-bold"
+      style="background:rgba(160,241,237,0.15);border:2px solid rgba(160,241,237,0.4)"
+      aria-label="QR kod ile telefona aktar">
+      <span class="material-symbols-outlined msym-fill text-secc" style="font-size:32px" aria-hidden="true">qr_code_2</span>
+      <div class="text-left">
+        <p class="text-[18px] font-bold text-secc leading-tight" id="btn-qr-text">Telefona Aktar</p>
+        <p class="text-[12px] text-white/50 font-normal">QR kodu tarayın → sonuçlarınız telefonda</p>
+      </div>
     </button>
 
-    <!-- Sprint 5 — Print ticket + QR code -->
-    <div class="grid grid-cols-2 gap-3 mt-3">
+    <!-- Yazdır + Ana Ekran -->
+    <div class="grid grid-cols-2 gap-3">
       <button onclick="printTicket()" id="btn-print"
-        class="btn-kiosk py-4 rounded-2xl card-kiosk flex items-center justify-center gap-2 text-[16px] font-semibold text-white/80"
+        class="btn-kiosk py-4 rounded-2xl card-kiosk flex items-center justify-center gap-2 text-[15px] font-semibold text-white/80"
         aria-label="Sıra fişi yazdır">
         <span class="material-symbols-outlined msym" style="font-size:22px" aria-hidden="true">print</span>
-        <span id="btn-print-text">Sıra Fişi Yazdır</span>
+        <span id="btn-print-text">Fiş Yazdır</span>
       </button>
-      <button onclick="showQR()" id="btn-qr"
-        class="btn-kiosk py-4 rounded-2xl card-kiosk flex items-center justify-center gap-2 text-[16px] font-semibold text-white/80"
-        aria-label="QR kod ile devam et">
-        <span class="material-symbols-outlined msym" style="font-size:22px" aria-hidden="true">qr_code</span>
-        <span id="btn-qr-text">QR ile Devam</span>
+      <button onclick="goTo('scr-welcome')"
+        class="btn-kiosk py-4 rounded-2xl card-kiosk flex items-center justify-center gap-2 text-[15px] font-semibold text-white/60"
+        aria-label="Ana ekrana dön">
+        <span class="material-symbols-outlined msym" style="font-size:22px" aria-hidden="true">home</span>
+        <span id="btn-home-text">Ana Ekran</span>
       </button>
     </div>
 
-    <!-- QR display modal -->
-    <div id="qr-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="QR kod">
-      <div class="card-kiosk p-8 text-center max-w-sm mx-4 fade">
-        <h3 class="text-[20px] font-bold mb-4" id="qr-title">Telefon ile Tara</h3>
-        <div id="qr-img-container" class="flex justify-center mb-4">
-          <div class="w-16 h-16 flex items-center justify-center">
-            <span class="material-symbols-outlined msym spin text-secc" style="font-size:40px">refresh</span>
+    <!-- QR Modal — büyütülmüş -->
+    <div id="qr-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4" role="dialog" aria-modal="true" aria-label="QR kod">
+      <div class="card-kiosk p-8 text-center max-w-sm w-full mx-auto fade rounded-3xl" style="background:#0a2e38">
+        <h3 class="text-[24px] font-head font-bold mb-1" id="qr-title">Telefon ile Tara</h3>
+        <p class="text-[13px] text-white/50 mb-5" id="qr-desc">Sonuçlarınıza telefonunuzdan erişmek için aşağıdaki QR kodu tarayın.</p>
+
+        <!-- Sıra no küçük tekrar -->
+        <div class="inline-flex items-center gap-2 bg-secc/10 border border-secc/30 rounded-xl px-4 py-2 mb-4">
+          <span class="material-symbols-outlined msym-fill text-secc text-[16px]">confirmation_number</span>
+          <span class="text-[13px] font-bold text-secc">Sıra: <span id="qr-ticket-no">—</span></span>
+        </div>
+
+        <!-- QR görsel alanı -->
+        <div id="qr-img-container" class="flex justify-center mb-5">
+          <div class="w-48 h-48 bg-white rounded-2xl flex items-center justify-center">
+            <span class="material-symbols-outlined msym spin text-sec" style="font-size:48px">refresh</span>
           </div>
         </div>
-        <p class="text-[14px] text-white/60 mb-6" id="qr-desc">Oturumunuza telefonunuzdan devam etmek için QR kodu tarayın.</p>
+
         <button onclick="document.getElementById('qr-modal').classList.add('hidden')"
-          class="btn-kiosk px-8 py-3 rounded-2xl bg-sec text-white font-semibold">Kapat</button>
+          class="btn-kiosk w-full px-8 py-4 rounded-2xl bg-sec text-white font-bold text-[16px]">Kapat</button>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -755,45 +789,52 @@ async function fetchKioskSummary() {
     const data = await res.json();
 
     const levelMap = {
-      RED: currentLang === 'en' ? '🔴 EMERGENCY' : '🔴 ACİL',
-      YELLOW: currentLang === 'en' ? '🟡 URGENT' : '🟡 İKİNCİL ACİL',
-      GREEN: currentLang === 'en' ? '🟢 ROUTINE' : '🟢 RUTİN',
+      RED:    currentLang === 'en' ? '🔴 EMERGENCY'    : '🔴 ACİL',
+      YELLOW: currentLang === 'en' ? '🟡 URGENT'       : '🟡 İKİNCİL ACİL',
+      GREEN:  currentLang === 'en' ? '🟢 ROUTINE'      : '🟢 RUTİN',
     };
-    document.getElementById('done-level').textContent = levelMap[data.triage_level] || data.triage_level;
-    document.getElementById('done-level').style.color = data.triage_color || '#fff';
+    const badgeColors = {
+      RED:    {bg:'rgba(186,26,26,0.25)', border:'rgba(186,26,26,0.5)', text:'#ff897d'},
+      YELLOW: {bg:'rgba(176,85,8,0.25)',  border:'rgba(176,85,8,0.5)',  text:'#ffb77c'},
+      GREEN:  {bg:'rgba(0,106,104,0.25)', border:'rgba(0,106,104,0.5)', text:'#a0f1ed'},
+    };
+    const lvl = data.triage_level || 'GREEN';
+    const bc = badgeColors[lvl] || badgeColors.GREEN;
+
+    // Triaj badge
+    document.getElementById('done-level').textContent = levelMap[lvl];
+    const badge = document.getElementById('done-level-badge');
+    badge.style.background = bc.bg;
+    badge.style.border = `2px solid ${bc.border}`;
+    badge.style.color = bc.text;
     document.getElementById('done-complaint').textContent = data.chief_complaint || '';
     document.getElementById('done-triage').classList.remove('hidden');
-    document.getElementById('done-triage-label').textContent = t('triageLabel');
+
+    // Sıra numarası — session ID'nin son 4 hanesi (demo)
+    const ticketNo = kioskSessionId
+      ? String(parseInt(kioskSessionId.replace(/\D/g,'').slice(-4) || '0001', 10)).padStart(4,'0')
+      : String(Math.floor(Math.random()*9000)+1000);
+    document.getElementById('done-ticket-no').textContent = ticketNo;
+    document.getElementById('qr-ticket-no').textContent = ticketNo;
+
+    // Zaman damgası
+    const now = new Date();
+    document.getElementById('done-timestamp').textContent =
+      now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) + ' · ' +
+      now.toLocaleDateString('tr-TR');
 
     localStorage.setItem('anamnez_summary', JSON.stringify(data));
-  } catch(e) { /* silently continue */ }
-  goTo('scr-done');
-}
-
-// ── Sprint 5: Print ticket ───────────────────────────────────────────────────
-function printTicket() {
-  if (!kioskSessionId) return;
-  window.open(`${API}/api/session/${kioskSessionId}/ticket`, '_blank');
-}
-
-// ── Sprint 5: QR code ────────────────────────────────────────────────────────
-async function showQR() {
-  if (!kioskSessionId) return;
-  document.getElementById('qr-modal').classList.remove('hidden');
-  const container = document.getElementById('qr-img-container');
-  container.innerHTML = `<div class="w-16 h-16 flex items-center justify-center"><span class="material-symbols-outlined msym spin text-secc" style="font-size:40px">refresh</span></div>`;
-  try {
-    const baseUrl = window.location.origin;
-    const url = `${API}/api/session/${kioskSessionId}/qr?base_url=${encodeURIComponent(baseUrl)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error();
-    const blob = await res.blob();
-    const imgSrc = URL.createObjectURL(blob);
-    container.innerHTML = `<img src="${imgSrc}" alt="QR kod — oturumu telefonla devam ettirmek için tarayın" style="width:200px;height:200px;border-radius:12px"/>`;
   } catch(e) {
-    // Fallback: show session URL
-    container.innerHTML = `<div class="p-4 text-[13px] text-white/60 break-all">${window.location.origin}/?session=${kioskSessionId}</div>`;
+    // Offline — hâlâ sıra no göster
+    const ticketNo = String(Math.floor(Math.random()*9000)+1000);
+    document.getElementById('done-ticket-no').textContent = ticketNo;
+    document.getElementById('qr-ticket-no').textContent = ticketNo;
+    const now = new Date();
+    document.getElementById('done-timestamp').textContent =
+      now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) + ' · ' +
+      now.toLocaleDateString('tr-TR');
   }
+  goTo('scr-done');
 }
 
 // ── Login ────────────────────────────────────────────────────────────────────
@@ -845,17 +886,23 @@ async function showQR() {
   modal.classList.remove('hidden');
   modal.classList.add('flex');
   // Yükleniyor göster
-  container.innerHTML = `<div class="w-16 h-16 flex items-center justify-center">
-    <span class="material-symbols-outlined msym spin text-secc" style="font-size:40px">refresh</span></div>`;
+  container.innerHTML = `<div class="w-48 h-48 bg-white rounded-2xl flex items-center justify-center">
+    <span class="material-symbols-outlined msym spin text-sec" style="font-size:48px">refresh</span></div>`;
   try {
     const baseUrl = window.location.origin;
     const res = await fetch(`${API}/api/session/${kioskSessionId}/qr?base_url=${encodeURIComponent(baseUrl)}`);
     if (!res.ok) throw new Error();
     const blob = await res.blob();
     const imgUrl = URL.createObjectURL(blob);
-    container.innerHTML = `<img src="${imgUrl}" alt="QR Kod" style="width:200px;height:200px;border-radius:12px"/>`;
+    container.innerHTML = `<img src="${imgUrl}" alt="QR Kod" class="rounded-2xl" style="width:192px;height:192px;object-fit:contain"/>`;
   } catch(e) {
-    container.innerHTML = `<p class="text-err text-[14px]">QR kod oluşturulamadı. Sunucuyu kontrol edin.</p>`;
+    // Fallback: URL göster
+    const fallbackUrl = `${window.location.origin}/?session=${kioskSessionId}`;
+    container.innerHTML = `
+      <div class="w-48 h-48 flex flex-col items-center justify-center gap-2">
+        <span class="material-symbols-outlined msym text-secc" style="font-size:40px">link</span>
+        <p class="text-[11px] text-white/60 break-all px-2">${fallbackUrl}</p>
+      </div>`;
   }
 }
 
