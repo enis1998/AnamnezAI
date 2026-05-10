@@ -1,34 +1,33 @@
-# AnamnezAI — Demo Ekran Görüntüleri
+# AnamnezAI — Demo Screenshots
 
-Bu klasör AnamnezAI'ın demo ekran görüntülerini içerir.
+This folder contains demo screenshots of AnamnezAI.
 
-## Beklenen Dosyalar
+## Expected Files
 
-| Dosya | İçerik |
-|-------|--------|
-| `interview.png` | AI mülakat ekranı (göğüs ağrısı senaryosu, bağlamsal soru) |
-| `triage_result.png` | RED triaj kartı (animated SVG, %94 güven, urgency flags) |
-| `icd10.png` | ICD-10 otomatik kodlama tablosu |
-| `vision_analysis.png` | MedGemma EKG analizi sonucu |
-| `doctor_queue.png` | SSE canlı triaj kuyruğu (RED/YELLOW/GREEN) |
-| `clinical_review.png` | Tam klinik inceleme + FHIR export butonu |
-| `kiosk.png` | Kiosk dokunmatik modu (QR fişi görünür) |
-| `admin_analytics.png` | Chart.js dashboard |
-| `patient_dashboard.png` | Hasta genel bakış |
-| `patient_profile.png` | Tıbbi profil SPA section |
+| File | Content |
+|------|---------|
+| `interview.png` | AI interview screen (chest pain scenario, context-aware question) |
+| `triage_result.png` | RED triage card (animated SVG, 94% confidence, urgency flags) |
+| `icd10.png` | ICD-10 auto-coding table |
+| `vision_analysis.png` | MedGemma ECG analysis result |
+| `doctor_queue.png` | SSE live triage queue (RED/YELLOW/GREEN) |
+| `clinical_review.png` | Full clinical review + FHIR export button |
+| `kiosk.png` | Kiosk touch mode (QR ticket visible) |
+| `admin_analytics.png` | Chart.js analytics dashboard |
+| `patient_dashboard.png` | Patient overview panel |
+| `patient_profile.png` | Medical profile SPA section |
 
-## Demo Adımları (Ekran Görüntüsü Almak İçin)
+## Demo Steps (Taking Screenshots)
 
 ```bash
-# 1. Uygulamayı başlat
+# 1. Start the application
 cd mediscreen
 docker compose up --build -d
 
-# 2. Tarayıcıda http://localhost:8000 aç
-# 3. Göğüs ağrısı senaryosu ile mülakat yap
-# 4. Her ekrandan ekran görüntüsü al
-# 5. Bu klasöre kaydet
+# 2. Open http://localhost:8000 in browser
+# 3. Run through a chest pain scenario interview
+# 4. Take a screenshot of each screen
+# 5. Save to this folder
 ```
 
-> Sprint 17: Gerçek ekran görüntüleri demo sırasında bu klasöre eklenecek.
-
+> Real screenshots should be added to this folder during the demo session.
