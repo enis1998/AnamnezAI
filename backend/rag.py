@@ -1430,6 +1430,314 @@ YAŞ SPESIFIK VITAL DEĞERLER:
   1-3 yaş: KAH 90-150/dk, SS 24-40/dk, SKB 80-110 mmHg
   Okul çağı: KAH 70-120/dk, SS 18-30/dk, SKB 90-120 mmHg"""
     },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: ORTOPEDİ / TRAVMA
+    # ════════════════════════════════════════
+    {
+        "source": "Orthopedic_Triage",
+        "category": "clinical_guideline",
+        "text": """Ortopedik Acil Triaj — Kırık ve Dislokasyon:
+AÇIK KIRIK (kemik deriden dışarı veya yara var): RED — enfeksiyon ve damar/sinir hasarı riski
+KALÇa KIRIGI (yaşlı düşme, kalça/uyluk ağrısı, bacak kısalması/dışa rotasyon): ORANGE — cerrahi
+OMLUz DİSLOKASYONU: Ani ağrı + kol hareketsiz + omuz şekil bozukluğu → ORANGE
+BİLEK/AYAK BİLEĞİ (Ottawa Kuralları):
+  Ayak bileği → malleous üzeri 6 cm'de hassasiyet + ağırlık taşıyamıyor → X-ray gerekli → YELLOW/ORANGE
+  Diz → Ottawa Diz Kuralı: yaş>55, fibula başı hassas, diz fleksiyonu <90° → X-ray
+OMURGA TRAVMASI: Boyun veya sırt ağrısı + travma + uyuşukluk/güçsüzlük → RED (spinal kord koruma)
+KOMPARTİMAN SENDROMU (5P): Pain, Pressure, Pallor, Paralysis, Pulselessness → RED (acil fasyotomi)
+Sorulacak: Nasıl düştü? Direkt mi çarptı? Şişlik ne kadar sürede gelişti? Uyuşukluk/karıncalanma var mı?"""
+    },
+    {
+        "source": "Orthopedic_Triage",
+        "category": "clinical_guideline",
+        "text": """Bel Ağrısı Triaj Değerlendirmesi:
+KIRMIZI BAYRAKLAR (RED/ORANGE — görüntüleme zorunlu):
+  - Bel ağrısı + mesane/bağırsak kontrolü kaybı → Cauda equina sendromu → RED ACİL
+  - Bel ağrısı + ateş + IV ilaç kullanımı → Spondilodiskit/epidural apse → RED
+  - 50 yaş üzeri + travmasız başlayan şiddetli bel ağrısı → Malinite şüphesi → ORANGE
+  - Bel ağrısı + bacak güçsüzlüğü progressif → RED
+  - Geceleri kötüleşen, istirahatla geçmeyen bel ağrısı → İnflamatuvar/neoplastik → ORANGE
+MEKANİK BEL AĞRISI (GREEN/YELLOW):
+  - Eforla artan, istirahatla azalan, 20-55 yaş, travma geçmişi
+  - NRS <6, nörolojik belirti yok → YELLOW (analjezi + hareket önerisi)
+Sorulacak: Bacağa yayılıyor mu (siyatik)? Ayağa kalkınca artar mı? İdrar/dışkılama sorunu var mı?"""
+    },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: KBB (KULAK-BURUN-BOĞAZ) ACİLLERİ
+    # ════════════════════════════════════════
+    {
+        "source": "ENT_Emergency",
+        "category": "clinical_guideline",
+        "text": """Kulak Acilleri — Triaj:
+ANİ İŞİTME KAYBI: Tek taraflı ani işitme kaybı → ORANGE (ilk 72 saat steroid penceresi)
+DIŞ KULAK YOLU YABANCI CİSMİ (çocuk): YELLOW — konservatif çıkarma, perforasyon riski
+AKUT OTİT MEDIA: Ateş + kulak ağrısı + timpanik membran bombeli → YELLOW (antibiyotik)
+OTİT EKSTERNASi ("yüzücü kulağı"): Tragus bası hassasiyeti + akıntı → YELLOW/GREEN
+MASTOIDIT: Kulak arkasında şişlik + ateş + kulak ağrısı → ORANGE (IV antibiyotik gerekebilir)
+BENIGN PAROKSİZMAL POZİSYONEL VERTİGO (BPPV): Baş pozisyonu ile tetiklenen kısa süreli (<1 dk) vertigo → GREEN (Epley manevrası)
+MENİER HASTALIĞI: Tekrarlayan vertigo + işitme kaybı + kulak çınlaması → YELLOW (akut ataklarda)"""
+    },
+    {
+        "source": "ENT_Emergency",
+        "category": "clinical_guideline",
+        "text": """Boğaz ve Boyun Acilleri — Triaj:
+EPİGLOTİT (yetişkin): Ani başlayan yutma güçlüğü + drooling + boğuk ses + tripod pozisyon → RED (havayolu tehlikesi)
+PERİTONSİLER APSE: Tek taraflı şişlik + uvula deviasyonu + ağız açamıyor (trismus) → ORANGE/RED (drenaj gerekli)
+RETROFARENGEAL APSE: Boyun ağrısı + yutma güçlüğü + ateş + boyun sertliği → RED
+AKUT TONSİLLİT: Ateş + boğaz ağrısı + şişmiş tonsil + eksüda → YELLOW/GREEN (antibiyotik)
+EPİSTAKSİS (Burun Kanaması):
+  Anterior (ön): Massmak alanı, bastırma ile durur → GREEN
+  Posterior (arka): Durdurulamıyor, yaşlı/hipertansiyon hastası → ORANGE (tampon)
+  Epistaksis + antikoagülan kullanımı + durmayan kanama → ORANGE/RED
+YABANCI CİSİM YUTMA: Keskin cisim (kemik, iğne, olta) veya pil → ORANGE (acil endoskopi)
+Düz cisim, semptom yok → YELLOW (radyoloji)"""
+    },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: DERMATOLOJİ ACİLLERİ
+    # ════════════════════════════════════════
+    {
+        "source": "Dermatology_Triage",
+        "category": "clinical_guideline",
+        "text": """Döküntü Triaj Değerlendirmesi — Kırmızı Bayraklar:
+HAYATI TEHLİKE (RED):
+  PETEŞİ/PURPURAf + yüksek ateş + hastayı iyi hissettirmeyen → Meningokoksemi → RED ACİL (IV penisilin)
+  STEVENs-JOHNSON SENDROMU / TEN: Yaygın büller + mukoza tutulumu + ilaç öyküsü → RED
+  NEKROTİZAN FASİİT: Hızla yayılan, orantısız ağrılı kızarık şişlik + krepitasyon → RED
+  ANAFİLAKSİ ile ürtiker: Deri + solunum/dolaşım → RED
+ACİL (ORANGE):
+  Yüz/boyun anjioödemi (larinks ödemi riski) → ORANGE/RED
+  Canlı ikinci derece yanık >%15 YAKT → ORANGE
+  İnfekte yaralar: Kızarıklık genişliyor + ateş + lenf bezi şişliği → ORANGE (Selülit/erizipel)
+STANDARD (YELLOW/GREEN):
+  Kontakt dermatit, urtiker (anafilaksi yok), egzama alevlenmesi
+Sorulacak: Döküntü ne kadar sürede yayıldı? İlaç kullanımı yeni mi? Ateş var mı? Kaşıntı mı ağrı mı?"""
+    },
+    {
+        "source": "Dermatology_Triage",
+        "category": "clinical_guideline",
+        "text": """Yara ve Cilt Enfeksiyonu Triajı:
+SELÜLIT: Kızarıklık + ısı + ödem + ağrı — sınır marker ile takip → YELLOW
+  Yüz selüliti, göz çevresi → ORANGE (orbital selülit riski)
+  Şeker hastası ayak yaraları → ORANGE (süpürüntü, koku, iyileşmeme)
+APSE: Flüktüan şişlik → Drenaj → YELLOW
+ERİZİPEL: Ateş + parlak kırmızı, sınırlı döküntü, özellikle yüz/bacak → YELLOW
+ZONA (HERPES ZOSTER): Ağrılı tek taraflı döküntü + kabarcık + güzergah bant şeklinde → YELLOW
+  Göz çevresi zona (oftalmik zona) → ORANGE (göz konsültasyonu)
+DERI ALTINDA YABANCI CİSİM (kıymık, cam): YELLOW — dikkatli çıkarma, tetanoz sorgula
+TETANOZ RISKI: Kirli yara + aşı durumu belirsiz/> 5 yıl → İmmünoprofilaksi gerekli → YELLOW
+Sorulacak: Yara kaç saat/gün önce oldu? Kirli mi (toprak, hayvan)? Tetanoz aşısı ne zaman?"""
+    },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: ÜROLOJİ ACİLLERİ
+    # ════════════════════════════════════════
+    {
+        "source": "Urology_Emergency",
+        "category": "emergency_protocol",
+        "text": """Üroloji Acilleri — Triaj:
+TESTİS TORSİYONU: Ani başlayan şiddetli skrotal ağrı + bulantı → RED ACİL (<6 saat kurtarma penceresi)
+  Kremasterik refleks kaybolmuş, testis yüksekte → HEMEN ÜROLOJİ
+PRİAPİZM: >4 saat süren ağrılı ereksiyon → ORANGE (iskemik priapizm — acil drenaj)
+ÜRINER RERANSİYON (idrar yapamıyor): Suprapubik dolgunluk + ağrı + son idrara çıkma uzun zaman → ORANGE (kateter)
+  Prostat büyümesi, ilaç (antikolinerjik, sempatomimetik) → yaşlı erkek risk grubu
+HEMATÜRI (idrarda kan): Ağrısız makroskobik hematüri → malinite (böbrek, mesane, prostat) → YELLOW (üroloji)
+  Hematüri + pıhtı → Tıkanma riski → ORANGE
+PİYELONEFRİT: Ateş + kostovertebral açı hassasiyeti + dizüri → YELLOW (IV antibiyotik) 
+  Sepsis bulgusu varsa → RED
+Sorulacak: Son ne zaman idrar yaptı? İdrar rengi? Çocukta: ıslatma alışkanlığı değişti mi?"""
+    },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: TÜRKİYE'YE ÖZGÜ KLİNİK BAĞLAM
+    # ════════════════════════════════════════
+    {
+        "source": "Turkey_Clinical_Context",
+        "category": "clinical_reference",
+        "text": """Türkiye'ye Özgü Sık Karşılaşılan Klinik Durumlar:
+MEVSİMSEL HASTALIKLAR:
+  Kış (Aralık-Mart): ÜSYE, grip, meningit (mevsimsel artış), RSV (bebek)
+  Yaz (Haziran-Eylül): Isı çarpması (özellikle yaşlılar, tarım işçileri), gıda zehirlenmesi, trafik kazaları
+  Kurban Bayramı: Kesici-delici alet yaralanmaları, gıda zehirlenmesi artışı
+YÜKSEK SEVİYE GRUPLARI:
+  Tarım işçileri: Organofosfat zehirlenmesi (SLUDGE: salivasyon, lakrimasyon, üriner, diyare, GIS, emisis)
+  İnşaat işçileri: İsh, künt travma, göz ve cilt yaralanmaları
+  Yaşlı kırsal nüfus: Kaza dışı ilaç aşımı (depresyon), hipotermi, yetersiz beslenme
+COVİD-19 SONRASI BAĞLAM (2024-2026): Long-COVID bulguları (kronik yorgunluk, nefes darlığı, beyin sisi)
+  Post-COVID PE riski artar — DVT değerlendirmesinde dikkate al"""
+    },
+    {
+        "source": "Turkey_Clinical_Context",
+        "category": "clinical_reference",
+        "text": """Türkiye'de İlaç Güvenliği ve Yaygın İlaç Kullanımı:
+EN SIK KULLANILAN İLAÇLAR (Türkiye, 2024):
+  1. Analjezikler (parasetamol, ibuprofen, metamizol/Novalgin) — aşırı kullanım yaygın
+  2. Antihipertansifler (amlodipin, enalapril, losartan) — uyumsuzluk sorunu
+  3. Statinler (atorvastatin, rosuvastatin)
+  4. Proton pompa inhibitörleri (omeprazol, pantoprazol) — gereksiz uyum
+  5. Antibiyotikler (amoksisilin-klavulanat, azitromisin) — direnç sorunu
+METAMİZOL (Novalgin) KULLANIMI: Türkiye'de yaygın, Avrupa'da yasak — agranülositoz riski
+ASPİRİN FAZLASI: Erken dönem (tinnitus, hipertermi) → YELLOWsorulacak antikoagülan kullanımı
+YÜKSEK RİSKLİ KOMBINASYONLAR (sık görülen):
+  Warfarin + Novalgin → Kanama riski kritik artış
+  Metformin + alkol → Laktik asidoz
+  Antihipertansif + NSAİİ → Böbrek yetmezliği riski
+Sorulacak: Hangi ilaçları kullanıyorsunuz? Doktor reçetesi mi, kendi aldınız mı? Son doz ne zaman?"""
+    },
+    {
+        "source": "Turkey_Clinical_Context",
+        "category": "clinical_reference",
+        "text": """Türkiye Sağlık Sistemi Yönlendirme Rehberi:
+ASM (AİLE SAĞLIĞI MERKEZİ) — GREEN vakalar için:
+  Üst solunum yolu enfeksiyonu, hafif ateş, reçete yenileme, kronik hastalık takibi, aşı
+  Hafta içi 08:00-17:00, randevu ile (MHRS: mhrs.gov.tr veya ALO 182)
+ACİL SERVİS — YELLOW/RED için:
+  7/24 hizmet, tüm devlet ve özel hastaneler
+  Yeşil alan (hafif vaka yön): Acil servis verimini artırmak için → ASM'ye yönlendir
+112 ACİL:
+  Kardiyak arrest, inme, ağır travma, bilinç kaybı → Doğrudan 112
+  Çağrı sonrası: Kapıyı aç, asansörü bekle, ilaç listesini hazırla
+Randevu Sistemi (MHRS): Branş bazlı poliklinik randevusu — rutin vakalar için
+SGSK Kapsam: Devlet hastanesi ve anlaşmalı özel → muayene ücreti farkı olabilir"""
+    },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: ISI ÇARPMASI / HİPOTERMİ / ÇEVRE ACİLLERİ
+    # ════════════════════════════════════════
+    {
+        "source": "Environmental_Emergency",
+        "category": "emergency_protocol",
+        "text": """Isı Çarpması ve Hipertermik Aciller:
+ISIL KRIZ (Heat Stroke) — RED: Vücut ısısı >40°C + bilinç değişikliği (klasik), terleme olmayabilir (klasik tip)
+  Exertional (fiziksel): Ağır egzersiz, sporcular, askerler + bilinç değişikliği → RED
+  Semptomlar: Konfüzyon, ataksi, konvülsiyon, sıcak kuru cilt
+  YÖNETİM: Hızlı soğutma (ıslak örtü + fan, buz banyosu değil), IV sıvı dikkatli
+ISIL TÜKENME (Heat Exhaustion) — YELLOW: Terleme + halsizlik + baş dönmesi + bulantı, bilinç açık
+  Oral sıvı veya IV izotonik, serin ortam
+GÜNEŞ ÇARPMASI (Sunstroke): Baş ağrısı + hafif bilinç bulanıklığı + ateş → YELLOW
+KREMP (Isı Krampi): Yorgunluk sonrası kas krampi, aşırı terleme → GREEN (elektrolit)
+Türkiye'de risk: Yaz ayları, özellikle SE Anadolu, yaşlılar ve açık havada çalışanlar yüksek risk"""
+    },
+    {
+        "source": "Environmental_Emergency",
+        "category": "emergency_protocol",
+        "text": """Hipotermi ve Soğuk Maruziyeti:
+HİPOTERMİ DERECELERİ:
+  Hafif (32-35°C): Titreme, letarji, ataksi → YELLOW (ısıtma)
+  Orta (28-32°C): Titreme yok, stupor, AF, bradikardi → ORANGE
+  Ağır (<28°C): Koma, VF riski, pulsuz görünebilir → RED (aktif ısıtma, CPR gerekirse)
+KLİNİK NOT: "Ölü değildir, ısınana kadar ölü değildir" — soğuk kardiyak arreste CPR devam et
+DONMA (Frostbite): Parmak/burun/kulak → beyaz sertleşme → YELLOW (ılık su banyosu 40°C)
+  Büllü donma → ORANGE
+Türkiye'de risk: Doğu ve İç Anadolu kışı, evsiz nüfus, alkol altında maruz kalma
+Sorulacak: Ne kadar süre soğukta kaldı? Alkol var mı? Isınmaya çalıştı mı?"""
+    },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: GÖZ ACİLLERİ (GENİŞLETİLMİŞ)
+    # ════════════════════════════════════════
+    {
+        "source": "Ophthalmology_Emergency",
+        "category": "emergency_protocol",
+        "text": """Göz Kimyasal Yaralanması ve Travma:
+KİMYASAL YANIK (Red — En Acil Göz Acili):
+  Asit veya baz (özellikle NaOH, Ca(OH)2 — çimento, tuvalet açıcı) → HEMEN su ile yıkama 15-20 dakika
+  Yıkama önce, göz muayenesi sonra — bekleme yok
+  Baz yanıkları daha derin girer → daha kötü prognoz
+LAZEr/UV YARALANMASI (Fotokeratit): Kaynak kaynakçılığı veya UV maruziyeti → 6-12 saat sonra ağrı, gözyaşı
+  → YELLOW (topikal anestezik + göz yaması)
+PENETRAN GÖZE TRAVMA: Sivri cisim sokulması, şüphe → RED (göze baskı yapma, shield)
+ORBITAL KIRIK: Çift görme + enoftalmus + şişlik altı doku → ORANGE (orbital BT)
+GÖZ İÇİ BASINCI YÜKSELMESI SEMPTOMLARI: Göz ağrısı + bulanık görme + haleler → Akut glokom → RED
+Sorulacak: Ne zaman oldu? Ne değdi — asit mi, baz mı? Görme kaybı var mı? Diplopi?"""
+    },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: ÇOCUK ACİLLERİ (GENİŞLETİLMİŞ)
+    # ════════════════════════════════════════
+    {
+        "source": "Pediatric_Emergency_Extended",
+        "category": "clinical_guideline",
+        "text": """Çocukta Karın Ağrısı Özel Değerlendirme:
+APANDİSiT (Çocuk): 5-15 yaş pik, bebekte atipik (peritonit riski yüksek)
+  Bulgu: Göbek çevresi ağrı → sağ alt kadrana kayma + ateş + iştahsızlık + rebound → ORANGE
+  Alvarado skoru ≥7 → Yüksek ihtimal → BT/US + cerrahi
+İNTUSÜSEPSİYON: 6-36 ay, kolje kramlp tarzı ağrı + çilek jölesi dışkı + karın kitlesi → RED
+VOLVÜlÜS: Yenidoğan veya küçük çocuk + safralı kusma + distansiyon → RED (cerrahi acil)
+MEZADENİT: ÜSYE sonrası karın ağrısı + mezenter lenf nodu büyümesi → GREEN/YELLOW (antiinfl)
+FUNKSİYONEL KARIN AĞRISI: Okul çağı, stresten etkilenme, palpasyonla azalma, kırmızı bayrak yok → GREEN
+Sorulacak: Kaç yaşında? Son dışkı ne renk ve neye benziyordu? Ateş var mı? Karın sert mi?"""
+    },
+    {
+        "source": "Pediatric_Emergency_Extended",
+        "category": "clinical_guideline",
+        "text": """Çocukta Yüksek Ateş Yönetimi:
+YENİDOĞAN (<28 gün) ATEŞ ≥38°C: HER ZAMAN RED — sepsis workup (LP dahil), IV antibiyotik
+BEBEK (1-3 ay) ATEŞ ≥38°C: RED/ORANGE — okült bakteremi riski yüksek
+BEBEK (3-24 ay) ATEŞ ≥39°C: Klinik görünüme göre ORANGE/YELLOW
+  Aşısız → Hib/pnömokok sepsis riski → ORANGE
+  Görünümü iyi, aşılı → YELLOW (ateş düşürücü, takip)
+FEBRİL KONVÜLSIYON: 6 ay-5 yaş, basit (<15 dk, jeneralize, tek) → YELLOW (febril konvülsiyon eğitimi)
+  Kompleks (>15 dk, fokal, tekrarlayan) → ORANGE (EEG değerlendirme)
+ATEŞ MİMEZEN DURUMLAR: Diş çıkarma hafif ateş (37.5°C altı) → GREEN
+ANTIPIRETIK: Parasetamol 15 mg/kg her 4-6 saat veya ibuprofen 10 mg/kg her 6-8 saat (>3 ay)
+Sorulacak: Ateş tam kaç derece? Ne zamandır devam ediyor? Titreme, ense sertliği, öne eğilemiyor mu?"""
+    },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: KLİNİK SORGULAMA KALİTE KONTROL
+    # ════════════════════════════════════════
+    {
+        "source": "Clinical_QA_Quality",
+        "category": "clinical_reference",
+        "text": """Tıbbi Mülakatta Kritik Kaçırılmaması Gereken Sorular:
+GENEL ACİL DEĞERLENDİRME HER VAKADA:
+  □ Şikayet ne zamandır var, nasıl başladı?
+  □ Daha önce aynı şikayet oldu mu?
+  □ Şu an hangi ilaçları kullanıyor?
+  □ Bilinen alerjisi var mı?
+  □ Kronik hastalık var mı (DM, HT, kalp hastalığı, KOAH)?
+AĞRI VAKASINDA:
+  □ 1-10 skalasında kaçıncı derecede? (0=yok, 10=dayanılmaz)
+  □ Sürekli mi, kesik kesik mi?
+  □ Başka yere yayılıyor mu?
+  □ Neler kötüleştirir/iyileştirir?
+ACİL ŞÜPHE VARSA:
+  □ Son yemek ne zaman? (anestezi güvenliği)
+  □ Hamile olabilir mi? (kadın, üreme çağı)
+  □ Son 24 saatte bilinç değişikliği oldu mu?
+ÇOCUK VAKASINDA:
+  □ Kaç kg? (ilaç dozu hesabı)
+  □ Aşı takvimi tam mı?
+  □ Annede gebelik komplikasyonu var mıydı?"""
+    },
+    {
+        "source": "Clinical_QA_Quality",
+        "category": "clinical_reference",
+        "text": """Triaj Hata Kaynakları ve Önleme — Klinik Güvenlik:
+ALT-TRİAJ (Undertriage) — En Tehlikeli Hata:
+  Yaşlılarda atipik prezentasyon: AMI'de göğüs ağrısı yok, sadece yorgunluk/konfüzyon
+  Diyabetiklerde ağrı eşiği yüksek → ağır durumu sessiz taşıyabilir
+  İmmünosüpresif: Ateş olmadan ağır sepsis olabilir
+  Psikiyatrik hastada fiziksel acili gözden kaçırma riski
+ÜST-TRİAJ (Overtriage) — Kaynak israfı ama kabul edilebilir:
+  Belirsiz semptomda yüksek triaj → "güvenli yanılma"
+ZAMAN TUZAĞI: Triaj yapıldıktan sonra kötüleşen hasta → dinamik olarak yeniden triaj
+DOKÜMANTASYON: Her triaj kararı, saati ve gerekçesi kayıt altına alınmalı
+SÖZEL ONAY: "Bunu doğru anladım mı? Başka önemli bir şey var mı?" her mülakatın sonu"""
+    },
+    # ════════════════════════════════════════
+    #  Sprint 17 EK: MENTAL SAĞLIK GENİŞLETME
+    # ════════════════════════════════════════
+    {
+        "source": "Mental_Health_Extended",
+        "category": "emergency_protocol",
+        "text": """Anksiyete Atağı vs. Kardiyak Acil Ayrımı:
+PANİK ATAGI KLİNİK (GREEN/YELLOW):
+  Çarpıntı + nefes darlığı + ölüm korkusu + uyuşma + terleme → Genç, daha önce aynı atak geçirdi
+  Dakikalar içinde zirve + kendiliğinden geçer, EKG normal
+  Tetikleyici: Stres, kapalı alan, animad (kalabalık)
+KARDİYAK ACİL İLE AYRIMI (RED'e geç):
+  >40 yaş + kardiyak risk faktörü varsa → HIÇ PTC ataması yapma, önce EKG
+  Ağrı 10/10 + solukluk + diyaforez → Kardiyak dışla
+  Nefes almakla artar mı? (plöritik → PE şüphesi)
+HIPERVENTILASYON: Perioral + el-ayak uyuşması + karpopedal spazm → Kağıt torba → GREEN
+Sorulacak: Bu ataklar daha önce aynı çıktı mı? Stres durumunda mı oldu? Kardiyoloji değerlendirmesi var mı?"""
+    },
+
     {
         "source": "MTS_Protocols_Extended_v3",
         "category": "triage_protocol",
