@@ -51,6 +51,232 @@ CATEGORY_PRIORITY = {
     "general": 9,
 }
 
+# ─────────────────────────────────────────────
+#  Tıbbi Terim Sözlüğü — TR ↔ EN Query Expansion
+#  (API çağrısı olmadan anlık genişleme)
+# ─────────────────────────────────────────────
+_TR_EN_MEDICAL = {
+    # Kardiyak
+    "göğüs ağrısı": "chest pain cardiac",
+    "göğüs": "chest thoracic",
+    "kalp": "heart cardiac",
+    "çarpıntı": "palpitation tachycardia arrhythmia",
+    "kalp krizi": "myocardial infarction AMI heart attack",
+    "kalp yetmezliği": "heart failure",
+    "hipertansiyon": "hypertension high blood pressure",
+    "tansiyon": "blood pressure hypertension",
+    "nabız": "pulse heart rate",
+    "aort": "aortic aorta dissection",
+    # Nöroloji
+    "felç": "stroke cerebrovascular",
+    "inme": "stroke ischemic cerebral",
+    "baş ağrısı": "headache migraine cephalgia",
+    "baş dönmesi": "dizziness vertigo",
+    "bayılma": "syncope loss of consciousness",
+    "uyuşma": "numbness paresthesia",
+    "güçsüzlük": "weakness paralysis paresis",
+    "konvülsiyon": "seizure epilepsy convulsion",
+    "nöbet": "seizure epileptic fit",
+    "bilinç kaybı": "loss of consciousness unconscious GCS",
+    "afazi": "aphasia speech difficulty",
+    # Solunum
+    "nefes darlığı": "dyspnea breathlessness shortness of breath",
+    "nefes": "breath respiratory breathing",
+    "öksürük": "cough",
+    "balgam": "sputum phlegm",
+    "hırıltı": "wheezing stridor",
+    "akciğer": "lung pulmonary",
+    "pnömotoraks": "pneumothorax",
+    "emboli": "embolism pulmonary embolism PE",
+    "astım": "asthma bronchospasm",
+    # Karın / GIS
+    "karın ağrısı": "abdominal pain abdomen",
+    "karın": "abdomen abdominal",
+    "bulantı": "nausea vomiting",
+    "kusma": "vomiting emesis",
+    "ishal": "diarrhea",
+    "kabızlık": "constipation",
+    "sarılık": "jaundice icterus",
+    "apandisit": "appendicitis appendix",
+    "kolesistit": "cholecystitis gallbladder",
+    "pankreatit": "pancreatitis",
+    "kanama": "bleeding hemorrhage",
+    "kanlı": "bloody hemorrhagic",
+    # Travma / Ortopedi
+    "kırık": "fracture broken bone",
+    "düşme": "fall trauma",
+    "travma": "trauma injury",
+    "bel ağrısı": "back pain lumbar",
+    "boyun ağrısı": "neck pain cervical",
+    "eklem": "joint articular",
+    "omuz": "shoulder",
+    "diz": "knee",
+    "bileği": "wrist ankle",
+    # Deri / Alerji
+    "döküntü": "rash dermatitis",
+    "kaşıntı": "itching pruritus",
+    "şişlik": "swelling edema",
+    "kızarıklık": "erythema redness",
+    "yanık": "burn",
+    "anafilaksi": "anaphylaxis allergic reaction",
+    "alerji": "allergy allergic",
+    "ürtiker": "urticaria hives",
+    # KBB
+    "kulak ağrısı": "ear pain otalgia otitis",
+    "boğaz ağrısı": "sore throat pharyngitis tonsillitis",
+    "burun kanaması": "epistaxis nosebleed",
+    "yutma güçlüğü": "dysphagia swallowing difficulty",
+    # Göz
+    "görme kaybı": "vision loss blindness",
+    "göz ağrısı": "eye pain ophthalmic",
+    "çift görme": "diplopia double vision",
+    # Endokrin
+    "şeker": "glucose diabetes blood sugar",
+    "diyabet": "diabetes mellitus",
+    "hipoglisemi": "hypoglycemia low blood sugar",
+    "tiroid": "thyroid",
+    # Psikiyatri / Genel
+    "ateş": "fever febrile pyrexia temperature",
+    "titreme": "chills shivering",
+    "halsizlik": "fatigue weakness malaise",
+    "terleme": "diaphoresis sweating",
+    "idrar": "urine urinary",
+    "kan": "blood hemorrhage",
+    "enfeksiyon": "infection",
+    "sepsis": "sepsis septic",
+    "çocuk": "pediatric child infant",
+    "bebek": "infant neonatal baby",
+    "yaşlı": "elderly geriatric",
+    "hamile": "pregnant pregnancy obstetric",
+    "gebe": "pregnant obstetric",
+}
+
+# İngilizce → Türkçe ters sözlük (opsiyonel kullanım)
+_EN_TR_MEDICAL = {v_word: k
+                  for k, v in _TR_EN_MEDICAL.items()
+                  for v_word in v.split()}
+
+
+def expand_query_multilingual(query: str) -> str:
+    """
+    Kullanıcı sorgusunu TR↔EN tıbbi sözlükle genişletir.
+    Herhangi bir dilde girilen sorguya, karşılık gelen İngilizce
+    (veya Türkçe) tıbbi terimler eklenir.
+
+    Örnek:
+      "göğüs ağrısı sol kola yayılım" →
+      "göğüs ağrısı sol kola yayılım chest pain cardiac thoracic"
+    """
+    q_lower = query.lower()
+    expansions: list[str] = []
+
+    for tr_term, en_terms in _TR_EN_MEDICAL.items():
+        if tr_term in q_lower:
+            # İngilizce karşılıklardan ilk 2'yi ekle (uzunluğu kontrol et)
+            en_words = en_terms.split()[:2]
+            expansions.extend(en_words)
+
+    # İngilizce kelime varsa Türkçe karşılık ekle
+    for en_word, tr_term in _EN_TR_MEDICAL.items():
+        if en_word.lower() in q_lower and tr_term not in q_lower:
+            expansions.append(tr_term)
+
+    if expansions:
+        # Tekrarlananları kaldır, query'ye ekle
+        unique_expansions = list(dict.fromkeys(expansions))
+        expanded = query + " " + " ".join(unique_expansions[:8])
+        logger.debug(f"Query expanded: '{query}' → '{expanded}'")
+        return expanded
+
+    return query
+
+
+# ─────────────────────────────────────────────
+#  Çok Dilli Sorgu Çevirisi — Herhangi Dil → İngilizce
+# ─────────────────────────────────────────────
+_langdetect_available = None
+_deep_translator_available = None
+
+
+def _check_translation_libs() -> tuple[bool, bool]:
+    """Çeviri kütüphanelerinin kullanılabilirliğini kontrol eder (lazy, bir kere)."""
+    global _langdetect_available, _deep_translator_available
+    if _langdetect_available is None:
+        try:
+            from langdetect import detect
+            _langdetect_available = True
+        except ImportError:
+            _langdetect_available = False
+    if _deep_translator_available is None:
+        try:
+            from deep_translator import GoogleTranslator
+            _deep_translator_available = True
+        except ImportError:
+            _deep_translator_available = False
+    return _langdetect_available, _deep_translator_available
+
+
+def detect_language(text: str) -> str:
+    """Metnin dilini algılar. Başarısız olursa 'unknown' döner."""
+    lang_ok, _ = _check_translation_libs()
+    if not lang_ok:
+        return "unknown"
+    try:
+        from langdetect import detect
+        return detect(text)
+    except Exception:
+        return "unknown"
+
+
+def translate_query_to_english(query: str) -> str:
+    """
+    Kullanıcı sorgusunu herhangi bir dilden İngilizce'ye çevirir.
+
+    Strateji:
+      1. Dil algılama (langdetect)
+      2. Türkçe ise  → sözlük tabanlı genişleme (internet gerektirmez, hızlı)
+      3. İngilizce   → doğrudan döndür
+      4. Diğer dil   → deep-translator ile Google Translate (internet gerekir)
+      5. Herhangi bir hata → orijinal sorguyu döndür (sessiz fallback)
+
+    Örnek:
+      "douleur thoracique" (Fransızca) → "chest pain"
+      "göğüs ağrısı"      (Türkçe)    → "göğüs ağrısı chest pain cardiac"
+      "chest pain"         (İngilizce) → "chest pain"
+      "ألم في الصدر"       (Arapça)    → "chest pain"
+    """
+    if not query or len(query.strip()) < 2:
+        return query
+
+    lang_ok, trans_ok = _check_translation_libs()
+
+    # Dil algıla
+    detected_lang = detect_language(query) if lang_ok else "unknown"
+    logger.debug(f"Detected language: '{detected_lang}' for query: '{query[:50]}'")
+
+    # Türkçe → sözlük tabanlı genişleme (en hızlı, internet yok)
+    if detected_lang in ("tr", "unknown") and any(t in query.lower() for t in _TR_EN_MEDICAL):
+        return expand_query_multilingual(query)
+
+    # İngilizce → doğrudan kullan
+    if detected_lang == "en":
+        return query
+
+    # Diğer diller → deep-translator ile çevir
+    if trans_ok and detected_lang not in ("tr", "en"):
+        try:
+            from deep_translator import GoogleTranslator
+            translated = GoogleTranslator(source="auto", target="en").translate(query)
+            if translated and translated.strip():
+                logger.info(f"Query translated ({detected_lang}→en): '{query}' → '{translated}'")
+                return translated.strip()
+        except Exception as e:
+            logger.warning(f"Translation failed ({detected_lang}→en): {e}")
+
+    # Türkçe için genişleme yap (algılama başarısız olsa bile)
+    expanded = expand_query_multilingual(query)
+    return expanded
+
 
 # ─────────────────────────────────────────────
 #  Lazy init
@@ -219,11 +445,27 @@ def ingest_json_qa(json_path: str, question_field: str = "question",
 def retrieve(query: str, n_results: int = TOP_K, category_filter: Optional[str] = None) -> list[dict]:
     """
     Verilen sorguya göre en alakalı belge chunk'larını getirir.
+
+    Arama öncesi sorgu otomatik olarak İngilizce'ye çevrilir:
+      - Türkçe   → sözlük tabanlı genişleme (TR + EN terimler)
+      - İngilizce → doğrudan kullan
+      - Diğer dil → deep-translator ile çevir (internet gerekir)
+    Bu sayede Türkçe, İngilizce veya başka herhangi bir dilde girilen
+    sorgular, Chromadb'deki tıbbi bilgilerle daha iyi eşleşir.
     """
     collection = _get_collection()
     embed = _get_embed_model()
 
-    query_emb = embed.encode([query], show_progress_bar=False).tolist()
+    # ── Çeviri katmanı — herhangi bir dil → İngilizce ──
+    translated_query = translate_query_to_english(query)
+    # Orijinal + çevrilmiş sorguyu birleştir (en iyi kapsama için)
+    search_query = (
+        f"{query} {translated_query}"
+        if translated_query.strip().lower() != query.strip().lower()
+        else query
+    )
+
+    query_emb = embed.encode([search_query], show_progress_bar=False).tolist()
 
     where = {"category": category_filter} if category_filter else None
 
@@ -254,6 +496,9 @@ def get_context_for_prompt(query: str, n_results: int = TOP_K,
     """
     Sorguyla ilgili tıbbi bağlamı prompt'a hazır formatta döndürür.
     Düşük relevance'lı sonuçları filtreler.
+
+    Sorgu herhangi bir dilde girilebilir — retrieve() içindeki
+    çeviri katmanı otomatik olarak İngilizce'ye dönüştürür.
     """
     if not is_rag_available():
         return ""
@@ -296,7 +541,7 @@ def get_medical_context_for_triage(
     Triaj kararı için optimize edilmiş multi-query RAG retrieval.
 
     Strateji:
-    1. Ana şikayet ile genel arama
+    1. Ana şikayet ile genel arama (Çeviri katmanıyla — herhangi bir dil)
     2. Triaj protokolü odaklı arama ("triage assessment " + şikayet)
     3. Acil protokol odaklı arama ("emergency RED urgency " + şikayet)
     4. Sonuçları de-duplicate + kategori önceliğine göre sırala
@@ -306,6 +551,7 @@ def get_medical_context_for_triage(
     - Genel vektör araması gözden kaçırabileceği protokol chunk'ları yakalanır
     - Emergency/triage kategorileri her zaman üste gelir
     - Doğruluk artar, gürültü azalır
+    - Türkçe, İngilizce veya başka dilde girilen şikayetler aynı doğrulukla çalışır
     """
     if not is_rag_available():
         return ""
@@ -317,14 +563,19 @@ def get_medical_context_for_triage(
 
         complaint_lower = chief_complaint.lower().strip()
 
-        # Multi-query stratejisi
+        # ── Çeviri katmanı: şikayeti İngilizce'ye çevir ──────────
+        complaint_en = translate_query_to_english(chief_complaint)
+        complaint_en_lower = complaint_en.lower().strip()
+
+        # Multi-query stratejisi (orijinal + İngilizce çeviri)
         queries = [
-            chief_complaint,
-            f"triage assessment {complaint_lower} emergency severity",
-            f"Manchester Triage System {complaint_lower} red flags urgency",
+            chief_complaint,                               # Orijinal dil
+            complaint_en,                                  # İngilizce çeviri
+            f"triage assessment {complaint_en_lower} emergency severity",
+            f"Manchester Triage System {complaint_en_lower} red flags urgency",
         ]
         if qa_history:
-            # Q&A geçmişinin ilk 200 karakterini 4. sorgu olarak ekle
+            # Q&A geçmişinin ilk 200 karakterini ek sorgu olarak ekle
             queries.append(qa_history[:200])
 
         # Tüm query'lerden sonuç topla, ID'ye göre de-duplicate

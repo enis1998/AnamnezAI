@@ -56,3 +56,8 @@ backend/anamnezai.db
 docker_build.log
 *.log
 
+# Test output artifacts (terminal dumps, live result files)
+evaluation/test_results_live.txt
+evaluation/*_live.txt
+evaluation/*_output.txt
+

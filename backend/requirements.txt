@@ -16,6 +16,10 @@ chromadb>=0.5.0
 sentence-transformers>=3.0.0
 pypdf>=4.0.0
 
+# Çok Dilli Çeviri (RAG query translation)
+deep-translator>=1.11.4
+langdetect>=1.0.9
+
 # Rate Limiting
 slowapi>=0.1.9
 
