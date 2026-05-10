@@ -472,6 +472,9 @@ async function init(){
     if(pr.ok){applyProfile(await pr.json());}
     if(hr.ok){const d=await hr.json();visitHistory=d.sessions||d.history||d||[];renderVisits(visitHistory);}
     renderStats();
+    // URL param ile direkt section aç (örn: ?tab=profile)
+    const urlTab = new URLSearchParams(location.search).get('tab');
+    if(urlTab) showSection(urlTab);
   }catch(e){console.error(e);}
   document.getElementById('loadingState').classList.add('hidden');
   document.getElementById('mainContent').classList.remove('hidden');
