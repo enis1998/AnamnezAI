@@ -117,6 +117,7 @@ tailwind.config={theme:{extend:{colors:{
   <div class="flex-1 flex flex-col min-w-0">
 
     <!-- Sprint 15: Model Durum Bar -->
+    <!-- model-status-bar: add offline badge -->
     <div id="model-status-bar" class="bg-pri/5 border-b border-surfc px-4 sm:px-6 py-2 flex flex-wrap gap-3 items-center text-[11px] font-semibold">
       <span class="text-onsv opacity-60 font-bold uppercase tracking-widest text-[9px]">Model Durumu</span>
       <div class="flex items-center gap-1.5" id="mbar-gemma4">
@@ -136,6 +137,11 @@ tailwind.config={theme:{extend:{colors:{
       <div class="ml-auto flex items-center gap-1.5" id="mbar-rag">
         <span class="material-symbols-outlined text-[12px] text-sec" style="font-variation-settings:'FILL' 0">database</span>
         <span id="mbar-rag-txt" class="text-onsv">RAG — Kontrol ediliyor</span>
+      </div>
+      <!-- Offline / Local badge -->
+      <div id="offline-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pri/10 border border-pri/20 text-[10px] font-bold text-pric hidden">
+        <span class="material-symbols-outlined text-[11px]" style="font-variation-settings:'FILL' 1">wifi_off</span>
+        Local AI · No Cloud
       </div>
     </div>
 
@@ -404,6 +410,9 @@ async function checkModelStatus() {
         ragEl.style.color = '#8c9499';
       }
     }
+    // Offline / local badge — shown when Ollama is connected (proves no cloud)
+    const offBadge = document.getElementById('offline-badge');
+    if (offBadge && d.ollama === 'connected') offBadge.classList.remove('hidden');
   } catch {
     dot.className  = 'w-1.5 h-1.5 rounded-full bg-err';
     pill.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-errc text-err';
@@ -740,6 +749,18 @@ function showDetail(sid){
         <button onclick="overrideTriage('${sid}','YELLOW')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#e07b26">🟡 İKİNCİL</button>
         <button onclick="overrideTriage('${sid}','GREEN')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#006a68">🟢 RUTİN</button>
       </div>
+      ${p.triage_override ? `<p class="text-[9px] text-blue-600 mt-1 font-semibold">Override: ${p.triage_override.doctor_name} · ${new Date(p.triage_override.timestamp).toLocaleTimeString('tr-TR')}</p>` : ''}
+    </div>
+    <!-- AI Gerekçe (Trust Layer) -->
+    ${(p.evidence&&p.evidence.length)||(p.guideline_sources&&p.guideline_sources.length) ? `
+    <div class="rounded-xl p-3.5" style="background:#f0f4f7;border-left:3px solid #00475e">
+      <p class="text-[10px] font-bold uppercase tracking-widest mb-2" style="color:#00475e">🧠 AI neden bu triajı önerdi?</p>
+      ${p.evidence&&p.evidence.length ? `<ul class="space-y-1 mb-2">${p.evidence.map(e=>`<li class="text-[11px] text-ons flex items-start gap-1.5"><span class="text-pric font-bold text-[10px] mt-0.5">✓</span>${e}</li>`).join('')}</ul>` : ''}
+      ${p.guideline_sources&&p.guideline_sources.length ? `<div class="flex flex-wrap gap-1 mt-1">${p.guideline_sources.map(g=>`<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-pric/10 text-pric border border-pric/20">${g}</span>`).join('')}</div>` : ''}
+    </div>` : ''}
+    <!-- Medikolegal Disclaimer -->
+    <div class="rounded-xl p-3 text-[10px] text-onsv bg-amber-50 border border-amber-200">
+      ⚕️ <strong>AI output is advisory.</strong> Final clinical responsibility belongs to the clinician. Override triage if clinical assessment differs.
     </div>
     <!-- Recommendation -->
     <div class="rounded-xl p-3.5 text-white" style="background:${cfg.color}">

@@ -339,6 +339,30 @@ tailwind.config = {
             </div>
           </section>
 
+          <!-- Doctor Final Decision -->
+          <section class="card p-5 editorial-shadow fade no-print" style="border-left:4px solid #00475e">
+            <h2 class="text-base font-bold text-pri mb-1 flex items-center gap-2">
+              <span class="material-symbols-outlined msym-fill text-pric text-[20px]">stethoscope</span>
+              Doktor Nihai Kararı
+            </h2>
+            <p class="text-[10px] text-onsv mb-3">AI öneri — doktor karar verir</p>
+            <div class="flex gap-1.5 mb-3">
+              <button onclick="drFinalTriage('RED')" class="flex-1 py-2 rounded-xl text-white text-[10px] font-bold hover:opacity-80 transition-all" style="background:#ba1a1a">🔴 ACİL</button>
+              <button onclick="drFinalTriage('YELLOW')" class="flex-1 py-2 rounded-xl text-white text-[10px] font-bold hover:opacity-80 transition-all" style="background:#e07b26">🟡 ÖNCELİKLİ</button>
+              <button onclick="drFinalTriage('GREEN')" class="flex-1 py-2 rounded-xl text-white text-[10px] font-bold hover:opacity-80 transition-all" style="background:#006a68">🟢 RUTİN</button>
+            </div>
+            <textarea id="dr-override-reason" rows="2" placeholder="Override nedeni (zorunlu)..."
+              class="w-full px-3 py-2 border border-surfc rounded-xl text-[11px] bg-surf resize-none mb-2" style="outline:none"></textarea>
+            <div id="dr-final-status" class="text-[10px] text-onsv"></div>
+          </section>
+
+          <!-- Medicolegal Disclaimer -->
+          <section class="rounded-2xl p-4 fade text-[11px] leading-relaxed" style="background:#fff8e1;border:1.5px solid #ffe082">
+            <p class="font-bold text-amber-800 mb-1">⚕️ Klinik Sorumluluk</p>
+            <p class="text-amber-700">Bu AI çıktısı yalnızca karar destek aracıdır. <strong>Nihai klinik sorumluluk</strong> inceleyen hekime aittir. AI triajı ile klinik değerlendirmeniz farklı ise override kullanınız.</p>
+            <p class="text-amber-600 mt-1 italic font-medium">AI output is advisory. Final clinical responsibility belongs to the clinician.</p>
+          </section>
+
           <!-- Quick Actions -->
           <section class="card p-5 editorial-shadow fade no-print">
             <h2 class="text-base font-bold text-ons mb-4">Hızlı İşlemler</h2>
@@ -633,6 +657,37 @@ async function saveNote() {
       setTimeout(() => saved.classList.add('hidden'), 3000);
     }
   } catch(e) {}
+}
+
+async function drFinalTriage(level) {
+  if (!sessionId || !token) return;
+  const reason = document.getElementById('dr-override-reason')?.value?.trim();
+  if (!reason) {
+    const el = document.getElementById('dr-final-status');
+    if (el) { el.textContent = '⚠️ Override nedeni zorunludur.'; el.style.color = '#ba1a1a'; }
+    document.getElementById('dr-override-reason')?.focus();
+    return;
+  }
+  try {
+    const res = await fetch(`${API}/api/session/${sessionId}/triage`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ triage_level: level })
+    });
+    // Also save the reason as a doctor note
+    await fetch(`${API}/api/session/${sessionId}/note`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note: `[Override → ${level}] ${reason}` })
+    });
+    const el = document.getElementById('dr-final-status');
+    const emoji = {RED:'🔴',YELLOW:'🟡',GREEN:'🟢'}[level]||'';
+    if (el) { el.textContent = `✅ Kaydedildi: ${emoji} ${level}`; el.style.color = '#006a68'; }
+    document.getElementById('dr-override-reason').value = '';
+  } catch(e) {
+    const el = document.getElementById('dr-final-status');
+    if (el) { el.textContent = 'Hata: ' + e.message; el.style.color = '#ba1a1a'; }
+  }
 }
 
 async function markSeen() {

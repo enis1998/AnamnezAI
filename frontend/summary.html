@@ -84,6 +84,43 @@ tailwind.config={theme:{extend:{colors:{
     <span class="material-symbols-outlined msym text-5xl text-sec block mb-4 spin">refresh</span>
     <p class="text-onsv text-sm" id="txt-loading">Rapor yükleniyor...</p>
   </div>
+
+  <!-- PATIENT-FRIENDLY RESULT CARD — shown only for patients, hidden for doctors -->
+  <div id="patient-result-card" class="hidden mb-8 fade">
+    <div class="card p-8 text-center" style="border-top: 6px solid var(--triage-color, #006a68)">
+      <span class="material-symbols-outlined msym-fill text-sec block mb-4" style="font-size:56px">check_circle</span>
+      <h2 class="text-[26px] font-head font-bold text-pri mb-2" id="pr-title">Bilgileriniz doktora iletildi</h2>
+      <p class="text-[15px] text-onsv mb-6" id="pr-subtitle">Lütfen bekleme alanında kalın.</p>
+
+      <!-- Priority badge -->
+      <div id="pr-priority" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-[18px] font-bold mb-6" style="background:#f4f7f9">
+        <span id="pr-emoji">🟡</span>
+        <span id="pr-level">Öncelik Durumu</span>
+      </div>
+      <p class="text-[14px] text-onsv mb-1" id="pr-complaint-label">Ana şikâyetiniz:</p>
+      <p class="text-[16px] font-semibold text-pri mb-8" id="pr-complaint">—</p>
+
+      <!-- Wait info row -->
+      <div class="grid grid-cols-2 gap-4 mb-8 max-w-sm mx-auto">
+        <div class="rounded-2xl bg-surfc p-4">
+          <span class="material-symbols-outlined msym text-sec block mb-1" style="font-size:28px">schedule</span>
+          <p class="text-[12px] text-onsv" id="pr-wait">Bekleme süresi için<br/>ekrana bakınız</p>
+        </div>
+        <div class="rounded-2xl bg-surfc p-4">
+          <span class="material-symbols-outlined msym text-sec block mb-1" style="font-size:28px">location_on</span>
+          <p class="text-[12px] text-onsv" id="pr-room">Oda bilgisi için<br/>personeli bekleyiniz</p>
+        </div>
+      </div>
+
+      <!-- Safety warning -->
+      <div class="rounded-2xl border-2 border-err/50 bg-err/5 p-4 flex items-start gap-3 text-left mb-6">
+        <span class="material-symbols-outlined msym-fill text-err flex-shrink-0" style="font-size:24px">emergency</span>
+        <p class="text-[13px] text-err font-semibold" id="pr-safety">Şikâyetleriniz kötüleşirse veya yeni bir belirti eklenirlerse hemen sağlık personelini uyarın.</p>
+      </div>
+
+      <p class="text-[11px] text-onsv/60" id="pr-disclaimer">⚕️ Bu sistem yapay zeka destekli bir ön triaj aracıdır. Kesin tanı için doktorunuzu bekleyiniz.</p>
+    </div>
+  </div>
 </main>
 
 <script>
@@ -93,18 +130,52 @@ const data = raw ? JSON.parse(raw) : null;
 let reportLang = (data && data.language) || localStorage.getItem('report_lang') || 'tr';
 
 // Doktor kontrolü
+let _isDoctor = false;
 (function(){
   try {
     const tok = localStorage.getItem('anamnez_token');
     if(tok){
       const pl = JSON.parse(atob(tok.split('.')[1]));
       if(['doctor','admin','personnel'].includes(pl.role)){
+        _isDoctor = true;
         const b = document.getElementById('btn-goto-doctor');
         if(b) b.style.display='flex';
       }
     }
   } catch(e){}
 })();
+
+// Patient-friendly result card
+function showPatientCard(d) {
+  if (_isDoctor) return; // Doctors see the full report
+  const card = document.getElementById('patient-result-card');
+  if (!card) return;
+  const EMOJIS = {RED:'🔴', YELLOW:'🟡', GREEN:'🟢'};
+  const COLORS = {RED:'#ba1a1a', YELLOW:'#e07b26', GREEN:'#006a68'};
+  const LEVEL_TR = {RED:'ACİL — Hemen bakılacak', YELLOW:'Öncelikli — Kısa süre içinde', GREEN:'Rutin — Sıranızı bekleyiniz'};
+  const LEVEL_EN = {RED:'IMMEDIATE — Will be seen now', YELLOW:'URGENT — Will be seen shortly', GREEN:'ROUTINE — Please wait in queue'};
+  const lang = reportLang;
+  const level = d.triage_level || 'YELLOW';
+  const color = COLORS[level] || '#006a68';
+  const levelLabel = lang === 'en' ? (LEVEL_EN[level]||level) : (LEVEL_TR[level]||level);
+  card.style.setProperty('--triage-color', color);
+  document.getElementById('pr-emoji').textContent = EMOJIS[level] || '🟡';
+  document.getElementById('pr-level').textContent = levelLabel;
+  document.getElementById('pr-level').style.color = color;
+  document.getElementById('pr-priority').style.background = color + '15';
+  document.getElementById('pr-priority').style.border = `2px solid ${color}40`;
+  if (lang === 'en') {
+    document.getElementById('pr-title').textContent = 'Your information has been sent to your doctor';
+    document.getElementById('pr-subtitle').textContent = 'Please stay in the waiting area.';
+    document.getElementById('pr-complaint-label').textContent = 'Your main concern:';
+    document.getElementById('pr-wait').textContent = 'Check the screen\nfor wait time';
+    document.getElementById('pr-room').textContent = 'Wait for staff\nfor room info';
+    document.getElementById('pr-safety').textContent = 'If your symptoms worsen or new symptoms appear, immediately notify the healthcare staff.';
+    document.getElementById('pr-disclaimer').textContent = '⚕️ This is an AI-assisted pre-triage tool. Please wait for your doctor for a final diagnosis.';
+  }
+  document.getElementById('pr-complaint').textContent = d.chief_complaint || '—';
+  card.classList.remove('hidden');
+}
 
 const I18N = {
   tr:{
@@ -423,6 +494,8 @@ function render(d){
     const db=document.getElementById('doctor-panel-btn'); if(db) db.classList.remove('hidden');
     const pb=document.getElementById('patient-panel-btn'); if(pb) pb.style.display='none';
   }
+  // Show patient-friendly card for non-doctor users
+  showPatientCard(d);
 }
 
 async function fetchRagInfo(sessionId) {
