@@ -58,16 +58,22 @@ from auth import (
     verify_password, create_access_token, get_current_user,
     require_auth, require_doctor, require_admin,
     get_patient_profile, upsert_patient_profile,
+    hash_password, audit,
     UserCreate, UserLogin, Token, UserOut, Role
 )
 
 # ─────────────────────────────────────────────
 #  Config
 # ─────────────────────────────────────────────
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-GEMMA_MODEL     = os.getenv("GEMMA_MODEL", "gemma4:e4b")
-RAG_ENABLED     = os.getenv("RAG_ENABLED", "true").lower() == "true"
-DB_PATH         = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "anamnezai.db"))
+OLLAMA_BASE_URL  = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+# Primary model: Gemma 4 (e4b) — Gemma 4 Good Hackathon
+GEMMA_MODEL      = os.getenv("GEMMA_MODEL", "gemma4:e4b")
+MEDGEMMA_MODEL   = os.getenv("MEDGEMMA_MODEL", "medgemma:4b")   # Vision — multimodal analysis
+RAG_ENABLED      = os.getenv("RAG_ENABLED", "true").lower() == "true"
+DB_PATH          = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "anamnezai.db"))
+
+# Sprint Fix — GPU/RAM yetersizse num_gpu=0 ile CPU moduna düş
+OLLAMA_NUM_GPU   = int(os.getenv("OLLAMA_NUM_GPU", "0"))  # 0 = CPU mode
 
 app = FastAPI(
     title="AnamnezAI",
@@ -102,6 +108,47 @@ _queue_subscribers: list[asyncio.Queue] = []
 # Model warmup durumu — tüm hastalar bu bayrağı görür
 _model_ready = False
 _model_warming = False
+
+# ─────────────────────────────────────────────
+#  Adaptif soru sayısı — klinik aciliyete göre
+# ─────────────────────────────────────────────
+_EMERGENCY_KEYWORDS_TR = [
+    "göğüs","kalp","nefes","bilinç","bayıl","felç","inme","kanama",
+    "şuur","koma","solunum","boğulma","anafilaksi","kriz","uyuşma",
+    "şiddetli","korkunç","dayanılmaz","bayılıyorum","ezber","nabız",
+]
+_EMERGENCY_KEYWORDS_EN = [
+    "chest","heart","breath","conscious","faint","stroke","bleed",
+    "coma","airway","anaphyl","seizure","severe","terrible","unbearable",
+    "crushing","numb","weakness",
+]
+
+def _adaptive_steps(complaint: str, age: int, lang: str = "tr") -> int:
+    """
+    Şikayetin aciliyetine göre soru sayısını belirler.
+    - Acil semptomlar (göğüs ağrısı, bilinç kaybı...) → 7 soru
+    - Orta (ateş, karın ağrısı, baş ağrısı) → 5 soru
+    - Basit (hafif boğaz, öksürük, kırık olmayan ağrı) → 4 soru
+    - Yaşlı hasta (≥70) → minimum 5 (atipik sunum riski)
+    """
+    c = complaint.lower()
+    EMERGENCY_KW = _EMERGENCY_KEYWORDS_TR if lang == "tr" else _EMERGENCY_KEYWORDS_EN
+    MEDIUM_KW_TR = ["ateş","sıcaklık","karın","mide","baş ağrısı","kusma","ishal","ağrı","şişlik","sarılık","dök"]
+    MEDIUM_KW_EN = ["fever","abdominal","stomach","headache","vomit","diarrhea","pain","swelling","jaundice","rash"]
+    MEDIUM_KW = MEDIUM_KW_TR if lang == "tr" else MEDIUM_KW_EN
+
+    if any(k in c for k in EMERGENCY_KW):
+        base = 7
+    elif any(k in c for k in MEDIUM_KW):
+        base = 5
+    else:
+        base = 4
+
+    # Yaşlı hastada minimum 5 — atipik sunum riski
+    if age >= 70:
+        base = max(base, 5)
+    return base
+
 
 # ─────────────────────────────────────────────
 #  SQLite Persistence
@@ -192,6 +239,39 @@ async def notify_queue_update():
             await q.put("update")
         except Exception:
             pass
+
+
+SESSION_TIMEOUT_MINUTES = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
+
+async def _session_cleanup_loop():
+    """Her 5 dakikada bir, 30 dakikadan fazla boş kalan oturumları temizler (Sprint 14)."""
+    while True:
+        await asyncio.sleep(300)  # 5 dakikada bir çalış
+        try:
+            now = datetime.utcnow()
+            to_delete = []
+            for sid, s in list(sessions.items()):
+                if s.get("completed") and s.get("is_seen"):
+                    continue  # Görülen hastalar zaten arşivde, temizleme
+                created_str = s.get("created_at", "")
+                if not created_str:
+                    continue
+                try:
+                    created = datetime.fromisoformat(created_str.replace("Z", ""))
+                    age_min = (now - created).total_seconds() / 60
+                    if age_min > SESSION_TIMEOUT_MINUTES and not s.get("completed"):
+                        to_delete.append(sid)
+                except Exception:
+                    pass
+            for sid in to_delete:
+                sessions.pop(sid, None)
+                summaries.pop(sid, None)
+                db_delete_session(sid)
+                print(f"[Session] Timeout temizlendi: {sid[:8]}... ({SESSION_TIMEOUT_MINUTES} dk boşta)")
+            if to_delete:
+                await notify_queue_update()
+        except Exception as e:
+            print(f"[Session] Cleanup hatası: {e}")
 
 
 async def _background_warmup():
@@ -298,8 +378,10 @@ class ClinicalSummaryResponse(BaseModel):
 # ─────────────────────────────────────────────
 #  Ollama /api/chat Helpers
 # ─────────────────────────────────────────────
-async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0) -> str:
-    """Ollama /api/chat üzerinden Gemma 4'e metin isteği gönderir."""
+async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0,
+                    model: Optional[str] = None) -> str:
+    """Ollama /api/chat üzerinden model isteği gönderir. model=None → GEMMA_MODEL."""
+    _model = model or GEMMA_MODEL
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
@@ -309,30 +391,31 @@ async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0) -> st
             resp = await client.post(
                 f"{OLLAMA_BASE_URL}/api/chat",
                 json={
-                    "model": GEMMA_MODEL,
+                    "model": _model,
                     "messages": messages,
                     "stream": False,
-                    "think": False,          # ← Gemma 4 thinking modunu kapat
+                    "think": False,
                     "options": {
                         "temperature": 0.25,
                         "top_p": 0.85,
                         "top_k": 40,
                         "num_predict": 512,
                         "repeat_penalty": 1.1,
+                        "num_gpu": OLLAMA_NUM_GPU,
                     },
                 },
             )
             resp.raise_for_status()
             raw = resp.json()["message"]["content"].strip()
-            return clean_gemma_response(raw)   # ← Think bloklarını temizle
+            return clean_gemma_response(raw)
     except httpx.ConnectError:
         raise HTTPException(status_code=503, detail="Ollama çalışmıyor. Terminal'de: ollama serve")
     except httpx.ReadTimeout:
-        raise HTTPException(status_code=504, detail=f"Gemma 4 yanıt vermedi (timeout {int(timeout)}sn). Model yükleniyor olabilir.")
+        raise HTTPException(status_code=504, detail=f"Model yanıt vermedi (timeout {int(timeout)}sn).")
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="Bağlantı zaman aşımı. Ollama servisini kontrol edin.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Gemma 4 hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Model hatası ({_model}): {str(e)}")
 
 
 async def ask_gemma_vision(prompt: str, image_base64: str, system: str = "", timeout: float = 180.0) -> str:
@@ -354,7 +437,7 @@ async def ask_gemma_vision(prompt: str, image_base64: str, system: str = "", tim
                     "messages": messages,
                     "stream": False,
                     "think": False,          # ← Thinking modunu kapat
-                    "options": {"temperature": 0.2, "top_p": 0.9, "num_predict": 600},
+                    "options": {"temperature": 0.2, "top_p": 0.9, "num_predict": 600, "num_gpu": OLLAMA_NUM_GPU},
                 },
             )
             resp.raise_for_status()
@@ -367,8 +450,8 @@ async def ask_gemma_vision(prompt: str, image_base64: str, system: str = "", tim
 
 
 async def ask_gemma_rag(prompt: str, system: str = "", rag_query: str = "",
-                        timeout: float = 180.0) -> str:
-    """RAG bağlamıyla güçlendirilmiş Gemma 4 isteği."""
+                        timeout: float = 180.0, model: Optional[str] = None) -> str:
+    """RAG bağlamıyla güçlendirilmiş model isteği."""
     enriched_system = system
     if RAG_ENABLED and rag_query:
         try:
@@ -379,11 +462,12 @@ async def ask_gemma_rag(prompt: str, system: str = "", rag_query: str = "",
                 enriched_system = system + "\n\n" + context if system else context
         except Exception:
             pass
-    return await ask_gemma(prompt, system=enriched_system, timeout=timeout)
+    return await ask_gemma(prompt, system=enriched_system, timeout=timeout, model=model)
 
 
 async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, None]:
-    """Gemma 4'ten token token streaming (SSE için)."""
+    """Gemma 4'ten token token streaming (SSE için). Tekrar eden metin algılama dahil.
+    Sprint 14: Think bloğu yarım gelirse buffer'la (edge case fix)."""
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
@@ -397,25 +481,58 @@ async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, Non
                     "model": GEMMA_MODEL,
                     "messages": messages,
                     "stream": True,
-                    "think": False,          # ← Thinking modunu kapat
-                    "options": {"temperature": 0.25, "top_p": 0.85, "num_predict": 512},
+                    "think": False,
+                    "options": {
+                        "temperature": 0.4,
+                        "top_p": 0.85,
+                        "num_predict": 400,       #Max token — sonsuz döngü önlemi
+                        "repeat_penalty": 1.35,   # Yüksek penalty → tekrar engeller
+                        "repeat_last_n": 64,
+                        "num_gpu": OLLAMA_NUM_GPU,
+                    },
                 },
             ) as resp:
-                in_think_block = False   # Think bloğu içinde miyiz?
+                in_think_block = False
+                think_buffer = ""   # Sprint 14: yarım think bloğu için buffer
+                accumulated = ""
                 async for line in resp.aiter_lines():
                     if line.strip():
                         try:
                             chunk = json.loads(line)
                             token = chunk.get("message", {}).get("content", "")
                             if token:
-                                # Streaming'de think bloğu filtresi
-                                if "<think" in token.lower():
-                                    in_think_block = True
-                                if in_think_block:
-                                    if "</think>" in token.lower():
+                                # Sprint 14: Think bloğu buffer'lama — yarım gelebilir
+                                if not in_think_block:
+                                    # <think> başlangıcı bu token'da mı?
+                                    if "<think" in token.lower():
+                                        in_think_block = True
+                                        think_buffer = token
+                                        # Token'ın think öncesi kısmını gönder
+                                        pre = re.split(r'<think(?:ing)?>', token, maxsplit=1, flags=re.IGNORECASE)[0]
+                                        if pre.strip():
+                                            accumulated += pre
+                                            yield f"data: {json.dumps({'token': pre})}\n\n"
+                                        continue
+                                    accumulated += token
+                                    # Sunucu tarafı tekrar algılama — 80 karın 3x tekrarı
+                                    if len(accumulated) > 300:
+                                        tail = accumulated[-80:]
+                                        if accumulated[:-80].count(tail) >= 3:
+                                            yield "data: [DONE]\n\n"
+                                            return
+                                    yield f"data: {json.dumps({'token': token})}\n\n"
+                                else:
+                                    # Think bloğu içindeyiz — buffer'a ekle
+                                    think_buffer += token
+                                    if "</think>" in think_buffer.lower():
                                         in_think_block = False
-                                    continue  # Think token'larını atla
-                                yield f"data: {json.dumps({'token': token})}\n\n"
+                                        # Think bloğundan sonraki içeriği gönder
+                                        post_match = re.split(r'</think(?:ing)?>', think_buffer, maxsplit=1, flags=re.IGNORECASE)
+                                        if len(post_match) > 1 and post_match[1].strip():
+                                            post = post_match[1]
+                                            accumulated += post
+                                            yield f"data: {json.dumps({'token': post})}\n\n"
+                                        think_buffer = ""
                             if chunk.get("done"):
                                 yield "data: [DONE]\n\n"
                                 break
@@ -529,6 +646,7 @@ RULES:
 TRIAGE_COLOR = {"RED": "#ba1a1a", "YELLOW": "#e07b26", "GREEN": "#006a68"}
 
 
+
 def get_system_prompt(lang: str) -> str:
     return SYSTEM_PROMPT_TR if lang == "tr" else SYSTEM_PROMPT_EN
 
@@ -566,9 +684,11 @@ async def startup_event():
     init_db()
     init_auth_tables()      # ← Kullanıcı tablolarını oluştur (+ demo doktor)
     db_load_all()
-    print(f"[AnamnezAI v4.0] DB hazır: {DB_PATH}")
+    print(f"[AnamnezAI v5.0] DB hazır: {DB_PATH}")
     # Modeli arka planda ısıt — ilk hasta gelene kadar hazır olsun
     asyncio.create_task(_background_warmup())
+    # Sprint 14: Oturum timeout cleanup (30 dk boş kalan oturumlar)
+    asyncio.create_task(_session_cleanup_loop())
 
 # ─────────────────────────────────────────────
 #  Auth Endpoints
@@ -717,6 +837,28 @@ async def warmup_model():
         return {"status": "warmup_failed", "error": str(e)}
 
 
+@app.post("/api/model/compare")
+async def compare_models(body: dict):
+    """Gemma 4 (gemma4:e4b) ile prompt test endpoint'i."""
+    prompt = body.get("prompt", "").strip()
+    system = body.get("system", "")
+    if not prompt or len(prompt) < 5:
+        raise HTTPException(status_code=400, detail="prompt parametresi gerekli (min 5 karakter).")
+
+    results = {}
+    try:
+        resp_full = await ask_gemma(prompt, system=system, model=GEMMA_MODEL, timeout=120.0)
+        results["gemma4"] = {"model": GEMMA_MODEL, "response": resp_full, "status": "ok"}
+    except Exception as e:
+        results["gemma4"] = {"model": GEMMA_MODEL, "response": None, "status": "error", "error": str(e)}
+
+    return {
+        "prompt": prompt,
+        "results": results,
+        "model": GEMMA_MODEL,
+    }
+
+
 # ─────────────────────────────────────────────
 #  RAG Endpoints
 # ─────────────────────────────────────────────
@@ -794,6 +936,80 @@ async def rag_ingest_builtin():
         raise HTTPException(status_code=503, detail="RAG bileşenleri kurulu değil.")
 
 
+# ─────────────────────────────────────────────
+#  Vision — Tıbbi Görüntü Analizi (MedGemma / Gemma 4 fallback)
+# ─────────────────────────────────────────────
+
+async def _get_vision_model() -> str:
+    """MedGemma kuruluysa onu, yoksa Gemma 4'ü döner."""
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as c:
+            r = await c.get(f"{OLLAMA_BASE_URL}/api/tags")
+            names = [m["name"] for m in r.json().get("models", [])]
+            if any("medgemma" in n.lower() for n in names):
+                return MEDGEMMA_MODEL
+    except Exception:
+        pass
+    return GEMMA_MODEL   # Gemma 4 multimodal fallback
+
+
+@app.post("/api/analyze-image")
+async def analyze_image(
+    file: UploadFile = File(...),
+    lang: str = "tr",
+    session_id: str = ""
+):
+    """
+    Tıbbi görüntü analizi — yara, cilt, EKG, röntgen vb.
+    MedGemma (medgemma:4b) varsa kullanır; yoksa Gemma 4 (gemma4:e4b) multimodal ile devam eder.
+    """
+    # Dosyayı oku & base64'e çevir
+    content = await file.read()
+    if len(content) > 15 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Dosya çok büyük (maks. 15 MB).")
+
+    b64 = base64.b64encode(content).decode()
+    vision_model = await _get_vision_model()
+    system = VISION_SYSTEM_TR if lang == "tr" else VISION_SYSTEM_EN
+
+    try:
+        async with httpx.AsyncClient(timeout=140.0) as client:
+            resp = await client.post(
+                f"{OLLAMA_BASE_URL}/api/chat",
+                json={
+                    "model": vision_model,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {
+                            "role": "user",
+                            "content": "Bu tıbbi görüntüyü analiz et ve klinik bulgularını açıkla." if lang == "tr" else "Analyze this medical image and explain the clinical findings.",
+                            "images": [b64]
+                        }
+                    ],
+                    "stream": False,
+                    "options": {"temperature": 0.15}
+                }
+            )
+        resp.raise_for_status()
+        findings = resp.json()["message"]["content"].strip()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Görüntü analizi başarısız: {exc}")
+
+    # Session varsa bulgular özete de eklenir
+    if session_id and session_id in summaries:
+        summaries[session_id]["image_findings"] = findings
+        summaries[session_id]["image_model"] = vision_model
+        db_save_summary(session_id, summaries[session_id])
+
+    is_medgemma = "medgemma" in vision_model.lower()
+    print(f"[Vision] model={vision_model} session={session_id or '—'} is_medgemma={is_medgemma}")
+    return {
+        "findings": findings,
+        "model_used": vision_model,
+        "is_medgemma": is_medgemma
+    }
+
+
 @app.get("/api/rag/query")
 async def rag_query(q: str, n: int = 4):
     if not q:
@@ -819,6 +1035,7 @@ async def health_check():
             models = [m["name"] for m in resp.json().get("models", [])]
             model_base = GEMMA_MODEL.split(":")[0]
             gemma_available = any(model_base in m for m in models)
+            medgemma_available = any("medgemma" in m.lower() for m in models)
 
         rag_info = {"rag_enabled": RAG_ENABLED, "rag_chunks": 0}
         if RAG_ENABLED:
@@ -835,20 +1052,31 @@ async def health_check():
 
         return {
             "status": "ok",
-            "version": "4.0.0",
+            "version": "5.0.0",
             "ollama": "connected",
             "gemma_model": GEMMA_MODEL,
             "gemma_available": gemma_available,
-            "model_ready": _model_ready,       # ← warmup tamamlandı mı?
-            "model_warming": _model_warming,   # ← warmup devam ediyor mu?
+            "medgemma_model": MEDGEMMA_MODEL,
+            "medgemma_available": medgemma_available,
+            "model_ready": _model_ready,
+            "model_warming": _model_warming,
             "available_models": models,
             "sessions_active": len(sessions),
             "summaries_cached": len(summaries),
+            "session_timeout_minutes": SESSION_TIMEOUT_MINUTES,
             "db_path": DB_PATH,
             **rag_info,
         }
     except Exception as e:
-        return {"status": "degraded", "ollama": "disconnected", "error": str(e)}
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "degraded",
+                "ollama": "disconnected",
+                "error": str(e),
+                "message": "Ollama servisi çalışmıyor veya bağlantı kurulamadı. Lütfen 'ollama serve' komutunu çalıştırın."
+            }
+        )
 
 
 @app.post("/api/session/start", response_model=SessionResponse)
@@ -859,6 +1087,12 @@ async def start_session(req: StartSessionRequest, current_user: Optional[dict] =
 
     vitals_dict = vitals_to_dict(req.vitals)
     vitals_ctx = ""
+
+    # ── Adaptif soru sayısı ──────────────────
+    # Hasta ilk girdiğinde şikayeti henüz yok ama ad/yaş/cinsiyet var.
+    # İlk soru geldikten sonra (answer sırasında) adaptif sayı güncellenir.
+    # Başlangıçta 5 kullan, ilk cevaptan sonra otomatik ayarlanır.
+    initial_steps = 5
     if vitals_dict:
         parts = []
         if req.vitals.blood_pressure: parts.append(f"KB: {req.vitals.blood_pressure}")
@@ -871,14 +1105,15 @@ async def start_session(req: StartSessionRequest, current_user: Optional[dict] =
 
     opening_prompt = (
         f"Hasta: {req.patient_name}, {req.age} yaşında, {req.gender}.{vitals_ctx}\n"
-        f"Bu ilk görüşme. Hastanın bugünkü ana şikayetini öğrenmek için samimi, empatik bir açılış sorusu sor. Soru 1/5."
+        f"Bu ilk görüşme. Hastanın bugünkü ana şikayetini öğrenmek için samimi, empatik bir açılış sorusu sor. Soru 1/{initial_steps}."
     ) if lang == "tr" else (
         f"Patient: {req.patient_name}, {req.age}y, {req.gender}.{vitals_ctx}\n"
-        f"First visit. Ask a warm, empathetic opening question to learn their main complaint. Q1/5."
+        f"First visit. Ask a warm, empathetic opening question to learn their main complaint. Q1/{initial_steps}."
     )
 
     rag_query = "medical triage first question patient interview clinical assessment"
-    first_question = await ask_gemma_rag(opening_prompt, system=get_system_prompt(lang), rag_query=rag_query)
+    first_question = await ask_gemma_rag(opening_prompt, system=get_system_prompt(lang),
+                                          rag_query=rag_query)
 
     sessions[session_id] = {
         "patient_name": req.patient_name,
@@ -886,7 +1121,7 @@ async def start_session(req: StartSessionRequest, current_user: Optional[dict] =
         "gender": req.gender,
         "language": lang,
         "step": 1,
-        "total_steps": 5,
+        "total_steps": initial_steps,
         "qa_history": [{"question": first_question, "answer": None}],
         "completed": False,
         "vitals": vitals_dict,
@@ -897,7 +1132,7 @@ async def start_session(req: StartSessionRequest, current_user: Optional[dict] =
     db_save_session(session_id, sessions[session_id])
     await notify_queue_update()
 
-    return SessionResponse(session_id=session_id, question=first_question, step=1, total_steps=5)
+    return SessionResponse(session_id=session_id, question=first_question, step=1, total_steps=initial_steps)
 
 
 @app.post("/api/session/answer", response_model=SessionResponse)
@@ -912,6 +1147,17 @@ async def submit_answer(req: AnswerRequest):
     session["qa_history"][-1]["answer"] = req.answer
     current_step = session["step"]
     total_steps  = session["total_steps"]
+
+    # ── Adaptif soru sayısı güncelle (ilk cevaptan sonra) ──
+    # Hastanın ilk cevabı ana şikayeti içerir → gerçek aciliyet burada belli olur
+    if current_step == 1 and req.answer:
+        lang_s = session.get("language", "tr")
+        age_s = session.get("age", 30)
+        new_steps = _adaptive_steps(req.answer, age_s, lang_s)
+        if new_steps != total_steps:
+            session["total_steps"] = new_steps
+            total_steps = new_steps
+            print(f"[Adaptive] '{req.answer[:40]}...' → {new_steps} soru (yaş:{age_s})")
 
     if current_step >= total_steps:
         session["completed"] = True
@@ -942,7 +1188,8 @@ async def submit_answer(req: AnswerRequest):
         )
 
     rag_query = req.answer + " " + history_text[-300:]
-    next_question = await ask_gemma_rag(next_prompt, system=get_system_prompt(lang), rag_query=rag_query)
+    next_question = await ask_gemma_rag(next_prompt, system=get_system_prompt(lang),
+                                         rag_query=rag_query)
     session["step"] += 1
     session["qa_history"].append({"question": next_question, "answer": None})
 
@@ -1358,6 +1605,92 @@ async def mark_as_seen(session_id: str, current_user: dict = Depends(require_doc
     return {"status": "ok", "seen_by": session["seen_by"]}
 
 
+@app.delete("/api/session/{session_id}/seen")
+async def unmark_as_seen(session_id: str, current_user: dict = Depends(require_doctor)):
+    """'Görüldü' işaretini kaldırır — hastayı kuyruğa geri alır."""
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+    session["is_seen"] = False
+    session.pop("seen_by", None)
+    db_save_session(session_id, session)
+    if session_id in summaries:
+        summaries[session_id]["is_seen"] = False
+        db_save_summary(session_id, summaries[session_id])
+    await notify_queue_update()
+    return {"status": "ok", "message": "Hasta kuyruğa geri alındı."}
+
+
+@app.get("/api/patients/seen")
+async def get_seen_patients(
+    limit: int = 50,
+    current_user: dict = Depends(require_doctor)
+):
+    """Görüldü işaretlenmiş hastaların arşivini döndürür (en yeniden eskiye)."""
+    seen_list = []
+    for sid, s in sessions.items():
+        if not s.get("is_seen"):
+            continue
+        summary = summaries.get(sid, {})
+        seen_by = s.get("seen_by", {})
+        seen_list.append({
+            "session_id": sid,
+            "patient_name": s["patient_name"],
+            "age": s["age"],
+            "gender": s["gender"],
+            "created_at": s.get("created_at", ""),
+            "seen_at": seen_by.get("timestamp", ""),
+            "seen_by_name": seen_by.get("doctor_name", ""),
+            "triage_level": summary.get("triage_level", "PENDING"),
+            "triage_color": summary.get("triage_color", "#8c9499"),
+            "confidence_score": summary.get("confidence_score", 0),
+            "chief_complaint": summary.get("chief_complaint", "—"),
+            "urgency_flags": summary.get("urgency_flags", []),
+            "possible_conditions": summary.get("possible_conditions", []),
+        })
+    # En yeni "görüldü" önce
+    seen_list.sort(key=lambda x: x["seen_at"], reverse=True)
+    return {"patients": seen_list[:limit], "total": len(seen_list)}
+
+
+@app.get("/api/session/{session_id}/detail")
+async def get_session_detail(session_id: str, current_user: dict = Depends(require_doctor)):
+    """Oturum detayını döndürür (görüldü olanlar dahil). Doktor tekrar erişimine izin verir."""
+    # Önce RAM'deki sessions sözlüğüne bak
+    session = sessions.get(session_id)
+    if not session:
+        # RAM'de yoksa DB'den yükle
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                row = conn.execute(
+                    "SELECT data FROM sessions WHERE session_id=?", (session_id,)
+                ).fetchone()
+            if row:
+                session = json.loads(row[0])
+            else:
+                raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+        except Exception:
+            raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+
+    summary = summaries.get(session_id)
+    if not summary:
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                row = conn.execute(
+                    "SELECT data FROM summaries WHERE session_id=?", (session_id,)
+                ).fetchone()
+            if row:
+                summary = json.loads(row[0])
+        except Exception:
+            summary = None
+
+    return {
+        "session_id": session_id,
+        "session": session,
+        "summary": summary,
+    }
+
+
 @app.get("/api/session/{session_id}/icd10")
 async def suggest_icd10(session_id: str, current_user: dict = Depends(require_doctor)):
     """Gemma 4 ile otomatik ICD-10 kod önerisi üretir."""
@@ -1385,7 +1718,7 @@ async def suggest_icd10(session_id: str, current_user: dict = Depends(require_do
     raw = await ask_gemma(prompt, system)
     try:
         start = raw.find("[")
-        end = raw.rfind("]") + 1
+        end = raw.rfind("}") + 1
         codes = json.loads(raw[start:end])
     except Exception:
         codes = [{"code": "Z03.89", "description": "Diğer şüpheli hastalıklar için gözlem", "confidence": "düşük"}]
@@ -1585,6 +1918,77 @@ async def get_audit_log(limit: int = 50, current_user: dict = Depends(require_ad
     return {"logs": [dict(r) for r in rows], "total": len(rows)}
 
 
+@app.get("/api/admin/users")
+async def list_all_users(current_user: dict = Depends(require_admin)):
+    """Tüm kullanıcıları listeler — sadece admin."""
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT user_id, name, email, role, specialty, created_at, is_active FROM users ORDER BY created_at DESC"
+        ).fetchall()
+    return {"users": [dict(r) for r in rows], "total": len(rows)}
+
+
+@app.put("/api/admin/users/{user_id}/role")
+async def change_user_role(user_id: str, body: dict, current_user: dict = Depends(require_admin)):
+    """Kullanıcı rolünü değiştirir — sadece admin."""
+    new_role = body.get("role")
+    valid_roles = ["patient", "doctor", "personnel", "admin"]
+    if new_role not in valid_roles:
+        raise HTTPException(status_code=400, detail=f"Geçersiz rol. Geçerli roller: {valid_roles}")
+    if user_id == current_user["user_id"]:
+        raise HTTPException(status_code=400, detail="Kendi rolünüzü değiştiremezsiniz.")
+    with _db_lock:
+        with sqlite3.connect(DB_PATH) as conn:
+            affected = conn.execute(
+                "UPDATE users SET role=? WHERE user_id=?", (new_role, user_id)
+            ).rowcount
+            conn.commit()
+    if affected == 0:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı.")
+    audit("role_change", user_id=current_user["user_id"], user_role=current_user["role"],
+          details=f"user {user_id} role → {new_role}")
+    return {"status": "ok", "user_id": user_id, "new_role": new_role}
+
+
+@app.put("/api/admin/users/{user_id}/active")
+async def toggle_user_active(user_id: str, body: dict, current_user: dict = Depends(require_admin)):
+    """Kullanıcıyı aktif/pasif yapar — sadece admin."""
+    if user_id == current_user["user_id"]:
+        raise HTTPException(status_code=400, detail="Kendi hesabınızı devre dışı bırakamazsınız.")
+    is_active = 1 if body.get("active", True) else 0
+    with _db_lock:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute("UPDATE users SET is_active=? WHERE user_id=?", (is_active, user_id))
+            conn.commit()
+    action = "activate" if is_active else "deactivate"
+    audit(action, user_id=current_user["user_id"], user_role=current_user["role"],
+          details=f"user {user_id}")
+    return {"status": "ok", "user_id": user_id, "is_active": bool(is_active)}
+
+
+@app.get("/api/admin/stats")
+async def admin_stats(current_user: dict = Depends(require_admin)):
+    """Sistem istatistikleri — sadece admin."""
+    with sqlite3.connect(DB_PATH) as conn:
+        total_users = conn.execute("SELECT COUNT(*) FROM users WHERE is_active=1").fetchone()[0]
+        by_role = conn.execute(
+            "SELECT role, COUNT(*) as cnt FROM users WHERE is_active=1 GROUP BY role"
+        ).fetchall()
+        total_sessions_db = conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+    return {
+        "total_users": total_users,
+        "by_role": {r[0]: r[1] for r in by_role},
+        "sessions_in_memory": len(sessions),
+        "sessions_in_db": total_sessions_db,
+        "seen_count": sum(1 for s in sessions.values() if s.get("is_seen")),
+        "queue_length": sum(1 for s in sessions.values() if s.get("completed") and not s.get("is_seen")),
+        "kiosk_locked": _kiosk_locked,
+        "model": GEMMA_MODEL,
+        "rag_enabled": RAG_ENABLED,
+    }
+
+
 @app.delete("/api/user/{user_id}/all-data")
 async def gdpr_delete_user_data(user_id: str, current_user: dict = Depends(require_auth)):
     """KVKK/GDPR hakkı: kullanıcının tüm verilerini siler. Sadece kendi verisi veya admin."""
@@ -1639,26 +2043,25 @@ async def kiosk_status():
         "estimated_wait_minutes": max(1, queue_len * 3),
         "message_tr": "Sisteme hoş geldiniz. Lütfen bilgilerinizi girin." if online else "Sistem bakımda.",
         "message_en": "Welcome. Please enter your information." if online else "System under maintenance.",
-        "message_ar": "مرحباً بكم. يرجى إدخال بياناتكم." if online else "النظام في صيانة.",
     }
 
 
 @app.post("/api/kiosk/lock")
-async def kiosk_lock(current_user: dict = Depends(require_admin)):
-    """Lock the kiosk — admin only."""
+async def kiosk_lock(current_user: dict = Depends(require_doctor)):
+    """Lock the kiosk — doktor veya admin yapabilir."""
     global _kiosk_locked
     _kiosk_locked = True
     audit("kiosk_lock", user_id=current_user["user_id"], user_role=current_user["role"])
-    return {"status": "locked", "message": "Kiosk locked by admin."}
+    return {"status": "locked", "message": "Kiosk locked."}
 
 
 @app.post("/api/kiosk/unlock")
-async def kiosk_unlock(current_user: dict = Depends(require_admin)):
-    """Unlock the kiosk — admin only."""
+async def kiosk_unlock(current_user: dict = Depends(require_doctor)):
+    """Unlock the kiosk — doktor veya admin yapabilir."""
     global _kiosk_locked
     _kiosk_locked = False
     audit("kiosk_unlock", user_id=current_user["user_id"], user_role=current_user["role"])
-    return {"status": "unlocked", "message": "Kiosk unlocked by admin."}
+    return {"status": "unlocked", "message": "Kiosk unlocked."}
 
 
 # ─────────────────────────────────────────────
@@ -1825,4 +2228,5 @@ if __name__ == "__main__":
             print(f"  RAG: Atıldı — {e}")
 
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    return GEMMA_MODEL
 

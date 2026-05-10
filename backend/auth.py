@@ -96,6 +96,17 @@ def init_auth_tables():
                     FOREIGN KEY (user_id) REFERENCES users(user_id)
                 )
             """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS audit_log (
+                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    action      TEXT NOT NULL,
+                    user_id     TEXT,
+                    user_role   TEXT,
+                    resource    TEXT,
+                    details     TEXT,
+                    created_at  TEXT NOT NULL
+                )
+            """)
             # Oturumları kullanıcıya bağla (sessions tablosuna patient_id eklenir)
             try:
                 conn.execute("ALTER TABLE sessions ADD COLUMN patient_id TEXT")
@@ -118,6 +129,21 @@ def init_auth_tables():
                 )
                 conn.commit()
                 print("[Auth] Demo doktor hesabı oluşturuldu: doctor@anamnezai.tr / doctor123")
+
+            # Demo admin hesabı
+            demo_admin_email = "admin@anamnezai.tr"
+            existing_admin = conn.execute(
+                "SELECT user_id FROM users WHERE email=?", (demo_admin_email,)
+            ).fetchone()
+            if not existing_admin:
+                conn.execute(
+                    "INSERT INTO users (user_id, name, email, password_hash, role, specialty, created_at) VALUES (?,?,?,?,?,?,?)",
+                    (str(uuid.uuid4()), "Sistem Yöneticisi", demo_admin_email,
+                     hash_password("admin123"), Role.ADMIN, None,
+                     datetime.utcnow().isoformat())
+                )
+                conn.commit()
+                print("[Auth] Demo admin hesabı oluşturuldu: admin@anamnezai.tr / admin123")
 
 # ─────────────────────────────────────────────
 #  Password Hashing
@@ -260,4 +286,35 @@ async def require_admin(current_user: dict = Depends(require_auth)) -> dict:
     if current_user["role"] != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Bu işlem için admin yetkisi gerekiyor.")
     return current_user
+
+
+# ─────────────────────────────────────────────
+#  Audit Log
+# ─────────────────────────────────────────────
+def audit(action: str, user_id: str = "", user_role: str = "",
+          resource: str = "", details: str = ""):
+    """Kullanıcı eylemlerini SQLite audit_log tablosuna kaydeder."""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS audit_log (
+                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    action      TEXT NOT NULL,
+                    user_id     TEXT,
+                    user_role   TEXT,
+                    resource    TEXT,
+                    details     TEXT,
+                    created_at  TEXT NOT NULL
+                )
+            """)
+            conn.execute(
+                "INSERT INTO audit_log (action, user_id, user_role, resource, details, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (action, user_id, user_role, resource, details,
+                 datetime.utcnow().isoformat())
+            )
+            conn.commit()
+    except Exception as e:
+        print(f"[Audit] Log hatası: {e}")
+
 

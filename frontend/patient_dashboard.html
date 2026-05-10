@@ -24,6 +24,14 @@ h1,h2,h3,h4{font-family:'Manrope',sans-serif}
 .badge-YELLOW{background:#fff3e0;color:#e07b26}
 .badge-GREEN{background:#e8f5e9;color:#006a68}
 .tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:500}
+.ptag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600}
+.ptag-green{background:#f0faf9;color:#006a68}
+.ptag-red{background:#fff5f5;color:#ba1a1a}
+.ptag-blue{background:#eff6ff;color:#1d4ed8}
+.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px #006a68}
+.nav-active{background:#f4f7f9;color:#006a68;font-weight:600}
 </style>
 </head>
 <body>
@@ -41,7 +49,7 @@ h1,h2,h3,h4{font-family:'Manrope',sans-serif}
   </button>
 </header>
 
-<div class="pt-14 flex min-h-screen">
+<div class="pt-14 flex min-h-screen pb-16 md:pb-0">
   <aside class="hidden md:flex flex-col w-60 sticky top-14 bg-white border-r border-surfc py-6" style="height:calc(100vh - 56px)">
     <div class="px-6 mb-8">
       <div class="flex flex-col items-center py-5 bg-surf rounded-2xl">
@@ -51,18 +59,18 @@ h1,h2,h3,h4{font-family:'Manrope',sans-serif}
       </div>
     </div>
     <nav class="flex-1 px-3 space-y-1 text-sm">
-      <a href="#top" class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-surf text-sec font-semibold">
+      <button onclick="showSection('overview')" id="nav-overview" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl nav-active">
         <span class="material-symbols-outlined msym text-[20px]">dashboard</span>Genel Bakış
-      </a>
-      <a href="#historySection" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
+      </button>
+      <button onclick="showSection('history')" id="nav-history" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
         <span class="material-symbols-outlined msym text-[20px]">history</span>Ziyaret Geçmişi
-      </a>
-      <a href="#medSection" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
+      </button>
+      <button onclick="showSection('meds')" id="nav-meds" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
         <span class="material-symbols-outlined msym text-[20px]">medication</span>İlaçlar
-      </a>
-      <a href="profile.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
+      </button>
+      <button onclick="showSection('profile')" id="nav-profile" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
         <span class="material-symbols-outlined msym text-[20px]">manage_accounts</span>Profil Düzenle
-      </a>
+      </button>
     </nav>
     <div class="px-3 mt-auto space-y-2">
       <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-sec text-white hover:bg-pric transition-colors text-sm font-semibold">
@@ -80,144 +88,366 @@ h1,h2,h3,h4{font-family:'Manrope',sans-serif}
       <p class="text-onsv text-sm">Panel yükleniyor...</p>
     </div>
 
-    <div id="mainContent" class="hidden space-y-8">
-      <!-- Hero Banner -->
-      <div id="top" class="card p-6 lg:p-8 bg-gradient-to-br from-pric to-pri text-white fade">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 rounded-full text-xs font-semibold mb-3">
-              <span class="material-symbols-outlined msymf text-[14px]">health_and_safety</span>
-              HASTA PANELİ
+    <div id="mainContent" class="hidden">
+
+      <!-- ⚠️ Alerji Acil Banner — alerjisi olan hastalarda sayfanın en üstünde görünür -->
+      <div id="allergy-banner" class="hidden mb-5 p-4 rounded-2xl border-2 border-err bg-errc flex items-start gap-3 fade">
+        <span class="material-symbols-outlined msymf text-err text-[24px] flex-shrink-0 mt-0.5">warning</span>
+        <div class="flex-1">
+          <p class="font-bold text-err text-sm mb-1">⚠️ Kayıtlı Alerji Uyarısı</p>
+          <p class="text-err/80 text-xs" id="allergy-banner-txt">Bilinen alerjileriniz doktorunuza iletilecektir.</p>
+        </div>
+      </div>
+
+      <!-- ===== GENEL BAKIŞ ===== -->
+      <div id="sec-overview" class="space-y-8">
+        <div class="card p-6 lg:p-8 bg-gradient-to-br from-pric to-pri text-white fade">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 rounded-full text-xs font-semibold mb-3">
+                <span class="material-symbols-outlined msymf text-[14px]">health_and_safety</span>
+                HASTA PANELİ
+              </div>
+              <h1 class="text-2xl font-bold mb-1">Hoş geldiniz, <span id="welcomeName">—</span> 👋</h1>
+              <p class="text-white/70 text-sm">Sağlık kaydınız güvende ve gizlidir.</p>
             </div>
-            <h1 class="text-2xl font-bold mb-1">Hoş geldiniz, <span id="welcomeName">—</span> 👋</h1>
-            <p class="text-white/70 text-sm">Sağlık kaydınız güvende ve gizlidir.</p>
-          </div>
-          <a href="index.html" class="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-white text-pri rounded-xl font-semibold text-sm hover:bg-secc transition-colors">
-            <span class="material-symbols-outlined msym text-[20px]">add_circle</span>
-            Yeni Mülakat Başlat
-          </a>
-        </div>
-      </div>
-
-      <!-- Stats -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="card p-4 text-center fade" style="animation-delay:.05s">
-          <p class="text-3xl font-extrabold text-pri mb-1" id="statTotal">0</p>
-          <p class="text-xs text-onsv">Toplam Ziyaret</p>
-        </div>
-        <div class="card p-4 text-center fade" style="animation-delay:.1s">
-          <p class="text-3xl font-extrabold text-err mb-1" id="statRed">0</p>
-          <p class="text-xs text-onsv">Acil</p>
-        </div>
-        <div class="card p-4 text-center fade" style="animation-delay:.15s">
-          <p class="text-3xl font-extrabold text-warn mb-1" id="statYellow">0</p>
-          <p class="text-xs text-onsv">Kritik</p>
-        </div>
-        <div class="card p-4 text-center fade" style="animation-delay:.2s">
-          <p class="text-3xl font-extrabold text-sec mb-1" id="statGreen">0</p>
-          <p class="text-xs text-onsv">Rutin</p>
-        </div>
-      </div>
-
-      <!-- Health snapshot -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div class="bg-errc rounded-2xl p-5 fade" style="animation-delay:.25s">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="material-symbols-outlined msymf text-err text-[20px]">warning</span>
-            <h2 class="font-bold text-err text-sm">Alerjiler</h2>
-          </div>
-          <div id="allergyTags" class="flex flex-wrap gap-2">
-            <span class="text-err/70 text-sm">Alerji kaydı yok</span>
-          </div>
-        </div>
-        <div class="card p-5 fade" style="animation-delay:.3s">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="material-symbols-outlined msym text-pri text-[20px]">medical_information</span>
-            <h2 class="font-bold text-ons text-sm">Kronik Hastalıklar</h2>
-          </div>
-          <div id="chronicTags" class="flex flex-wrap gap-2">
-            <span class="text-onsv text-sm">Kayıtlı hastalık yok</span>
-          </div>
-        </div>
-        <div class="card p-5 fade" style="animation-delay:.35s">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="material-symbols-outlined msym text-pri text-[20px]">medication</span>
-            <h2 class="font-bold text-ons text-sm">İlaçlar</h2>
-          </div>
-          <div id="medTagsSmall" class="flex flex-wrap gap-2">
-            <span class="text-onsv text-sm">Kayıtlı ilaç yok</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Visit History -->
-      <section id="historySection">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold text-ons flex items-center gap-2">
-            <span class="material-symbols-outlined msym text-pri">history</span>
-            Ziyaret Geçmişi
-          </h2>
-          <span id="visitCount" class="text-sm text-onsv"></span>
-        </div>
-        <div id="visitList" class="space-y-3">
-          <div class="card p-6 text-center">
-            <span class="material-symbols-outlined msym text-[40px] text-ouv mb-2 block">inbox</span>
-            <p class="text-onsv text-sm">Henüz tamamlanmış ziyaret yok.</p>
-            <a href="index.html" class="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-sm font-semibold hover:bg-pric transition-colors">
-              <span class="material-symbols-outlined msym text-[18px]">add_circle</span>
-              İlk Mülakatı Başlat
+            <a href="index.html" class="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-white text-pri rounded-xl font-semibold text-sm hover:bg-secc transition-colors">
+              <span class="material-symbols-outlined msym text-[20px]">add_circle</span>
+              Yeni Mülakat Başlat
             </a>
           </div>
         </div>
-      </section>
 
-      <!-- Medications detail -->
-      <section id="medSection">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold text-ons flex items-center gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="card p-4 text-center fade" style="animation-delay:.05s">
+            <p class="text-3xl font-extrabold text-pri mb-1" id="statTotal">0</p>
+            <p class="text-xs text-onsv">Toplam Ziyaret</p>
+          </div>
+          <div class="card p-4 text-center fade" style="animation-delay:.1s">
+            <p class="text-3xl font-extrabold text-err mb-1" id="statRed">0</p>
+            <p class="text-xs text-onsv">Acil</p>
+          </div>
+          <div class="card p-4 text-center fade" style="animation-delay:.15s">
+            <p class="text-3xl font-extrabold text-warn mb-1" id="statYellow">0</p>
+            <p class="text-xs text-onsv">Kritik</p>
+          </div>
+          <div class="card p-4 text-center fade" style="animation-delay:.2s">
+            <p class="text-3xl font-extrabold text-sec mb-1" id="statGreen">0</p>
+            <p class="text-xs text-onsv">Rutin</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div class="bg-errc rounded-2xl p-5 fade" style="animation-delay:.25s">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-symbols-outlined msymf text-err text-[20px]">warning</span>
+              <h2 class="font-bold text-err text-sm">Alerjiler</h2>
+            </div>
+            <div id="allergyTags" class="flex flex-wrap gap-2">
+              <span class="text-err/70 text-sm">Alerji kaydı yok</span>
+            </div>
+          </div>
+          <div class="card p-5 fade" style="animation-delay:.3s">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-symbols-outlined msym text-pri text-[20px]">medical_information</span>
+              <h2 class="font-bold text-ons text-sm">Kronik Hastalıklar</h2>
+            </div>
+            <div id="chronicTags" class="flex flex-wrap gap-2">
+              <span class="text-onsv text-sm">Kayıtlı hastalık yok</span>
+            </div>
+          </div>
+          <div class="card p-5 fade" style="animation-delay:.35s">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-symbols-outlined msym text-pri text-[20px]">medication</span>
+              <h2 class="font-bold text-ons text-sm">İlaçlar</h2>
+            </div>
+            <div id="medTagsSmall" class="flex flex-wrap gap-2">
+              <span class="text-onsv text-sm">Kayıtlı ilaç yok</span>
+            </div>
+          </div>
+        </div>
+
+        <section>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-ons flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-pri">history</span>
+              Ziyaret Geçmişi
+            </h2>
+            <span id="visitCount" class="text-sm text-onsv"></span>
+          </div>
+          <div id="visitList" class="space-y-3">
+            <div class="card p-6 text-center">
+              <span class="material-symbols-outlined msym text-[40px] text-ouv mb-2 block">inbox</span>
+              <p class="text-onsv text-sm">Henüz tamamlanmış ziyaret yok.</p>
+              <a href="index.html" class="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-sm font-semibold hover:bg-pric transition-colors">
+                <span class="material-symbols-outlined msym text-[18px]">add_circle</span>
+                İlk Mülakatı Başlat
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-ons flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-pri">medication</span>
+              İlaç Listesi
+            </h2>
+            <button onclick="showSection('profile')" class="text-sm text-sec hover:underline">Düzenle →</button>
+          </div>
+          <div id="medDetailList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="card p-4 text-center text-onsv text-sm col-span-full">
+              Kayıtlı ilaç yok. <button onclick="showSection('profile')" class="text-sec hover:underline">Profilinizden</button> ekleyebilirsiniz.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ===== ZİYARET GEÇMİŞİ ===== -->
+      <div id="sec-history" class="hidden space-y-6">
+        <h2 class="text-2xl font-bold text-ons flex items-center gap-2">
+          <span class="material-symbols-outlined msym text-pri">history</span>
+          Ziyaret Geçmişi
+        </h2>
+        <div id="visitListFull" class="space-y-3">
+          <div class="card p-6 text-center">
+            <span class="material-symbols-outlined msym text-[40px] text-ouv mb-2 block">inbox</span>
+            <p class="text-onsv text-sm">Henüz tamamlanmış ziyaret yok.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== İLAÇLAR ===== -->
+      <div id="sec-meds" class="hidden space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold text-ons flex items-center gap-2">
             <span class="material-symbols-outlined msym text-pri">medication</span>
             İlaç Listesi
           </h2>
-          <a href="profile.html" class="text-sm text-sec hover:underline">Düzenle →</a>
+          <button onclick="showSection('profile')" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-sm font-semibold hover:bg-pric transition-colors">
+            <span class="material-symbols-outlined msym text-[18px]">edit</span>İlaç Düzenle
+          </button>
         </div>
-        <div id="medDetailList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div id="medDetailListFull" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div class="card p-4 text-center text-onsv text-sm col-span-full">
-            Kayıtlı ilaç yok. <a href="profile.html" class="text-sec hover:underline">Profilinizden</a> ekleyebilirsiniz.
+            Kayıtlı ilaç yok.
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+
+      <!-- ===== PROFİL DÜZENLE ===== -->
+      <div id="sec-profile" class="hidden space-y-6 fade">
+        <h2 class="text-2xl font-bold text-ons flex items-center gap-2">
+          <span class="material-symbols-outlined msym text-pri">manage_accounts</span>
+          Profil Düzenle
+        </h2>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Sol: Tıbbi Profil Formu -->
+          <div class="card p-6 space-y-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined msymf text-sec text-[20px]">medical_information</span>
+                <h3 class="font-bold text-pri text-base">Tıbbi Profil</h3>
+              </div>
+              <button onclick="saveProfile()" id="btn-save"
+                class="flex items-center gap-1.5 px-4 py-2 bg-sec text-white rounded-xl text-sm font-bold hover:bg-pric transition-all">
+                <span class="material-symbols-outlined msym text-[16px]">save</span>Kaydet
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Doğum Yılı</label>
+                <input id="inp-birth-year" type="number" min="1920" max="2020" placeholder="1990"
+                  class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all"/>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Cinsiyet</label>
+                <select id="inp-gender" class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all appearance-none">
+                  <option value="">-- Seçin --</option>
+                  <option>Erkek</option><option>Kadın</option><option>Belirtmek İstemiyorum</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Kan Grubu</label>
+              <select id="inp-blood" class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all appearance-none">
+                <option value="">-- Seçin --</option>
+                <option>A Rh+</option><option>A Rh-</option><option>B Rh+</option><option>B Rh-</option>
+                <option>AB Rh+</option><option>AB Rh-</option><option>O Rh+</option><option>O Rh-</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Kronik Hastalıklar</label>
+              <div id="chronic-tags" class="flex flex-wrap gap-1.5 min-h-[32px] p-2 border border-surfc rounded-xl bg-surf mb-1.5"></div>
+              <div class="flex gap-2">
+                <input id="inp-chronic" type="text" placeholder="Hastalık ekle... (Enter)"
+                  class="flex-1 px-3 py-1.5 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all"
+                  onkeydown="addTag(event,'chronic')"/>
+                <button onclick="addTagBtn('chronic')" class="px-3 py-1.5 bg-surfc rounded-xl text-sm hover:bg-ouv/40 transition-all">
+                  <span class="material-symbols-outlined msym text-[15px]">add</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Sürekli Kullanılan İlaçlar</label>
+              <div id="medication-tags" class="flex flex-wrap gap-1.5 min-h-[32px] p-2 border border-surfc rounded-xl bg-surf mb-1.5"></div>
+              <div class="flex gap-2">
+                <input id="inp-medication" type="text" placeholder="İlaç ekle... (Enter)"
+                  class="flex-1 px-3 py-1.5 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all"
+                  onkeydown="addTag(event,'medication')"/>
+                <button onclick="addTagBtn('medication')" class="px-3 py-1.5 bg-surfc rounded-xl text-sm hover:bg-ouv/40 transition-all">
+                  <span class="material-symbols-outlined msym text-[15px]">add</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Alerjiler</label>
+              <div id="allergy-tags" class="flex flex-wrap gap-1.5 min-h-[32px] p-2 border border-surfc rounded-xl bg-surf mb-1.5"></div>
+              <div class="flex gap-2">
+                <input id="inp-allergy" type="text" placeholder="Alerji ekle... (Enter)"
+                  class="flex-1 px-3 py-1.5 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all"
+                  onkeydown="addTag(event,'allergy')"/>
+                <button onclick="addTagBtn('allergy')" class="px-3 py-1.5 bg-surfc rounded-xl text-sm hover:bg-ouv/40 transition-all">
+                  <span class="material-symbols-outlined msym text-[15px]">add</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Ek Notlar</label>
+              <textarea id="inp-notes" rows="3" placeholder="Genel sağlık notu, ameliyat geçmişi vb."
+                class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all resize-none"></textarea>
+            </div>
+
+            <div id="save-msg" class="hidden items-center gap-2 p-2.5 rounded-xl bg-green-50 text-green-700 text-sm font-medium">
+              <span class="material-symbols-outlined msymf text-[16px]">check_circle</span>
+              Profil kaydedildi ✓
+            </div>
+          </div>
+
+          <!-- Sağ: Bilgi özeti -->
+          <div class="space-y-5">
+            <div class="grid grid-cols-3 gap-3">
+              <div class="card p-4 text-center">
+                <p class="text-[28px] font-head font-bold text-pri" id="pstat-total">0</p>
+                <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mt-0.5">Toplam</p>
+              </div>
+              <div class="card p-4 text-center" style="background:#fff5f5">
+                <p class="text-[28px] font-head font-bold text-err" id="pstat-red">0</p>
+                <p class="text-[10px] font-bold uppercase tracking-wide mt-0.5" style="color:#ba1a1a">Acil</p>
+              </div>
+              <div class="card p-4 text-center" style="background:#f0faf9">
+                <p class="text-[28px] font-head font-bold text-sec" id="pstat-green">0</p>
+                <p class="text-[10px] font-bold text-sec uppercase tracking-wide mt-0.5">Rutin</p>
+              </div>
+            </div>
+
+            <div class="card p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <span class="material-symbols-outlined msym text-sec text-[18px]">person</span>
+                <h3 class="font-bold text-pri text-sm">Hesap Bilgileri</h3>
+              </div>
+              <div class="space-y-3">
+                <div>
+                  <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-0.5">Ad Soyad</p>
+                  <p class="text-sm font-semibold text-ons" id="prof-name">—</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-0.5">E-posta</p>
+                  <p class="text-sm text-ons" id="prof-email">—</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-0.5">Rol</p>
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secc/50 text-sec text-xs font-bold">
+                    <span class="material-symbols-outlined msymf text-[11px]">verified_user</span>
+                    HASTA
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card p-5">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="material-symbols-outlined msym text-pri text-[18px]">info</span>
+                <h3 class="font-bold text-pri text-sm">Kaydedilen Veriler</h3>
+              </div>
+              <div class="space-y-2 text-sm text-onsv">
+                <div class="flex justify-between">
+                  <span>Kronik Hastalık</span>
+                  <span id="summary-chronic" class="font-semibold text-ons">0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>İlaç</span>
+                  <span id="summary-med" class="font-semibold text-ons">0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Alerji</span>
+                  <span id="summary-allergy" class="font-semibold text-ons">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /mainContent -->
   </main>
 </div>
 
 <!-- Mobile bottom nav -->
 <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-surfc flex items-center justify-around py-2 z-50">
-  <a href="#top" class="flex flex-col items-center gap-0.5 text-sec">
+  <button onclick="showSection('overview')" class="flex flex-col items-center gap-0.5 text-sec">
     <span class="material-symbols-outlined msymf text-[24px]">dashboard</span>
     <span class="text-[10px] font-medium">Panel</span>
-  </a>
-  <a href="#historySection" class="flex flex-col items-center gap-0.5 text-onsv">
+  </button>
+  <button onclick="showSection('history')" class="flex flex-col items-center gap-0.5 text-onsv">
     <span class="material-symbols-outlined msym text-[24px]">history</span>
     <span class="text-[10px]">Geçmiş</span>
-  </a>
+  </button>
   <a href="index.html" class="flex flex-col items-center gap-0.5">
     <div class="w-12 h-12 rounded-full bg-sec -mt-4 flex items-center justify-center shadow-lg">
       <span class="material-symbols-outlined msym text-white text-[24px]">add</span>
     </div>
     <span class="text-[10px] text-onsv mt-0.5">Mülakat</span>
   </a>
-  <a href="profile.html" class="flex flex-col items-center gap-0.5 text-onsv">
+  <button onclick="showSection('profile')" class="flex flex-col items-center gap-0.5 text-onsv">
     <span class="material-symbols-outlined msym text-[24px]">manage_accounts</span>
     <span class="text-[10px]">Profil</span>
-  </a>
+  </button>
   <button onclick="logout()" class="flex flex-col items-center gap-0.5 text-onsv">
     <span class="material-symbols-outlined msym text-[24px]">logout</span>
     <span class="text-[10px]">Çıkış</span>
   </button>
 </nav>
 
+<!-- Toast -->
+<div id="toast" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold shadow-lg text-white max-w-xs"></div>
+
 <script>
-const API='';let token,visitHistory=[];
+const API='';
+let token, visitHistory=[];
+const profileTags={chronic:[],medication:[],allergy:[]};
+
+// ---- Section switcher ----
+function showSection(name){
+  ['overview','history','meds','profile'].forEach(s=>{
+    document.getElementById('sec-'+s).classList.toggle('hidden', s!==name);
+    const btn=document.getElementById('nav-'+s);
+    if(btn){
+      if(s===name){btn.classList.add('nav-active');btn.classList.remove('text-onsv');}
+      else{btn.classList.remove('nav-active');btn.classList.add('text-onsv');}
+    }
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ---- Init ----
 async function init(){
   token=localStorage.getItem('anamnez_token');
   if(!token){location.href='login.html';return;}
@@ -225,49 +455,91 @@ async function init(){
     const me=await fetch(`${API}/auth/me`,{headers:{Authorization:`Bearer ${token}`}});
     if(!me.ok){location.href='login.html';return;}
     const u=await me.json();
+    if(u.role==='doctor'||u.role==='admin'||u.role==='personnel'){location.href='doctor.html';return;}
     if(u.role!=='patient'){location.href='index.html';return;}
     const n=u.name||u.email;
     document.getElementById('userName').textContent=n;
     document.getElementById('welcomeName').textContent=n.split(' ')[0];
     document.getElementById('sidebarName').textContent=n;
     document.getElementById('avatarInitial').textContent=n.charAt(0).toUpperCase();
+    document.getElementById('prof-name').textContent=n;
+    document.getElementById('prof-email').textContent=u.email||'—';
+
     const[pr,hr]=await Promise.all([
       fetch(`${API}/auth/profile`,{headers:{Authorization:`Bearer ${token}`}}),
       fetch(`${API}/api/patient/history`,{headers:{Authorization:`Bearer ${token}`}})
     ]);
-    if(pr.ok){renderProfile(await pr.json());}
-    if(hr.ok){const d=await hr.json();visitHistory=d.sessions||d||[];renderVisits(visitHistory);}
+    if(pr.ok){applyProfile(await pr.json());}
+    if(hr.ok){const d=await hr.json();visitHistory=d.sessions||d.history||d||[];renderVisits(visitHistory);}
     renderStats();
   }catch(e){console.error(e);}
   document.getElementById('loadingState').classList.add('hidden');
   document.getElementById('mainContent').classList.remove('hidden');
 }
-function renderProfile(p){
-  renderTags('allergyTags',p.allergies||[],'tag bg-errc text-err','Alerji kaydı yok');
-  renderTags('chronicTags',p.chronic_diseases||[],'tag bg-secc text-sec','Kayıtlı hastalık yok');
-  renderTags('medTagsSmall',p.medications||[],'tag bg-surf text-ons border border-surfc','Kayıtlı ilaç yok');
-  const mdl=document.getElementById('medDetailList');
-  if((p.medications||[]).length){
-    mdl.innerHTML=p.medications.map(m=>`<div class="card p-4 flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-secc flex items-center justify-center flex-shrink-0">
-        <span class="material-symbols-outlined msym text-sec text-[18px]">pill</span>
-      </div>
-      <div><p class="font-semibold text-ons text-sm">${esc(m)}</p><p class="text-xs text-onsv">Düzenli kullanım</p></div>
-    </div>`).join('');
+
+function applyProfile(data){
+  const p=data.profile||data;
+  // Fill form
+  if(p.birth_year) document.getElementById('inp-birth-year').value=p.birth_year;
+  if(p.gender) document.getElementById('inp-gender').value=p.gender;
+  if(p.blood_type) document.getElementById('inp-blood').value=p.blood_type;
+  if(p.notes) document.getElementById('inp-notes').value=p.notes;
+  if(Array.isArray(p.chronic_diseases)){profileTags.chronic=p.chronic_diseases;renderPTags('chronic');}
+  if(Array.isArray(p.medications)){profileTags.medication=p.medications;renderPTags('medication');}
+  if(Array.isArray(p.allergies)){profileTags.allergy=p.allergies;renderPTags('allergy');}
+  // Summary counts
+  document.getElementById('summary-chronic').textContent=(p.chronic_diseases||[]).length;
+  document.getElementById('summary-med').textContent=(p.medications||[]).length;
+  document.getElementById('summary-allergy').textContent=(p.allergies||[]).length;
+  // Overview tags
+  renderDisplayTags('allergyTags',p.allergies||[],'tag bg-errc text-err','Alerji kaydı yok');
+
+  // ── Alerji Acil Banner ──────────────────────────────────
+  const allergyBanner = document.getElementById('allergy-banner');
+  const allergyBannerTxt = document.getElementById('allergy-banner-txt');
+  if (allergyBanner && (p.allergies || []).length > 0) {
+    allergyBanner.classList.remove('hidden');
+    allergyBannerTxt.textContent = 'Bilinen alerjileriniz: ' + p.allergies.join(', ') + '. Doktorunuza iletilecektir.';
   }
+  renderDisplayTags('chronicTags',p.chronic_diseases||[],'tag bg-secc text-sec','Kayıtlı hastalık yok');
+  renderDisplayTags('medTagsSmall',p.medications||[],'tag bg-surf text-ons border border-surfc','Kayıtlı ilaç yok');
+  // Med detail list
+  const mdl=document.getElementById('medDetailList');
+  const mdlf=document.getElementById('medDetailListFull');
+  const meds=p.medications||[];
+  const medHtml=meds.length
+    ? meds.map(m=>`<div class="card p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-secc flex items-center justify-center flex-shrink-0">
+          <span class="material-symbols-outlined msym text-sec text-[18px]">pill</span>
+        </div>
+        <div><p class="font-semibold text-ons text-sm">${esc(m)}</p><p class="text-xs text-onsv">Düzenli kullanım</p></div>
+      </div>`).join('')
+    : `<div class="card p-4 text-center text-onsv text-sm col-span-full">Kayıtlı ilaç yok. <button onclick="showSection('profile')" class="text-sec hover:underline">Eklemek için tıklayın</button></div>`;
+  if(mdl) mdl.innerHTML=medHtml;
+  if(mdlf) mdlf.innerHTML=medHtml;
 }
-function renderTags(id,items,cls,empty){
+
+function renderDisplayTags(id,items,cls,empty){
   const el=document.getElementById(id);
+  if(!el)return;
   el.innerHTML=items.length?items.map(i=>`<span class="${cls}">${esc(i)}</span>`).join(''):`<span class="text-onsv text-sm">${empty}</span>`;
 }
+
 function renderVisits(visits){
-  document.getElementById('visitCount').textContent=`${visits.length} ziyaret`;
-  if(!visits.length)return;
+  const count=visits.length;
+  document.getElementById('visitCount').textContent=`${count} ziyaret`;
+  // pstat
+  document.getElementById('pstat-total').textContent=count;
+  document.getElementById('pstat-red').textContent=visits.filter(v=>(v.triage_level||'GREEN')==='RED').length;
+  document.getElementById('pstat-green').textContent=visits.filter(v=>(v.triage_level||'GREEN')==='GREEN').length;
+
+  if(!count)return;
   const lbl={RED:'🔴 ACİL',YELLOW:'🟡 KRİTİK',GREEN:'🟢 RUTİN'};
-  document.getElementById('visitList').innerHTML=visits.slice().reverse().map((v,i)=>{
+  const makeCard=(v,i)=>{
     const tl=v.triage_level||v.summary?.triage_level||'GREEN';
     const date=v.created_at?new Date(v.created_at).toLocaleString('tr-TR'):'—';
     const complaint=v.chief_complaint||v.summary?.chief_complaint||'Belirtilmemiş';
+    const sid=v.session_id||v.id;
     return `<div class="card p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 fade" style="animation-delay:${i*0.05}s">
       <div class="flex items-start gap-4">
         <div class="w-10 h-10 rounded-xl badge-${tl} flex items-center justify-center flex-shrink-0 font-bold text-sm">${tl[0]}</div>
@@ -275,11 +547,15 @@ function renderVisits(visits){
       </div>
       <div class="flex items-center gap-3 ml-14 sm:ml-0">
         <span class="tag badge-${tl} text-xs font-bold">${lbl[tl]||tl}</span>
-        ${v.id?`<a href="summary.html?id=${v.id}" class="text-xs text-sec hover:underline flex items-center gap-1"><span class="material-symbols-outlined msym text-[14px]">open_in_new</span>Rapor</a>`:''}
+        ${sid?`<button onclick="openVisitReport('${sid}')" class="text-xs text-sec hover:underline flex items-center gap-1"><span class="material-symbols-outlined msym text-[14px]">open_in_new</span>Rapor</button>`:''}
       </div>
     </div>`;
-  }).join('');
+  };
+  const html=visits.slice().reverse().map(makeCard).join('');
+  document.getElementById('visitList').innerHTML=html;
+  document.getElementById('visitListFull').innerHTML=html;
 }
+
 function renderStats(){
   const t=visitHistory.length;
   document.getElementById('statTotal').textContent=t;
@@ -287,10 +563,123 @@ function renderStats(){
   document.getElementById('statYellow').textContent=visitHistory.filter(v=>(v.triage_level||'GREEN')==='YELLOW').length;
   document.getElementById('statGreen').textContent=visitHistory.filter(v=>(v.triage_level||'GREEN')==='GREEN').length;
 }
+
+// ---- Profile tag management ----
+function renderPTags(category){
+  const container=document.getElementById(`${category}-tags`);
+  if(!container)return;
+  const clsMap={chronic:'ptag ptag-blue',medication:'ptag ptag-green',allergy:'ptag ptag-red'};
+  container.innerHTML=profileTags[category].map((t,i)=>
+    `<span class="${clsMap[category]}">${esc(t)}<button onclick="removeTag('${category}',${i})" class="ml-1 hover:opacity-70"><span class="material-symbols-outlined msym text-[11px]">close</span></button></span>`
+  ).join('');
+  // update summary counts
+  document.getElementById('summary-chronic').textContent=profileTags.chronic.length;
+  document.getElementById('summary-med').textContent=profileTags.medication.length;
+  document.getElementById('summary-allergy').textContent=profileTags.allergy.length;
+}
+
+function addTag(event,category){
+  if(event.key!=='Enter')return;
+  event.preventDefault();
+  const idMap={chronic:'inp-chronic',medication:'inp-medication',allergy:'inp-allergy'};
+  const inp=document.getElementById(idMap[category]);
+  const val=inp.value.trim();
+  if(val&&!profileTags[category].includes(val)){profileTags[category].push(val);renderPTags(category);}
+  inp.value='';
+}
+
+function addTagBtn(category){
+  const idMap={chronic:'inp-chronic',medication:'inp-medication',allergy:'inp-allergy'};
+  const inp=document.getElementById(idMap[category]);
+  const val=inp.value.trim();
+  if(val&&!profileTags[category].includes(val)){profileTags[category].push(val);renderPTags(category);}
+  inp.value='';
+}
+
+function removeTag(category,idx){
+  profileTags[category].splice(idx,1);
+  renderPTags(category);
+}
+
+async function saveProfile(){
+  const btn=document.getElementById('btn-save');
+  btn.disabled=true;
+  btn.innerHTML='<span class="material-symbols-outlined msym spin text-[14px]">refresh</span> Kaydediliyor...';
+  const body={
+    birth_year:parseInt(document.getElementById('inp-birth-year').value)||null,
+    gender:document.getElementById('inp-gender').value||null,
+    blood_type:document.getElementById('inp-blood').value||null,
+    chronic_diseases:profileTags.chronic,
+    medications:profileTags.medication,
+    allergies:profileTags.allergy,
+    notes:document.getElementById('inp-notes').value.trim(),
+  };
+  try{
+    const res=await fetch(`${API}/auth/profile`,{method:'PUT',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok)throw new Error();
+    const msg=document.getElementById('save-msg');
+    msg.classList.remove('hidden');msg.classList.add('flex');
+    showToast('Profil kaydedildi ✓');
+    // Refresh display tags
+    renderDisplayTags('allergyTags',profileTags.allergy,'tag bg-errc text-err','Alerji kaydı yok');
+    renderDisplayTags('chronicTags',profileTags.chronic,'tag bg-secc text-sec','Kayıtlı hastalık yok');
+    renderDisplayTags('medTagsSmall',profileTags.medication,'tag bg-surf text-ons border border-surfc','Kayıtlı ilaç yok');
+    setTimeout(()=>{msg.classList.add('hidden');msg.classList.remove('flex');},3000);
+  }catch(e){
+    showToast('Kayıt başarısız.', true);
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='<span class="material-symbols-outlined msym text-[16px]">save</span> Kaydet';
+  }
+}
+
+function openVisitReport(sessionId){
+  fetch(`${API}/api/session/${sessionId}/summary`,{headers:{Authorization:`Bearer ${token}`}})
+    .then(r=>r.ok?r.json():null)
+    .then(data=>{
+      if(data){localStorage.setItem('anamnez_summary',JSON.stringify(data));window.location.href='summary.html';}
+      else showToast('Rapor yüklenemedi.',true);
+    })
+    .catch(()=>showToast('Rapor yüklenemedi.',true));
+}
+
+function showToast(msg,isErr=false){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.background=isErr?'#ba1a1a':'#006a68';
+  el.classList.remove('hidden');el.classList.add('flex');
+  setTimeout(()=>{el.classList.add('hidden');el.classList.remove('flex');},3000);
+}
+
 function logout(){localStorage.removeItem('anamnez_token');localStorage.removeItem('anamnez_user');location.href='login.html';}
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+
 document.addEventListener('DOMContentLoaded',init);
 </script>
+<!-- Mobil Alt Navigasyon (sad MD altı göster) -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-surfc z-40 flex md:hidden">
+  <button onclick="showSection('overview')" class="flex-1 flex flex-col items-center py-3 text-sec">
+    <span class="material-symbols-outlined msym text-[22px]">dashboard</span>
+    <span class="text-[10px] font-semibold mt-0.5">Genel</span>
+  </button>
+  <button onclick="showSection('history')" class="flex-1 flex flex-col items-center py-3 text-onsv">
+    <span class="material-symbols-outlined msym text-[22px]">history</span>
+    <span class="text-[10px] font-medium mt-0.5">Geçmiş</span>
+  </button>
+  <a href="index.html" class="flex-1 flex flex-col items-center py-3 text-white bg-sec">
+    <span class="material-symbols-outlined msym text-[22px]">add_circle</span>
+    <span class="text-[10px] font-bold mt-0.5">Mülakat</span>
+  </a>
+  <button onclick="showSection('meds')" class="flex-1 flex flex-col items-center py-3 text-onsv">
+    <span class="material-symbols-outlined msym text-[22px]">medication</span>
+    <span class="text-[10px] font-medium mt-0.5">İlaçlar</span>
+  </button>
+  <button onclick="showSection('profile')" class="flex-1 flex flex-col items-center py-3 text-onsv">
+    <span class="material-symbols-outlined msym text-[22px]">manage_accounts</span>
+    <span class="text-[10px] font-medium mt-0.5">Profil</span>
+  </button>
+</nav>
+
 </body>
 </html>
 

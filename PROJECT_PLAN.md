@@ -244,6 +244,8 @@ mediscreen/
 ```powershell
 # 1. Ollama kur ve gemma4 indir
 ollama pull gemma4:e4b
+# Opsiyonel — Vision analizi için:
+# ollama pull medgemma:4b
 
 # 2. Ollama başlat (arka planda)
 ollama serve

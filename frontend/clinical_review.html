@@ -190,6 +190,31 @@ tailwind.config = {
             </div>
           </section>
 
+          <!-- Sprint 15: AI Düşünce Süreci Paneli -->
+          <section class="bg-gradient-to-br from-[#001f2e] to-[#002f40] rounded-2xl border border-white/10 editorial-shadow fade text-white" id="thinkingPanel">
+            <button onclick="toggleThinking()" class="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 rounded-2xl transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-secc/20 flex items-center justify-center">
+                  <span class="material-symbols-outlined msym-fill text-secc text-[18px]">psychology</span>
+                </div>
+                <div class="text-left">
+                  <p class="font-bold text-[15px] text-white">AI Düşünce Süreci</p>
+                  <p class="text-[11px] text-white/50 font-normal">Gemma 4 e4b · Zincir-Düşünce analizi</p>
+                </div>
+                <span class="px-2 py-0.5 rounded-full bg-secc/20 text-secc text-[10px] font-bold uppercase tracking-wider ml-1">Gemma 4</span>
+              </div>
+              <span id="thinking-chevron" class="material-symbols-outlined msym text-white/40 text-[22px] transition-transform duration-300">expand_more</span>
+            </button>
+            <div id="thinking-body" class="hidden px-6 pb-5">
+              <div class="border-t border-white/10 pt-4">
+                <div id="thinking-content" class="space-y-3 max-h-64 overflow-y-auto pr-1 scrollbar-thin">
+                  <p class="text-white/50 text-sm italic">Düşünce süreci verisi bulunamadı.</p>
+                </div>
+                <p class="text-[10px] text-white/30 mt-3">Bu panel, Gemma 4'ün mülakat sırasında ürettiği iç düşünce bloklarını (Chain-of-Thought) gösterir. Hastaya gösterilmez.</p>
+              </div>
+            </div>
+          </section>
+
           <!-- ICD-10 Table -->
           <section class="bg-surf p-6 rounded-2xl border border-surfc editorial-shadow fade">
             <div class="flex items-center justify-between mb-4">
@@ -362,7 +387,7 @@ async function loadData() {
 
     const queue = await queueRes.json();
     summaryData = await summaryRes.json();
-    sessionData = queue.patients?.find(p => p.id === sessionId);
+    sessionData = queue.patients?.find(p => p.session_id === sessionId);
 
     if (!summaryData && !sessionData) { showError(); return; }
 
@@ -387,7 +412,8 @@ function renderPage() {
   badge.textContent = { RED: '🔴 KIRMIZI', YELLOW: '🟡 SARI', GREEN: '🟢 YEŞİL' }[tl] || tl;
 
   // Confidence score
-  document.getElementById('confScore').childNodes[0].textContent = `${Math.round((s.confidence_score || 0) * 100)}%`;
+    // confidence_score backend'den 0-100 olarak geliyor (zaten yüzde)
+    document.getElementById('confScore').childNodes[0].textContent = `${Math.round(s.confidence_score || 0)}%`;
 
   // Chief complaint
   document.getElementById('chiefComplaint').textContent = `"${s.chief_complaint || sess.chief_complaint || '—'}"`;
@@ -452,6 +478,23 @@ function renderPage() {
     qa.innerHTML = '<p class="text-onsv text-sm">Mülakat transkripti bulunamadı.</p>';
   }
 
+  // Sprint 15: AI Thinking process
+  const thinkBlocks = s.thinking_blocks || sess.thinking_blocks || [];
+  const thinkEl = document.getElementById('thinking-content');
+  if (thinkBlocks.length && thinkEl) {
+    thinkEl.innerHTML = thinkBlocks.map((block, i) =>
+      `<div class="bg-white/5 rounded-xl p-3">
+        <p class="text-[10px] font-bold text-secc uppercase tracking-wider mb-1.5">Düşünce Bloğu ${i+1}</p>
+        <p class="text-[12px] text-white/70 leading-relaxed whitespace-pre-wrap">${escapeHtml(block)}</p>
+      </div>`
+    ).join('');
+  } else if (s.clinical_analysis && thinkEl) {
+    thinkEl.innerHTML = `<div class="bg-white/5 rounded-xl p-3">
+      <p class="text-[10px] font-bold text-secc uppercase tracking-wider mb-1.5">Klinik Analiz</p>
+      <p class="text-[12px] text-white/70 leading-relaxed whitespace-pre-wrap">${escapeHtml(s.clinical_analysis)}</p>
+    </div>`;
+  }
+
   // Existing doctor note
   if (sess.doctor_note) {
     document.getElementById('doctorNotes').value = sess.doctor_note;
@@ -504,13 +547,15 @@ async function suggestICD10() {
   btn.disabled = true;
   btn.innerHTML = '<span class="material-symbols-outlined msym text-[16px] animate-spin">autorenew</span> Öneriliyor...';
   try {
+    // Backend: GET /api/session/{id}/icd10
     const res = await fetch(`${API}/api/session/${sessionId}/icd10`, {
-      method: 'POST',
+      method: 'GET',
       headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) {
       const data = await res.json();
-      if (data.icd10_codes?.length) renderICD10(data.icd10_codes);
+      const codes = data.icd10_codes || data.icd10_suggestions || [];
+      if (codes.length) renderICD10(codes);
     }
   } catch(e) {}
   btn.disabled = false;
@@ -521,8 +566,9 @@ async function saveNote() {
   if (!sessionId || !token) return;
   const note = document.getElementById('doctorNotes').value.trim();
   try {
+    // Backend: POST /api/session/{id}/note
     const res = await fetch(`${API}/api/session/${sessionId}/note`, {
-      method: 'PUT',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ note })
     });
@@ -537,8 +583,9 @@ async function saveNote() {
 async function markSeen() {
   if (!sessionId || !token) return;
   try {
+    // Backend: PUT /api/session/{id}/seen
     await fetch(`${API}/api/session/${sessionId}/seen`, {
-      method: 'POST',
+      method: 'PUT',
       headers: { Authorization: `Bearer ${token}` }
     });
     alert('Hasta görüldü olarak işaretlendi.');
@@ -552,11 +599,12 @@ async function exportFHIR() {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) {
-      const blob = await res.blob();
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `fhir-${sessionId.slice(0,8)}.json`;
+      a.download = `fhir-r4-${sessionId.slice(0,8)}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -570,6 +618,14 @@ function exportPDF() {
 function showError() {
   document.getElementById('loadingState').classList.add('hidden');
   document.getElementById('errorState').classList.remove('hidden');
+}
+
+function toggleThinking() {
+  const body = document.getElementById('thinking-body');
+  const chevron = document.getElementById('thinking-chevron');
+  const isHidden = body.classList.contains('hidden');
+  body.classList.toggle('hidden', !isHidden);
+  chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
 }
 
 function logout() {

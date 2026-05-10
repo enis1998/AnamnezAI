@@ -69,16 +69,16 @@ tailwind.config = {
       <span id="conn-text"></span>
     </div>
     <!-- Kullanıcı Pill -->
-    <div id="user-pill" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-surf border border-surfc text-[12px] font-semibold text-pri cursor-pointer hover:bg-surfc transition-all group relative">
+    <div id="user-pill" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-surf border border-surfc text-[12px] font-semibold text-pri cursor-pointer hover:bg-surfc transition-all relative" onclick="toggleUserMenu(event)">
       <span class="material-symbols-outlined msym-fill text-[15px] text-sec">account_circle</span>
       <span id="user-name-pill">Kullanıcı</span>
-      <span class="material-symbols-outlined msym text-[13px] text-ouv">expand_more</span>
+      <span class="material-symbols-outlined msym text-[13px] text-ouv" id="user-menu-chevron">expand_more</span>
       <!-- Dropdown -->
-      <div class="absolute top-full right-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-surfc hidden group-hover:block z-50 py-1">
+      <div id="user-dropdown" class="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-surfc hidden z-50 py-1" onclick="event.stopPropagation()">
         <a href="patient_dashboard.html" class="flex items-center gap-2 px-4 py-2.5 hover:bg-surf text-[12px] font-medium text-ons transition-colors">
           <span class="material-symbols-outlined msym text-[15px] text-sec">dashboard</span>Hasta Panelim
         </a>
-        <a href="profile.html" class="flex items-center gap-2 px-4 py-2.5 hover:bg-surf text-[12px] font-medium text-ons transition-colors">
+        <a href="patient_dashboard.html" class="flex items-center gap-2 px-4 py-2.5 hover:bg-surf text-[12px] font-medium text-ons transition-colors">
           <span class="material-symbols-outlined msym text-[15px] text-sec">manage_accounts</span>Profilim & Geçmiş
         </a>
         <div class="h-px bg-surfc mx-2"></div>
@@ -116,7 +116,7 @@ tailwind.config = {
       <span class="text-sec" id="txt-hero2">AI sizi dinler.</span>
     </h1>
     <p class="text-onsv text-[14px] max-w-sm mx-auto leading-relaxed" id="txt-sub">
-      Yapay zeka 5 akıllı soru sorar, semptomlarınızı analiz eder ve doktorunuza hazır klinik özet sunar.
+      Yapay zeka akıllı sorular sorar, semptomlarınızı analiz eder ve doktorunuza hazır klinik özet sunar.
     </p>
   </div>
 
@@ -191,6 +191,37 @@ tailwind.config = {
               <input id="inp-rr" type="number" min="5" max="60" placeholder="16"
                 class="w-full rounded-xl bg-surfc px-3 py-2.5 text-[13px] border border-transparent transition-all"/>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Görüntü Analizi (isteğe bağlı) — MedGemma Vision -->
+      <div>
+        <button type="button" onclick="toggleImageUpload()" id="btn-img-toggle"
+          class="flex items-center gap-1.5 text-[11px] font-bold text-sec hover:text-pric transition-colors w-full">
+          <span class="material-symbols-outlined msym text-[14px]" id="img-chevron">expand_more</span>
+          <span id="lbl-img-toggle">+ Görüntü Ekle (Yara, Cilt, EKG, Röntgen...)</span>
+        </button>
+        <div id="img-panel" class="hidden mt-3">
+          <!-- Drop zone -->
+          <label id="img-drop-zone"
+            class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-ouv rounded-xl cursor-pointer bg-surfc hover:bg-surfcl transition-colors">
+            <span class="material-symbols-outlined msym text-sec text-[28px] mb-1">add_photo_alternate</span>
+            <span class="text-[12px] font-semibold text-onsv" id="lbl-img-drop">Görüntü seç veya sürükle</span>
+            <span class="text-[10px] text-onsv opacity-60">JPG, PNG, WEBP — maks. 15 MB</span>
+            <input id="inp-image" type="file" accept="image/*" class="hidden" onchange="handleImageSelect(this)"/>
+          </label>
+          <!-- Preview -->
+          <div id="img-preview-wrap" class="hidden mt-2 relative">
+            <img id="img-preview" class="w-full max-h-44 object-contain rounded-xl border border-ouv/30 bg-surfc"/>
+            <button onclick="clearImage()" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-err flex items-center justify-center shadow-md">
+              <span class="material-symbols-outlined msym-fill text-white text-[14px]">close</span>
+            </button>
+          </div>
+          <!-- MedGemma badge -->
+          <div id="img-model-badge" class="hidden mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-secc/50 rounded-xl">
+            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">biotech</span>
+            <span class="text-[11px] font-semibold text-sec" id="txt-img-badge">MedGemma Vision ile analiz edilecek</span>
           </div>
         </div>
       </div>
@@ -287,13 +318,9 @@ tailwind.config = {
         </div>
       </div>
     </div>
-    <!-- Progress dots stepper (Sprint 6) -->
-    <div class="flex justify-center gap-2 mb-2">
-      <div id="dot-1" class="w-2 h-2 rounded-full bg-sec transition-all duration-300"></div>
-      <div id="dot-2" class="w-2 h-2 rounded-full bg-surfc transition-all duration-300"></div>
-      <div id="dot-3" class="w-2 h-2 rounded-full bg-surfc transition-all duration-300"></div>
-      <div id="dot-4" class="w-2 h-2 rounded-full bg-surfc transition-all duration-300"></div>
-      <div id="dot-5" class="w-2 h-2 rounded-full bg-surfc transition-all duration-300"></div>
+    <!-- Progress dots stepper — adaptif soru sayısına göre dinamik oluşturulur -->
+    <div id="step-dots" class="flex justify-center gap-2 mb-2">
+      <!-- JS tarafından doldurulur -->
     </div>
     <div class="w-full h-1.5 bg-surfc rounded-full overflow-hidden">
       <div id="prog-bar" class="prog-bar h-full bg-sec rounded-full" style="width:20%"></div>
@@ -359,6 +386,11 @@ tailwind.config = {
         <span class="material-symbols-outlined msym text-[16px]" id="voice-icon">mic</span>
         <span id="txt-voice">Sesli</span>
       </button>
+      <button onclick="toggleTTS()" title="Sesli çıkış (TTS)"
+        class="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-surfc text-onsv hover:bg-secc hover:text-sec transition-all flex-shrink-0"
+        aria-label="Sesli çıkış toggle">
+        <span class="material-symbols-outlined msym text-[16px]" id="tts-icon">volume_up</span>
+      </button>
       <span id="txt-vstatus" class="text-[11px] text-onsv flex-1"></span>
       <button onclick="submitAnswer()" id="btn-next"
         class="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-pric text-white font-bold text-[13px]
@@ -421,6 +453,25 @@ function doLogout() {
   window.location.href = 'login.html';
 }
 
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('user-dropdown');
+  const ch = document.getElementById('user-menu-chevron');
+  const isOpen = !dd.classList.contains('hidden');
+  dd.classList.toggle('hidden', isOpen);
+  if (ch) ch.textContent = isOpen ? 'expand_more' : 'expand_less';
+}
+
+// Menü dışına tıklayınca kapat
+document.addEventListener('click', function() {
+  const dd = document.getElementById('user-dropdown');
+  const ch = document.getElementById('user-menu-chevron');
+  if (dd && !dd.classList.contains('hidden')) {
+    dd.classList.add('hidden');
+    if (ch) ch.textContent = 'expand_more';
+  }
+});
+
 function initAuthNav() {
   const user = getUser();
   const pill = document.getElementById('user-pill');
@@ -430,7 +481,24 @@ function initAuthNav() {
     pill.classList.remove('hidden');
     pill.classList.add('flex');
     if (loginBtn) { loginBtn.classList.add('hidden'); loginBtn.classList.remove('flex'); }
-    // Hasta adını forma doldur
+
+    // Doktor / Admin / Personel bu sayfada olmamalı — kendi paneline yönlendir
+    const staffRoles = ['doctor', 'admin', 'personnel'];
+    if (staffRoles.includes(user.role)) {
+      const dest = user.role === 'admin' ? 'admin.html' : 'doctor.html';
+      showToast(
+        lang === 'en'
+          ? `Welcome Dr. ${user.name?.split(' ')[0]}! Redirecting to your panel...`
+          : `Hoş geldiniz Dr. ${user.name?.split(' ')[0]}! Doktor panelinize yönlendiriliyorsunuz...`
+      );
+      setTimeout(() => { window.location.href = dest; }, 1800);
+      // Formu kilitle — yanlışlıkla mülakat başlatılmasın
+      const btn = document.getElementById('btn-start');
+      if (btn) { btn.disabled = true; btn.classList.add('opacity-40', 'cursor-not-allowed'); }
+      return;
+    }
+
+    // Sadece HASTA rolü için adı forma doldur
     const nameInp = document.getElementById('inp-name');
     if (nameInp && !nameInp.value) nameInp.value = user.name || '';
   } else {
@@ -472,7 +540,7 @@ const T = {
   tr:{
     powered:'Gemma 4 ile Güçlendirildi',
     hero:'Doktorunuz sizi görmeden önce', hero2:'AI sizi dinler.',
-    sub:'Yapay zeka 5 akıllı soru sorar, semptomlarınızı analiz eder ve doktorunuza hazır klinik özet sunar.',
+    sub:'Yapay zeka akıllı sorular sorar, semptomlarınızı analiz eder ve doktorunuza hazır klinik özet sunar.',
     formTitle:'Hasta Bilgileri', lblName:'Ad Soyad', lblAge:'Yaş', lblGender:'Cinsiyet',
     optM:'Erkek', optF:'Kadın', optO:'Belirtmek İstemiyorum',
     btnStart:'Mülakatı Başlat', privacy:'🔒 Verileriniz yerel olarak tutulur ve paylaşılmaz.',
@@ -659,9 +727,12 @@ function escapeHtml(text){
     .replace(/\n/g,'<br>');
 }
 
+// Model sabit: gemma4:e4b
 function addAIMessage(text){
   chatHistory.push({role:'ai',text});
   renderChat();
+  // Sprint 12: Soruyu seslendir
+  speakText(text);
 }
 function addUserMessage(text){
   chatHistory.push({role:'user',text});
@@ -669,7 +740,9 @@ function addUserMessage(text){
 }
 function renderChat(){
   const area = document.getElementById('chat-area');
-  area.innerHTML = chatHistory.map(m => m.role==='ai' ? `
+  // Sprint 16: Alerji banner kontrolü
+  const allergyBanner = buildAllergyBanner();
+  area.innerHTML = (allergyBanner ? `<div class="slide">${allergyBanner}</div>` : '') + chatHistory.map(m => m.role==='ai' ? `
     <div class="flex items-start gap-3 slide">
       <div class="w-8 h-8 rounded-full bg-pric/10 flex items-center justify-center flex-shrink-0 mt-0.5">
         <span class="material-symbols-outlined msym text-pric text-[15px]">smart_toy</span>
@@ -693,6 +766,21 @@ function renderChat(){
     </div>`
   ).join('');
   area.scrollTop = area.scrollHeight;
+}
+
+// Sprint 16: Alerji banner
+function buildAllergyBanner() {
+  try {
+    const user = getUser();
+    if (!user) return '';
+    const profile = JSON.parse(localStorage.getItem('anamnez_profile') || 'null');
+    const allergies = profile?.allergies || '';
+    if (!allergies || allergies.trim().length < 2) return '';
+    return `<div class="flex items-start gap-2 px-3 py-2 rounded-xl bg-errc border border-err/30 text-[11px] font-semibold text-err mb-1">
+      <span class="material-symbols-outlined msym-fill text-[14px] flex-shrink-0 mt-0.5">warning</span>
+      <span>⚠ Bilinen alerji: <strong>${allergies}</strong> — Bu bilgi AI'a iletilmektedir.</span>
+    </div>`;
+  } catch { return ''; }
 }
 function showTyping(show){
   const el=document.getElementById('typing-ind');
@@ -809,12 +897,14 @@ async function _doStartInterview(name, age, gender, vitals=null){
 function updateProgress(step, total){
   document.getElementById('txt-step').textContent=`${step}/${total}`;
   document.getElementById('prog-bar').style.width=`${(step/total)*100}%`;
-  // Update progress dots
-  for(let i=1;i<=5;i++){
-    const dot = document.getElementById(`dot-${i}`);
-    if(dot) dot.className = i <= step
-      ? 'w-2.5 h-2.5 rounded-full bg-sec transition-all duration-300'
-      : 'w-2 h-2 rounded-full bg-surfc transition-all duration-300';
+  // Adaptif dot'lar — total'e göre dinamik oluştur
+  const dotsEl = document.getElementById('step-dots');
+  if(dotsEl){
+    dotsEl.innerHTML = Array.from({length:total},(_,i)=>{
+      const active = i < step;
+      const current = i === step-1;
+      return `<div class="${current?'w-3 h-3':'w-2 h-2'} rounded-full ${active?'bg-sec':'bg-surfc'} transition-all duration-300"></div>`;
+    }).join('');
   }
   const isLast = step >= total;
   document.getElementById('txt-btn-next').textContent = isLast ? t('finishBtn') : t('sendBtn');
@@ -831,6 +921,20 @@ async function submitAnswer(){
   addUserMessage(ans);
   document.getElementById('inp-answer').value='';
   showTyping(true);
+
+  // Sprint 14: Gemma 4 Düşünüyor animasyonu
+  const typingTxt = document.getElementById('txt-typing');
+  let thinkInterval = null;
+  const thinkPhrases = lang==='tr'
+    ? ['Gemma 4 düşünüyor...','Klinik bağlam analiz ediliyor...','MTS kriterleri değerlendiriliyor...','Sonraki soru hazırlanıyor...']
+    : ['Gemma 4 is thinking...','Analyzing clinical context...','Evaluating MTS criteria...','Preparing next question...'];
+  let thinkIdx = 0;
+  if (typingTxt) {
+    thinkInterval = setInterval(() => {
+      thinkIdx = (thinkIdx + 1) % thinkPhrases.length;
+      typingTxt.textContent = thinkPhrases[thinkIdx];
+    }, 2500);
+  }
 
   try {
     const res = await fetch(`${API}/api/session/answer`,{
@@ -859,13 +963,35 @@ async function submitAnswer(){
   } catch(e) {
     showTyping(false);
     const msg = e.name==='TimeoutError'
-      ? 'Gemma 4 yanıt vermedi. Lütfen tekrar gönderin.'
+      ? (lang==='tr' ? '⚠️ Gemma 4 yanıt vermedi. Lütfen tekrar deneyin.' : '⚠️ Gemma 4 timed out. Please try again.')
       : (e.message || t('errConn'));
-    showToast(msg, true);
+    // Sprint 14: Toast + lastAnswer kaydet + Retry butonu
+    showToastWithRetry(msg, ans);
   } finally {
+    if (thinkInterval) clearInterval(thinkInterval);
+    if (typingTxt) typingTxt.textContent = t('typing');
     btn.disabled=false;
     btn.innerHTML=`<span id="txt-btn-next">${t('sendBtn')}</span><span class="material-symbols-outlined msym text-[16px]">send</span>`;
   }
+}
+
+function showToastWithRetry(msg, lastAnswer='') {
+  const el = document.getElementById('toast');
+  el.innerHTML = `<span>${msg}</span>${lastAnswer ? `<button onclick="retryAnswer(${JSON.stringify(lastAnswer)})" class="ml-3 px-2 py-0.5 rounded-lg bg-white text-err text-[11px] font-bold hover:opacity-80">🔄 Tekrar Dene</button>` : ''}`;
+  el.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl text-[13px] font-medium shadow-xl z-50 flex items-center gap-2 bg-err text-white';
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 6000);
+}
+
+function retryAnswer(ans) {
+  document.getElementById('toast').classList.add('hidden');
+  document.getElementById('inp-answer').value = ans;
+  // Chat'ten son user mesajını kaldır (add edildiydi)
+  if (chatHistory.length && chatHistory[chatHistory.length-1].role === 'user') {
+    chatHistory.pop();
+    renderChat();
+  }
+  submitAnswer();
 }
 
 async function fetchSummary(){
@@ -873,6 +999,34 @@ async function fetchSummary(){
     const res = await fetch(`${API}/api/session/${sessionId}/summary`);
     if(!res.ok) throw new Error();
     const data = await res.json();
+
+    // 🔬 Görüntü varsa — MedGemma Vision analizi
+    if(selectedImageFile){
+      try {
+        const viewEl = document.getElementById('view-analyzing');
+        if(viewEl){
+          const tip = viewEl.querySelector('p');
+          if(tip) tip.textContent = 'Tıbbi görüntü MedGemma Vision ile analiz ediliyor...';
+        }
+        const form = new FormData();
+        form.append('file', selectedImageFile);
+        form.append('lang', lang);
+        form.append('session_id', sessionId);
+        const imgRes = await fetch(`${API}/api/analyze-image`, {
+          method:'POST', body: form,
+          signal: AbortSignal.timeout(140000)
+        });
+        if(imgRes.ok){
+          const imgData = await imgRes.json();
+          data.image_findings = imgData.findings;
+          data.image_model    = imgData.model_used;
+          data.is_medgemma    = imgData.is_medgemma;
+        }
+      } catch(e) {
+        console.warn('[Vision] Görüntü analizi başarısız (non-fatal):', e.message);
+      }
+    }
+
     localStorage.setItem('anamnez_summary', JSON.stringify(data));
     window.location.href='summary.html';
   } catch {
@@ -911,6 +1065,29 @@ function toggleVoice(){
   recognition.start();
 }
 
+// ── Sprint 12: TTS (Text-to-Speech) ──
+let _ttsEnabled = localStorage.getItem('tts_enabled') !== 'off';
+function speakText(text) {
+  if (!_ttsEnabled || !('speechSynthesis' in window) || !text) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang  = lang === 'en' ? 'en-US' : 'tr-TR';
+  utt.rate  = 0.92;
+  const voices = window.speechSynthesis.getVoices();
+  const match  = voices.find(v => v.lang.startsWith(lang === 'en' ? 'en' : 'tr'));
+  if (match) utt.voice = match;
+  window.speechSynthesis.speak(utt);
+}
+function toggleTTS() {
+  _ttsEnabled = !_ttsEnabled;
+  localStorage.setItem('tts_enabled', _ttsEnabled ? 'on' : 'off');
+  const icon = document.getElementById('tts-icon');
+  if (icon) icon.textContent = _ttsEnabled ? 'volume_up' : 'volume_off';
+  if (!_ttsEnabled) window.speechSynthesis.cancel();
+  showToast(_ttsEnabled ? (lang==='en'?'Voice output on':'Sesli çıkış açık') : (lang==='en'?'Voice output off':'Sesli çıkış kapalı'));
+}
+if ('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
 function handleKey(e){
   if(e.key==='Enter'&&e.ctrlKey){e.preventDefault();submitAnswer();}
 }
@@ -923,69 +1100,50 @@ function toggleVitals(){
   chevron.textContent = hidden ? 'expand_more' : 'expand_less';
 }
 
-// ── Image Upload (Gemma 4 Multimodal) ──
-function handleImageUpload(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  if(!file.type.startsWith('image/')){
-    showToast('Lütfen bir görüntü dosyası seçin (JPEG, PNG vb.)', true); return;
-  }
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const dataUrl = ev.target.result;
-    // base64 sadece veri kısmını al (prefix olmadan)
-    currentImageBase64 = dataUrl.split(',')[1];
-    document.getElementById('img-thumb').src = dataUrl;
-    document.getElementById('img-preview-area').classList.remove('hidden');
-    document.getElementById('img-analysis-result').classList.add('hidden');
-    document.getElementById('img-analysis-result').textContent = '';
-  };
-  reader.readAsDataURL(file);
+// ── Image Upload — MedGemma Vision ──
+let selectedImageFile = null;
+
+function toggleImageUpload(){
+  const panel = document.getElementById('img-panel');
+  const chev  = document.getElementById('img-chevron');
+  panel.classList.toggle('hidden');
+  chev.textContent = panel.classList.contains('hidden') ? 'expand_more' : 'expand_less';
+  // Otomatik MedGemma badge kontrolü
+  if(!panel.classList.contains('hidden')) _checkVisionModel();
+}
+
+async function _checkVisionModel(){
+  try {
+    const r = await fetch(`${API}/health`);
+    const d = await r.json();
+    const badge = document.getElementById('txt-img-badge');
+    if(badge){
+      badge.textContent = d.medgemma_available
+        ? 'MedGemma Vision ile analiz edilecek 🏥'
+        : 'Gemma 4 Vision ile analiz edilecek (MedGemma kurulu değil)';
+    }
+  } catch(e){}
+}
+
+function handleImageSelect(input){
+  if(!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  if(file.size > 15 * 1024 * 1024){ showToast('Görüntü max 15 MB olmalı', true); return; }
+  selectedImageFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('img-preview').src = url;
+  document.getElementById('img-drop-zone').classList.add('hidden');
+  document.getElementById('img-preview-wrap').classList.remove('hidden');
+  document.getElementById('img-model-badge').classList.remove('hidden');
 }
 
 function clearImage(){
-  currentImageBase64 = null;
+  selectedImageFile = null;
   document.getElementById('inp-image').value = '';
-  document.getElementById('img-preview-area').classList.add('hidden');
-  document.getElementById('img-thumb').src = '';
-}
-
-async function analyzeImage(){
-  if(!currentImageBase64 || !sessionId){
-    showToast('Önce mülakat başlatın ve görüntü seçin.', true); return;
-  }
-  const btn = document.getElementById('btn-analyze-img');
-  const context = document.getElementById('img-context').value;
-  const resultEl = document.getElementById('img-analysis-result');
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-outlined msym spin text-[12px]">refresh</span> Analiz Ediliyor...';
-  resultEl.classList.add('hidden');
-
-  try {
-    const res = await fetch(`${API}/api/session/image-analyze`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({session_id: sessionId, image_base64: currentImageBase64, context}),
-      signal: AbortSignal.timeout(190000),
-    });
-    if(!res.ok){
-      const err = await res.json().catch(()=>({detail:'Analiz hatası'}));
-      throw new Error(err.detail || `HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    resultEl.textContent = '🔬 ' + data.analysis;
-    resultEl.classList.remove('hidden');
-    // Cevap alanına da kısaca ekle
-    const ta = document.getElementById('inp-answer');
-    if(ta && !ta.value.trim()) ta.value = `[Görüntü analizi (${context}): ${data.analysis.slice(0,120)}...]`;
-    showToast('Görüntü Gemma 4 Vision ile analiz edildi ✓');
-  } catch(e){
-    showToast(e.message || 'Görüntü analizi başarısız', true);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<span class="material-symbols-outlined msym text-[12px]">biotech</span>Gemma 4 ile Analiz Et';
-  }
+  document.getElementById('img-preview').src = '';
+  document.getElementById('img-drop-zone').classList.remove('hidden');
+  document.getElementById('img-preview-wrap').classList.add('hidden');
+  document.getElementById('img-model-badge').classList.add('hidden');
 }
 
 // ── Init ──

@@ -70,6 +70,14 @@ jobs:
             grep -l "manifest.json" "$f" && echo "    PWA manifest: OK" || echo "    PWA manifest: MISSING"
           done
 
+      - name: Verify TR+EN only (no Arabic)
+        run: |
+          if grep -r "message_ar\|lang-ar\|setLang('ar')\|dir=\"rtl\"\|lang=\"ar\"" frontend/ 2>/dev/null; then
+            echo "✗ Arabic language content found — project supports TR+EN only"
+            exit 1
+          fi
+          echo "✓ Language check passed: TR+EN only"
+
       - name: Check PWA assets exist
         run: |
           test -f frontend/manifest.json && echo "✓ manifest.json" || echo "✗ manifest.json MISSING"

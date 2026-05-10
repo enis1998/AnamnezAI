@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — Yapay Zeka Destekli Akıllı Hasta Ön Triajı</title>
+<meta name="description" content="Gemma 4 ile güçlendirilmiş yapay zeka hasta ön triaj platformu. Doktorunuz sizi görmeden önce AI sizi dinler, analiz eder ve klinik özet sunar."/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      pri:"#002f40", pric:"#00475e", sec:"#006a68", secc:"#a0f1ed",
+      surf:"#f4f7f9", surfc:"#e8ecee", surfcl:"#eef1f3", surflow:"#ffffff",
+      surfch:"#dde1e3", ons:"#191c1d", onsv:"#3f4749",
+      ouv:"#bfc7ca", err:"#ba1a1a", errc:"#ffdad6", warn:"#e07b26"
+    },
+    fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}
+  }}
+}
+</script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',sans-serif;background:#fff;color:#191c1d;overflow-x:hidden}
+  h1,h2,h3,h4{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+
+  /* Glass nav */
+  .glass-nav{background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+
+  /* Hero gradient */
+  .hero-bg{background:linear-gradient(135deg,#001f2d 0%,#002f40 40%,#003d52 70%,#006a68 100%)}
+  .hero-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,106,104,0.3) 0%,transparent 70%);pointer-events:none}
+
+  /* Animations */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(0,106,104,0.4)}50%{box-shadow:0 0 0 20px rgba(0,106,104,0)}}
+  @keyframes slideRight{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes countUp{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+  .fade-up{animation:fadeUp .6s ease both}
+  .fade-up-1{animation:fadeUp .6s .1s ease both;opacity:0}
+  .fade-up-2{animation:fadeUp .6s .2s ease both;opacity:0}
+  .fade-up-3{animation:fadeUp .6s .3s ease both;opacity:0}
+  .fade-up-4{animation:fadeUp .6s .4s ease both;opacity:0}
+  .float-anim{animation:float 4s ease-in-out infinite}
+  .pulse-btn{animation:pulse-glow 2.5s ease infinite}
+
+  /* Gradient text */
+  .grad-text{background:linear-gradient(90deg,#a0f1ed,#4dd9d5,#00b4ae);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .grad-text-warm{background:linear-gradient(90deg,#006a68,#00475e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+  /* Cards */
+  .feature-card{background:#fff;border-radius:24px;border:1px solid #e8ecee;transition:all .3s ease;cursor:default}
+  .feature-card:hover{transform:translateY(-6px);box-shadow:0 20px 60px rgba(0,47,64,0.12);border-color:#a0f1ed}
+
+  .step-line{position:absolute;top:28px;left:calc(50% + 28px);width:calc(100% - 56px);height:2px;background:linear-gradient(90deg,#a0f1ed,#e8ecee)}
+
+  /* Stats */
+  .stat-card{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(10px)}
+
+  /* Tech badge */
+  .tech-badge{background:rgba(160,241,237,0.15);border:1px solid rgba(160,241,237,0.3)}
+
+  /* Testimonial */
+  .quote-card{background:linear-gradient(135deg,#f4f7f9,#eef4f3)}
+
+  /* CTA section */
+  .cta-bg{background:linear-gradient(135deg,#001f2d,#003d52,#006a68)}
+
+  /* Mobile menu */
+  #mobile-menu{transition:all .3s ease}
+
+  /* Scroll indicator */
+  .scroll-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.4);transition:all .3s}
+  .scroll-dot.active{background:#a0f1ed;width:20px;border-radius:3px}
+
+  /* Number counter */
+  .counter{font-variant-numeric:tabular-nums}
+
+  /* Chat demo */
+  .chat-demo{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px}
+  .chat-msg-ai{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15)}
+  .chat-msg-user{background:rgba(0,106,104,0.5);border:1px solid rgba(0,106,104,0.6)}
+
+  /* Cursor blink */
+  .cursor::after{content:'|';animation:blink 1s ease infinite;color:#a0f1ed}
+
+  /* Section divider */
+  .wave-divider{overflow:hidden;line-height:0}
+  .wave-divider svg{display:block}
+
+  /* Highlight chip */
+  .highlight-chip{background:linear-gradient(90deg,rgba(160,241,237,0.2),rgba(0,106,104,0.2));border:1px solid rgba(160,241,237,0.4)}
+
+  /* Responsive */
+  @media(max-width:768px){
+    .hero-glow{width:300px;height:300px}
+    .step-line{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     NAV
+═══════════════════════════════════════════ -->
+<nav class="glass-nav fixed top-0 w-full z-50 border-b border-gray-100/60">
+  <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="landing.html" class="flex items-center gap-2.5 flex-shrink-0">
+      <div class="w-9 h-9 rounded-xl bg-pric flex items-center justify-center shadow-sm">
+        <span class="material-symbols-outlined msym-fill text-white text-[20px]">monitor_heart</span>
+      </div>
+      <div>
+        <span class="font-head font-bold text-pri text-[16px]">AnamnezAI</span>
+        <span class="hidden sm:inline text-[10px] font-medium text-sec ml-1.5 bg-secc/40 px-2 py-0.5 rounded-full">by MediScreen</span>
+      </div>
+    </a>
+
+    <!-- Desktop nav links -->
+    <div class="hidden md:flex items-center gap-7">
+      <a href="#features" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors">Özellikler</a>
+      <a href="#how-it-works" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors">Nasıl Çalışır</a>
+      <a href="#technology" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors">Teknoloji</a>
+      <a href="#audience" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors">Kimler İçin</a>
+    </div>
+
+    <!-- CTA buttons -->
+    <div class="flex items-center gap-3">
+      <a href="login.html" class="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold text-pric hover:text-pri transition-colors">
+        Giriş Yap
+      </a>
+      <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[13px] font-bold hover:bg-pri transition-all shadow-sm hover:shadow-md active:scale-[.97]">
+        <span class="material-symbols-outlined msym text-[15px]">rocket_launch</span>
+        <span class="hidden sm:inline">Ücretsiz Başla</span>
+        <span class="sm:hidden">Başla</span>
+      </a>
+      <!-- Mobile menu btn -->
+      <button id="menu-btn" onclick="toggleMenu()" class="md:hidden p-2 rounded-lg hover:bg-surf transition-colors">
+        <span class="material-symbols-outlined msym text-pri text-[22px]" id="menu-icon">menu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile dropdown -->
+  <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-surfc px-5 py-4 space-y-3">
+    <a href="#features" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
+      <span class="material-symbols-outlined msym text-sec text-[18px]">auto_awesome</span>Özellikler
+    </a>
+    <a href="#how-it-works" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
+      <span class="material-symbols-outlined msym text-sec text-[18px]">route</span>Nasıl Çalışır
+    </a>
+    <a href="#technology" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
+      <span class="material-symbols-outlined msym text-sec text-[18px]">memory</span>Teknoloji
+    </a>
+    <a href="#audience" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
+      <span class="material-symbols-outlined msym text-sec text-[18px]">groups</span>Kimler İçin
+    </a>
+    <div class="pt-2 border-t border-surfc flex gap-3">
+      <a href="login.html" class="flex-1 text-center py-2.5 rounded-xl border border-pric text-pric text-[13px] font-bold">Giriş Yap</a>
+      <a href="register.html" class="flex-1 text-center py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Kayıt Ol</a>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════ -->
+<section class="hero-bg min-h-screen flex items-center relative overflow-hidden pt-16">
+  <!-- Glow orbs -->
+  <div class="hero-glow" style="top:-100px;right:-100px;opacity:0.6"></div>
+  <div class="hero-glow" style="bottom:-200px;left:-150px;width:400px;height:400px;opacity:0.4"></div>
+
+  <!-- Grid pattern overlay -->
+  <div class="absolute inset-0 opacity-5" style="background-image:linear-gradient(rgba(255,255,255,0.1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.1) 1px,transparent 1px);background-size:60px 60px"></div>
+
+  <div class="max-w-6xl mx-auto px-5 py-20 w-full relative z-10">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+
+      <!-- Left: Text -->
+      <div>
+        <!-- Badge -->
+        <div class="highlight-chip inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 fade-up">
+          <span class="material-symbols-outlined msym-fill text-secc text-[14px]">auto_awesome</span>
+          <span class="text-[11px] font-bold text-secc uppercase tracking-widest">Gemma 4 · MedGemma Vision ile Güçlendirildi</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="font-head font-black text-white text-[42px] md:text-[56px] leading-[1.1] mb-5 fade-up-1">
+          Doktorunuz sizi görmeden önce<br/>
+          <span class="grad-text">AI sizi dinler.</span>
+        </h1>
+
+        <!-- Sub -->
+        <p class="text-white/70 text-[16px] leading-relaxed mb-8 max-w-lg fade-up-2">
+          AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, tanı kalitesini artırın.
+        </p>
+
+        <!-- CTA buttons -->
+        <div class="flex flex-wrap gap-4 mb-10 fade-up-3">
+          <a href="index.html" class="pulse-btn flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-sec text-white font-bold text-[15px] hover:bg-secc hover:text-pri transition-all shadow-lg">
+            <span class="material-symbols-outlined msym text-[20px]">play_circle</span>
+            Hemen Deneyin — Ücretsiz
+          </a>
+          <a href="#how-it-works" class="flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white font-semibold text-[15px] hover:bg-white/20 transition-all backdrop-blur-sm">
+            <span class="material-symbols-outlined msym text-[20px]">play_arrow</span>
+            Nasıl Çalışır
+          </a>
+        </div>
+
+        <!-- Trust signals -->
+        <div class="flex flex-wrap items-center gap-5 fade-up-4">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined msym-fill text-secc text-[16px]">shield</span>
+            <span class="text-white/60 text-[12px] font-medium">GDPR Uyumlu</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined msym-fill text-secc text-[16px]">lock</span>
+            <span class="text-white/60 text-[12px] font-medium">Yerel AI — Veri Dışarı Çıkmaz</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined msym-fill text-secc text-[16px]">language</span>
+            <span class="text-white/60 text-[12px] font-medium">TR / EN / AR Dil Desteği</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Chat Demo -->
+      <div class="float-anim">
+        <div class="chat-demo p-5 max-w-md mx-auto">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-4 pb-4 border-b border-white/10">
+            <div class="w-9 h-9 rounded-full bg-sec flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined msym-fill text-white text-[18px]">smart_toy</span>
+            </div>
+            <div>
+              <p class="text-white font-bold text-[13px]">AnamnezAI</p>
+              <div class="flex items-center gap-1.5">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                <span class="text-white/50 text-[11px]">Gemma 4 · Çevrimiçi</span>
+              </div>
+            </div>
+            <div class="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 border border-white/15">
+              <span class="material-symbols-outlined msym text-secc text-[12px]">verified</span>
+              <span class="text-secc text-[10px] font-bold">Güvenli</span>
+            </div>
+          </div>
+
+          <!-- Chat messages -->
+          <div class="space-y-3 mb-4">
+            <!-- AI msg 1 -->
+            <div class="flex items-start gap-2">
+              <div class="w-6 h-6 rounded-full bg-pric/80 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="material-symbols-outlined msym text-white text-[11px]">smart_toy</span>
+              </div>
+              <div class="chat-msg-ai px-3 py-2 rounded-2xl rounded-tl-sm max-w-[80%]">
+                <p class="text-white text-[12px] leading-relaxed">Merhaba Ayşe Hanım! 👋 Bugün sizi ne rahatsız ediyor? Şikayetinizi anlatır mısınız?</p>
+              </div>
+            </div>
+            <!-- User msg -->
+            <div class="flex items-start gap-2 justify-end">
+              <div class="chat-msg-user px-3 py-2 rounded-2xl rounded-tr-sm max-w-[80%]">
+                <p class="text-white text-[12px] leading-relaxed">3 gündür başım ağrıyor, hafif ateşim var ve yorgun hissediyorum.</p>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="material-symbols-outlined msym text-white text-[11px]">person</span>
+              </div>
+            </div>
+            <!-- AI msg 2 -->
+            <div class="flex items-start gap-2">
+              <div class="w-6 h-6 rounded-full bg-pric/80 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="material-symbols-outlined msym text-white text-[11px]">smart_toy</span>
+              </div>
+              <div class="chat-msg-ai px-3 py-2 rounded-2xl rounded-tl-sm max-w-[80%]">
+                <p class="text-white text-[12px] leading-relaxed">Anlıyorum. Ateşiniz kaç derece? Boğaz ağrısı veya öksürük var mı?</p>
+              </div>
+            </div>
+            <!-- Typing -->
+            <div class="flex items-center gap-2 pl-8">
+              <div class="flex gap-1 px-3 py-2 bg-white/5 rounded-full">
+                <div class="w-1.5 h-1.5 rounded-full bg-secc" style="animation:float .6s ease infinite"></div>
+                <div class="w-1.5 h-1.5 rounded-full bg-secc" style="animation:float .6s .2s ease infinite"></div>
+                <div class="w-1.5 h-1.5 rounded-full bg-secc" style="animation:float .6s .4s ease infinite"></div>
+              </div>
+              <span class="text-white/40 text-[10px]">Gemma 4 analiz ediyor...</span>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div class="border-t border-white/10 pt-3">
+            <div class="flex justify-between text-[10px] font-bold text-white/40 mb-1.5">
+              <span>Mülakat İlerlemesi</span>
+              <span>Soru 2/5</span>
+            </div>
+            <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-sec rounded-full" style="width:40%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating result card -->
+        <div class="mx-4 -mt-2 bg-white rounded-2xl shadow-2xl p-4 border border-surfc relative">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined msym-fill text-orange-500 text-[16px]">assignment</span>
+            </div>
+            <div>
+              <p class="text-[11px] font-bold text-pri">Triaj Raporu Hazır</p>
+              <p class="text-[10px] text-onsv">Dr. Mehmet Yılmaz için oluşturuldu</p>
+            </div>
+            <div class="ml-auto px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-bold">ORTA</div>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-1.5">
+              <div class="w-1 h-1 rounded-full bg-sec flex-shrink-0"></div>
+              <span class="text-[11px] text-ons">Baş ağrısı + ateş (37.8°C) + halsizlik, 3 gün</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div class="w-1 h-1 rounded-full bg-sec flex-shrink-0"></div>
+              <span class="text-[11px] text-ons">Öncel tanı: Üst solunum yolu enfeksiyonu</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wave divider -->
+  <div class="wave-divider absolute bottom-0 w-full">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 60" preserveAspectRatio="none" style="height:60px;width:100%">
+      <path fill="#ffffff" d="M0,60 C240,0 480,60 720,30 C960,0 1200,60 1440,30 L1440,60 Z"/>
+    </svg>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     STATS
+═══════════════════════════════════════════ -->
+<section class="py-14 bg-white">
+  <div class="max-w-5xl mx-auto px-5">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div class="text-center reveal">
+        <div class="text-[40px] font-head font-black grad-text-warm counter" data-target="5">0</div>
+        <div class="text-[12px] font-semibold text-onsv mt-1">Akıllı Soru</div>
+        <div class="text-[11px] text-ouv">Ortalama mülakat</div>
+      </div>
+      <div class="text-center reveal">
+        <div class="text-[40px] font-head font-black grad-text-warm counter" data-target="90" data-suffix="%">0</div>
+        <div class="text-[12px] font-semibold text-onsv mt-1">Triaj Doğruluğu</div>
+        <div class="text-[11px] text-ouv">MTS protokolüne göre</div>
+      </div>
+      <div class="text-center reveal">
+        <div class="text-[40px] font-head font-black grad-text-warm counter" data-target="3">0</div>
+        <div class="text-[12px] font-semibold text-onsv mt-1">Dil Desteği</div>
+        <div class="text-[11px] text-ouv">TR · EN · AR</div>
+      </div>
+      <div class="text-center reveal">
+        <div class="text-[40px] font-head font-black grad-text-warm counter" data-target="0" data-special="∞">∞</div>
+        <div class="text-[12px] font-semibold text-onsv mt-1">Veri Sızıntısı</div>
+        <div class="text-[11px] text-ouv">Yerel AI işlemi</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     FEATURES
+═══════════════════════════════════════════ -->
+<section id="features" class="py-20 bg-surf">
+  <div class="max-w-6xl mx-auto px-5">
+    <!-- Header -->
+    <div class="text-center mb-14 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secc/40 border border-sec/20 mb-4">
+        <span class="material-symbols-outlined msym-fill text-sec text-[14px]">auto_awesome</span>
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Güçlü Özellikler</span>
+      </div>
+      <h2 class="font-head font-black text-pri text-[36px] md:text-[44px] leading-tight mb-4">
+        Sağlık hizmeti sunumunu<br/><span class="grad-text-warm">yeniden tasarladık.</span>
+      </h2>
+      <p class="text-onsv text-[15px] max-w-xl mx-auto leading-relaxed">
+        Hasta kabulünden klinik özete kadar tüm ön triaj sürecini yapay zeka ile otomatize eden tek platform.
+      </p>
+    </div>
+
+    <!-- Feature grid -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- F1 -->
+      <div class="feature-card p-7 reveal">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sec to-pric flex items-center justify-center mb-5 shadow-sm">
+          <span class="material-symbols-outlined msym-fill text-white text-[24px]">psychology</span>
+        </div>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Akıllı AI Mülakat</h3>
+        <p class="text-onsv text-[13px] leading-relaxed">Gemma 4 tabanlı dil modeliyle semptomlarınızı derinlemesine anlayan, bağlamsal ve klinik açıdan anlamlı sorular soran konuşma akışı.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-secc/30 text-sec text-[10px] font-bold">Gemma 4</span>
+          <span class="px-2.5 py-1 rounded-full bg-secc/30 text-sec text-[10px] font-bold">Adaptif Soru</span>
+        </div>
+      </div>
+
+      <!-- F2 -->
+      <div class="feature-card p-7 reveal">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center mb-5 shadow-sm">
+          <span class="material-symbols-outlined msym-fill text-white text-[24px]">biotech</span>
+        </div>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Tıbbi Görüntü Analizi</h3>
+        <p class="text-onsv text-[13px] leading-relaxed">MedGemma Vision ile yara, cilt döküntüsü, EKG şeridi veya röntgen görüntüleri anında analiz edilir ve klinik rapora eklenir.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold">MedGemma Vision</span>
+          <span class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold">Multimodal</span>
+        </div>
+      </div>
+
+      <!-- F3 -->
+      <div class="feature-card p-7 reveal">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-5 shadow-sm">
+          <span class="material-symbols-outlined msym-fill text-white text-[24px]">assignment</span>
+        </div>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Klinik Triaj Raporu</h3>
+        <p class="text-onsv text-[13px] leading-relaxed">MTS (Manchester Triage System) protokolüne uygun öncelik skoru, olası tanı listesi ve vital bulgular içeren yapılandırılmış klinik özet.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">MTS Protokolü</span>
+          <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">PDF Export</span>
+        </div>
+      </div>
+
+      <!-- F4 -->
+      <div class="feature-card p-7 reveal">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-5 shadow-sm">
+          <span class="material-symbols-outlined msym-fill text-white text-[24px]">mic</span>
+        </div>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Sesli Giriş & TTS</h3>
+        <p class="text-onsv text-[13px] leading-relaxed">Web Speech API ile Türkçe/İngilizce/Arapça sesli cevap girilebilir. Text-to-Speech ile AI soruları sesli dinlenebilir. Kiosk modunda ideal.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Speech API</span>
+          <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">TTS</span>
+        </div>
+      </div>
+
+      <!-- F5 -->
+      <div class="feature-card p-7 reveal">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-5 shadow-sm">
+          <span class="material-symbols-outlined msym-fill text-white text-[24px]">dashboard</span>
+        </div>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Doktor & Admin Paneli</h3>
+        <p class="text-onsv text-[13px] leading-relaxed">Tüm hasta oturumları, triaj skorları, geçmiş raporlar ve klinik inceleme arayüzünü içeren kapsamlı yönetim panosu.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">Rol Tabanlı Erişim</span>
+          <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">Analytics</span>
+        </div>
+      </div>
+
+      <!-- F6 -->
+      <div class="feature-card p-7 reveal">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center mb-5 shadow-sm">
+          <span class="material-symbols-outlined msym-fill text-white text-[24px]">install_mobile</span>
+        </div>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2">PWA — Offline Destek</h3>
+        <p class="text-onsv text-[13px] leading-relaxed">Progressive Web App olarak telefona veya tablete kurulabilir. Kiosk modunda dokunmatik ekranlarda sorunsuz çalışır. İnternet bağlantısı gerekmez.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold">PWA</span>
+          <span class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold">Kiosk Modu</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     HOW IT WORKS
+═══════════════════════════════════════════ -->
+<section id="how-it-works" class="py-20 bg-white">
+  <div class="max-w-5xl mx-auto px-5">
+    <!-- Header -->
+    <div class="text-center mb-16 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secc/40 border border-sec/20 mb-4">
+        <span class="material-symbols-outlined msym text-sec text-[14px]">route</span>
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Adım Adım</span>
+      </div>
+      <h2 class="font-head font-black text-pri text-[36px] md:text-[44px] leading-tight mb-4">
+        Nasıl çalışır?
+      </h2>
+      <p class="text-onsv text-[15px] max-w-lg mx-auto">Hasta kabulünden klinik rapora kadar tüm süreç ortalama <strong>5-8 dakikada</strong> tamamlanır.</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="grid md:grid-cols-5 gap-6 items-start">
+
+      <!-- Step 1 -->
+      <div class="text-center relative reveal">
+        <div class="relative inline-flex">
+          <div class="w-14 h-14 rounded-full bg-secc flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <span class="material-symbols-outlined msym-fill text-sec text-[26px]">person_add</span>
+          </div>
+          <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pric text-white text-[11px] font-black flex items-center justify-center">1</div>
+        </div>
+        <div class="step-line hidden md:block"></div>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1">Hasta Kaydı</h4>
+        <p class="text-onsv text-[12px] leading-relaxed">İsim, yaş, cinsiyet ve isteğe bağlı vital bulgular girilir.</p>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="text-center relative reveal">
+        <div class="relative inline-flex">
+          <div class="w-14 h-14 rounded-full bg-secc flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <span class="material-symbols-outlined msym-fill text-sec text-[26px]">chat</span>
+          </div>
+          <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pric text-white text-[11px] font-black flex items-center justify-center">2</div>
+        </div>
+        <div class="step-line hidden md:block"></div>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1">AI Mülakatı</h4>
+        <p class="text-onsv text-[12px] leading-relaxed">Gemma 4, klinik açıdan önemli 5 soru sorar ve cevapları analiz eder.</p>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="text-center relative reveal">
+        <div class="relative inline-flex">
+          <div class="w-14 h-14 rounded-full bg-secc flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <span class="material-symbols-outlined msym-fill text-sec text-[26px]">biotech</span>
+          </div>
+          <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pric text-white text-[11px] font-black flex items-center justify-center">3</div>
+        </div>
+        <div class="step-line hidden md:block"></div>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1">Görüntü Analizi</h4>
+        <p class="text-onsv text-[12px] leading-relaxed">İsteğe bağlı: MedGemma Vision ile tıbbi görüntü yüklenir ve analiz edilir.</p>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="text-center relative reveal">
+        <div class="relative inline-flex">
+          <div class="w-14 h-14 rounded-full bg-secc flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <span class="material-symbols-outlined msym-fill text-sec text-[26px]">summarize</span>
+          </div>
+          <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pric text-white text-[11px] font-black flex items-center justify-center">4</div>
+        </div>
+        <div class="step-line hidden md:block"></div>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1">Klinik Özet</h4>
+        <p class="text-onsv text-[12px] leading-relaxed">MTS triaj skoru, öncel tanılar ve öneriler içeren rapor oluşturulur.</p>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="text-center reveal">
+        <div class="relative inline-flex">
+          <div class="w-14 h-14 rounded-full bg-pric flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <span class="material-symbols-outlined msym-fill text-white text-[26px]">stethoscope</span>
+          </div>
+          <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-sec text-white text-[11px] font-black flex items-center justify-center">5</div>
+        </div>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1">Doktor Görüşmesi</h4>
+        <p class="text-onsv text-[12px] leading-relaxed">Doktor, hazır klinik özetle hastayı çok daha kısa sürede değerlendirir.</p>
+      </div>
+
+    </div>
+
+    <!-- Result highlight -->
+    <div class="mt-16 p-8 rounded-3xl bg-gradient-to-br from-secc/30 to-surf border border-sec/20 reveal">
+      <div class="grid md:grid-cols-3 gap-6 text-center">
+        <div>
+          <div class="text-[32px] font-head font-black text-pric mb-1">%60</div>
+          <p class="text-[13px] font-semibold text-onsv">Daha kısa hasta kabul süresi</p>
+        </div>
+        <div class="border-y md:border-y-0 md:border-x border-sec/20 py-6 md:py-0">
+          <div class="text-[32px] font-head font-black text-pric mb-1">%90</div>
+          <p class="text-[13px] font-semibold text-onsv">Artmış triaj doğruluğu</p>
+        </div>
+        <div>
+          <div class="text-[32px] font-head font-black text-pric mb-1">24/7</div>
+          <p class="text-[13px] font-semibold text-onsv">Kesintisiz hizmet kapasitesi</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     TECHNOLOGY
+═══════════════════════════════════════════ -->
+<section id="technology" class="py-20 hero-bg relative overflow-hidden">
+  <!-- Grid overlay -->
+  <div class="absolute inset-0 opacity-5" style="background-image:linear-gradient(rgba(255,255,255,0.1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.1) 1px,transparent 1px);background-size:60px 60px"></div>
+
+  <div class="max-w-5xl mx-auto px-5 relative z-10">
+    <!-- Header -->
+    <div class="text-center mb-14 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 mb-4">
+        <span class="material-symbols-outlined msym text-secc text-[14px]">memory</span>
+        <span class="text-[11px] font-bold text-secc uppercase tracking-widest">Altyapı & Teknoloji</span>
+      </div>
+      <h2 class="font-head font-black text-white text-[36px] md:text-[44px] leading-tight mb-4">
+        En güncel AI modelleri<br/><span class="grad-text">güvenli altyapıda.</span>
+      </h2>
+      <p class="text-white/60 text-[15px] max-w-lg mx-auto">Tüm AI işlemleri yerel olarak çalışır. Hasta verisi asla dışarı çıkmaz.</p>
+    </div>
+
+    <!-- Tech stack -->
+    <div class="grid md:grid-cols-2 gap-6 mb-10">
+
+      <!-- Gemma 4 -->
+      <div class="stat-card rounded-3xl p-7 reveal">
+        <div class="flex items-start gap-4 mb-5">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-secc/30 to-sec/30 border border-secc/20 flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined msym-fill text-secc text-[28px]">psychology</span>
+          </div>
+          <div>
+            <h3 class="font-head font-bold text-white text-[18px]">Gemma 4</h3>
+            <p class="text-secc text-[12px] font-medium">Google DeepMind · Dil Modeli</p>
+          </div>
+        </div>
+        <p class="text-white/60 text-[13px] leading-relaxed mb-4">Tıbbi sorgulamalar için optimize edilmiş, çok dilli destek sunan Google'ın en güncel açık kaynak dil modeli.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold">Türkçe</span>
+          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold">İngilizce</span>
+          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold">Arapça</span>
+          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold">Ollama</span>
+        </div>
+      </div>
+
+      <!-- MedGemma -->
+      <div class="stat-card rounded-3xl p-7 reveal">
+        <div class="flex items-start gap-4 mb-5">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-700/20 border border-purple-400/20 flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined msym-fill text-purple-300 text-[28px]">biotech</span>
+          </div>
+          <div>
+            <h3 class="font-head font-bold text-white text-[18px]">MedGemma Vision</h3>
+            <p class="text-purple-300 text-[12px] font-medium">Google · Tıbbi Görüntü AI</p>
+          </div>
+        </div>
+        <p class="text-white/60 text-[13px] leading-relaxed mb-4">Tıbbi görüntüleme için özel eğitilmiş multimodal model. Röntgen, EKG, cilt görüntüsü ve yara analizi.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/20 text-purple-300 text-[10px] font-bold">Vision</span>
+          <span class="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/20 text-purple-300 text-[10px] font-bold">Multimodal</span>
+          <span class="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/20 text-purple-300 text-[10px] font-bold">Tıbbi Görüntü</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backend stack -->
+    <div class="stat-card rounded-3xl p-7 reveal">
+      <h3 class="font-head font-bold text-white text-[16px] mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined msym text-secc text-[20px]">dns</span>
+        Backend & Altyapı
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10">
+          <div class="text-secc font-bold text-[13px]">FastAPI</div>
+          <div class="text-white/40 text-[10px] mt-0.5">Python 3.11</div>
+        </div>
+        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10">
+          <div class="text-secc font-bold text-[13px]">ChromaDB</div>
+          <div class="text-white/40 text-[10px] mt-0.5">Vector RAG</div>
+        </div>
+        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10">
+          <div class="text-secc font-bold text-[13px]">Docker</div>
+          <div class="text-white/40 text-[10px] mt-0.5">Containerized</div>
+        </div>
+        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10">
+          <div class="text-secc font-bold text-[13px]">Kubernetes</div>
+          <div class="text-white/40 text-[10px] mt-0.5">K8s Ready</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     TARGET AUDIENCE
+═══════════════════════════════════════════ -->
+<section id="audience" class="py-20 bg-white">
+  <div class="max-w-5xl mx-auto px-5">
+    <!-- Header -->
+    <div class="text-center mb-14 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secc/40 border border-sec/20 mb-4">
+        <span class="material-symbols-outlined msym text-sec text-[14px]">groups</span>
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Kimler İçin</span>
+      </div>
+      <h2 class="font-head font-black text-pri text-[36px] md:text-[44px] leading-tight mb-4">
+        Her ölçekte sağlık kurumu<br/><span class="grad-text-warm">için tasarlandı.</span>
+      </h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+
+      <div class="p-7 rounded-3xl border border-surfc hover:border-sec/30 hover:shadow-xl transition-all reveal group">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center mb-5 group-hover:bg-sec transition-colors">
+          <span class="material-symbols-outlined msym-fill text-emerald-600 group-hover:text-white text-[28px] transition-colors">local_hospital</span>
+        </div>
+        <h3 class="font-head font-bold text-pri text-[18px] mb-2">Devlet Hastaneleri</h3>
+        <p class="text-onsv text-[13px] leading-relaxed mb-4">Yoğun hasta trafiğini azaltın. Acil serviste triaj bekleme süresini kısaltın. Hemşire iş yükünü optimize edin.</p>
+        <ul class="space-y-2">
+          <li class="flex items-center gap-2 text-[12px] text-onsv">
+            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">check_circle</span>Kiosk entegrasyonu
+          </li>
+          <li class="flex items-center gap-2 text-[12px] text-onsv">
+            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">check_circle</span>Çok dilli destek
+          </li>
+          <li class="flex items-center gap-2 text-[12px] text-onsv">
+            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">check_circle</span>Yüksek hasta hacmi
+          </li>
+        </ul>
+      </div>
+
+      <div class="p-7 rounded-3xl border border-surfc hover:border-sec/30 hover:shadow-xl transition-all reveal group">
+        <div class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-5 group-hover:bg-pric transition-colors">
+          <span class="material-symbols-outlined msym-fill text-blue-600 group-hover:text-white text-[28px] transition-colors">medical_services</span>
+        </div>
+        <h3 class="font-head font-bold text-pri text-[18px] mb-2">Özel Klinikler</h3>
+        <p class="text-onsv text-[13px] leading-relaxed mb-4">Hasta deneyimini premium hale getirin. Doktor-hasta görüşme süresini verimli kullanın. Dijital dönüşümü hızlandırın.</p>
+        <ul class="space-y-2">
+          <li class="flex items-center gap-2 text-[12px] text-onsv">
+            <span class="material-symbols-outlined msym-fill text-pric text-[14px]">check_circle</span>Özelleştirilebilir sorular
+          </li>
+          <li class="flex items-center gap-2 text-[12px] text-onsv">
+            <span class="material-symbols-outlined msym-fill text-pric text-[14px]">check_circle</span>Marka entegrasyonu
+          </li>
+          <li class="flex items-center gap-2 text-[12px] text-onsv">
+            <span class="material-symbols-outlined msym-fill text-pric text-[14px]">check_circle</span>Analytics dashboard
+          </li>
+        </ul>
+      </div>
+
+      <div class="p-7 rounded-3xl border border-surfc hover:border-sec/30 hover:shadow-xl transition-all reveal group">
+        <div class="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center mb-5 group-hover:bg-warn transition-colors">
+          <span class="material-symbols-outlined msym-fill text-orange-600 group-hover:text-white text-[28px] transition-colors">health_and_safety</span>
+        </div>
+        <h3 class="font-head font-bold text-pri text-[18px] mb-2">Aile Hekimliği</h3>
+        <p class="text-onsv text-[13px] leading-relaxed mb-4">Randevu öncesi hastaları hazırlayın. Muayene verimliliğini artırın. Hasta memnuniyetini yükseltin.</p>
+        <ul class="space-y-2">
+          <li class="flex items-center gap-2 text-[12px] text-onsv">
+            <span class="material-symbols-outlined msym-fill text-warn text-[14px]">check_circle</span>Düşük kurulum maliyeti
+          </li>
+          <li class="flex items-center gap-2 text-[12px] text-onsv">
+            <span class="material-symbols-outlined msym-fill text-warn text-[14px]">check_circle</span>PWA mobil uygulama
+          </li>
+          <li class="flex items-center gap-2 text-[12px] text-onsv">
+            <span class="material-symbols-outlined msym-fill text-warn text-[14px]">check_circle</span>Basit kurulum
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     TESTIMONIALS
+═══════════════════════════════════════════ -->
+<section class="py-20 bg-surf">
+  <div class="max-w-5xl mx-auto px-5">
+    <div class="text-center mb-14 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secc/40 border border-sec/20 mb-4">
+        <span class="material-symbols-outlined msym-fill text-sec text-[14px]">format_quote</span>
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Ne Diyorlar</span>
+      </div>
+      <h2 class="font-head font-black text-pri text-[36px] leading-tight">Sağlık profesyonellerinden</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="quote-card p-7 rounded-3xl reveal">
+        <div class="flex mb-4">
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+        </div>
+        <p class="text-ons text-[13px] leading-relaxed italic mb-5">"Hastaların muayeneden önce AI ile ön görüşme yapması, bana çok daha hazır ve analiz edilmiş vaka sunuyor. Muayene sürem gerçekten kısaldı."</p>
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-pric flex items-center justify-center flex-shrink-0">
+            <span class="text-white font-bold text-[14px]">MK</span>
+          </div>
+          <div>
+            <p class="font-bold text-pri text-[13px]">Dr. Mehmet Kaya</p>
+            <p class="text-onsv text-[11px]">Acil Tıp Uzmanı</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="quote-card p-7 rounded-3xl reveal">
+        <div class="flex mb-4">
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+        </div>
+        <p class="text-ons text-[13px] leading-relaxed italic mb-5">"Triaj hemşireleri olarak yoğun dönemlerde AnamnezAI inanılmaz yük alıyor. Özellikle çok dilli destek çok önemli kliniğimiz için."</p>
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-sec flex items-center justify-center flex-shrink-0">
+            <span class="text-white font-bold text-[14px]">SY</span>
+          </div>
+          <div>
+            <p class="font-bold text-pri text-[13px]">Hemşire Selin Yıldız</p>
+            <p class="text-onsv text-[11px]">Triaj Baş Hemşiresi</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="quote-card p-7 rounded-3xl reveal">
+        <div class="flex mb-4">
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
+        </div>
+        <p class="text-ons text-[13px] leading-relaxed italic mb-5">"Görüntü analizi özelliği özellikle dermatoloji ön değerlendirmelerinde çok faydalı. Cilt döküntüsü fotoğrafını yükleyip AI'dan ilk görüşü alabilmek harika."</p>
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+            <span class="text-white font-bold text-[14px]">AÖ</span>
+          </div>
+          <div>
+            <p class="font-bold text-pri text-[13px]">Dr. Ayşe Öztürk</p>
+            <p class="text-onsv text-[11px]">Dermatoloji Uzmanı</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     CTA
+═══════════════════════════════════════════ -->
+<section class="py-24 cta-bg relative overflow-hidden">
+  <div class="hero-glow" style="top:-100px;left:50%;transform:translateX(-50%);opacity:0.5"></div>
+
+  <div class="max-w-3xl mx-auto px-5 text-center relative z-10 reveal">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 mb-6">
+      <span class="material-symbols-outlined msym-fill text-secc text-[14px]">rocket_launch</span>
+      <span class="text-[11px] font-bold text-secc uppercase tracking-widest">Hemen Başlayın</span>
+    </div>
+
+    <h2 class="font-head font-black text-white text-[40px] md:text-[52px] leading-tight mb-5">
+      Kliniğinizi geleceğe<br/><span class="grad-text">taşıyın.</span>
+    </h2>
+    <p class="text-white/60 text-[16px] leading-relaxed mb-10 max-w-xl mx-auto">
+      Kurulum ücreti yok. Kredi kartı gerekmez. Beş dakikada çalışmaya hazır.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="register.html" class="pulse-btn flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-sec text-white font-bold text-[16px] hover:bg-secc hover:text-pri transition-all shadow-xl">
+        <span class="material-symbols-outlined msym text-[22px]">person_add</span>
+        Ücretsiz Hesap Oluştur
+      </a>
+      <a href="index.html" class="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white/10 border border-white/20 text-white font-semibold text-[16px] hover:bg-white/20 transition-all">
+        <span class="material-symbols-outlined msym text-[22px]">play_circle</span>
+        Demo Deneyin
+      </a>
+    </div>
+
+    <!-- Reassurance -->
+    <p class="text-white/30 text-[12px] mt-8">
+      🔒 GDPR Uyumlu &nbsp;·&nbsp; Veri dışarı çıkmaz &nbsp;·&nbsp; Açık kaynak altyapı
+    </p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════ -->
+<footer class="bg-pri py-12">
+  <div class="max-w-5xl mx-auto px-5">
+    <div class="grid md:grid-cols-4 gap-8 mb-10">
+      <!-- Brand -->
+      <div class="md:col-span-2">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-9 h-9 rounded-xl bg-pric flex items-center justify-center">
+            <span class="material-symbols-outlined msym-fill text-white text-[20px]">monitor_heart</span>
+          </div>
+          <span class="font-head font-bold text-white text-[16px]">AnamnezAI</span>
+        </div>
+        <p class="text-white/40 text-[13px] leading-relaxed max-w-xs">
+          Gemma 4 ve MedGemma Vision ile güçlendirilmiş yapay zeka hasta ön triaj platformu. MediScreen projesi kapsamında geliştirilmiştir.
+        </p>
+      </div>
+
+      <!-- Links -->
+      <div>
+        <h4 class="font-head font-bold text-white text-[13px] mb-4 uppercase tracking-wider">Platform</h4>
+        <ul class="space-y-2.5">
+          <li><a href="index.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Hasta Girişi</a></li>
+          <li><a href="login.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Doktor Paneli</a></li>
+          <li><a href="register.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Kayıt Ol</a></li>
+          <li><a href="kiosk.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Kiosk Modu</a></li>
+          <li><a href="analytics.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Analytics</a></li>
+        </ul>
+      </div>
+
+      <!-- Docs -->
+      <div>
+        <h4 class="font-head font-bold text-white text-[13px] mb-4 uppercase tracking-wider">Kaynaklar</h4>
+        <ul class="space-y-2.5">
+          <li><a href="../README.md" class="text-white/40 text-[13px] hover:text-secc transition-colors">README</a></li>
+          <li><a href="../PROJECT_PLAN.md" class="text-white/40 text-[13px] hover:text-secc transition-colors">Proje Planı</a></li>
+          <li><a href="../ROADMAP.md" class="text-white/40 text-[13px] hover:text-secc transition-colors">Roadmap</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <p class="text-white/30 text-[12px]">© 2026 AnamnezAI · MediScreen. Tüm hakları saklıdır.</p>
+      <div class="flex items-center gap-4">
+        <span class="flex items-center gap-1.5 text-white/30 text-[11px]">
+          <span class="material-symbols-outlined msym text-[13px]">favorite</span>
+          Sağlık için yapay zeka
+        </span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+// Mobile menu toggle
+function toggleMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const icon = document.getElementById('menu-icon');
+  const isHidden = menu.classList.contains('hidden');
+  menu.classList.toggle('hidden');
+  icon.textContent = isHidden ? 'close' : 'menu';
+}
+
+// Close mobile menu on outside click
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('mobile-menu');
+  const btn = document.getElementById('menu-btn');
+  if (!menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.add('hidden');
+    document.getElementById('menu-icon').textContent = 'menu';
+  }
+});
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+
+// Reveal on scroll
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(24px)';
+  el.style.transition = 'all 0.6s ease';
+  revealObserver.observe(el);
+});
+
+// Counter animation
+function animateCounter(el) {
+  if (el.dataset.special) return; // Skip special (infinity)
+  const target = parseInt(el.dataset.target);
+  const suffix = el.dataset.suffix || '';
+  const duration = 1500;
+  const step = target / (duration / 16);
+  let current = 0;
+  const timer = setInterval(() => {
+    current += step;
+    if (current >= target) {
+      current = target;
+      clearInterval(timer);
+    }
+    el.textContent = Math.floor(current) + suffix;
+  }, 16);
+}
+
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      animateCounter(entry.target);
+      counterObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.counter').forEach(el => {
+  if (!el.dataset.special) {
+    el.textContent = '0';
+    counterObserver.observe(el);
+  }
+});
+
+// Nav scroll effect
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  if (window.scrollY > 20) {
+    nav.style.boxShadow = '0 2px 20px rgba(0,0,0,0.08)';
+  } else {
+    nav.style.boxShadow = 'none';
+  }
+});
+</script>
+</body>
+</html>
+

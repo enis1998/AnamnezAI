@@ -10,18 +10,22 @@ This document proves that **Gemma 4** is the core AI model powering MediScreen A
 
 | Property | Value |
 |---|---|
-| **Model Family** | Gemma 4 |
-| **Model ID** | `gemma4:e4b` |
+| **Primary Model** | Gemma 4 |
+| **Primary Model ID** | `gemma4:e4b` |
+| **Secondary Model** | MedGemma (Vision) |
+| **Secondary Model ID** | `medgemma:4b` |
 | **Provider** | Google DeepMind |
 | **Runtime** | Ollama (local inference) |
-| **Ollama Model Page** | https://ollama.com/library/gemma4 |
+| **Ollama — Gemma 4** | https://ollama.com/library/gemma4 |
+| **Ollama — MedGemma** | https://ollama.com/library/medgemma |
 | **HuggingFace** | https://huggingface.co/google/gemma-4 |
 
 ---
 
 ## How Gemma 4 is Used
 
-MediScreen AI uses Gemma 4 for **three distinct medical NLP tasks**:
+MediScreen AI uses Gemma 4 as the **primary model** for three distinct medical NLP tasks,
+and MedGemma as a **secondary model** for medical image analysis.
 
 ### Task 1 — Dynamic Interview Question Generation
 ```python
@@ -52,6 +56,22 @@ Gemma 4 analyzes a 5-turn patient interview and produces a **structured clinical
 
 ### Task 3 — Bilingual Medical Communication
 Gemma 4 handles both **Turkish** and **English** medical conversations with appropriate tone and terminology adaptation.
+
+### Task 4 — Medical Image Analysis (MedGemma Vision — Secondary)
+```python
+# backend/main.py — /api/analyze-image endpoint
+POST http://localhost:11434/api/chat
+{
+  "model": "medgemma:4b",          ← MedGemma (Gemma 4 fallback if not installed)
+  "messages": [
+    {"role": "system",  "content": "Sen klinik görüntü analizi yapan..."},
+    {"role": "user",    "content": "...", "images": ["<base64>"]}
+  ]
+}
+```
+MedGemma analyzes patient-uploaded medical images (wounds, skin conditions, ECG strips, X-rays).
+If MedGemma is not installed, **Gemma 4 multimodal** is used automatically as fallback.
+Findings are embedded into the clinical report (`image_findings` field).
 
 ---
 
@@ -100,13 +120,14 @@ curl http://localhost:8000/health
 
 ---
 
-## Why Ollama + Gemma 4?
+## Why Ollama + Gemma 4 + MedGemma?
 
 | Requirement | How MediScreen Meets It |
 |---|---|
-| Uses Gemma 4 | `gemma4:e4b` via Ollama API |
+| Uses Gemma 4 | `gemma4:e4b` via Ollama API — PRIMARY model |
+| Medical Vision | `medgemma:4b` via Ollama API — SECONDARY model |
 | Local inference | Ollama runs on-device, no cloud |
-| Demonstrable output | Full patient interview + clinical report |
+| Demonstrable output | Full patient interview + clinical report + image analysis |
 | Novel use case | Medical pre-triage (not a chatbot) |
 | Health & Sciences | Democratizes triage in underserved areas |
 
@@ -117,6 +138,7 @@ curl http://localhost:8000/health
 ```bash
 # Anyone can reproduce this exact setup:
 ollama pull gemma4:e4b
+ollama pull medgemma:4b       # Optional — vision model (falls back to Gemma 4 if missing)
 ollama serve
 cd backend && pip install -r requirements.txt
 python main.py
@@ -128,7 +150,9 @@ python main.py
 
 ## Competition Compliance
 
-- ✅ Uses **Gemma 4** (not Gemma 3 or other models)
+- ✅ Uses **Gemma 4** as primary model (not Gemma 3 or other models)
+- ✅ Uses **MedGemma** as secondary vision model (medical image analysis)
+- ✅ Gemma 4 is the **core decision-maker** — triage, questions, reports
 - ✅ Runs **locally via Ollama** (Ollama Prize Track)
 - ✅ Real-world **health impact** (Health & Sciences Track)
 - ✅ Open source under **CC-BY 4.0**

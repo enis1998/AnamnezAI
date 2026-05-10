@@ -65,11 +65,13 @@ tailwind.config = {
 <!-- ── SCREEN: WELCOME ── -->
 <div id="scr-welcome" class="screen active min-h-screen items-center justify-center px-8 py-12" role="main">
 
-  <!-- Language & Accessibility Bar (Sprint 7) -->
+  <!-- Language & Accessibility Bar (Sprint 7 + Sprint 12 TTS) -->
   <div class="fixed top-4 right-4 flex items-center gap-2 z-50" role="toolbar" aria-label="Dil ve erişilebilirlik seçenekleri">
     <button class="lang-btn active" onclick="setLang('tr')" id="lang-tr" aria-label="Türkçe" aria-pressed="true">TR</button>
     <button class="lang-btn" onclick="setLang('en')" id="lang-en" aria-label="English" aria-pressed="false">EN</button>
-    <button class="lang-btn" onclick="setLang('ar')" id="lang-ar" aria-label="عربي" aria-pressed="false">AR</button>
+    <button onclick="toggleVoice()" class="lang-btn" id="btn-voice" aria-label="Sesli yönlendirme" title="Sesli yönlendirme (TTS)">
+      <span class="material-symbols-outlined msym" style="font-size:16px;vertical-align:middle" id="voice-icon">volume_up</span>
+    </button>
     <button onclick="toggleContrast()" class="lang-btn" aria-label="Yüksek kontrast modu" id="btn-contrast" title="High contrast">
       <span class="material-symbols-outlined msym" style="font-size:16px;vertical-align:middle">contrast</span>
     </button>
@@ -300,6 +302,46 @@ let kioskSessionId = null;
 let kioskStep = 1;
 const TOTAL_STEPS = 5;
 
+// ── Sprint 12: TTS (Sesli Yönlendirme) ──────────────────────────────────────
+let _voiceEnabled = localStorage.getItem('kiosk_voice') !== 'off';
+let _ttsSupported = 'speechSynthesis' in window;
+
+function toggleVoice() {
+  _voiceEnabled = !_voiceEnabled;
+  localStorage.setItem('kiosk_voice', _voiceEnabled ? 'on' : 'off');
+  const icon = document.getElementById('voice-icon');
+  const btn  = document.getElementById('btn-voice');
+  if (icon) icon.textContent = _voiceEnabled ? 'volume_up' : 'volume_off';
+  if (btn)  btn.style.opacity = _voiceEnabled ? '1' : '0.4';
+  if (_voiceEnabled) speak(currentLang === 'en' ? 'Voice guidance on.' : 'Sesli yönlendirme açıldı.');
+  else window.speechSynthesis.cancel();
+}
+
+function speak(text) {
+  if (!_ttsSupported || !_voiceEnabled || !text) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang  = currentLang === 'en' ? 'en-US' : 'tr-TR';
+  utt.rate  = 0.92;
+  utt.pitch = 1.0;
+  // Dile uygun ses seç (varsa)
+  const voices = window.speechSynthesis.getVoices();
+  const match  = voices.find(v => v.lang.startsWith(currentLang === 'en' ? 'en' : 'tr'));
+  if (match) utt.voice = match;
+  window.speechSynthesis.speak(utt);
+}
+
+// Sayfa yüklenince sesleri yükle (bazı tarayıcılar async yükler)
+if (_ttsSupported) window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
+// Başlangıçta ikon durumunu ayarla
+document.addEventListener('DOMContentLoaded', () => {
+  const icon = document.getElementById('voice-icon');
+  const btn  = document.getElementById('btn-voice');
+  if (icon) icon.textContent = _voiceEnabled ? 'volume_up' : 'volume_off';
+  if (btn)  btn.style.opacity = _voiceEnabled ? '1' : '0.4';
+});
+
 // ── Sprint 7: i18n ───────────────────────────────────────────────────────────
 let currentLang = localStorage.getItem('kiosk_lang') || 'tr';
 const I18N = {
@@ -395,52 +437,7 @@ const I18N = {
     roomInfo: 'For your assigned room,<br/>please wait for triage staff',
     waitInfo: 'Check the screen for<br/>estimated wait time',
   },
-  ar: {
-    subtitle: 'الفرز الطبي المسبق بالذكاء الاصطناعي',
-    subtitle2: 'AI-Powered Patient Pre-Triage',
-    statusChecking: 'جارٍ التحقق من حالة النظام...',
-    statusReady: 'النظام جاهز ✓',
-    statusLoading: 'جارٍ تحميل النموذج...',
-    statusMaint: 'النظام في صيانة',
-    statusOffline: 'لا يوجد اتصال بالخادم',
-    statusLocked: '🔒 الكشك مغلق مؤقتاً',
-    queueLabel: 'المرضى المنتظرون',
-    waitLabel: 'الانتظار المتوقع (د)',
-    btnStart: 'بدء المقابلة',
-    btnLogin: 'تسجيل الدخول',
-    footer: 'بياناتك محمية وفق KVKK · AnamnezAI v5.0',
-    formTitle: 'بيانات المريض',
-    formDesc: 'يرجى إدخال بياناتك',
-    labelName: 'الاسم الكامل',
-    placeholderName: 'اسمك الكامل',
-    labelAge: 'العمر',
-    labelGender: 'الجنس',
-    optMale: 'ذكر', optFemale: 'أنثى', optOther: 'أفضل عدم الإفصاح',
-    btnAI: 'بدء مقابلة الذكاء الاصطناعي',
-    errName: 'الرجاء إدخال اسمك.',
-    errAge: 'الرجاء إدخال عمر صحيح.',
-    errConn: 'خطأ في الاتصال.',
-    chatLabel: 'المقابلة جارية',
-    placeholder: 'اكتب إجابتك...',
-    thinking: 'Gemma 4 يفكر...',
-    completed: 'شكراً! تم تسجيل إجاباتك. جارٍ تقييم الفرز...',
-    errRetry: 'حدث خطأ. الرجاء المحاولة مجدداً.',
-    doneTitle: 'اكتملت المقابلة',
-    doneDesc: 'يقيّم الذكاء الاصطناعي أعراضك.<br/>يرجى انتظار موظفي الفرز.',
-    triageLabel: 'نتيجة الفرز',
-    btnHome: 'العودة للرئيسية',
-    btnPrint: 'طباعة تذكرة الدور',
-    btnQR: 'المتابعة عبر QR',
-    qrTitle: 'امسح بهاتفك',
-    qrDesc: 'امسح رمز QR لمواصلة جلستك على هاتفك.',
-    loginTitle: 'تسجيل الدخول',
-    loginDesc: 'تابع بحسابك المسجل',
-    loginErr: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
-    loginConnErr: 'تعذر الاتصال بالخادم.',
-    btnBack: 'رجوع',
-    roomInfo: 'للحصول على رقم غرفتك،<br/>يرجى انتظار موظفي الفرز',
-    waitInfo: 'راقب الشاشة لمعرفة<br/>وقت الانتظار المتوقع',
-  }
+  ar: {}
 };
 
 function t(key) { return (I18N[currentLang] || I18N.tr)[key] || I18N.tr[key] || key; }
@@ -449,12 +446,12 @@ function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('kiosk_lang', lang);
   // Update button states
-  ['tr','en','ar'].forEach(l => {
+  ['tr','en'].forEach(l => {
     const btn = document.getElementById('lang-'+l);
     if (btn) { btn.classList.toggle('active', l === lang); btn.setAttribute('aria-pressed', l === lang); }
   });
-  // Direction
-  document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  // Direction always LTR (TR + EN only)
+  document.body.dir = 'ltr';
   document.documentElement.lang = lang;
   // Re-render all text
   applyTranslations();
@@ -519,6 +516,8 @@ function addMessage(text, isAI = true) {
   div.innerHTML = `<div style="background:${bg};border-radius:20px;padding:16px 20px;max-width:75%;font-size:18px;line-height:1.5">${text}</div>`;
   el.appendChild(div);
   el.scrollTop = el.scrollHeight;
+  // Sprint 12: AI soruları otomatik seslendir
+  if (isAI) speak(text);
 }
 
 function updateSteps(step) {
@@ -553,7 +552,7 @@ async function loadStatus() {
     document.getElementById('kiosk-queue').textContent = d.queue_length ?? 0;
     document.getElementById('kiosk-wait').textContent = d.estimated_wait_minutes ?? '—';
     // Kiosk subtitle from backend
-    const msgKey = currentLang === 'ar' ? 'message_ar' : currentLang === 'en' ? 'message_en' : 'message_tr';
+    const msgKey = currentLang === 'en' ? 'message_en' : 'message_tr';
     if (d[msgKey]) document.getElementById('kiosk-subtitle').textContent = d[msgKey];
   } catch(e) {
     const statusEl = document.getElementById('kiosk-status');
@@ -586,7 +585,7 @@ async function startKioskSession() {
     kioskSessionId = data.session_id;
     kioskStep = 1;
 
-    document.getElementById('chat-patient-label').textContent = `${name} · ${age} ${currentLang === 'ar' ? 'سنة' : (currentLang === 'en' ? 'years old' : 'yaşında')}`;
+    document.getElementById('chat-patient-label').textContent = `${name} · ${age} ${currentLang === 'en' ? 'years old' : 'yaşında'}`;
     document.getElementById('chat-messages').innerHTML = '';
     updateSteps(1);
     addMessage(data.question, true);
@@ -664,9 +663,9 @@ async function fetchKioskSummary() {
     const data = await res.json();
 
     const levelMap = {
-      RED: currentLang === 'ar' ? '🔴 طارئ' : currentLang === 'en' ? '🔴 EMERGENCY' : '🔴 ACİL',
-      YELLOW: currentLang === 'ar' ? '🟡 عاجل' : currentLang === 'en' ? '🟡 URGENT' : '🟡 İKİNCİL ACİL',
-      GREEN: currentLang === 'ar' ? '🟢 روتيني' : currentLang === 'en' ? '🟢 ROUTINE' : '🟢 RUTİN',
+      RED: currentLang === 'en' ? '🔴 EMERGENCY' : '🔴 ACİL',
+      YELLOW: currentLang === 'en' ? '🟡 URGENT' : '🟡 İKİNCİL ACİL',
+      GREEN: currentLang === 'en' ? '🟢 ROUTINE' : '🟢 RUTİN',
     };
     document.getElementById('done-level').textContent = levelMap[data.triage_level] || data.triage_level;
     document.getElementById('done-level').style.color = data.triage_color || '#fff';
@@ -732,6 +731,39 @@ async function kioskLogin() {
     errEl.textContent = t('loginConnErr');
     errEl.classList.remove('hidden');
     errEl.setAttribute('role', 'alert');
+  }
+}
+
+// ── Sprint 13: Sıra Fişi Yazdır ─────────────────────────────────────────────
+function printTicket() {
+  if (!kioskSessionId) return;
+  const url = `${API}/api/session/${kioskSessionId}/ticket`;
+  const win = window.open(url, '_blank', 'width=400,height=600,toolbar=0,location=0,menubar=0');
+  if (!win) {
+    // Popup engellenirse yeni sekmede aç
+    window.open(url, '_blank');
+  }
+}
+
+// ── Sprint 13: QR Kod Göster ──────────────────────────────────────────────
+async function showQR() {
+  if (!kioskSessionId) return;
+  const modal = document.getElementById('qr-modal');
+  const container = document.getElementById('qr-img-container');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  // Yükleniyor göster
+  container.innerHTML = `<div class="w-16 h-16 flex items-center justify-center">
+    <span class="material-symbols-outlined msym spin text-secc" style="font-size:40px">refresh</span></div>`;
+  try {
+    const baseUrl = window.location.origin;
+    const res = await fetch(`${API}/api/session/${kioskSessionId}/qr?base_url=${encodeURIComponent(baseUrl)}`);
+    if (!res.ok) throw new Error();
+    const blob = await res.blob();
+    const imgUrl = URL.createObjectURL(blob);
+    container.innerHTML = `<img src="${imgUrl}" alt="QR Kod" style="width:200px;height:200px;border-radius:12px"/>`;
+  } catch(e) {
+    container.innerHTML = `<p class="text-err text-[14px]">QR kod oluşturulamadı. Sunucuyu kontrol edin.</p>`;
   }
 }
 

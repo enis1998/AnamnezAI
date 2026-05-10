@@ -216,10 +216,14 @@ function saveAndRedirect(data) {
   localStorage.setItem('anamnez_token', data.access_token);
   localStorage.setItem('anamnez_user', JSON.stringify(data.user));
   const role = data.user.role;
+  // next parametresi varsa ona git (örn: ?next=doctor)
+  const next = new URLSearchParams(window.location.search).get('next');
+  if (next) { window.location.href = next + '.html'; return; }
   if (['doctor','admin','personnel'].includes(role)) {
     window.location.href = 'doctor.html';
   } else {
-    window.location.href = 'index.html';
+    // Hasta giriş yaptıktan sonra profiline yönlendir
+    window.location.href = 'patient_dashboard.html';
   }
 }
 
@@ -340,7 +344,8 @@ if (GOOGLE_CLIENT_ID) loadGoogleScript();
     if (['doctor','admin','personnel'].includes(user.role)) {
       window.location.href = 'doctor.html';
     } else {
-      window.location.href = 'index.html';
+      // Hasta kullanıcı → önce panele yönlendir
+      window.location.href = 'patient_dashboard.html';
     }
   }
 })();

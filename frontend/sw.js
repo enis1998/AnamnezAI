@@ -10,10 +10,12 @@ const STATIC_ASSETS = [
   '/kiosk.html',
   '/login.html',
   '/register.html',
-  '/profile.html',
+  '/patient_dashboard.html',
   '/doctor.html',
   '/summary.html',
   '/analytics.html',
+  '/clinical_review.html',
+  '/landing.html',
   '/manifest.json',
 ];
 

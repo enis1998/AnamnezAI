@@ -1,373 +1,234 @@
-# 🗺️ AnamnezAI — Tam Ürün Yol Haritası
+# AnamnezAI — Gemma 4 Good Hackathon Sprint Planı
 
-> **Proje:** AI-PAP (AI-Powered Anamnesis Platform)  
-> **Organizasyon:** GNDER — Geleceği Önemseyenler Derneği  
-> **Ortaklar:** T.C. Sağlık Bakanlığı, AYBU Yenimahalle Hastanesi  
-> **Hedef:** Google.org AI for Government Innovation ($1M–$3M) + Ulusal ölçek  
-> **Hackathon:** Gemma 4 Good Hackathon — Health $10K + Ollama $10K
-
----
-
-## 📊 Proje Vizyonu (Dokümanlardan)
-
-AI-PAP, Türkiye'nin kamu sağlık sisteminde **hastane öncesi anamnez sürecini dijitalleştiren**, ajansal AI ile çalışan çok kanallı bir platformdur:
-
-- **4 Erişim Kanalı:** Web · Mobil (iOS/Android) · Hastane Kiosk · Personel Destekli  
-- **Entegrasyon:** HBYS (Hastane Bilgi Yönetim Sistemi) · FHIR HL7 · ICD-10  
-- **Uyumluluk:** KVKK · GDPR · TLS 1.3 · AES-256  
-- **Diller:** Türkçe · İngilizce · Arapça (genişletilebilir)  
-- **Ekip:** 13 kişi (proje, teknik, klinik danışmanlar, veri bilimi, saha)
+> **Proje:** AnamnezAI (AI-Powered Medical Pre-Triage Platform)  
+> **Yarışma:** Gemma 4 Good Hackathon — Health & Sciences ($10K) + Ollama Prize ($10K)  
+> **Model Yığını:** `gemma4:e4b` (birincil) + `medgemma:4b` (Vision — opsiyonel)  
+> **Son Güncelleme:** Mayıs 2026
 
 ---
 
-## 🏃 Sprint 0 — Şu An Tamamlananlar (v4.0)
+## 🎯 Yarışma Kazanma Kriterleri
 
-| Özellik | Durum |
-|---|---|
-| FastAPI backend + Gemma 4 (Ollama) | ✅ |
-| 5 turlu AI anamnez mülakatı | ✅ |
-| MTS Triaj (RED/YELLOW/GREEN) + AI skoru | ✅ |
-| RAG (ChromaDB + MiniLM) | ✅ |
-| SSE Gerçek zamanlı kuyruk | ✅ |
-| SQLite kalıcılık | ✅ |
-| Multimodal Vision (yara/EKG/cilt) | ✅ |
-| Vital bulgular formu | ✅ |
-| PDF Export (jsPDF) | ✅ |
-| SSE Streaming anlatı | ✅ |
-| Sunucu başlangıcında warmup | ✅ |
-| Think blok temizleme | ✅ |
+| Kriter | Ağırlık | Mevcut Durum |
+|--------|---------|-------------|
+| Gemma 4 modeli kullanımı | Zorunlu | ✅ `gemma4:e4b` — triage + anamnez + rapor |
+| Ollama ile yerel çalışma | Zorunlu (Ollama $10K) | ✅ Tamamen yerel, sıfır API maliyeti |
+| Gerçek dünya etkisi | Yüksek | ✅ Türkiye kamu sağlığı — 117M yıllık başvuru |
+| Teknik derinlik | Yüksek | ✅ RAG + FHIR R4 + SSE + Vision |
+| Çalışan demo | Kritik | 🔧 S-14 önceliği |
+| Kod kalitesi & dokümantasyon | Orta | 🔧 S-17 sonrası 9/10 |
 
 ---
 
-## 🔐 Sprint 1 — Authentication & Rol Yönetimi ✅ TAMAMLANDI
+## ✅ Tamamlanan Özellikler (Sprint 1–13 + ek)
 
-**Süre:** 1 gün  
-**Durum:** ✅ Tam entegre
-
-### Backend
-- [x] `users` tablosu: user_id, email, password_hash, role, name, specialty, clinic_code, created_at, is_active
-- [x] JWT token tabanlı auth (python-jose + passlib)
-- [x] `POST /auth/register` — hasta / doktor kaydı (doktora clinic_code kontrolü)
-- [x] `POST /auth/login` — JWT döndürür (role bilgisiyle)
-- [x] `GET /auth/me` — mevcut kullanıcı
-- [x] `GET /auth/profile` / `PUT /auth/profile` — hasta profili
-- [x] `GET /auth/patients` — doktor için hasta listesi
-- [x] Route koruması: `get_current_user()`, `require_auth()`, `require_doctor()`, `require_admin()`
-- [x] Oturumlar kullanıcıya bağlanır (`patient_id` alanı)
-- [x] Demo doktor otomatik oluşturulur: `doctor@anamnezai.tr` / `doctor123`
-
-### Frontend
-- [x] `login.html` — hasta + doktor tabbed giriş ekranı
-- [x] `register.html` — hasta / doktor kayıt ekranı  
-- [x] `index.html` — kullanıcı pill (isim + çıkış), token ile API çağrısı, auth nav
-- [x] `doctor.html` — doktor auth guard (hasta girmeye çalışırsa index'e, giriş yoksa login'e)
-- [x] Token localStorage'da saklanır, Bearer header tüm API isteklerine eklenir
-
-### Roller
-```
-HASTA    → Mülakat başlatır, kendi raporlarını görür
-DOKTOR   → Triaj kuyruğunu yönetir (guard korumalı)
-PERSONEL → Doktor gibi erişim
-ADMİN    → Tüm haklar
-```
-
-**Doktor Demo:** `doctor@anamnezai.tr` / `doctor123`  
-**Yeni Doktor Kaydı:** Klinik kodu `DEMO2026`
+| Gün | Sprint | Özellik | Durum |
+|-----|--------|---------|-------|
+| 0 | S-1,2 | FastAPI + Ollama/Gemma 4 altyapısı, SYSTEM_PROMPT_TR (MTS), SSE streaming | ✅ |
+| 1 | S-3 | Glassmorphism UI, animated SVG güven halkası, triaj renk kartları, Docker | ✅ |
+| 2 | S-4,5 | Kiosk modu, QR kod sıra fişi, kiosk kilit/açma, Kaggle notebook | ✅ |
+| 3 | S-6 | Mobil responsive, patient_dashboard, bottom sheet nav | ✅ |
+| 4 | S-7 | clinical_review.html — FHIR R4 export, ICD-10 tablosu, doktor notu | ✅ |
+| 5 | S-8 | RAG: ChromaDB + all-MiniLM-L6-v2 + PDF ingest API + dinamik bağlam | ✅ |
+| 6 | S-9 | Rate limiting (slowapi), session TTL, KVKK audit log, Kubernetes | ✅ |
+| 7 | S-10 | JWT auth — 4 rol, Google OAuth2, klinik kodu, demo kullanıcılar | ✅ |
+| 8 | S-11 | JWT auth — 4 rol, Google OAuth2, klinik kodu, demo kullanıcılar | ✅ |
+| 9 | S-12 | Web Speech TTS+STT, Service Worker (offline PWA), Chart.js analitik | ✅ |
+| 10 | S-13 | MedGemma Vision — `/api/analyze-image`, image_findings, fallback | ✅ |
+| 11 | S-Plus | Profil SPA — patient_dashboard içinde 4 section (profile.html kaldırıldı) | ✅ |
 
 ---
 
-## 📋 Sprint 2 — Hasta Profili & Tıbbi Geçmiş ✅ TAMAMLANDI
-
-**Süre:** 1 gün  
-**Durum:** ✅ Tam entegre
-
-- [x] `patient_profiles` tablosu: doğum yılı, cinsiyet, kan grubu, kronik hastalıklar, ilaçlar, alerjiler, notlar
-- [x] `GET /api/patient/history` — hastanın tüm tamamlanmış oturumları ve triaj özetleri
-- [x] `GET /auth/profile` / `PUT /auth/profile` — tıbbi profil alma/güncelleme
-- [x] `profile.html` — hasta profil sayfası (tag tabanlı ilaç/kronik/alerji, ziyaret geçmişi)
-- [x] Geçmiş ziyaretler listesi (triaj rengiyle, tarih/saat, şikayet özeti)
-- [x] Profile istatistikleri: toplam/acil/rutin sayaç
-- [x] index.html dropdown menü: "Profilim & Geçmiş" linki
+## 🚀 Kalan Sprint Planı — Yarışma Öncesi
 
 ---
 
-## 🏥 Sprint 3 — Doktor İş Akışı Geliştirme ✅ TAMAMLANDI
+### 🔴 SPRINT 14 — Demo Güvenilirliği ✅ TAMAMLANDI
 
-**Süre:** 1 gün  
-**Durum:** ✅ Tam entegre
+**Hedef:** Jürinin önünde sıfır hata, sorunsuz demo akışı
 
-- [x] `POST /api/session/{id}/note` — doktor notu ekleme (birden fazla not)
-- [x] `PUT /api/session/{id}/triage` — triaj seviyesi override (doktor değiştirebilir, kayıt tutulur)
-- [x] `PUT /api/session/{id}/seen` — "Görüldü" işareti (kuyruktan çıkarma)
-- [x] `GET /api/session/{id}/icd10` — Gemma 4 ile otomatik ICD-10 kod önerisi (max 3 kod)
-- [x] `DELETE /api/session/{id}` — artık doktor yetkisi gerektiriyor
-- [x] doctor.html güncellendi: not ekleme formu, triaj override butonları, görüldü butonu, ICD-10 öneri
-- [x] Raporlarda override/görüldü badge'leri görünür
+**Backend (`main.py`):**
+- [x] `/health` endpoint'i model durumunu ayrıntılı döndürsün (model durumu, warmup bayrağı)
+- [x] Ollama bağlantı kesilirse `503 Service Unavailable` + Türkçe hata mesajı
+- [x] Session timeout: 30 dk boşta kalan oturumu otomatik kapat + temizle (`_session_cleanup_loop`)
+- [x] Startup warmup: uygulama başlangıcında `_background_warmup` otomatik çağrılır
+- [x] Think bloğu garantisi — buffer ile yarım think bloğu korunur (`think_buffer` implementasyonu)
 
----
-
-## 📱 Sprint 4 — Mobil Uygulama (3-4 hafta)
-
-**Öncelik:** Yüksek — Kırsal erişim için kritik
-
-- [ ] React Native veya Flutter ile cross-platform uygulama
-- [ ] Offline mode: 5 soruluk form önbelleğe alınsın, bağlantı gelince sync
-- [ ] Sesli yönlendirme (yaşlı/düşük okuryazarlık)
-- [ ] Push notification: "Sıranız geldi"
-- [ ] Kamera ile cilt/yara fotoğrafı çekip Vision analiz
-- [ ] QR kod ile kliniğe gelince oturumu sürdür
+**Frontend:**
+- [x] Mülakat sırasında "Gemma 4 düşünüyor..." animasyonu — döngüsel klinik mesajlar
+- [x] Network hatalarında toast notification + "Tekrar Dene" butonu (`showToastWithRetry`)
+- [x] `summary.html` — "Doktor Paneline Git" butonu yalnızca doctor/admin rolünde görünüyor (önceden vardı + doğrulandı)
+- [x] PDF yazdırma — html2canvas + jsPDF ile tüm tarayıcılarda çalışıyor
 
 ---
 
-## 🖥️ Sprint 5 — Hastane Kiosk Modu ✅ TAMAMLANDI (temel)
+### 🟡 SPRINT 15 — Gemma 4 Farklılaştırıcılar ✅ TAMAMLANDI
 
-**Durum:** ✅ Temel kiosk entegre
+**Hedef:** Jüriye Gemma 4'ün ne fark yarattığını somut, görsel olarak göster
 
-- [x] `kiosk.html` — dokunmatik ekran dostu tam ekran UI (koyu tema, büyük butonlar)
-- [x] 5 ekranlı akış: Karşılama → Form → Mülakat → Tamamlandı → Giriş
-- [x] `GET /api/kiosk/status` — anonim sistem durumu + kuyruk bilgisi
-- [x] Inaktivite koruması: 3 dakika hareketsizlikte ana ekrana dön
-- [x] Giriş yapmış hastalar için profil entegrasyonu
-- [ ] QR kod oturum başlatma
-- [ ] Yazıcı entegrasyonu (sıra fişi)
-- [ ] Admin panelinden kiosk kilit/açık
+**Thinking Mode Gösterimi:**
+- [x] Mülakat sırasında "AI Düşünüyor..." animasyonu döngüsel klinik mesajlarla
+- [x] `clinical_review.html`'de AI Düşünce Süreci açılır panel mevcut
 
----
+**MedGemma Vision Vurgusu:**
+- [x] `summary.html`'de "Görsel Bulgular" ayrı kart — `[MedGemma Vision]` · `[Gemma 4 Multimodal]` rozeti
 
-## 🔗 Sprint 6 — HBYS & FHIR Entegrasyonu ✅ TAMAMLANDI (temel)
-
-**Durum:** ✅ FHIR R4 export entegre
-
-- [x] `GET /api/session/{id}/fhir` — FHIR R4 Bundle (Patient + ClinicalImpression + Observation)
-- [x] Vital signs → FHIR Observation (LOINC kodlarıyla: KB, nabız, ateş, SpO2)
-- [x] Olası tanılar → FHIR ClinicalImpression finding list
-- [x] Triaj seviyesi + AI skoru → custom extension
-- [x] doctor.html → "FHIR R4 Export" butonu (JSON indirme)
-- [ ] HBYS staging ortam bağlantısı
-- [ ] HL7 v2 mesajlaşma
-- [ ] ICD-10 FHIR Condition resource
+**Model Durum Kartı (`doctor.html`):**
+- [x] Sayfanın üstünde model durum bar'ı: `Gemma 4 e4b ✅ ACTIVE | MedGemma 4b (opsiyonel)`
+- [x] `/health` endpoint'ten her 30 sn poll et
 
 ---
 
-## 🌍 Sprint 7 — Çok Dil & Erişilebilirlik ✅ TAMAMLANDI
+### 🟡 SPRINT 16 — RAG & Klinik Kalite ✅ TAMAMLANDI
 
-**Durum:** ✅ TR/EN/AR + WCAG 2.1 AA
+**Hedef:** AI çıktılarının tıbbi kalitesini artır, kaynak şeffaflığı sağla
 
-- [x] **Türkçe / İngilizce / Arapça** dil desteği — kiosk.html + index.html tam i18n
-- [x] RTL desteği — Arapça seçilince `dir="rtl"` + `lang="ar"` otomatik uygulanır
-- [x] Dil tercihi `localStorage`'da kalıcı tutulur
-- [x] `GET /api/kiosk/status` → `message_tr`, `message_en`, `message_ar` döndürür
-- [x] **WCAG 2.1 AA uyumu** — aria-label, role="alert", aria-live, aria-pressed, aria-modal
-- [x] **Yüksek kontrast modu** toggle butonu (kiosk.html, localStorage'da saklanır)
-- [x] **Büyük yazı tipi** toggle (kiosk.html)
-- [x] **Klavye navigasyonu** — :focus-visible, goTo() ilk fokuslanabilir elemana focus verir
-- [x] **.sr-only** yardımcı teknoloji (ekran okuyucu) class'ı eklendi
-- [x] Tüm semantik HTML — role="main", role="toolbar", role="region", role="figure"
-- [x] index.html AR butonu + setLang() RTL/LTR toggle
-- [ ] Kürtçe temel destek (v2 roadmap)
-- [ ] Sesli soru/cevap STT+TTS (v2 roadmap)
+**RAG İyileştirme:**
+- [x] ChromaDB'ye ek Türkçe tıbbi belgeler eklendi:
+  - ICD-10 TR Kodlama Rehberi (kardiyoloji, solunum, GI, nöroloji, travma) 
+  - Türkiye Acil Servis İstatistikleri 2024 (3 chunk)
+  - Genişletilmiş MTS Algoritmaları (kardiyak, pediatrik, ağrı yönetimi)
+- [x] RAG kaynak rozeti `summary.html`'de — `fetchRagInfo()` ile dinamik
+- [x] Hasta alerji profili → `buildAllergyBanner()` ile mülakat ekranında gösterilir
 
----
-
-## 📊 Sprint 8 — Analitik Dashboard & Raporlama ✅ TAMAMLANDI
-
-**Durum:** ✅ Tam admin analitik sayfası + CSV export
-
-- [x] `GET /api/analytics` — triaj istatistikleri: toplam, renk dağılımı, cinsiyet, yaş grupları, ortalama güven
-- [x] Günlük aktivite (son 7 gün)
-- [x] En sık urgency flag listesi
-- [x] doctor.html → sidebar "Analitik" butonu ile açılabilen panel
-- [x] **`analytics.html`** — ayrı admin analitik sayfası (Chart.js ile 4 grafik: donut, line, bar, pie)
-- [x] KPI kartları: Toplam/Kırmızı/Sarı/Yeşil/Güven/Görüldü/Bekleyen
-- [x] **`GET /api/analytics/export/csv`** — admin için anonimleştirilmiş CSV export (audit log kaydıyla)
-- [x] 60 saniyede bir otomatik yenileme
-- [ ] Semptom paterni analizi (grip dalgası tespiti) — v2
-- [ ] Bölge/il bazlı dağılım haritası — v2
-- [ ] BigQuery entegrasyon — v2
+**Klinik Rapor Kalitesi:**
+- [x] Vital bulgular tablosunda normal aralık dışı değerler renk kodlu (zaten vardı: ateş ≥38.5°C → err rengi, SpO2 <95 → err)
+- [x] Mülakat ekranında aktif alerji varsa kırmızı sabit banner (localStorage'dan alerji profili okunur)
+- [x] `summary.html` — olası tanılar ICD-10 ara linki ile (`icd10data.com`)
 
 ---
 
-## 🔒 Sprint 9 — Güvenlik & Uyumluluk ✅ TAMAMLANDI
+### 🟢 SPRINT 17 — Demo Materyali & Sunum ✅ TAMAMLANDI
 
-**Durum:** ✅ Rate limiting + audit log + KVKK/GDPR
+**Hedef:** Jüriyi ikna eden, eksiksiz dokümantasyon
 
-- [x] `audit_log` tablosu: tüm kritik işlemler (session_start, fhir_export, gdpr_delete, doctor_actions) loglanıyor
-- [x] `GET /api/audit-log` — admin için audit log listesi
-- [x] `DELETE /api/user/{id}/all-data` — KVKK/GDPR veri silme hakkı
-- [x] Tüm doktor işlemleri (not, override, görüldü) audit'e kaydediliyor
-- [x] **Rate limiting — `slowapi`** (`requirements.txt`'e eklendi, app.state.limiter kurulumu)
-- [x] Kiosk lock/unlock işlemleri audit loguna kaydediliyor
-- [x] CSV export işlemleri audit loguna kaydediliyor
-- [ ] Penetrasyon testi bulguları — v2
-- [ ] Sağlık Bakanlığı güvenlik sertifikası — v2
+**Ekran Görüntüleri (`frontend/screens/`):**
+- [x] `frontend/screens/` klasörü oluşturuldu
+- [x] `README.md` placeholder ve demo talimatları eklendi
 
----
-
-## ☁️ Sprint 10 — Cloud & Ölçekleme ✅ TAMAMLANDI
-
-**Durum:** ✅ CI/CD pipeline + Docker + Kubernetes hazır
-
-- [x] **`.github/workflows/ci.yml`** — GitHub Actions pipeline:
-  - Lint (ruff) + pytest + coverage
-  - Frontend HTML + PWA asset validation
-  - Docker build (Buildx + cache)
-  - Cloud Run auto-deploy (main branch → production)
-- [x] `Dockerfile` — mevcut, production hazır
-- [x] `docker-compose.yml` — mevcut, local dev
-- [x] **`kubernetes/deployment.yaml`** — tam Kubernetes manifests:
-  - Namespace, ConfigMap, Secret
-  - Backend Deployment (2 replicas, rolling update)
-  - Ollama Deployment
-  - Services (ClusterIP)
-  - Ingress (HTTPS + TLS + cert-manager)
-  - HorizontalPodAutoscaler (2–10 replicas, CPU/Memory)
-  - PersistentVolumeClaim (5Gi SQLite storage)
-- [ ] Vertex AI + Gemini API cloud fallback
-- [ ] PostgreSQL geçişi (SQLite → production)
-- [ ] Redis cache
-- [ ] Cloud Monitoring + Alerting
+**README Son Hali:**
+- [x] Sprint history tablosu güncellendi (S-14 → S-17)
+- [x] "Yargıçlar için doğrulama" bölümü — tüm 6 endpoint test komutu eklendi
+- [x] Ekran görüntüsü dizini belgelenendi
 
 ---
 
-## 🎯 Hackathon Öncelik Listesi (Gemma 4 Good Hackathon)
+### 🔵 SPRINT 18 — Bonus ✅ TAMAMLANDI
 
-> Bu proje Sağlık Bakanlığı değil, **Gemma 4 Good Hackathon** için geliştirilmektedir.  
-> Tamamen yerel (Ollama) çalışır, hasta verisi sunucuya gitmez.
+- [x] Admin panel: RAG belge yönetimi UI — belgeleri listele, metin ekle, PDF yükle, yerleşik bilgiyi yenile
+- [x] Admin panel: Model test sekmesi — `gemma4:e4b` canlı prompt test UI
+- [x] `/api/model/compare` endpoint — Gemma 4 ile tek model prompt test desteği
+
+---
+
+### 🔵 SPRINT 19 — Kalite Güvencesi & Son Dokunuşlar ✅ TAMAMLANDI
+
+**Hedef:** Hackathon demosuna hazır, hatasız sistem
+
+**Frontend Düzeltmeleri:**
+- [x] `admin.html` — RAG sekmesi tab butonu eksikti, eklendi
+- [x] `clinical_review.html` — AI Düşünce Süreci açılır paneli eklendi (Sprint 15 gereksinimi karşılandı)
+- [x] `clinical_review.html` — ICD-10 endpoint uyumu (`icd10_suggestions` fallback) düzeltildi
+- [x] `clinical_review.html` — FHIR export `blob()` → `json()` düzeltildi
+- [x] `clinical_review.html` — Q&A transkriptinde model rozeti eklendi
+- [x] `register.html` — hasta kaydı sonrası `patient_dashboard.html`'e yönlendirme düzeltildi
+- [x] `sw.js` — `profile.html` (kaldırılmış) yerine `patient_dashboard.html`, `clinical_review.html`, `landing.html` eklendi
+- [x] `summary.html` — "tilbbi" yazım hatası düzeltildi
+- [x] `index.html` — Sabit `gemma4:e4b` etiketi her AI mesajında gösteriliyor
+
+**Backend İyileştirmeleri:**
+- [x] `clean_gemma_response()` — thinking blokları temizlenir, markdown fence kaldırılır
+- [x] Offline/degraded mod — Ollama bağlantısı yoksa net hata mesajı
+
+---
+
+## 📊 Puan Tahmini
 
 ```
-1. ✅ Gemma 4 think bloğu fix
-2. ✅ Authentication (doktor/hasta login + JWT)
-3. ✅ login.html + register.html
-4. ✅ Doctor guard + kullanıcı nav
-5. ✅ Hasta profil sayfası (profile.html) — geçmiş raporlar, tıbbi geçmiş
-6. ✅ Doktor notu ekleme (POST /api/session/{id}/note)
-7. ✅ Triaj override + Görüldü işareti + ICD-10 öneri
-8. ✅ Temel analitik dashboard
-9. ✅ Hasta profili → mülakat entegrasyonu (kronik/ilaç/alerji → AI prompt)
-10. ✅ Alerji uyarısı kırmızı bayrak (önce listeye, doktor panelinde badge)
-11. ✅ Kiosk modu (kiosk.html — dokunmatik ekran UI)
-12. ✅ FHIR R4 export (Bundle: Patient + ClinicalImpression + Observation)
-13. ✅ Audit log (KVKK/GDPR uyumu)
-14. ✅ GDPR veri silme hakkı (DELETE /api/user/{id}/all-data)
-15. ✅ commit.py ile UTF-8 encoding düzeltmesi
-16. 🔄 RAG fine-tune: Gemma 4 medical LoRA (kaggle notebook)
-```
-
-### 🤖 Fine-Tune & RAG Planı (Hackathon için kritik)
-
-```
-MEVCUT:
-  RAG: ChromaDB + MiniLM — tıbbi bilgi tabanı (✅)
-  Model: Gemma 4 e4b via Ollama (✅)
-
-PLANLANAN:
-  LoRA Fine-Tune:
-    - Dataset: Turkish medical QA + symptom-triage pairs
-    - Base model: google/gemma-4-it (Kaggle notebook)
-    - Adapter: LoRA r=16, alpha=32
-    - Hedef: Türkçe tıbbi terminoloji + MTS triaj kararları
-    
-  RAG Güçlendirme:
-    - PDF ingest: Acil Tıp kılavuzu, MTS, CTAS
-    - Embed model: paraphrase-multilingual-MiniLM-L12-v2
-    - Chunk size: 512 token, overlap: 64
-    - Collection: medical_tr + medical_en
+Teknik Derinlik     ████████████ 9/10  — RAG + FHIR + SSE + Vision
+Gemma 4 Kullanımı   ████████████ 9/10  — e4b birincil + MedGemma (opsiyonel)
+Ollama Uyumu        ████████████ 10/10 — Tamamen yerel, sıfır API maliyeti
+Gerçek Etki         ████████████ 9/10  — Türkiye kamu sağlığı, 117M yıllık başvuru
+Demo Kalitesi       █████████░░░ 8/10  — Sprint 14 sonrası → 9/10
+Kod & Dokümantasyon ████████████ 9/10  — Sprint 17 sonrası
+──────────────────────────────────────────────────────────────
+TOPLAM              ████████████ ~9.0/10 → 🏆 Top 3 potansiyeli
 ```
 
 ---
 
-## 📐 Teknik Mimari (Hedef)
+## 🛠️ Sistem Mimarisi
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    AnamnezAI — Tam Mimari                        │
-│                                                                   │
-│  KULLANICI KATMANI                                               │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐   │
-│  │  Web     │ │  Mobil   │ │  Kiosk   │ │ Personel Destekli│   │
-│  │ (Mevcut) │ │   App    │ │  Modu    │ │      Mod         │   │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────────┬─────────┘   │
-│       └────────────┴────────────┴─────────────────┘             │
-│                              │                                    │
-│  API KATMANI                 ▼                                   │
-│  ┌───────────────────────────────────────────────────────────┐   │
-│  │  FastAPI v4.0   │  JWT Auth  │  Rate Limit  │  Audit Log │   │
-│  └───────────────────────────────────────────────────────────┘   │
-│                              │                                    │
-│  AI KATMANI                  ▼                                   │
-│  ┌───────────────┐  ┌───────────────────┐  ┌─────────────────┐  │
-│  │  Gemma 4      │  │  RAG (ChromaDB)   │  │  Vision API     │  │
-│  │  (Ollama)     │  │  MiniLM Embeddings│  │  Multimodal     │  │
-│  │  Lokal        │  │  12+ Tıbbi Chunk  │  │  Görüntü Analiz │  │
-│  └───────────────┘  └───────────────────┘  └─────────────────┘  │
-│                              │                                    │
-│  VERİ KATMANI                ▼                                   │
-│  ┌──────────────┐  ┌──────────────────┐  ┌────────────────────┐ │
-│  │  SQLite      │  │  FHIR R4 Store   │  │  Analytics (anon)  │ │
-│  │  (Mevcut)    │  │  (Sprint 6)      │  │  (Sprint 8)        │ │
-│  └──────────────┘  └──────────────────┘  └────────────────────┘ │
-│                              │                                    │
-│  ENTEGRASYON                 ▼                                   │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │  HBYS API  │  ICD-10  │  KVKK/GDPR  │  HL7 FHIR         │    │
-│  └──────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
+│                       KULLANICI KATMANI                         │
+│  ┌──────────┐  ┌───────────┐  ┌───────────────┐  ┌──────────┐  │
+│  │   Web    │  │   Kiosk   │  │    Doktor     │  │  Admin   │  │
+│  │ (Hasta)  │  │  TR / EN  │  │  SSE Kuyruk   │  │ Analitik │  │
+│  │ PWA+ses  │  │ QR+dokunma│  │  Override     │  │ Chart.js │  │
+│  └────┬─────┘  └─────┬─────┘  └───────┬───────┘  └────┬─────┘  │
+│       └──────────────┴────────────────┴───────────────┘        │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ HTTP / SSE
+┌────────────────────────────▼────────────────────────────────────┐
+│                   FastAPI Backend v5.0                          │
+│   JWT Auth │ Rate Limit (200/min) │ Audit Log │ SSE │ FHIR R4  │
+└──────────┬───────────────┬──────────────────┬────────────────────┘
+           │               │                  │
+┌──────────▼────┐  ┌───────▼──────────┐  ┌───▼──────────────────┐
+│    Ollama     │  │    ChromaDB      │  │       SQLite         │
+│  gemma4:e4b   │  │  ~810 chunk      │  │  sessions            │
+│  medgemma:4b  │  │  all-MiniLM-L6   │  │  summaries           │
+│  (opsiyonel)  │  │  MTS / ICD-10    │  │  users + roles       │
+│               │  │  top-k cosine    │  │  audit_log           │
+└───────────────┘  └──────────────────┘  └──────────────────────┘
+⚡ Tüm modeller YEREL (Ollama) — Sıfır API maliyeti
+⚡ Hasta verisi asla buluta gitmiyor — KVKK uyumlu
 ```
 
 ---
 
-## 👥 Kullanıcı Yolculukları
+## 🌍 Hackathon Sonrası Vizyon
 
-### Hasta Yolculuğu
-```
-Kayıt/Giriş → Profil Doldur → Mülakat Başlat → 
-Vital Gir → 5 Soru Cevapla → Görüntü Yükle (opsiyonel) → 
-Triaj Raporu Gör → PDF İndir → Doktora Git
-```
-
-### Doktor Yolculuğu
-```
-Giriş → Triaj Kuyruğunu Gör (SSE canlı) → 
-Hasta Detayına Tıkla → Vision Bulguları + Vital Gör → 
-Not Ekle → Triaj Onayla/Değiştir → "Görüldü" İşaretle
-```
-
-### Sağlık Personeli Yolculuğu
-```
-Giriş (Personel rolü) → Yeni Hasta Başlat → 
-Hasta Adına Formu Doldur → Sesli Yönlendir → 
-Raporu Doktora İlet
-```
+| Dönem | Hedef |
+|-------|-------|
+| **Q3 2026** | Türkiye Sağlık Bakanlığı pilot görüşmeleri (2 ASM) |
+| **Q3 2026** | Arapça + Kürtçe dil desteği — Gemma 4 çok dilli kapasitesi |
+| **Q4 2026** | PostgreSQL'e geçiş — çok klinikte ortak veri |
+| **Q4 2026** | Doktor mobil uygulaması (React Native) — SSE kuyruk telefonda |
+| **Q1 2027** | FHIR R4 tam API sunucu — hastane HIS sistemleriyle entegrasyon |
+| **Q1 2027** | Gemma 4 fine-tuning — Türkiye klinik veri setiyle ince ayar |
+| **2027** | Orta Doğu / Orta Asya — düşük kaynaklı sağlık sistemi ortakları |
 
 ---
 
-## 📈 Başarı Metrikleri
+## ⚡ Hızlı Başlangıç
 
-| Metrik | Hedef (6 ay) | Hedef (36 ay) |
-|---|---|---|
-| Günlük aktif kullanıcı | 100 | 50,000 |
-| İşlenen anamnez | 500/ay | 100,000/ay |
-| Triaj doğruluk oranı | %85 | %92 |
-| Doktor başına tasarruf | 15-20 dk/hasta | 20-25 dk/hasta |
-| Desteklenen hastane | 1 (pilot) | 50+ |
-| Dil desteği | 2 (TR+EN) | 5+ |
+```bash
+# 1. Modeli indir (~9.6 GB)
+ollama pull gemma4:e4b
+# Opsiyonel: Vision analizi için
+# ollama pull medgemma:4b
+
+# 2. Projeyi başlat
+cd mediscreen
+docker compose up --build -d
+
+# 3. Tarayıcıda aç
+# http://localhost:8000          → Hasta mülakatı
+# http://localhost:8000/doctor.html   → Doktor paneli
+# http://localhost:8000/kiosk.html    → Kiosk modu
+```
+
+## 👤 Demo Kullanıcıları
+
+| Rol | E-posta | Şifre | Kapsam |
+|-----|---------|-------|--------|
+| Doktor | `doctor@anamnezai.tr` | `doctor123` | Triaj kuyruğu, klinik inceleme, override |
+| Admin | `admin@anamnezai.tr` | `admin123` | Analitik, audit log, CSV export, RAG |
+| Yeni Doktor | Herhangi e-posta | — | Klinik kodu: **DEMO2026** |
+| Hasta | `register.html` ile kayıt | — | Mülakat, geçmiş, profil |
 
 ---
 
-## 🏆 Yarışma Durumu
-
-| Özellik | Hackathon Değeri |
-|---|---|
-| Gemma 4 lokal (Ollama) | ✅ Ollama $10K qualification |
-| Multimodal Vision | ✅ Gemma 4 differentiator |
-| SSE Streaming | ✅ Real-time demo |
-| Türkiye sağlık sistemi | ✅ Health $10K qualification |
-| Authentication (JWT) | ✅ Professional full-product |
-| Fine-tune LoRA plan | 🔄 AI depth bonus |
-| FHIR formatı | ⏳ Enterprise bonus |
-
----
-
-*Son güncelleme: Mayıs 2026 | AnamnezAI v5.0 | Gemma 4 Good Hackathon*
-*Sprint 4 (PWA) ✅ | Sprint 7 (i18n TR/EN/AR + WCAG) ✅ | Sprint 8 (Analytics) ✅ | Sprint 9 (Rate Limiting) ✅ | Sprint 10 (CI/CD) ✅*
-
+*AnamnezAI — Gemma 4 Good Hackathon 2026 | Health & Sciences ($10K) + Ollama Prize ($10K)*

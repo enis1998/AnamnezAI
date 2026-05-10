@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — Admin Paneli</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config={theme:{extend:{colors:{
+  pri:"#002f40",pric:"#00475e",sec:"#006a68",secc:"#a0f1ed",
+  surf:"#f4f7f9",surfc:"#e8ecee",ons:"#191c1d",onsv:"#3f4749",
+  ouv:"#bfc7ca",err:"#ba1a1a",errc:"#ffdad6",warn:"#e07b26"
+},fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}}}}
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;background:#f4f7f9;color:#191c1d;margin:0}
+  h1,h2,h3{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  .card{background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,47,64,0.06)}
+  .tab-btn{padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;border:none;display:flex;align-items:center;gap:6px}
+  .tab-btn.active{background:#002f40;color:#fff}
+  .tab-btn:not(.active){background:#e8ecee;color:#3f4749}
+  .tab-btn:not(.active):hover{background:#bfc7ca}
+  .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700}
+  .spin{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-pri text-white px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+        <span class="material-symbols-outlined msym-fill text-white text-[20px]">admin_panel_settings</span>
+      </div>
+      <div>
+        <h1 class="font-head font-bold text-[16px]">Admin Paneli</h1>
+        <p class="text-[11px] text-white/60" id="txt-admin-name">Yükleniyor...</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="doctor.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white text-[12px] font-medium hover:bg-white/20 transition-all">
+        <span class="material-symbols-outlined msym text-[14px]">medical_services</span>Doktor Paneli
+      </a>
+      <button onclick="logout()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white text-[12px] font-medium hover:bg-white/20 transition-all">
+        <span class="material-symbols-outlined msym text-[14px]">logout</span>Çıkış
+      </button>
+    </div>
+  </header>
+
+  <!-- Tab Bar -->
+  <div class="bg-white border-b border-surfc px-6 py-3 flex gap-2">
+    <button class="tab-btn active" onclick="switchTab('stats')" id="tab-stats">
+      <span class="material-symbols-outlined msym text-[14px]">bar_chart</span>Sistem
+    </button>
+    <button class="tab-btn" onclick="switchTab('users')" id="tab-users">
+      <span class="material-symbols-outlined msym text-[14px]">people</span>Kullanıcılar
+    </button>
+    <button class="tab-btn" onclick="switchTab('audit')" id="tab-audit">
+      <span class="material-symbols-outlined msym text-[14px]">history</span>Audit Log
+    </button>
+    <button class="tab-btn" onclick="switchTab('kiosk')" id="tab-kiosk">
+      <span class="material-symbols-outlined msym text-[14px]">tablet</span>Kiosk
+    </button>
+    <button class="tab-btn" onclick="switchTab('rag')" id="tab-rag">
+      <span class="material-symbols-outlined msym text-[14px]">database</span>RAG
+    </button>
+    <button class="tab-btn" onclick="switchTab('compare')" id="tab-compare">
+      <span class="material-symbols-outlined msym text-[14px]">compare</span>Model Karşılaştır
+    </button>
+  </div>
+
+  <!-- Content -->
+  <main class="flex-1 p-6 max-w-6xl mx-auto w-full">
+
+    <!-- ── Tab: Sistem İstatistikleri ── -->
+    <div id="tab-content-stats">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="card p-4 text-center">
+          <span class="material-symbols-outlined msym-fill text-pric text-2xl block mb-1">people</span>
+          <p class="text-[28px] font-head font-bold text-pri" id="s-total-users">—</p>
+          <p class="text-[11px] text-onsv">Toplam Kullanıcı</p>
+        </div>
+        <div class="card p-4 text-center">
+          <span class="material-symbols-outlined msym-fill text-sec text-2xl block mb-1">medical_services</span>
+          <p class="text-[28px] font-head font-bold text-pri" id="s-doctors">—</p>
+          <p class="text-[11px] text-onsv">Doktor</p>
+        </div>
+        <div class="card p-4 text-center">
+          <span class="material-symbols-outlined msym-fill text-warn text-2xl block mb-1">folder</span>
+          <p class="text-[28px] font-head font-bold text-pri" id="s-sessions">—</p>
+          <p class="text-[11px] text-onsv">Oturum (RAM)</p>
+        </div>
+        <div class="card p-4 text-center">
+          <span class="material-symbols-outlined msym-fill text-green-500 text-2xl block mb-1">visibility</span>
+          <p class="text-[28px] font-head font-bold text-pri" id="s-seen">—</p>
+          <p class="text-[11px] text-onsv">Görüldü İşaretli</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <!-- Queue -->
+        <div class="card p-5">
+          <h2 class="font-head font-bold text-pri text-[14px] mb-4">Kuyruk Durumu</h2>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center py-2 border-b border-surfc">
+              <span class="text-[13px] text-ons">Aktif kuyruk</span>
+              <span class="font-bold text-pri" id="s-queue">—</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-surfc">
+              <span class="text-[13px] text-ons">DB'deki toplam oturum</span>
+              <span class="font-bold text-pri" id="s-db-sessions">—</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-surfc">
+              <span class="text-[13px] text-ons">AI modeli</span>
+              <span class="font-mono text-[12px] bg-secc px-2 py-0.5 rounded-lg text-sec font-bold" id="s-model">—</span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+              <span class="text-[13px] text-ons">RAG</span>
+              <span class="font-bold" id="s-rag">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card p-5">
+          <h2 class="font-head font-bold text-pri text-[14px] mb-4">Hızlı İşlemler</h2>
+          <div class="space-y-3">
+            <button onclick="exportAnalyticsCSV()" id="btn-csv"
+              class="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 border-sec text-sec text-[13px] font-bold hover:bg-sec hover:text-white transition-all">
+              <span class="material-symbols-outlined msym text-[16px]">download</span>Analytics CSV İndir
+            </button>
+            <button onclick="clearOldSessions()"
+              class="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 border-warn text-warn text-[13px] font-bold hover:bg-warn hover:text-white transition-all">
+              <span class="material-symbols-outlined msym text-[16px]">cleaning_services</span>Eski Oturumları Temizle
+            </button>
+            <button onclick="loadStats()"
+              class="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border border-ouv text-onsv text-[13px] font-medium hover:bg-surfc transition-all">
+              <span class="material-symbols-outlined msym text-[16px]">refresh</span>İstatistikleri Yenile
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Role Distribution -->
+      <div class="card p-5">
+        <h2 class="font-head font-bold text-pri text-[14px] mb-4">Rol Dağılımı</h2>
+        <div id="role-distribution" class="flex flex-wrap gap-3">
+          <div class="text-center py-4 text-onsv text-[13px] w-full">Yükleniyor...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Kullanıcı Yönetimi ── -->
+    <div id="tab-content-users" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-head font-bold text-pri text-[16px]">Kullanıcı Listesi</h2>
+        <div class="flex gap-2 items-center">
+          <input id="user-search" type="text" placeholder="İsim veya e-posta ara..." oninput="filterUsers()"
+            class="px-3 py-2 rounded-xl border border-ouv text-[13px] w-56 focus:outline-none focus:border-sec"/>
+          <select id="user-role-filter" onchange="filterUsers()"
+            class="px-3 py-2 rounded-xl border border-ouv text-[13px] focus:outline-none focus:border-sec">
+            <option value="">Tüm Roller</option>
+            <option value="doctor">Doktor</option>
+            <option value="patient">Hasta</option>
+            <option value="admin">Admin</option>
+            <option value="personnel">Personel</option>
+          </select>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <div id="users-table">
+          <div class="text-center py-10"><span class="material-symbols-outlined msym spin text-sec text-3xl">refresh</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Audit Log ── -->
+    <div id="tab-content-audit" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-head font-bold text-pri text-[16px]">Audit Log</h2>
+        <button onclick="loadAuditLog()"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-medium hover:bg-ouv/30 transition-all">
+          <span class="material-symbols-outlined msym text-[14px]">refresh</span>Yenile
+        </button>
+      </div>
+      <div class="card overflow-hidden">
+        <div id="audit-table">
+          <div class="text-center py-10"><span class="material-symbols-outlined msym spin text-sec text-3xl">refresh</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Kiosk Yönetimi ── -->
+    <div id="tab-content-kiosk" class="hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Kiosk Status -->
+        <div class="card p-6">
+          <h2 class="font-head font-bold text-pri text-[15px] mb-5">Kiosk Durumu</h2>
+          <div class="flex items-center justify-center py-6">
+            <div id="kiosk-status-display" class="text-center">
+              <span class="material-symbols-outlined msym-fill text-6xl block mb-3" id="kiosk-icon">tablet</span>
+              <p class="font-bold text-[16px]" id="kiosk-status-text">Kontrol ediliyor...</p>
+              <p class="text-[12px] text-onsv mt-1" id="kiosk-status-sub">—</p>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-4">
+            <button onclick="setKiosk(true)" id="btn-lock"
+              class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-bold bg-err text-white hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined msym text-[16px]">lock</span>Kilitle
+            </button>
+            <button onclick="setKiosk(false)" id="btn-unlock"
+              class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-bold bg-sec text-white hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined msym text-[16px]">lock_open</span>Kilidi Aç
+            </button>
+          </div>
+        </div>
+
+        <!-- Kiosk Info -->
+        <div class="card p-6">
+          <h2 class="font-head font-bold text-pri text-[15px] mb-4">Kiosk Hakkında</h2>
+          <div class="space-y-3 text-[13px]">
+            <div class="flex items-start gap-3 p-3 bg-surf rounded-xl">
+              <span class="material-symbols-outlined msym text-sec text-[18px] mt-0.5">info</span>
+              <p class="text-ons">Kiosk kilitleme, hastaların yeni mülakat başlatmasını engeller. Acil durumlarda veya sistem bakımında kullanın.</p>
+            </div>
+            <div class="flex items-start gap-3 p-3 bg-surf rounded-xl">
+              <span class="material-symbols-outlined msym text-sec text-[18px] mt-0.5">qr_code</span>
+              <p class="text-ons">Kioskta tamamlanan her oturum için QR kod oluşturulur. Hasta bu QR ile kendi raporuna erişebilir.</p>
+            </div>
+            <div class="flex items-center gap-2 mt-4">
+              <a href="kiosk.html" target="_blank"
+                class="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-sec text-sec text-[12px] font-bold hover:bg-sec hover:text-white transition-all">
+                <span class="material-symbols-outlined msym text-[14px]">open_in_new</span>Kiosk Sayfası
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: RAG Belge Yönetimi (Sprint 18) ── -->
+    <div id="tab-content-rag" class="hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        <!-- RAG Durum -->
+        <div class="card p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined msym text-sec text-[18px]">database</span>
+            <h2 class="font-head font-bold text-pri text-[14px]">RAG Veritabanı Durumu</h2>
+            <button onclick="loadRagStatus()" class="ml-auto w-7 h-7 rounded-lg bg-surfc hover:bg-ouv/30 flex items-center justify-center">
+              <span class="material-symbols-outlined msym text-onsv text-[14px]">refresh</span>
+            </button>
+          </div>
+          <div id="rag-status-content" class="space-y-2 text-[13px]">
+            <div class="flex items-center justify-center py-6">
+              <span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RAG Metin Girişi -->
+        <div class="card p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined msym text-pric text-[18px]">post_add</span>
+            <h2 class="font-head font-bold text-pri text-[14px]">Metin Ekle</h2>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Kaynak Adı</label>
+              <input id="rag-source" type="text" placeholder="ör: MTS_Protokol_v4"
+                class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent"/>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Kategori</label>
+              <select id="rag-category" class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent">
+                <option value="triage_protocol">Triaj Protokolü</option>
+                <option value="icd10_coding">ICD-10 Kodlama</option>
+                <option value="clinical_reference">Klinik Referans</option>
+                <option value="epidemiology">Epidemiyoloji</option>
+                <option value="custom">Özel</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Metin (min. 20 karakter)</label>
+              <textarea id="rag-text" rows="5" placeholder="Tıbbi bilgi metnini buraya girin..."
+                class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent resize-none"></textarea>
+            </div>
+            <button onclick="addRagText()"
+              class="w-full py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined msym text-[15px]">add_circle</span>RAG'a Ekle
+            </button>
+            <p id="rag-text-result" class="text-[11px] text-center min-h-[16px]"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- PDF Yükleme -->
+        <div class="card p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined msym text-warn text-[18px]">picture_as_pdf</span>
+            <h2 class="font-head font-bold text-pri text-[14px]">PDF Yükle</h2>
+          </div>
+          <label id="rag-pdf-drop"
+            class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-ouv rounded-xl cursor-pointer bg-surfc hover:bg-surf transition-colors">
+            <span class="material-symbols-outlined msym text-warn text-[24px] mb-1">upload_file</span>
+            <span class="text-[12px] font-semibold text-onsv">PDF seç veya sürükle</span>
+            <span class="text-[10px] text-onsv opacity-60">Maks. 50 MB</span>
+            <input id="inp-rag-pdf" type="file" accept=".pdf" class="hidden" onchange="uploadRagPDF(this)"/>
+          </label>
+          <p id="rag-pdf-result" class="text-[11px] text-center mt-2 min-h-[16px]"></p>
+        </div>
+
+        <!-- Yerleşik Bilgi Yenile -->
+        <div class="card p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined msym text-sec text-[18px]">restart_alt</span>
+            <h2 class="font-head font-bold text-pri text-[14px]">Yerleşik Bilgi Tabanı</h2>
+          </div>
+          <p class="text-[12px] text-onsv mb-4">MTS protokolleri, ICD-10 TR, Türkiye acil servis istatistikleri ve genişletilmiş klinik algoritmalar dahil onlarca tıbbi bilgi chunk'ı yeniden yükler.</p>
+          <button onclick="reloadBuiltinRAG()"
+            class="w-full py-2.5 rounded-xl bg-sec text-white text-[13px] font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined msym text-[15px]">sync</span>Yerleşik Bilgiyi Yenile
+          </button>
+          <p id="rag-builtin-result" class="text-[11px] text-center mt-2 min-h-[16px]"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Model Karşılaştırma (Sprint 18) ── -->
+    <div id="tab-content-compare" class="hidden">
+      <div class="card p-6 mb-5">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-9 h-9 rounded-xl bg-pric/10 flex items-center justify-center">
+            <span class="material-symbols-outlined msym text-pric text-[18px]">compare</span>
+          </div>
+          <div>
+            <h2 class="font-head font-bold text-pri text-[15px]">Gemma 4 vs Lite Model Karşılaştırması</h2>
+            <p class="text-[12px] text-onsv">Aynı klinik soru için iki modelin yanıtlarını yan yana görün</p>
+          </div>
+          <span class="ml-auto px-2.5 py-1 rounded-full text-[10px] font-bold bg-secc text-sec">Sprint 18</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Sistem Rolü (opsiyonel)</label>
+            <input id="cmp-system" type="text" placeholder="ör: Sen bir acil tıp doktorusun..."
+              class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent focus:border-sec focus:outline-none"/>
+          </div>
+          <div class="flex items-end">
+            <button onclick="runCompare()"
+              class="w-full py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined msym text-[15px]">play_arrow</span>Karşılaştır
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Klinik Soru / Prompt</label>
+          <textarea id="cmp-prompt" rows="3"
+            class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent resize-none focus:border-sec focus:outline-none"
+            placeholder="ör: 58 yaşında erkek hasta göğüs ağrısı şikayetiyle başvurdu. Bir sonraki en klinik olarak değerli soruyu Türkçe sor."></textarea>
+        </div>
+        <p id="cmp-status" class="text-[11px] text-onsv mt-2 min-h-[16px]"></p>
+      </div>
+
+      <div id="cmp-results" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Gemma 4 -->
+          <div class="card p-5 border-t-4 border-pric">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-lg bg-pric flex items-center justify-center">
+                <span class="material-symbols-outlined msym-fill text-white text-[14px]">psychology</span>
+              </div>
+              <div>
+                <p class="font-bold text-pri text-[14px]" id="cmp-g4-model">Gemma 4 e4b</p>
+                <p class="text-[10px] text-onsv">Ana Klinik Model</p>
+              </div>
+              <span class="ml-auto px-2 py-0.5 rounded-full bg-pric/10 text-pric text-[10px] font-bold">PRIMARY</span>
+            </div>
+            <div id="cmp-g4-time" class="text-[10px] text-onsv mb-2"></div>
+            <div id="cmp-g4-response" class="bg-surfc rounded-xl p-4 text-[13px] text-ons leading-relaxed whitespace-pre-wrap min-h-[100px]">
+              <span class="text-ouv italic">Yanıt bekleniyor...</span>
+            </div>
+            <div id="cmp-g4-badge" class="mt-2 hidden">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">✅ Yanıt alındı</span>
+            </div>
+          </div>
+          <!-- Lite Model -->
+          <div class="card p-5 border-t-4 border-warn">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-lg bg-warn flex items-center justify-center">
+                <span class="material-symbols-outlined msym-fill text-white text-[14px]">flash_on</span>
+              </div>
+              <div>
+                <p class="font-bold text-pri text-[14px]" id="cmp-lite-model">Lite Model (gemma3:1b)</p>
+                <p class="text-[10px] text-onsv">Hızlı Tier-1 Model</p>
+              </div>
+              <span class="ml-auto px-2 py-0.5 rounded-full bg-warn/10 text-warn text-[10px] font-bold">FAST</span>
+            </div>
+            <div id="cmp-lite-time" class="text-[10px] text-onsv mb-2"></div>
+            <div id="cmp-lite-response" class="bg-surfc rounded-xl p-4 text-[13px] text-ons leading-relaxed whitespace-pre-wrap min-h-[100px]">
+              <span class="text-ouv italic">Yanıt bekleniyor...</span>
+            </div>
+            <div id="cmp-lite-badge" class="mt-2 hidden"></div>
+          </div>
+        </div>
+        <!-- Analysis note -->
+        <div id="cmp-note" class="mt-5 card p-4 bg-surf border-l-4 border-sec text-[12px] text-onsv leading-relaxed"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-5 right-5 z-50 hidden">
+  <div id="toast-inner" class="px-4 py-3 rounded-xl text-white text-[13px] font-medium shadow-lg"></div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let allUsers = [];
+
+function authHeaders() {
+  const token = localStorage.getItem('anamnez_token');
+  return token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+}
+
+function showToast(msg, isErr = false) {
+  const t = document.getElementById('toast');
+  const ti = document.getElementById('toast-inner');
+  ti.textContent = msg;
+  ti.style.background = isErr ? '#ba1a1a' : '#006a68';
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 3000);
+}
+
+function logout() {
+  localStorage.removeItem('anamnez_token');
+  localStorage.removeItem('anamnez_user');
+  window.location.href = 'login.html';
+}
+
+// ── Auth check ──
+async function checkAuth() {
+  const token = localStorage.getItem('anamnez_token');
+  if (!token) { window.location.href = 'login.html'; return; }
+  try {
+    const r = await fetch(`${API}/auth/me`, { headers: authHeaders() });
+    if (!r.ok) { window.location.href = 'login.html'; return; }
+    const d = await r.json();
+    if (d.user.role !== 'admin') {
+      alert('Bu sayfaya sadece admin kullanıcılar erişebilir.');
+      window.location.href = 'doctor.html';
+      return;
+    }
+    document.getElementById('txt-admin-name').textContent = `${d.user.name} · Admin`;
+    loadStats();
+  } catch { window.location.href = 'login.html'; }
+}
+
+// ── Tab sistemi ──
+const TABS = ['stats','users','audit','kiosk','rag','compare'];
+function switchTab(tab) {
+  TABS.forEach(t => {
+    const content = document.getElementById(`tab-content-${t}`);
+    const btn = document.getElementById(`tab-${t}`);
+    if (content) content.classList.toggle('hidden', t !== tab);
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
+  if (tab === 'users' && allUsers.length === 0) loadUsers();
+  if (tab === 'audit') loadAuditLog();
+  if (tab === 'kiosk') loadKioskStatus();
+  if (tab === 'rag') loadRagStatus();
+}
+
+// ── Sprint 18: RAG Yönetimi ──
+async function loadRagStatus() {
+  const el = document.getElementById('rag-status-content');
+  if (!el) return;
+  try {
+    const r = await fetch(`${API}/api/rag/status`, { headers: authHeaders() });
+    const d = await r.json();
+    if (d.enabled && d.total_chunks >= 0) {
+      const sources = d.sources || {};
+      const sourceHtml = Object.entries(sources).map(([src, cnt]) =>
+        `<div class="flex justify-between items-center py-1.5 border-b border-surfc text-[12px]">
+          <span class="text-ons font-medium truncate flex-1">${src.replace(/_/g,' ')}</span>
+          <span class="font-bold text-sec ml-2">${cnt} chunk</span>
+        </div>`
+      ).join('') || '<p class="text-ouv text-[12px]">Henüz kaynak yok.</p>';
+      el.innerHTML = `
+        <div class="flex gap-2 mb-3 flex-wrap">
+          <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700">✅ RAG Aktif</span>
+          <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-secc text-sec">${d.total_chunks} chunk</span>
+          <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-surfc text-onsv">${Object.keys(sources).length} kaynak</span>
+        </div>
+        <div class="rounded-xl border border-surfc overflow-hidden">${sourceHtml}</div>`;
+    } else {
+      el.innerHTML = `<div class="p-4 rounded-xl bg-amber-50 text-amber-700 text-[13px]">⚠ RAG devre dışı veya başlatılmamış. Aşağıdan yerleşik bilgiyi yükleyin.</div>`;
+    }
+  } catch(e) {
+    el.innerHTML = `<div class="text-err text-[12px]">RAG durumu alınamadı: ${e.message}</div>`;
+  }
+}
+
+async function addRagText() {
+  const text = document.getElementById('rag-text').value.trim();
+  const source = document.getElementById('rag-source').value.trim() || 'admin_upload';
+  const category = document.getElementById('rag-category').value;
+  const resultEl = document.getElementById('rag-text-result');
+  if (text.length < 20) { resultEl.textContent = '⚠ Metin çok kısa (min 20 karakter)'; resultEl.style.color='#ba1a1a'; return; }
+  try {
+    const r = await fetch(`${API}/api/rag/ingest/text`, {
+      method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, source, category })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      resultEl.textContent = `✅ ${d.added_chunks || 0} chunk eklendi.`;
+      resultEl.style.color = '#006a68';
+      document.getElementById('rag-text').value = '';
+      setTimeout(loadRagStatus, 1000);
+    } else {
+      resultEl.textContent = `⚠ ${d.detail || 'Hata'}`;
+      resultEl.style.color = '#ba1a1a';
+    }
+  } catch(e) {
+    resultEl.textContent = `Bağlantı hatası: ${e.message}`;
+    resultEl.style.color = '#ba1a1a';
+  }
+}
+
+async function uploadRagPDF(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const resultEl = document.getElementById('rag-pdf-result');
+  resultEl.textContent = '⏳ Yükleniyor...';
+  resultEl.style.color = '#e07b26';
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const r = await fetch(`${API}/api/rag/ingest/pdf`, {
+      method: 'POST',
+      headers: (() => { const h = authHeaders(); delete h['Content-Type']; return h; })(),
+      body: form
+    });
+    const d = await r.json();
+    if (r.ok) {
+      resultEl.textContent = `✅ PDF yüklendi: ${d.filename} (${d.status === 'processing' ? 'arka planda işleniyor' : d.total_chunks + ' chunk'})`;
+      resultEl.style.color = '#006a68';
+      setTimeout(loadRagStatus, 2000);
+    } else {
+      resultEl.textContent = `⚠ ${d.detail || 'PDF yüklenemedi'}`;
+      resultEl.style.color = '#ba1a1a';
+    }
+  } catch(e) {
+    resultEl.textContent = `Hata: ${e.message}`;
+    resultEl.style.color = '#ba1a1a';
+  }
+  input.value = '';
+}
+
+async function reloadBuiltinRAG() {
+  const resultEl = document.getElementById('rag-builtin-result');
+  resultEl.textContent = '⏳ Yerleşik bilgi yükleniyor...';
+  resultEl.style.color = '#e07b26';
+  try {
+    const r = await fetch(`${API}/api/rag/ingest/builtin`, {
+      method: 'POST', headers: authHeaders()
+    });
+    const d = await r.json();
+    if (r.ok) {
+      resultEl.textContent = `✅ ${d.added_chunks || 0} yeni chunk eklendi (toplam: ${d.total_chunks || 0})`;
+      resultEl.style.color = '#006a68';
+      setTimeout(loadRagStatus, 1000);
+    } else {
+      resultEl.textContent = `⚠ ${d.detail || 'Hata'}`;
+      resultEl.style.color = '#ba1a1a';
+    }
+  } catch(e) {
+    resultEl.textContent = `Hata: ${e.message}`;
+    resultEl.style.color = '#ba1a1a';
+  }
+}
+
+// ── Stats ──
+async function loadStats() {
+  try {
+    const r = await fetch(`${API}/api/admin/stats`, { headers: authHeaders() });
+    if (!r.ok) { showToast('İstatistikler yüklenemedi', true); return; }
+    const d = await r.json();
+    document.getElementById('s-total-users').textContent = d.total_users;
+    document.getElementById('s-doctors').textContent = d.by_role?.doctor || 0;
+    document.getElementById('s-sessions').textContent = d.sessions_in_memory;
+    document.getElementById('s-seen').textContent = d.seen_count;
+    document.getElementById('s-queue').textContent = d.queue_length;
+    document.getElementById('s-db-sessions').textContent = d.sessions_in_db;
+    document.getElementById('s-model').textContent = d.model;
+    document.getElementById('s-rag').textContent = d.rag_enabled ? '✅ Aktif' : '❌ Kapalı';
+
+    const roleColors = { doctor: '#006a68', patient: '#002f40', admin: '#ba1a1a', personnel: '#e07b26' };
+    const roleLabels = { doctor: 'Doktor', patient: 'Hasta', admin: 'Admin', personnel: 'Personel' };
+    document.getElementById('role-distribution').innerHTML = Object.entries(d.by_role || {}).map(([role, cnt]) =>
+      `<div class="flex items-center gap-3 flex-1 min-w-[140px] p-4 rounded-xl border border-surfc">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-[18px] font-bold" style="background:${roleColors[role]||'#8c9499'}">${cnt}</div>
+        <div><p class="font-bold text-pri text-[14px]">${roleLabels[role]||role}</p><p class="text-[11px] text-onsv">${role}</p></div>
+      </div>`
+    ).join('') || '<p class="text-onsv text-[13px]">Kullanıcı bulunamadı.</p>';
+  } catch(e) { showToast('Bağlantı hatası', true); }
+}
+
+// ── Users ──
+async function loadUsers() {
+  try {
+    const r = await fetch(`${API}/api/admin/users`, { headers: authHeaders() });
+    if (!r.ok) { document.getElementById('users-table').innerHTML = '<div class="p-5 text-err text-[13px]">Yetki hatası.</div>'; return; }
+    const d = await r.json();
+    allUsers = d.users || [];
+    renderUsers(allUsers);
+  } catch { document.getElementById('users-table').innerHTML = '<div class="p-5 text-err text-[13px]">Bağlantı hatası.</div>'; }
+}
+
+function filterUsers() {
+  const q = document.getElementById('user-search').value.toLowerCase();
+  const roleF = document.getElementById('user-role-filter').value;
+  const filtered = allUsers.filter(u =>
+    (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
+    (!roleF || u.role === roleF)
+  );
+  renderUsers(filtered);
+}
+
+const ROLE_BADGE = {
+  doctor:    ['bg-emerald-100 text-emerald-700','Doktor'],
+  patient:   ['bg-blue-100 text-blue-700','Hasta'],
+  admin:     ['bg-red-100 text-red-700','Admin'],
+  personnel: ['bg-amber-100 text-amber-700','Personel'],
+};
+
+function renderUsers(users) {
+  const el = document.getElementById('users-table');
+  if (!users.length) { el.innerHTML = '<div class="p-8 text-center text-onsv text-[13px]">Kullanıcı bulunamadı.</div>'; return; }
+  el.innerHTML = `
+  <table class="w-full text-[13px]">
+    <thead class="bg-surf text-[11px] font-bold text-onsv uppercase tracking-wider">
+      <tr>
+        <th class="px-5 py-3 text-left">Ad Soyad</th>
+        <th class="px-5 py-3 text-left">E-posta</th>
+        <th class="px-5 py-3 text-left">Rol</th>
+        <th class="px-5 py-3 text-left">Uzmanlık</th>
+        <th class="px-5 py-3 text-left">Durum</th>
+        <th class="px-5 py-3 text-left">İşlemler</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-surfc">
+      ${users.map(u => {
+        const [bc, bl] = ROLE_BADGE[u.role] || ['bg-surfc text-onsv', u.role];
+        return `<tr class="hover:bg-surf transition-colors ${!u.is_active?'opacity-50':''}">
+          <td class="px-5 py-3 font-semibold text-pri">${u.name}</td>
+          <td class="px-5 py-3 text-onsv font-mono text-[12px]">${u.email}</td>
+          <td class="px-5 py-3">
+            <select onchange="changeRole('${u.user_id}',this.value)"
+              class="text-[11px] font-bold px-2 py-1 rounded-lg border border-ouv ${bc} appearance-none cursor-pointer">
+              ${['doctor','patient','admin','personnel'].map(r=>
+                `<option value="${r}" ${r===u.role?'selected':''}>${ROLE_BADGE[r]?.[1]||r}</option>`
+              ).join('')}
+            </select>
+          </td>
+          <td class="px-5 py-3 text-onsv">${u.specialty||'—'}</td>
+          <td class="px-5 py-3">
+            <span class="badge ${u.is_active?'bg-emerald-100 text-emerald-700':'bg-surfc text-onsv'}">
+              ${u.is_active?'✓ Aktif':'Pasif'}
+            </span>
+          </td>
+          <td class="px-5 py-3">
+            <button onclick="toggleActive('${u.user_id}',${u.is_active})"
+              class="text-[11px] px-2.5 py-1 rounded-lg border ${u.is_active?'border-err text-err hover:bg-err hover:text-white':'border-sec text-sec hover:bg-sec hover:text-white'} transition-all font-semibold">
+              ${u.is_active?'Devre Dışı':'Aktif Et'}
+            </button>
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function changeRole(userId, newRole) {
+  try {
+    const r = await fetch(`${API}/api/admin/users/${userId}/role`, {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify({role: newRole})
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.detail || 'Rol değiştirilemedi.', true); loadUsers(); return; }
+    showToast('Rol güncellendi ✓');
+    allUsers = allUsers.map(u => u.user_id === userId ? {...u, role: newRole} : u);
+  } catch { showToast('Bağlantı hatası', true); loadUsers(); }
+}
+
+async function toggleActive(userId, currentlyActive) {
+  const newActive = !currentlyActive;
+  try {
+    const r = await fetch(`${API}/api/admin/users/${userId}/active`, {
+      method: 'PUT', headers: authHeaders(), body: JSON.stringify({active: newActive})
+    });
+    if (!r.ok) { showToast('İşlem başarısız.', true); return; }
+    showToast(newActive ? 'Kullanıcı aktif edildi ✓' : 'Kullanıcı devre dışı ✓');
+    allUsers = allUsers.map(u => u.user_id === userId ? {...u, is_active: newActive?1:0} : u);
+    renderUsers(allUsers);
+  } catch { showToast('Bağlantı hatası', true); }
+}
+
+// ── Audit Log ──
+async function loadAuditLog() {
+  const el = document.getElementById('audit-table');
+  el.innerHTML = '<div class="text-center py-8"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>';
+  try {
+    const r = await fetch(`${API}/api/audit-log?limit=100`, { headers: authHeaders() });
+    if (!r.ok) { el.innerHTML = '<div class="p-5 text-err text-[13px]">Yetki hatası veya log bulunamadı.</div>'; return; }
+    const d = await r.json();
+    const logs = d.logs || [];
+    if (!logs.length) { el.innerHTML = '<div class="p-8 text-center text-onsv text-[13px]">Henüz log kaydı yok.</div>'; return; }
+    el.innerHTML = `
+    <table class="w-full text-[12px]">
+      <thead class="bg-surf text-[10px] font-bold text-onsv uppercase tracking-wider">
+        <tr>
+          <th class="px-4 py-2 text-left">Zaman</th>
+          <th class="px-4 py-2 text-left">İşlem</th>
+          <th class="px-4 py-2 text-left">Kullanıcı Rol</th>
+          <th class="px-4 py-2 text-left">IP</th>
+          <th class="px-4 py-2 text-left">Detay</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-surfc">
+        ${logs.map(l => `<tr class="hover:bg-surf">
+          <td class="px-4 py-2 text-onsv font-mono">${new Date(l.created_at).toLocaleString('tr-TR')}</td>
+          <td class="px-4 py-2 font-bold text-pri">${l.action||'—'}</td>
+          <td class="px-4 py-2 text-onsv">${l.user_role||'—'}</td>
+          <td class="px-4 py-2 font-mono text-onsv">${l.ip_address||'—'}</td>
+          <td class="px-4 py-2 text-onsv truncate max-w-xs">${l.details||'—'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  } catch { el.innerHTML = '<div class="p-5 text-err text-[13px]">Bağlantı hatası.</div>'; }
+}
+
+// ── Kiosk ──
+async function loadKioskStatus() {
+  try {
+    const r = await fetch(`${API}/api/kiosk/status`);
+    const d = await r.json();
+    const locked = d.is_locked;
+    document.getElementById('kiosk-icon').textContent = locked ? 'lock' : 'tablet';
+    document.getElementById('kiosk-icon').style.color = locked ? '#ba1a1a' : '#006a68';
+    document.getElementById('kiosk-status-text').textContent = locked ? '🔒 Kiosk Kilitli' : '✅ Kiosk Açık';
+    document.getElementById('kiosk-status-sub').textContent = locked ? 'Hasta girişi devre dışı' : 'Hasta girişi aktif';
+  } catch { document.getElementById('kiosk-status-text').textContent = 'Bağlantı hatası'; }
+}
+
+async function setKiosk(lock) {
+  try {
+    const r = await fetch(`${API}/api/kiosk/${lock?'lock':'unlock'}`, {
+      method: 'POST', headers: authHeaders()
+    });
+    if (!r.ok) { showToast('İşlem başarısız.', true); return; }
+    showToast(lock ? '🔒 Kiosk kilitlendi' : '🔓 Kiosk açıldı');
+    loadKioskStatus();
+  } catch { showToast('Bağlantı hatası', true); }
+}
+
+async function clearOldSessions() {
+  if (!confirm('Görüldü işaretlenen tüm eski oturumlar RAM\'den temizlenecek. Emin misiniz?')) return;
+  showToast('Bu özellik geliştirme aşamasında.');
+}
+
+// ── Sprint 18: Model Karşılaştırma ──
+async function runCompare() {
+  const prompt = document.getElementById('cmp-prompt').value.trim();
+  const system = document.getElementById('cmp-system').value.trim();
+  const statusEl = document.getElementById('cmp-status');
+  if (!prompt || prompt.length < 5) { statusEl.textContent = '⚠ Lütfen en az 5 karakterlik bir prompt girin.'; statusEl.style.color='#ba1a1a'; return; }
+
+  statusEl.textContent = '⏳ İki model paralel olarak sorgulanıyor...';
+  statusEl.style.color = '#e07b26';
+  document.getElementById('cmp-results').classList.remove('hidden');
+  const g4El = document.getElementById('cmp-g4-response');
+  const liteEl = document.getElementById('cmp-lite-response');
+  const g4Badge = document.getElementById('cmp-g4-badge');
+  const liteBadge = document.getElementById('cmp-lite-badge');
+  g4El.innerHTML = '<span class="text-ouv italic flex items-center gap-2"><span class="material-symbols-outlined msym spin text-[15px]">refresh</span>Gemma 4 düşünüyor...</span>';
+  liteEl.innerHTML = '<span class="text-ouv italic flex items-center gap-2"><span class="material-symbols-outlined msym spin text-[15px]">flash_on</span>Lite model yanıt veriyor...</span>';
+  g4Badge.classList.add('hidden');
+  liteBadge.classList.add('hidden');
+
+  const t0 = Date.now();
+  try {
+    const r = await fetch(`${API}/api/model/compare`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, system: system || undefined })
+    });
+    const d = await r.json();
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+
+    const g4 = d.comparison?.gemma4 || {};
+    const lite = d.comparison?.lite || {};
+
+    // Gemma 4
+    const g4ModelEl = document.getElementById('cmp-g4-model');
+    if (g4ModelEl) g4ModelEl.textContent = g4.model || 'Gemma 4 e4b';
+    document.getElementById('cmp-g4-time').textContent = `⏱ ${elapsed}s (toplam süre)`;
+    if (g4.status === 'ok' && g4.response) {
+      g4El.textContent = g4.response;
+      g4Badge.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">✅ Yanıt alındı</span>';
+      g4Badge.classList.remove('hidden');
+    } else {
+      g4El.innerHTML = `<span class="text-err text-[12px]">⚠ ${g4.error || 'Yanıt alınamadı'}</span>`;
+    }
+
+    // Lite model
+    const liteModelEl = document.getElementById('cmp-lite-model');
+    if (lite.status === 'ok' && lite.response) {
+      if (liteModelEl) liteModelEl.textContent = lite.model || 'Lite Model';
+      liteEl.textContent = lite.response;
+      liteBadge.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">⚡ Hızlı yanıt</span>';
+      liteBadge.classList.remove('hidden');
+    } else if (lite.status === 'not_available') {
+      if (liteModelEl) liteModelEl.textContent = 'Lite Model — Kurulu Değil';
+      liteEl.innerHTML = '<span class="text-onsv text-[12px]">ℹ Lite model (gemma3:1b) Ollama\'da kurulu değil. <code>ollama pull gemma3:1b</code> ile yükleyin.</span>';
+    } else {
+      liteEl.innerHTML = `<span class="text-err text-[12px]">⚠ ${lite.error || 'Yanıt alınamadı'}</span>`;
+    }
+
+    // Note
+    const noteEl = document.getElementById('cmp-note');
+    if (noteEl && d.note) noteEl.textContent = `💡 ${d.note}`;
+    statusEl.textContent = `✅ Karşılaştırma tamamlandı (${elapsed}s)`;
+    statusEl.style.color = '#006a68';
+  } catch(e) {
+    statusEl.textContent = `Bağlantı hatası: ${e.message}`;
+    statusEl.style.color = '#ba1a1a';
+  }
+}
+
+// CSV export — /api/analytics endpoint'inden veriyi alıp CSV'ye dönüştür
+async function exportAnalyticsCSV() {
+  const token = localStorage.getItem('anamnez_token');
+  if (!token) { showToast('Giriş yapmanız gerekiyor.', true); return; }
+  try {
+    const r = await fetch(`${API}/api/analytics`, { headers: authHeaders() });
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const s = d.summary || {};
+    const rows = [
+      ['Metrik', 'Değer'],
+      ['Toplam Tamamlanan', s.total_completed || 0],
+      ['Acil (RED)', s.red || 0],
+      ['İkincil (YELLOW)', s.yellow || 0],
+      ['Rutin (GREEN)', s.green || 0],
+      ['Görüldü', s.seen || 0],
+      ['Ortalama Güven Skoru', s.avg_confidence || 0],
+    ];
+    const dist = d.distributions?.age_groups || {};
+    Object.entries(dist).forEach(([k,v]) => rows.push([`Yaş Grubu ${k}`, v]));
+    (d.top_urgency_flags || []).forEach(f => rows.push([`Acil Bulgu: ${f.flag}`, f.count]));
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `anamnezai-analytics-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    showToast('CSV indirildi ✓');
+  } catch { showToast('CSV indirilemedi.', true); }
+}
+
+checkAuth();
+</script>
+</body>
+</html>
+

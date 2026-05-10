@@ -233,7 +233,7 @@ async function doRegister(e) {
 
     setTimeout(() => {
       const role = data.user.role;
-      window.location.href = ['doctor','admin','personnel'].includes(role) ? 'doctor.html' : 'index.html';
+      window.location.href = ['doctor','admin','personnel'].includes(role) ? 'doctor.html' : 'patient_dashboard.html';
     }, 1500);
   } catch(err) {
     showErr('Sunucuya bağlanılamadı.');
