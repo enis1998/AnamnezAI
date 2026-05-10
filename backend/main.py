@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import AsyncGenerator, Optional
 import httpx
@@ -75,10 +76,25 @@ DB_PATH          = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), 
 # Sprint Fix — GPU/RAM yetersizse num_gpu=0 ile CPU moduna düş
 OLLAMA_NUM_GPU   = int(os.getenv("OLLAMA_NUM_GPU", "0"))  # 0 = CPU mode
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Uygulama başladığında DB'yi başlat, geçmiş verileri yükle ve modeli önceden ısıt."""
+    init_db()
+    init_auth_tables()      # ← Kullanıcı tablolarını oluştur (+ demo doktor)
+    db_load_all()
+    print(f"[AnamnezAI v5.0] DB hazır: {DB_PATH}")
+    # Modeli arka planda ısıt — ilk hasta gelene kadar hazır olsun
+    asyncio.create_task(_background_warmup())
+    # Sprint 14: Oturum timeout cleanup (30 dk boş kalan oturumlar)
+    asyncio.create_task(_session_cleanup_loop())
+    yield  # Uygulama çalışıyor
+
+
 app = FastAPI(
     title="AnamnezAI",
     description="AI-Powered Patient Pre-Triage — Gemma 4 + RAG + Vision | Gemma 4 Good Hackathon",
     version="5.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -684,20 +700,6 @@ def clean_gemma_response(text: str) -> str:
     text = re.sub(r'\s*```$', '', text.strip())
     return text.strip()
 
-# ─────────────────────────────────────────────
-#  Startup Event
-# ─────────────────────────────────────────────
-@app.on_event("startup")
-async def startup_event():
-    """Uygulama başladığında DB'yi başlat, geçmiş verileri yükle ve modeli önceden ısıt."""
-    init_db()
-    init_auth_tables()      # ← Kullanıcı tablolarını oluştur (+ demo doktor)
-    db_load_all()
-    print(f"[AnamnezAI v5.0] DB hazır: {DB_PATH}")
-    # Modeli arka planda ısıt — ilk hasta gelene kadar hazır olsun
-    asyncio.create_task(_background_warmup())
-    # Sprint 14: Oturum timeout cleanup (30 dk boş kalan oturumlar)
-    asyncio.create_task(_session_cleanup_loop())
 
 # ─────────────────────────────────────────────
 #  Auth Endpoints
