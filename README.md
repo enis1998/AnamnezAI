@@ -4,7 +4,7 @@
 
 > **Gemma 4 Good Hackathon 2026 — Health & Sciences ($10 K) + Ollama Prize ($10 K)**
 >
-> Dark-themed bilingual UI (TR 🇹🇷 · EN 🇬🇧) · 5–7 turn adaptive AI interview powered by Gemma 4 e4b via Ollama · Manchester Triage System (MTS) RED / YELLOW / GREEN classification · 92-chunk ChromaDB RAG corpus (MTS protocols, ICD-10 TR, cardiac, neuro, pediatric, ENT, dermatology) · Trust Layer with evidence list + guideline sources + `doctor_review_required` flag · FHIR R4 export · SSE streaming clinical narrative to doctor panel · Kiosk touch screen with QR queue ticket · Offline PWA · 4-role JWT auth · vendor-bundled jsPDF + html2canvas — zero CDN dependency.
+> Dark-themed bilingual UI (TR 🇹🇷 · EN 🇬🇧) · 5–7 turn adaptive AI interview powered by Gemma 4 e4b via Ollama · Manchester Triage System (MTS) RED / YELLOW / GREEN classification · ~90-chunk ChromaDB RAG corpus (MTS protocols, ICD-10 TR, cardiac, neuro, pediatric, ENT, dermatology) · Trust Layer with evidence list + guideline sources + `doctor_review_required` flag · FHIR R4 export · SSE streaming clinical narrative to doctor panel · Kiosk touch screen with QR queue ticket · Offline PWA · 4-role JWT auth · vendor-bundled jsPDF + html2canvas — zero CDN dependency.
 
 [![Built for Gemma 4 Good 2026](https://img.shields.io/badge/built%20for-Gemma%204%20Good%202026-4285F4)](https://gemma.google)
 [![Powered by Gemma 4](https://img.shields.io/badge/powered%20by-Gemma%204%20e4b-34A853)](https://ollama.com/library/gemma4)
@@ -82,7 +82,7 @@ Over 40 % of emergency department visits are coded with the wrong urgency level 
 What Gemma 4 makes possible here that no prior generation could:
 
 - **Adaptive interview depth** — detects emergency keywords in the first answer and automatically escalates from 5 to 7 questions, re-routing to OPQRST pain profiling or sepsis screening
-- **RAG-augmented triage** — retrieves relevant MTS and ICD-10 protocol chunks from a 92-chunk ChromaDB corpus before every clinical decision, grounding the model in actual guidelines
+- **RAG-augmented triage** — retrieves relevant MTS and ICD-10 protocol chunks from a ~90-chunk ChromaDB corpus before every clinical decision, grounding the model in actual guidelines
 - **Evidence-cited output** — every summary includes `evidence[]` (the specific findings that drove the decision) and `guideline_sources[]` (the clinical protocols consulted), not just a classification label
 - **Fully local** — Gemma 4 e4b runs on an 8 GB VRAM GPU via Ollama; no cloud API, no patient data egress, KVKK / GDPR compliant
 
@@ -106,7 +106,7 @@ What Gemma 4 makes possible here that no prior generation could:
 
 ### AI triage engine
 - **Gemma 4 e4b via Ollama** — `think: false` mode, 600-token output budget, temperature 0.2 for clinical consistency
-- **RAG-augmented prompting** — `rag.retrieve()` top-k cosine search against 92 ChromaDB chunks injected into every triage prompt
+- **RAG-augmented prompting** — `rag.retrieve()` top-k cosine search against ~90 ChromaDB chunks injected into every triage prompt
 - **Manchester Triage System** — RED (immediate) / YELLOW (urgent) / GREEN (routine) with confidence score 0–100
 - **Trust Layer** — `evidence[]`, `guideline_sources[]`, `doctor_review_required`, `unsafe_to_self_manage` on every summary
 - **ICD-10 auto-coding** — up to 3 suggested diagnostic codes per session from `GET /api/session/{id}/icd10`
@@ -135,7 +135,7 @@ What Gemma 4 makes possible here that no prior generation could:
 - **Google OAuth2** — one-click sign-in via Google IdP configured in `auth.py`
 - **Admin dashboard** — `admin.html` shows session counts, triage distribution chart, RAG status, model test panel, live audit log
 - **Analytics** — `analytics.html` time-series charts (Chart.js): hourly walk-ins, triage level distribution, average interview duration
-- **RAG management** — admin can trigger `POST /api/rag/ingest/builtin` to reload the 92-chunk knowledge base; status visible at `GET /api/rag/status`
+- **RAG management** — admin can trigger `POST /api/rag/ingest/builtin` to reload the medical knowledge base; status visible at `GET /api/rag/status`
 - **GDPR right to erasure** — `DELETE /api/session/{id}` hard-deletes session, answers, summary and audit trail
 
 ---
@@ -156,7 +156,7 @@ ollama pull gemma4:e4b
 
 # 2. Clone
 git clone https://github.com/enis1998/AnamnezAI.git
-cd AnamnezAI/mediscreen
+cd AnamnezAI
 ```
 
 ### With Docker
@@ -192,7 +192,7 @@ RAG_ENABLED=true SECRET_KEY=your-secret-key python main.py
 ### Load the RAG knowledge base
 
 ```bash
-# After backend is running — loads 92 medical chunks into ChromaDB (~30 s)
+# After backend is running — loads medical chunks into ChromaDB (~30 s)
 curl -X POST http://localhost:8000/api/rag/ingest/builtin
 ```
 
@@ -266,7 +266,7 @@ curl -X POST http://localhost:8000/api/rag/ingest/builtin
          │                    │                      │
 ┌────────▼────────┐  ┌────────▼──────────┐  ┌───────▼──────────────────┐
 │     Ollama      │  │    ChromaDB       │  │    SQLite (anamnezai.db)  │
-│  gemma4:e4b     │  │  92 med. chunks   │  │  sessions · answers      │
+│  gemma4:e4b     │  │  ~90 med. chunks  │  │  sessions · answers      │
 │  (GPU — 7.9 GB  │  │  MiniLM-L12 v2   │  │  clinical_summaries      │
 │   VRAM, RTX 8G) │  │  384-dim cosine   │  │  users · audit_log       │
 │  medgemma:4b    │  │  top-k retrieval  │  │  triage_queue            │
@@ -281,9 +281,9 @@ curl -X POST http://localhost:8000/api/rag/ingest/builtin
 
 ## RAG knowledge base
 
-The medical knowledge corpus grounds every triage decision in published clinical guidelines. All 92 chunks are ingested at `POST /api/rag/ingest/builtin`; status is visible at `GET /api/rag/status`.
+The medical knowledge corpus grounds every triage decision in published clinical guidelines. All chunks are ingested at `POST /api/rag/ingest/builtin`; status is visible at `GET /api/rag/status`.
 
-### Current corpus — 92 chunks
+### Current corpus — ~90 chunks
 
 | Category | Chunks | Content |
 |----------|-------:|---------|
@@ -398,7 +398,7 @@ Tested **2026-05-10** on Gemma 4 e4b via Ollama, RTX 8 GB VRAM, `think: false`:
 | `GET` | `/api/patients/queue` | Doctor triage queue (auth: doctor / admin) |
 | `POST` | `/api/analyze-image` | MedGemma Vision — ECG / X-ray / skin photo analysis |
 | `GET` | `/api/offline-proof` | Returns `cloud_api_keys_required: false` |
-| `POST` | `/api/rag/ingest/builtin` | Load 92-chunk medical knowledge base into ChromaDB |
+| `POST` | `/api/rag/ingest/builtin` | Load medical knowledge base into ChromaDB |
 | `GET` | `/api/rag/status` | RAG enabled flag + chunk count |
 | `DELETE` | `/api/session/{id}` | Hard-delete session + all data (GDPR erasure) |
 | `POST` | `/auth/register` | Register new user |
@@ -440,7 +440,7 @@ Every capability claim can be verified independently:
 | Claim | How to verify |
 |-------|---------------|
 | Local Gemma 4 — no cloud | `GET /api/offline-proof` → `cloud_api_keys_required: false` |
-| RAG enabled — 92 chunks | `GET /api/rag/status` → `total_chunks: 92, enabled: true` |
+| RAG enabled | `GET /api/rag/status` → `total_chunks: <n>, enabled: true` |
 | Triage accuracy 86 % | `python evaluation/test_ai_quality.py` — prints final score |
 | Triage 100 % on 5 scenarios | See evaluation table above |
 | FHIR R4 export | `GET /api/session/{id}/fhir` → FHIR Bundle JSON |
@@ -487,7 +487,7 @@ Target metrics: ≥ 80 % triage accuracy ✅ · ≥ 90 % red-flag recall ✅ · 
 mediscreen/
 ├── backend/
 │   ├── main.py                ← FastAPI — interview engine, triage, SSE, FHIR, auth, RAG
-│   ├── rag.py                 ← ChromaDB RAG engine + 92-chunk built-in medical corpus
+│   ├── rag.py                 ← ChromaDB RAG engine + built-in medical corpus (~90 chunks)
 │   ├── auth.py                ← JWT + Google OAuth2 + 4-role RBAC
 │   ├── requirements.txt
 │   └── tests/
@@ -535,7 +535,7 @@ mediscreen/
 
 **Sprint 11–15** · Streaming + export — SSE narrative stream (`/stream-summary`), doctor panel live queue, MedGemma Vision endpoint, FHIR R4 export, ICD-10 suggestions, `<think>` block stripping in `clean_gemma_response()`.
 
-**Sprint 16–18** · Trust Layer + adaptive interview — RAG corpus expanded 40 → 92 chunks (cardiac, neuro, pediatric, ENT, dermatology, sepsis, environment). Trust Layer added: `evidence[]`, `guideline_sources[]`, `doctor_review_required`, `unsafe_to_self_manage`. `_adaptive_steps()` logic. Patient-friendly triage card on `summary.html`.
+**Sprint 16–18** · Trust Layer + adaptive interview — RAG corpus expanded 40 → ~90 chunks (cardiac, neuro, pediatric, ENT, dermatology, sepsis, environment). Trust Layer added: `evidence[]`, `guideline_sources[]`, `doctor_review_required`, `unsafe_to_self_manage`. `_adaptive_steps()` logic. Patient-friendly triage card on `summary.html`.
 
 **Sprint 19–20** · Kiosk + PWA — kiosk touch mode, Service Worker offline PWA, admin dashboard, analytics charts, full 4-role RBAC, Google OAuth2.
 

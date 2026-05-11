@@ -51,7 +51,7 @@
            │               │                  │
 ┌──────────▼────┐  ┌───────▼──────────┐  ┌───▼──────────────────┐
 │    Ollama     │  │    ChromaDB      │  │       SQLite         │
-│  gemma4:e4b   │  │  ~810 chunks     │  │  sessions            │
+│  gemma4:e4b   │  │  ~90 chunks      │  │  sessions            │
 │  medgemma:4b  │  │  all-MiniLM-L6   │  │  summaries           │
 │  (optional)   │  │  MTS / ICD-10    │  │  users + roles       │
 │               │  │  top-k cosine    │  │  audit_log           │

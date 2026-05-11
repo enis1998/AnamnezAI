@@ -1169,7 +1169,13 @@ async def health_check():
         )
 
 
-@app.post("/api/session/start", response_model=SessionResponse)
+@app.get("/healthz")
+async def healthz():
+    """Docker / k8s liveness probe — sadece process ayakta mı kontrol eder."""
+    return {"status": "ok"}
+
+
+@app.post("/api/session/start")
 async def start_session(req: StartSessionRequest, current_user: Optional[dict] = Depends(get_current_user)):
     """Yeni hasta mülakatı başlatır — ilk soru anında döner (model çağrısı yok), 2. sorudan itibaren Gemma 4 + RAG devreye girer."""
     session_id = str(uuid.uuid4())
