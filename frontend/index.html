@@ -277,46 +277,8 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- ── VIEW: PREPARING ── -->
-<div id="view-preparing" class="hidden max-w-xl mx-auto px-4 py-16 text-center fade">
-  <div class="relative w-24 h-24 mx-auto mb-7">
-    <div class="absolute inset-0 rounded-full bg-secc pulse-ring"></div>
-    <div class="relative w-24 h-24 rounded-full bg-pric flex items-center justify-center">
-      <span class="material-symbols-outlined msym-fill text-white text-4xl">psychology</span>
-    </div>
-  </div>
-  <h2 class="font-head font-bold text-pri text-xl mb-2" id="txt-prep">AnamnezAI Hazırlanıyor</h2>
-  <p class="text-onsv text-sm mb-1" id="txt-prep-sub">Gemma 4 ilk sorunuzu hazırlıyor...</p>
-
-  <!-- Cycling tips -->
-  <div id="prep-tip" class="text-[11px] text-onsv opacity-60 mb-5 min-h-[18px] transition-all duration-500">⏱ Model ilk yüklemede 30–90 saniye sürebilir</div>
-
-  <!-- Countdown bar -->
-  <div class="max-w-xs mx-auto mb-5">
-    <div class="flex justify-between text-[10px] font-bold text-onsv opacity-50 mb-1.5">
-      <span>Model yükleniyor</span>
-      <span id="prep-elapsed">0s</span>
-    </div>
-    <div class="w-full h-1.5 bg-surfc rounded-full overflow-hidden">
-      <div id="prep-progress" class="h-full bg-sec rounded-full transition-all duration-1000" style="width:0%"></div>
-    </div>
-  </div>
-
-  <!-- Timeout retry area — shown after 100s -->
-  <div id="prep-retry" class="hidden mt-5 p-4 bg-orange-50 rounded-2xl border border-orange-100">
-    <p class="text-warn text-sm mb-3 font-semibold">⚠️ Model daha uzun sürüyor. Bu normaldir.</p>
-    <div class="flex gap-2 justify-center flex-wrap">
-      <button onclick="retryStart()"
-        class="px-5 py-2.5 rounded-xl bg-warn text-white font-bold text-sm hover:opacity-90 transition-all">
-        🔄 Tekrar Dene
-      </button>
-      <button onclick="showView('view-landing')"
-        class="px-5 py-2.5 rounded-xl bg-surfc text-onsv font-bold text-sm hover:bg-surfch transition-all">
-        ← Geri Dön
-      </button>
-    </div>
-  </div>
-</div>
+<!-- ── VIEW: PREPARING (legacy — artık kullanılmıyor, doğrudan interview'a geçiliyor) ── -->
+<div id="view-preparing" class="hidden max-w-xl mx-auto px-4 py-16 text-center fade" style="display:none!important"></div>
 
 <!-- ── VIEW: INTERVIEW ── -->
 <div id="view-interview" class="hidden max-w-2xl mx-auto px-4 py-2 fade" style="height:calc(100vh - 56px);display:none;flex-direction:column">
@@ -447,8 +409,8 @@ const API = '';
 let sessionId = null, lang = 'tr', recognition = null;
 let chatHistory = [];
 let lastStartParams = null;
-let prepTimerRef = null;
-let prepElapsedRef = null;
+let prepTimerRef = null;   // legacy — artık kullanılmıyor
+let prepElapsedRef = null; // legacy — artık kullanılmıyor
 let warmupDone = false;
 let currentImageBase64 = null;
 
@@ -830,7 +792,6 @@ async function startInterview(){
 
 async function retryStart(){
   if(!lastStartParams) return;
-  document.getElementById('prep-retry').classList.add('hidden');
   warmupDone=true;
   await _doStartInterview(lastStartParams.name, lastStartParams.age, lastStartParams.gender, lastStartParams.vitals);
 }
@@ -840,43 +801,36 @@ async function _doStartInterview(name, age, gender, vitals=null){
   btn.disabled=true;
   btn.innerHTML='<span class="material-symbols-outlined msym spin text-[18px]">refresh</span>';
 
-  showView('view-preparing');
   chatHistory=[];
 
-  // --- Preparing screen: elapsed counter + cycling tips ---
-  let elapsed=0;
-  const MAX_WAIT=150; // show retry after 100s, total wait
-  if(prepElapsedRef) clearInterval(prepElapsedRef);
-  document.getElementById('prep-retry').classList.add('hidden');
-  document.getElementById('prep-progress').style.width='0%';
+  // ── Doğrudan mülakat ekranına geç — bekleme ekranı YOK ──
+  showView('view-interview');
 
-  const tips = lang==='tr' ? PREP_TIPS_TR : lang==='ar' ? PREP_TIPS_AR : PREP_TIPS_EN;
-  let tipIdx=0;
+  // Chat alanında anlık "hazırlanıyor" mesajı göster
+  const chatArea = document.getElementById('chat-area');
+  chatArea.innerHTML = '';
+  const initMsgId = 'init-loading-msg';
+  const initLang = {
+    tr: 'Gemma 4 sorunuzu hazırlıyor...',
+    en: 'Gemma 4 is preparing your question...',
+    ar: 'Gemma 4 يحضّر سؤالك...'
+  };
+  const loadDiv = document.createElement('div');
+  loadDiv.id = initMsgId;
+  loadDiv.className = 'flex items-center gap-3 py-4 text-onsv text-sm fade';
+  loadDiv.innerHTML = `
+    <div class="w-9 h-9 rounded-full bg-secc flex items-center justify-center flex-shrink-0">
+      <span class="material-symbols-outlined msym-fill text-sec spin text-[20px]">psychology</span>
+    </div>
+    <div class="flex flex-col gap-1">
+      <span class="font-semibold text-pri text-[13px]">Gemma 4</span>
+      <span class="text-onsv text-[12px]">${initLang[lang] || initLang.en}</span>
+    </div>`;
+  chatArea.appendChild(loadDiv);
 
-  prepElapsedRef = setInterval(()=>{
-    elapsed++;
-    const el=document.getElementById('prep-elapsed');
-    if(el) el.textContent=`${elapsed}s`;
-    const bar=document.getElementById('prep-progress');
-    if(bar) bar.style.width=`${Math.min(95,(elapsed/MAX_WAIT)*100)}%`;
-    // Cycle tip every 7s
-    if(elapsed%7===0){
-      tipIdx=(tipIdx+1)%tips.length;
-      const tip=document.getElementById('prep-tip');
-      if(tip){tip.style.opacity='0';setTimeout(()=>{tip.textContent=tips[tipIdx];tip.style.opacity='0.6';},300);}
-    }
-    // Show retry after 100s
-    if(elapsed>=100){
-      const retryEl=document.getElementById('prep-retry');
-      if(retryEl) retryEl.classList.remove('hidden');
-    }
-  },1000);
-
-  function stopPrepTimer(){
-    if(prepElapsedRef){clearInterval(prepElapsedRef);prepElapsedRef=null;}
-    const bar=document.getElementById('prep-progress');
-    if(bar) bar.style.width='100%';
-  }
+  // Typing indicator'ı da göster
+  const typingInd = document.getElementById('typing-ind');
+  if(typingInd) typingInd.classList.remove('hidden');
 
   try {
     const res = await fetch(`${API}/api/session/start`,{
@@ -885,7 +839,12 @@ async function _doStartInterview(name, age, gender, vitals=null){
       body:JSON.stringify({patient_name:name,age,gender,language:lang, vitals: vitals||undefined}),
       signal: AbortSignal.timeout(190000)
     });
-    stopPrepTimer();
+
+    // Yükleme mesajını ve typing indicator'ı kaldır
+    const initMsg = document.getElementById(initMsgId);
+    if(initMsg) initMsg.remove();
+    if(typingInd) typingInd.classList.add('hidden');
+
     if(!res.ok){
       const err = await res.json().catch(()=>({detail:'Bağlantı hatası'}));
       throw new Error(err.detail || `HTTP ${res.status}`);
@@ -894,15 +853,19 @@ async function _doStartInterview(name, age, gender, vitals=null){
     sessionId = data.session_id;
     updateProgress(data.step, data.total_steps);
     addAIMessage(data.question);
-    showView('view-interview');
   } catch(e) {
-    stopPrepTimer();
-    const retryEl = document.getElementById('prep-retry');
-    if(retryEl) retryEl.classList.remove('hidden');
+    if(typingInd) typingInd.classList.add('hidden');
+    const initMsg = document.getElementById(initMsgId);
+    if(initMsg) initMsg.remove();
     const msg = e.name==='TimeoutError'
-      ? '⚠️ Gemma 4 yanıt vermedi (190sn). Model yükleniyor olabilir — "Tekrar Dene" ya da birkaç saniye sonra tekrar başlatın.'
+      ? (lang==='tr'
+          ? '⚠️ Model yanıt vermedi. Lütfen birkaç saniye sonra tekrar deneyin.'
+          : lang==='ar'
+          ? '⚠️ لم يستجب النموذج. يرجى المحاولة مرة أخرى.'
+          : '⚠️ Model did not respond. Please try again in a few seconds.')
       : (e.message || t('errConn'));
     showToast(msg, true);
+    showView('view-landing');
   } finally {
     btn.disabled=false;
     btn.innerHTML=`<span class="material-symbols-outlined msym text-[18px]">play_arrow</span><span id="txt-btn-start">${t('btnStart')}</span>`;
@@ -1165,6 +1128,11 @@ function clearImage(){
 initAuthNav();
 checkHealth();
 setInterval(checkHealth, 30000);
+
+// Sayfa açılınca modeli arka planda ısıt — kullanıcı formu doldururken model hazır olsun
+setTimeout(() => {
+  fetch(`${API}/api/warmup`, {method:'POST', signal:AbortSignal.timeout(200000)}).catch(()=>{});
+}, 800);
 
 // ── Sprint 4: PWA Service Worker ──
 if ('serviceWorker' in navigator) {
