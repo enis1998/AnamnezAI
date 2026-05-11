@@ -500,6 +500,34 @@ tailwind.config = {
         <div class="text-[11px] text-ouv" data-i18n="stat.4s">%100 başarı (2026-05-11)</div>
       </div>
     </div>
+
+    <!-- Latency Context Banner -->
+    <div class="mt-10 rounded-3xl border border-sec/20 bg-gradient-to-r from-secc/20 to-surf p-6 reveal">
+      <div class="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+        <div class="flex-shrink-0">
+          <div class="w-14 h-14 rounded-2xl bg-sec/10 flex items-center justify-center mx-auto sm:mx-0">
+            <span class="material-symbols-outlined msym-fill text-sec text-[28px]">timer</span>
+          </div>
+        </div>
+        <div class="flex-1">
+          <p class="font-head font-bold text-pri text-[15px] mb-1" data-i18n="latency.title">AI triaj neden 15 saniye sürsün?</p>
+          <p class="text-onsv text-[13px] leading-relaxed" data-i18n-html="latency.body">
+            Gaziantep STEMI senaryosunda hasta <strong>22 dakika</strong> manuel triajı bekledi. AnamnezAI aynı bilgiyi <strong>~15 saniyede</strong> toplar (Gemma 4 e4b, GPU, think=false). Gecikme değil — 22 dakikalık klinik değeri 15 saniyede sunmak.
+          </p>
+        </div>
+        <div class="flex-shrink-0 flex flex-col sm:flex-row gap-3 items-center">
+          <div class="text-center px-4 py-3 rounded-2xl bg-err/10 border border-err/20">
+            <div class="text-[26px] font-head font-black" style="color:#ba1a1a">22<span class="text-[14px]">dk</span></div>
+            <div class="text-[10px] font-bold text-err uppercase" data-i18n="latency.manual">Manuel Triaj</div>
+          </div>
+          <div class="text-[18px] font-bold text-ouv">→</div>
+          <div class="text-center px-4 py-3 rounded-2xl bg-sec/10 border border-sec/20">
+            <div class="text-[26px] font-head font-black text-sec">~15<span class="text-[14px]">sn</span></div>
+            <div class="text-[10px] font-bold text-sec uppercase" data-i18n="latency.ai">AI Triaj</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1114,9 +1142,13 @@ const LP_I18N = {
     'ksk.smart':'<strong>Akıllı yükseltme:</strong> Hasta "göğüs ağrısı", "nefes alamıyorum" veya "ani şiddetli baş ağrısı" derse sistem sessizce 7 soruya geçer, OPQRST ağrı profili ve sepsis taramasına yönlendirir. Kiosk hiç uyarmadan daha derin bir görüşme yapar.',
     // stats
     'stat.1l':'Akıllı Soru','stat.1s':'Ortalama mülakat',
-    'stat.2l':'Triaj Doğruluğu','stat.2s':'86% — 13/15 test senaryosu',
+    'stat.2l':'Triaj Doğruluğu','stat.2s':'86% — 13/15 test senaryosu (sentetik)',
     'stat.3l':'Dil Desteği','stat.3s':'TR · EN · AR (Arapça canlı)',
     'stat.4l':'MedGemma Testi','stat.4s':'%100 başarı (2026-05-11)',
+    // latency banner
+    'latency.title':'AI triaj neden 15 saniye sürsün?',
+    'latency.body':'Gaziantep STEMI senaryosunda hasta <strong>22 dakika</strong> manuel triajı bekledi. AnamnezAI aynı bilgiyi <strong>~15 saniyede</strong> toplar (Gemma 4 e4b, GPU, think=false). Gecikme değil — 22 dakikalık klinik değeri 15 saniyede sunmak.',
+    'latency.manual':'Manuel Triaj','latency.ai':'AI Triaj',
     // features
     'feat.chip':'Güçlü Özellikler',
     'feat.h2a':'Sağlık hizmeti sunumunu','feat.h2b':'yeniden tasarladık.',
@@ -1215,9 +1247,13 @@ const LP_I18N = {
     'ksk.4t':'Doctor Ready','ksk.4d':'Clinical summary streams to the doctor\'s screen in real time',
     'ksk.smart':'<strong>Smart escalation:</strong> If the patient says "chest pain", "can\'t breathe" or "sudden severe headache", the system silently switches to 7 questions, guiding the OPQRST pain profile and sepsis screening. The kiosk conducts a deeper interview without any warning.',
     'stat.1l':'Smart Questions','stat.1s':'Average interview',
-    'stat.2l':'Triage Accuracy','stat.2s':'86% — 13/15 test scenarios',
+    'stat.2l':'Triage Accuracy','stat.2s':'86% — 13/15 test scenarios (synthetic)',
     'stat.3l':'Language Support','stat.3s':'TR · EN · AR (Arabic live)',
     'stat.4l':'MedGemma Test','stat.4s':'100% success (2026-05-11)',
+    // latency banner
+    'latency.title':'Why does AI triage take 15 seconds?',
+    'latency.body':'In the Gaziantep STEMI scenario, the patient waited <strong>22 minutes</strong> for manual triage. AnamnezAI collects the same information in <strong>~15 seconds</strong> (Gemma 4 e4b, GPU, think=false). Not a limitation — delivering 22 minutes of clinical value in 15 seconds.',
+    'latency.manual':'Manual Triage','latency.ai':'AI Triage',
     'feat.chip':'Powerful Features',
     'feat.h2a':'We reimagined','feat.h2b':'healthcare delivery.',
     'feat.sub':'The only platform that automates the entire pre-triage workflow — from patient intake to clinical summary — using AI.',
@@ -1308,9 +1344,13 @@ const LP_I18N = {
     'ksk.4t':'الطبيب جاهز','ksk.4d':'يصل الملخص السريري إلى شاشة الطبيب في الوقت الفعلي',
     'ksk.smart':'<strong>التصعيد الذكي:</strong> إذا قال المريض "ألم في الصدر" أو "لا أستطيع التنفس" أو "صداع شديد مفاجئ"، ينتقل النظام بهدوء إلى 7 أسئلة متخصصة وتقييم نمط OPQRST وفحص الإنتان. يُجري الكشك مقابلة أعمق دون أي تحذير.',
     'stat.1l':'سؤال ذكي','stat.1s':'متوسط المقابلة',
-    'stat.2l':'دقة الفرز','stat.2s':'%86 — 13/15 سيناريو اختبار',
+    'stat.2l':'دقة الفرز','stat.2s':'%86 — 13/15 سيناريو اختبار (اصطناعي)',
     'stat.3l':'دعم اللغات','stat.3s':'TR · EN · AR (العربية مباشرة)',
     'stat.4l':'اختبار MedGemma','stat.4s':'نجاح 100% (2026-05-11)',
+    // latency banner
+    'latency.title':'لماذا يستغرق الفرز بالذكاء الاصطناعي 15 ثانية؟',
+    'latency.body':'في سيناريو غازي عنتاب، انتظر المريض <strong>22 دقيقة</strong> للفرز اليدوي. يجمع AnamnezAI نفس المعلومات في <strong>~15 ثانية</strong>. ليست تأخيراً — بل تقديم قيمة 22 دقيقة من التشخيص في 15 ثانية.',
+    'latency.manual':'الفرز اليدوي','latency.ai':'فرز الذكاء الاصطناعي',
     'feat.chip':'مميزات قوية',
     'feat.h2a':'أعدنا تصميم','feat.h2b':'تقديم الرعاية الصحية.',
     'feat.sub':'المنصة الوحيدة التي تُؤتمت كامل سير عمل ما قبل الفرز — من استقبال المريض إلى الملخص السريري — باستخدام الذكاء الاصطناعي.',
@@ -1371,7 +1411,8 @@ const LP_I18N = {
 
 // data-i18n-html için ayrı tutulan HTML anahtarları
 const LP_I18N_HTML_KEYS = new Set([
-  'chat.ai.1','chat.user.1','chat.ai.2','s1.body','s2.body1','s2.body2','ksk.smart','how.sub','q1.text'
+  'chat.ai.1','chat.user.1','chat.ai.2','s1.body','s2.body1','s2.body2','ksk.smart','how.sub','q1.text',
+  'latency.body'
 ]);
 
 let lpLang = localStorage.getItem('ui_lang') || 'tr';

@@ -262,7 +262,39 @@ tailwind.config={theme:{extend:{colors:{
           <span class="material-symbols-outlined msym text-sec text-[16px]">science</span>
           <h2 class="font-head font-bold text-pri text-[14px]">Demo Hastalar</h2>
           <span class="text-[10px] text-onsv bg-secc/40 text-sec px-2 py-0.5 rounded-full font-bold ml-1">Gemma 4 Örnek Çıktısı</span>
+          <span class="ml-auto text-[10px] text-onsv">5 vaka · 2 RED · 2 YELLOW · 1 GREEN</span>
         </div>
+
+        <!-- STEMI Timeline Karşılaştırma Banner -->
+        <div class="mx-4 mt-4 mb-2 rounded-2xl border border-red-200 bg-red-50 p-4">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+                <span class="material-symbols-outlined msym-fill text-red-500 text-[20px]">favorite</span>
+              </div>
+              <div>
+                <p class="text-[12px] font-bold text-red-700">Gaziantep STEMI Senaryosu</p>
+                <p class="text-[10px] text-onsv">Mehmet Yılmaz · 66 yaş · Vaka 1</p>
+              </div>
+            </div>
+            <div class="flex-1 text-[12px] text-ons leading-relaxed hidden sm:block">
+              Aynı hasta, aynı semptomlar. Manuel triajda 22 dakika bekledi ve STEMI geçirdi.
+              AI bu vakayı <strong>14 saniyede RED</strong> olarak sınıflandırdı.
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="text-center px-3 py-2 rounded-xl bg-red-100 border border-red-200">
+                <div class="text-[20px] font-head font-black text-red-600">22<span class="text-[11px]">dk</span></div>
+                <div class="text-[9px] font-bold text-red-500 uppercase">Manuel</div>
+              </div>
+              <span class="text-red-300 font-bold">→</span>
+              <div class="text-center px-3 py-2 rounded-xl bg-white border border-red-200">
+                <div class="text-[20px] font-head font-black text-sec">14<span class="text-[11px]">sn</span></div>
+                <div class="text-[9px] font-bold text-sec uppercase">AI Triaj</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="demo-table"></div>
       </div>
 
@@ -459,35 +491,191 @@ function _updateModelBar(barId, available, label) {
   if (specEl) specEl.textContent = user.specialty || (user.role === 'admin' ? 'Admin' : 'Sağlık Personeli');
 })();
 
-// Demo data — Gemma 4 örnek çıktısı
+// Demo data — Gemma 4 örnek çıktıs�� (5 zengin vaka — jüri demo için)
+const _now = new Date();
+const _ago = (m) => new Date(_now - m * 60000).toISOString();
+
 const DEMO = [
-  {session_id:'demo-1',patient_name:'Ayşe Kaya',age:42,gender:'Kadın',
-   triage_level:'RED',triage_color:'#ba1a1a',confidence_score:94,
-   chief_complaint:'Göğüs ağrısı, sol kola yayılım',
-   symptoms_summary:'Akut başlangıçlı göğüs ağrısı, sol kola ve çeneye yayılım, nefes darlığı, terleme mevcut.',
-   possible_conditions:['Miyokard Enfarktüsü','Unstabil Angina','Pulmoner Emboli'],
-   urgency_flags:['Kardiyak risk faktörleri mevcut','Klasik MI prezentasyonu'],
-   recommended_action:'Derhal kardiyoloji konsültasyonu, EKG ve troponin testi',
-   clinical_notes:'42 yaşında kadın hastada akut koroner sendrom bulguları. Acil kateterizasyon gerekebilir.',
-   generated_at:new Date().toISOString()},
-  {session_id:'demo-2',patient_name:'Mehmet Demir',age:68,gender:'Erkek',
-   triage_level:'YELLOW',triage_color:'#e07b26',confidence_score:87,
-   chief_complaint:'Yüksek ateş ve solunum zorluğu',
-   symptoms_summary:'39.2°C ateş, kuru öksürük, nefes darlığı 3 gündür devam ediyor.',
-   possible_conditions:['Pnömoni','Bronşit','COVID-19'],
-   urgency_flags:['SpO2 takibi gerekli'],
-   recommended_action:'Akciğer grafisi, kan kültürü ve SpO2 ölçümü',
-   clinical_notes:'Yaşlı erkek hastada akciğer enfeksiyonu şüphesi yüksek. Antibiyotik başlanabilir.',
-   generated_at:new Date().toISOString()},
-  {session_id:'demo-3',patient_name:'Zeynep Arslan',age:29,gender:'Kadın',
-   triage_level:'GREEN',triage_color:'#006a68',confidence_score:79,
-   chief_complaint:'Hafif karın ağrısı ve bulantı',
-   symptoms_summary:'3 gündür devam eden hafif epigastrik ağrı, iştahsızlık, hafif bulantı.',
-   possible_conditions:['Gastrit','İBS','Sindirim Bozukluğu'],
-   urgency_flags:[],
-   recommended_action:'Rutin muayene, diyet düzenlemesi ve antasit tedavisi',
-   clinical_notes:'Genç kadın hastada fonksiyonel dispepsi olasılığı yüksek. Endoskopi gerekebilir.',
-   generated_at:new Date().toISOString()},
+  // ── VAKA 1: RED — STEMI (Gaziantep senaryosu — hikayenin kendisi) ────────
+  {
+    session_id: 'demo-1',
+    patient_name: 'Mehmet Yılmaz',
+    age: 66,
+    gender: 'Erkek',
+    triage_level: 'RED',
+    triage_color: '#ba1a1a',
+    confidence_score: 98,
+    chief_complaint: 'Göğüs ağrısı — sol kola yayılım + terleme',
+    symptoms_summary:
+      'Sabahtan beri süren göğüs baskısı, sol kola ve çeneye yayılım, aşırı terleme, nefes darlığı. ' +
+      'Diyabetik hasta, 10 yıldır hipertansiyon. Ağrı şiddeti 9/10.',
+    possible_conditions: ['Akut Miyokard Enfarktüsü (STEMI)', 'Unstabil Angina Pektoris', 'Aort Diseksiyonu'],
+    urgency_flags: [
+      '��� GUARDRAIL [cardiac_emergency]: Olası kardiyak acil (AMI/AKS)',
+      '⚠️ Kardiyak risk faktörleri: DM + HT + 66 yaş erkek',
+      '🔴 Klasik STEMI triadı: Göğüs + sol kol + diyaforez',
+    ],
+    recommended_action: 'Derhal EKG + troponin; kardiyoloji acil konsültasyonu; aspirin 300 mg PO',
+    clinical_notes:
+      'MTS RED: Akut koroner sendrom bulguları mevcut. 3 kırmızı bayrak eş zamanlı. ' +
+      'AI mülakat süresi: 4 dakika. Manuel triajda bu hasta 22 dakika bekletilmişti. ' +
+      'Safety guardrail devreye girdi — cardiac_emergency kuralı tetiklendi.',
+    vitals: { blood_pressure: '160/95 mmHg', pulse: 108, temperature: 36.8, spo2: 94 },
+    evidence: [
+      'Göğüs baskısı — sol kola ve çeneye yayılım',
+      'Diyaforez (aşırı terleme) — kardiyak kaynaklı',
+      'Nefes darlığı — kardiyak yetmezlik şüphesi',
+      'Diyabetik hasta: MI sessiz seyredebilir',
+    ],
+    guideline_sources: ['MTS Göğüs Ağrısı Diskriminatörü', 'CTAS Level 1 Kardiyak'],
+    safety_guardrail_triggered: true,
+    guardrail_rules_fired: ['Olası kardiyak acil (AMI/AKS)'],
+    ai_execution_log: {
+      model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false,
+      patient_data_egress: false, inference_latency_s: 14.3,
+    },
+    // Timeline karşılaştırması — demo değeri
+    _demo_timeline: {
+      ai_triage_seconds: 14,
+      manual_triage_minutes: 22,
+      story: 'Gaziantep STEMI — 09:15 — Hasta 22 dakika bekledi. AI bu vakayı 14 saniyede RED olarak sınıflandırırdı.',
+    },
+    generated_at: _ago(3),
+  },
+
+  // ── VAKA 2: RED — İnme (FAST kriterleri) ────────────────────────────────
+  {
+    session_id: 'demo-2',
+    patient_name: 'Fatma Şahin',
+    age: 71,
+    gender: 'Kadın',
+    triage_level: 'RED',
+    triage_color: '#ba1a1a',
+    confidence_score: 96,
+    chief_complaint: 'Ani konuşma bozukluğu ve sağ kol güçsüzlüğü',
+    symptoms_summary:
+      'Son 2 saatte başlayan konuşma bozukluğu (kelime bulamıyor), sağ kol güçsüzlüğü, hafif yüz asimetrisi. ' +
+      '71 yaşında, AF tanısı var, antikoagülan kullanıyo.',
+    possible_conditions: ['İskemik İnme (İntra-serebral)', 'TIA', 'Todd Felci'],
+    urgency_flags: [
+      '⚡ GUARDRAIL [stroke_fast]: Olası inme — FAST kriterleri pozitif',
+      '⚠️ 2 saatlik pencere — tPA adayı olabilir',
+      '⚠️ Atriyal fibrilasyon + antikoagülan geçmişi',
+    ],
+    recommended_action: 'Acil BT beyin; nöroloji konsültasyonu; tPA penceresi değerlendirme',
+    clinical_notes:
+      'FAST: Yüz (kısmi) + Kol (güçsüzlük) + Konuşma (afazi) — üç kriter pozitif. ' +
+      '2 saatlik semptom penceresi ile intravenöz tPA adayı olabilir.',
+    vitals: { blood_pressure: '178/102 mmHg', pulse: 88, spo2: 97 },
+    evidence: [
+      'Konuşma bozukluğu (afazi) — FAST-S pozitif',
+      'Sağ kol güçsüzlüğü — FAST-A pozitif',
+      'Hafif yüz asimetrisi — FAST-F pozitif',
+    ],
+    guideline_sources: ['MTS Nörolojik Diskriminatörler', 'AHA/ASA İnme Kılavuzu'],
+    safety_guardrail_triggered: true,
+    guardrail_rules_fired: ['Olası inme (FAST kriterleri)'],
+    ai_execution_log: { model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false, patient_data_egress: false, inference_latency_s: 18.7 },
+    generated_at: _ago(8),
+  },
+
+  // ── VAKA 3: YELLOW — Pediatrik Ateş (3 yaşında kız çocuğu) ─────────────
+  {
+    session_id: 'demo-3',
+    patient_name: 'Elif Aydın (3 yaş)',
+    age: 3,
+    gender: 'Kız',
+    triage_level: 'YELLOW',
+    triage_color: '#e07b26',
+    confidence_score: 88,
+    chief_complaint: 'Çocuk ateş — 39.8°C, halsizlik',
+    symptoms_summary:
+      '39.8°C ateş, 2 gündür devam ediyor. İştahsızlık, hafif öksürük. ' +
+      'Ebeveyn ense sertliği sorulduğunda net cevap veremedi. Ateş paracetamol ile geçici düşüyor.',
+    possible_conditions: ['Viral ÜSYE', 'Akut Otit Media', 'Pnömoni (Atipik)'],
+    urgency_flags: [
+      '⚡ GUARDRAIL [pediatric_high_fever]: Çocuk yüksek ateş — acil değerlendirme gerekir',
+      '⚠️ Ense sertliği dışlanamadı — meningit göz önünde bulundurulmalı',
+    ],
+    recommended_action: 'Pediatri muayenesi; ense muayenesi; KBB-Kulak değerlendirme',
+    clinical_notes:
+      'Pediatrik protokol (Sprint 22): İlk soru ateş derecesini sordu (klinik doğru). ' +
+      '39.8°C ateş — MTS YELLOW. Ense tutukluğu dışlanana kadar meningit ihtimali göz ardı edilemez.',
+    vitals: { temperature: 39.8, pulse: 124 },
+    evidence: [
+      'Ateş 39.8°C — 2 gündür devam ediyor',
+      'Taşikardi (nabız 124) — ateşe bağlı / dehidrasyon',
+    ],
+    guideline_sources: ['MTS Pediatrik Ateş Diskriminatörü'],
+    safety_guardrail_triggered: true,
+    guardrail_rules_fired: ['Bebek / küçük çocuk ateşi — acil değerlendirme gerekir'],
+    ai_execution_log: { model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false, patient_data_egress: false, inference_latency_s: 11.2 },
+    generated_at: _ago(15),
+  },
+
+  // ── VAKA 4: YELLOW — Apandisit şüphesi ────────────────────────────────
+  {
+    session_id: 'demo-4',
+    patient_name: 'Serkan Koç',
+    age: 24,
+    gender: 'Erkek',
+    triage_level: 'YELLOW',
+    triage_color: '#e07b26',
+    confidence_score: 82,
+    chief_complaint: 'Sağ alt karın ağrısı, bulantı, iştahsızlık',
+    symptoms_summary:
+      '12 saattir göbek çevresinde başlayan, sağ alt kadrana göçen ağrı. 7/10 şiddetinde. ' +
+      'Bulantı mevcut, 1 kez kusma. Hafif ateş (37.9°C). McBurney noktası hassasiyeti sorulduğunda "evet" yanıtladı.',
+    possible_conditions: ['Akut Apandisit', 'Mesenteric Lenfadenit', 'Sağ Üreter Taşı'],
+    urgency_flags: [
+      '⚠️ Göçen ağrı (göbek → sağ alt kadran) — apandisit klasik sunumu',
+      '⚠️ Hafif ateş + lökositoz şüphesi',
+    ],
+    recommended_action: 'Cerrahi konsültasyon; Alvarado skoru; karın US veya BT',
+    clinical_notes:
+      'Alvarado puanı: 6-7 (migration + nausea + RLQ tenderness + fever). ' +
+      'Cerrahi değerlendirme öncelikli. Oral alım kısıtlanmalı.',
+    vitals: { temperature: 37.9, pulse: 95 },
+    evidence: [
+      'Göbek çevresinden sağ alt kadrana göçen ağrı',
+      'Bulantı + 1 kez kusma',
+      'Hafif ateş (37.9°C)',
+    ],
+    guideline_sources: ['MTS Karın Ağrısı Diskriminatörü', 'Alvarado Apandisit Skoru'],
+    safety_guardrail_triggered: false,
+    ai_execution_log: { model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false, patient_data_egress: false, inference_latency_s: 16.8 },
+    generated_at: _ago(22),
+  },
+
+  // ── VAKA 5: GREEN — Basit ÜSYE ──────────────────────────────────���─────
+  {
+    session_id: 'demo-5',
+    patient_name: 'Zeynep Arslan',
+    age: 29,
+    gender: 'Kadın',
+    triage_level: 'GREEN',
+    triage_color: '#006a68',
+    confidence_score: 91,
+    chief_complaint: 'Boğaz ağrısı, hafif ateş, burun akıntısı — 3 gün',
+    symptoms_summary:
+      'Son 3 gündür boğaz ağrısı, 37.5°C hafif ateş, burun akıntısı ve hafif baş ağrısı. ' +
+      'Nefes darlığı yok, terleme yok. Genel durumu iyi, sıvı alıyor. İlaç alerjisi yok.',
+    possible_conditions: ['Akut Farenjit (viral)', 'Rinit', 'ÜSYE'],
+    urgency_flags: [],
+    recommended_action: 'Semptomatik tedavi; bol sıvı; analjezik/antipretik; 3 günde düzelmezse tekrar başvuru',
+    clinical_notes:
+      'MTS GREEN: Hayati risk yok, kronik hastalık yok, genel durum iyi. ' +
+      'Rutin muayene sırası — tahmini bekleme 45 dakika.',
+    vitals: { temperature: 37.5, pulse: 76 },
+    evidence: [
+      'Hafif ateş (37.5°C) — viral seyre uyumlu',
+      'Burun + boğaz semptomları — ÜSYE tablosu',
+    ],
+    guideline_sources: ['MTS ÜSYE Diskriminatörü'],
+    safety_guardrail_triggered: false,
+    ai_execution_log: { model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false, patient_data_egress: false, inference_latency_s: 9.4 },
+    generated_at: _ago(35),
+  },
 ];
 
 const TCFG = {

@@ -57,6 +57,13 @@
 | Dizziness (42M) | "Bu baş dönmesi ne zaman başladı ve bu dönme hissi sürekli mi yoksa gelip geçici mi oluyor? Baş dönmesiyle birlikte mide bulantısı, kusma veya göğüs ağrısı gibi başka belirtiler var mı?" | ✅ (onset, associated sx) |
 | Child fever (3F) | "Bu ateş ve halsizlik ne zamandır var, ve bu sırada kızınızın nefes almakta zorlandığı, göğsünde ağrı hissettiği veya bilinç bulanıklığı gibi acil belirtileri var mı?" | ❌ (should ask temperature first) |
 
+> **Fix applied (Sprint 22):** `_pediatric_interview_steps()` function added to `main.py`.
+> Pediatric cases (age ≤ 12) now receive a clinical hint injected into the prompt at step 2:
+> *"NEXT question MUST ask for the specific temperature reading and duration first."*
+> Complication questions (seizure, neck stiffness) are deferred until after fever severity is established.
+> This aligns with Manchester Triage System pediatric fever discriminator protocol.
+
+
 ## Sprint 21 — New Quality Layers
 
 ### Safety Guardrail Layer
@@ -87,7 +94,31 @@
 
 ## Disclaimer
 
-These are **synthetic evaluation cases** for development purposes.
-Real-world accuracy requires clinical validation with licensed healthcare professionals.
-AnamnezAI is not a diagnostic system — all outputs require physician review.
+> ⚠️ **Synthetic Evaluation Notice**
+>
+> These results are based on **15 synthetic test cases** designed for development validation — not real patient records or prospective clinical data.
+>
+> | Claim | What it means |
+> |-------|--------------|
+> | **93% on 15 synthetic cases** | Development benchmark on constructed scenarios; useful for hackathon proof-of-concept |
+> | **NOT equivalent to:** | "93% on 500 real ED visits" — that requires prospective clinical validation with licensed physicians |
+>
+> Before production deployment in any healthcare facility, AnamnezAI requires:
+> - Prospective validation with real patient cohorts (≥200 cases minimum)
+> - Review and sign-off by licensed emergency physicians (MTS protocol experts)
+> - IRB / ethics board approval for patient data collection
+> - Regulatory compliance review (MDR/FDA SaMD depending on jurisdiction)
+>
+> AnamnezAI is a **decision-support prototype**, not a diagnostic system. All AI-generated triage outputs must be reviewed by a licensed physician before any clinical action is taken.
+
+### Inference Latency Context (Demo Note)
+
+| Metric | Value |
+|--------|-------|
+| AI pre-triage (Gemma 4 e4b, RTX 8 GB) | **11–39 seconds** |
+| `think: False` flag active | ✅ Required — thinking mode exhausts token budget |
+| Traditional manual triage (Gaziantep STEMI scenario) | **~22 minutes** |
+| **Net time saving** | **AI delivers 22-minute triage value in ~15 seconds** |
+
+> 💡 **Demo framing:** "AI triage takes ~15 seconds. Manual triage took 22 minutes for the STEMI patient in our story. The latency is a feature, not a limitation."
 

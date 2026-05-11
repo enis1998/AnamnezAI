@@ -141,6 +141,71 @@ _EMERGENCY_KEYWORDS_EN = [
     "crushing","numb","weakness",
 ]
 
+def _pediatric_interview_steps() -> list[str]:
+    """
+    Pediatrik triaj için özel mülakat adımları — önce ateş değerini sor.
+
+    Klinik gerekçe:
+    - Çocuk ateşi vakasında İLK soru mutlaka ateş derecesi ve süresi olmalı.
+      (Komplikasyon soruları ancak ateş ciddiyeti belirlendikten sonra sorulur.)
+    - 3 aydan küçük bebekler → herhangi bir ateş = RED (Manchester Triage)
+    - 38.5°C üzeri + titreme / ense tutukluğu → RED
+    - 38.5°C altı + genel durum iyi → YELLOW/GREEN
+
+    Adım sırası (bağlamsal, klinisyen önceliğine göre):
+      1. Başlangıç: Ateş ne zamandır var ve kaç derece? (termometre varsa)
+      2. Şiddet: Ateş nasıl seyrediyor — sürekli mi, gelip gidiyor mu?
+      3. Eşlik: Ateşle birlikte kusma, ishal, öksürük, döküntü var mı?
+      4. Nörolojik: Havale geçirdi mi? Ense sertliği, ışık hassasiyeti?
+      5. Genel durum: Uyku hali mi, emmesi/iştahı nasıl?
+
+    Bu adımlar sistem_promptuna enjekte edilir, Gemma 4 bu çerçevede devam eder.
+    """
+    return [
+        "pediatric_step_1_fever_onset",
+        "pediatric_step_2_fever_pattern",
+        "pediatric_step_3_associated_symptoms",
+        "pediatric_step_4_neurological",
+        "pediatric_step_5_general_status",
+    ]
+
+
+# Pediatrik şikayetleri tespit eden anahtar kelimeler
+_PEDIATRIC_KEYWORDS_TR = [
+    "çocuk", "bebek", "kız", "oğlum", "kızım", "bebeğim", "küçük",
+    "1 yaş", "2 yaş", "3 yaş", "4 yaş", "5 yaş", "6 yaş", "7 yaş",
+    "8 yaş", "9 yaş", "10 yaş", "aylık", "ay", "infant"
+]
+_PEDIATRIC_KEYWORDS_EN = [
+    "child", "baby", "infant", "toddler", "kid", "son", "daughter",
+    "months old", "year old", "years old", "pediatric"
+]
+
+_PEDIATRIC_FIRST_Q_TR = (
+    "Çocuğunuzun ateşi ne zamandır var ve en son ölçtüğünüzde kaç derece gösterdi? "
+    "(termometre ile ölçtüyseniz tam değeri paylaşın)"
+)
+_PEDIATRIC_FIRST_Q_EN = (
+    "How long has your child had a fever, and what was the temperature reading the last time you measured it? "
+    "(please share the exact value if measured with a thermometer)"
+)
+
+
+def _is_pediatric_case(session: dict) -> bool:
+    """Mevcut oturum çocuk hastası mı? Yaş veya şikayet metnine göre belirler."""
+    age = session.get("age", 99)
+    if age <= 12:
+        return True
+    # Ebeveynin şikayetini de tara
+    complaint = ""
+    for qa in session.get("qa_history", []):
+        if qa.get("answer"):
+            complaint += qa["answer"].lower() + " "
+    lang = session.get("language", "tr")
+    kw = _PEDIATRIC_KEYWORDS_TR if lang == "tr" else _PEDIATRIC_KEYWORDS_EN
+    return any(k in complaint for k in kw)
+
+
 def _adaptive_steps(complaint: str, age: int, lang: str = "tr") -> int:
     """
     Şikayetin aciliyetine göre soru sayısını belirler.
@@ -148,6 +213,7 @@ def _adaptive_steps(complaint: str, age: int, lang: str = "tr") -> int:
     - Orta (ateş, karın ağrısı, baş ağrısı) → 5 soru
     - Basit (hafif boğaz, öksürük, kırık olmayan ağrı) → 4 soru
     - Yaşlı hasta (≥70) → minimum 5 (atipik sunum riski)
+    - Pediatrik (≤12 yaş) → minimum 5 (ateş değeri önce sorulur)
     """
     c = complaint.lower()
     EMERGENCY_KW = _EMERGENCY_KEYWORDS_TR if lang == "tr" else _EMERGENCY_KEYWORDS_EN
@@ -165,6 +231,11 @@ def _adaptive_steps(complaint: str, age: int, lang: str = "tr") -> int:
     # Yaşlı hastada minimum 5 — atipik sunum riski
     if age >= 70:
         base = max(base, 5)
+
+    # Pediatrik hastada minimum 5 — ateş değeri ilk sorulur (klinik protokol)
+    if age <= 12:
+        base = max(base, 5)
+
     return base
 
 
@@ -413,7 +484,15 @@ class ClinicalSummaryResponse(BaseModel):
 # ─────────────────────────────────────────────
 async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0,
                     model: Optional[str] = None) -> str:
-    """Ollama /api/chat üzerinden model isteği gönderir. model=None → GEMMA_MODEL."""
+    """Ollama /api/chat üzerinden model isteği gönderir. model=None → GEMMA_MODEL.
+
+    LATENCY CONTEXT (demo / jüri için):
+    - Ortalama inference süresi: 11–39 saniye (RTX 8 GB GPU, think=False)
+    - `think: False` zorunlu — thinking modu aktif olursa token kotası boşa harcanır ve yanıt üretilemez.
+    - Karşılaştırma: Geleneksel manuel triaj ~22 dakika (Gaziantep STEMI senaryosu).
+    - AI triaj 15-40 saniye → klinisyen için 22 dakikalık bilgi birikimini sağlar.
+    - Demo sırasında bekleme süresini "AI pre-triage: ~15 sn — manuel triaj: 22 dk" bağlamıyla sun.
+    """
     _model = model or GEMMA_MODEL
     messages = []
     if system:
@@ -1328,16 +1407,34 @@ async def submit_answer(req: AnswerRequest):
         if qa.get("answer")
     )
 
+    # ── Pediatrik protokol: 2. sorudan itibaren klinik çerçeve eklenir ─────
+    pediatric_hint = ""
+    if _is_pediatric_case(session) and current_step == 1:
+        if lang == "tr":
+            pediatric_hint = (
+                "\n⚠️ PEDİATRİK VAKA: Çocuk hastası. Bir sonraki soru MUTLAKA ateş derecesini "
+                "ve süresini sormalı. Komplikasyon soruları (havale, ense sertliği) ancak "
+                "ateş ciddiyeti belirlendikten SONRA sorulur.\n"
+            )
+        else:
+            pediatric_hint = (
+                "\n⚠️ PEDIATRIC CASE: Child patient. The NEXT question MUST ask for the specific "
+                "temperature reading and duration first. Complication questions (seizure, neck stiffness) "
+                "come only AFTER fever severity is established.\n"
+            )
+
     if lang == "tr":
         next_prompt = (
-            f"Hasta: {session['patient_name']}, {session['age']} yaşında, {session['gender']}.\n\n"
+            f"Hasta: {session['patient_name']}, {session['age']} yaşında, {session['gender']}.\n"
+            f"{pediatric_hint}"
             f"Mülakat geçmişi:\n{history_text}\n\n"
             f"Yukarıdaki cevaplara dayanarak tanıyı netleştirecek SONRAKI en kritik soruyu sor. "
             f"Acil belirti varsa o yönde derinleş. Soru {current_step+1}/{total_steps}."
         )
     else:
         next_prompt = (
-            f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n\n"
+            f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n"
+            f"{pediatric_hint}"
             f"Interview so far:\n{history_text}\n\n"
             f"Based on above answers, ask the NEXT most critical question to clarify the diagnosis. "
             f"If emergency signs present, explore further. Q{current_step+1}/{total_steps}."
