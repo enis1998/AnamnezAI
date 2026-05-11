@@ -246,6 +246,14 @@ tailwind.config = {
               <span class="text-white/60 text-[12px] font-medium" id="txt-trust-lang" data-i18n="hero.trust.lang">TR · EN · AR — Mülteci yoğunluğu için Arapça desteği</span>
             </div>
         </div>
+
+        <!-- Safety disclaimer -->
+        <div class="mt-6 fade-up-4 flex items-start gap-2.5 bg-white/5 border border-white/10 rounded-xl px-4 py-3 max-w-lg">
+          <span class="material-symbols-outlined msym-fill text-amber-400 text-[17px] flex-shrink-0 mt-0.5">info</span>
+          <p class="text-white/50 text-[11.5px] leading-relaxed" id="txt-hero-disclaimer" data-i18n="hero.disclaimer">
+            AnamnezAI teşhis koymaz. Hasta geçmişini yapılandırır, aciliyeti işaretler ve Gemma 4 ile yerel olarak doktor incelemesine hazır klinik kabul özeti oluşturur.
+          </p>
+        </div>
       </div>
 
       <!-- Right: Chat Demo -->
@@ -1116,6 +1124,7 @@ const LP_I18N = {
     'hero.cta1':'Hemen Deneyin — Ücretsiz','hero.cta2':'Nasıl Çalışır',
     'hero.trust.gdpr':'GDPR Uyumlu','hero.trust.local':'Yerel AI — Veri Dışarı Çıkmaz',
     'hero.trust.lang':'TR · EN · AR — Mülteci yoğunluğu için Arapça desteği',
+    'hero.disclaimer':'AnamnezAI teşhis koymaz. Hasta geçmişini yapılandırır, aciliyeti işaretler ve Gemma 4 ile yerel olarak doktor incelemesine hazır klinik kabul özeti oluşturur.',
     // chat demo
     'chat.ai.1':'Merhaba Ayşe Hanım! 👋 Bugün sizi ne rahatsız ediyor? Şikayetinizi anlatır mısınız?',
     'chat.user.1':'3 gündür başım ağrıyor, hafif ateşim var ve yorgun hissediyorum.',
@@ -1220,10 +1229,11 @@ const LP_I18N = {
     'nav.login':'Log In','nav.register':'Get Started Free','nav.register.sm':'Start',
     'hero.badge':'Powered by Gemma 4 · MedGemma Vision',
     'hero.h1':'Before your doctor sees you,','hero.h1b':'AI listens to you.',
-    'hero.sub':'AnamnezAI analyzes your symptoms with smart questions, determines triage priority, and delivers a clinical summary to your doctor. Reduce wait times, improve diagnostic quality.',
+    'hero.sub':'AnamnezAI analyzes your symptoms with smart questions, determines triage priority, and delivers a clinical summary to your doctor. Reduce wait times, improve clinical intake quality.',
     'hero.cta1':'Try It Now — Free','hero.cta2':'How It Works',
     'hero.trust.gdpr':'GDPR Compliant','hero.trust.local':'Local AI — Data Never Leaves',
     'hero.trust.lang':'TR · EN · AR — Arabic support for refugee-dense regions',
+    'hero.disclaimer':'AnamnezAI does not diagnose. It structures patient history, flags urgency, and prepares a physician-reviewable clinical intake summary locally with Gemma 4.',
     'chat.ai.1':'Hello! 👋 What brings you in today? Please describe your complaint.',
     'chat.user.1':'I\'ve had a headache for 3 days, a slight fever, and I feel tired.',
     'chat.ai.2':'I understand. What is your temperature? Do you have a sore throat or cough?',
@@ -1259,7 +1269,7 @@ const LP_I18N = {
     'feat.sub':'The only platform that automates the entire pre-triage workflow — from patient intake to clinical summary — using AI.',
     'f1.t':'Smart AI Interview','f1.d':'A conversational flow powered by Gemma 4 that deeply understands your symptoms and asks contextually relevant, clinically meaningful questions.','f1.tag':'Adaptive Questions',
     'f2.t':'Medical Image Analysis','f2.d':'Wounds, skin rashes, ECG strips or X-rays are instantly analyzed by MedGemma Vision and added to the clinical report.',
-    'f3.t':'Clinical Triage Report','f3.d':'Structured clinical summary with priority score per MTS (Manchester Triage System) protocol, differential diagnosis list, and vital signs.','f3.tag1':'MTS Protocol',
+    'f3.t':'Clinical Triage Report','f3.d':'Structured clinical summary with priority score per MTS (Manchester Triage System) protocol, possible clinical considerations, and vital signs.','f3.tag1':'MTS Protocol',
     'f4.t':'Voice Input & TTS','f4.d':'Voice answers in Turkish/English/Arabic via Web Speech API. Text-to-Speech lets patients listen to AI questions. Ideal for kiosk mode.',
     'f5.t':'Doctor & Admin Panel','f5.d':'Comprehensive management dashboard with all patient sessions, triage scores, historical reports, and clinical review interface.','f5.tag1':'Role-Based Access',
     'f6.t':'PWA — Offline Support','f6.d':'Installable as a Progressive Web App on phones or tablets. Runs smoothly on touchscreens in kiosk mode. No internet connection required.','f6.tag':'Kiosk Mode',
@@ -1269,7 +1279,7 @@ const LP_I18N = {
     'step.1t':'Patient Registration','step.1d':'Name, age, gender and optional vital signs are entered.',
     'step.2t':'AI Interview','step.2d':'Gemma 4 asks 5 clinically important questions and analyzes the answers.',
     'step.3t':'Image Analysis','step.3d':'Optional: upload a medical image for analysis by MedGemma Vision.',
-    'step.4t':'Clinical Summary','step.4d':'Report with MTS triage score, differential diagnoses and recommendations is generated.',
+    'step.4t':'Clinical Summary','step.4d':'Report with MTS triage score, possible clinical considerations and recommendations is generated.',
     'step.5t':'Doctor Consultation','step.5d':'The doctor evaluates the patient much faster with the ready clinical summary.',
     'res.1':'Shorter patient intake time','res.2':'Improved triage accuracy','res.3':'24/7 service capacity',
     'tech.chip':'Infrastructure & Technology',
@@ -1319,10 +1329,11 @@ const LP_I18N = {
     'nav.login':'تسجيل الدخول','nav.register':'ابدأ مجاناً','nav.register.sm':'ابدأ',
     'hero.badge':'مدعوم بـ Gemma 4 · MedGemma Vision',
     'hero.h1':'قبل أن يراك طبيبك،','hero.h1b':'الذكاء الاصطناعي يستمع إليك.',
-    'hero.sub':'يحلّل AnamnezAI أعراضك بأسئلة ذكية، ويحدد أولوية الفرز الطبي، ويقدم ملخصاً سريرياً لطبيبك. قلّل أوقات الانتظار وحسّن جودة التشخيص.',
+    'hero.sub':'يحلّل AnamnezAI أعراضك بأسئلة ذكية، ويحدد أولوية الفرز الطبي، ويقدم ملخصاً سريرياً لطبيبك. قلّل أوقات الانتظار وحسّن جودة استقبال المريض سريرياً.',
     'hero.cta1':'جرّبه الآن — مجاناً','hero.cta2':'كيف يعمل',
     'hero.trust.gdpr':'متوافق مع GDPR','hero.trust.local':'ذكاء اصطناعي محلي — البيانات لا تغادر',
     'hero.trust.lang':'TR · EN · AR — دعم اللغة العربية للمناطق كثيفة اللاجئين',
+    'hero.disclaimer':'لا يُشخّص AnamnezAI الأمراض. يُنظّم تاريخ المريض، ويُحدد درجة الاستعجال، ويُعدّ ملخصاً سريرياً لاستقبال المريض مراجَعاً من الطبيب محلياً عبر Gemma 4.',
     'chat.ai.1':'مرحباً! 👋 ما الذي يُزعجك اليوم؟ أخبرني بشكواك.',
     'chat.user.1':'أعاني من صداع منذ 3 أيام مع حمى خفيفة وتعب عام.',
     'chat.ai.2':'أفهم. كم درجة حرارتك؟ هل تعاني من ألم في الحلق أو سعال؟',
@@ -1350,14 +1361,14 @@ const LP_I18N = {
     'stat.4l':'اختبار MedGemma','stat.4s':'نجاح 100% (2026-05-11)',
     // latency banner
     'latency.title':'لماذا يستغرق الفرز بالذكاء الاصطناعي 15 ثانية؟',
-    'latency.body':'في سيناريو غازي عنتاب، انتظر المريض <strong>22 دقيقة</strong> للفرز اليدوي. يجمع AnamnezAI نفس المعلومات في <strong>~15 ثانية</strong>. ليست تأخيراً — بل تقديم قيمة 22 دقيقة من التشخيص في 15 ثانية.',
+    'latency.body':'في سيناريو غازي عنتاب، انتظر المريض <strong>22 دقيقة</strong> للفرز اليدوي. يجمع AnamnezAI نفس المعلومات في <strong>~15 ثانية</strong>. ليست تأخيراً — بل تقديم قيمة الفرز السريري لـ 22 دقيقة في 15 ثانية.',
     'latency.manual':'الفرز اليدوي','latency.ai':'فرز الذكاء الاصطناعي',
     'feat.chip':'مميزات قوية',
     'feat.h2a':'أعدنا تصميم','feat.h2b':'تقديم الرعاية الصحية.',
     'feat.sub':'المنصة الوحيدة التي تُؤتمت كامل سير عمل ما قبل الفرز — من استقبال المريض إلى الملخص السريري — باستخدام الذكاء الاصطناعي.',
     'f1.t':'مقابلة ذكية بالذكاء الاصطناعي','f1.d':'تدفق محادثة مدعوم بـ Gemma 4 يفهم أعراضك بعمق ويطرح أسئلة ذات صلة سريرية.','f1.tag':'أسئلة تكيفية',
     'f2.t':'تحليل الصور الطبية','f2.d':'الجروح وطفح الجلد وشرائط تخطيط القلب والأشعة السينية تُحلَّل فوراً بـ MedGemma Vision وتُضاف إلى التقرير السريري.',
-    'f3.t':'تقرير الفرز السريري','f3.d':'ملخص سريري منظم بدرجة الأولوية وفق بروتوكول MTS وقائمة التشخيصات التفاضلية والعلامات الحيوية.','f3.tag1':'بروتوكول MTS',
+    'f3.t':'تقرير الفرز السريري','f3.d':'ملخص سريري منظم بدرجة الأولوية وفق بروتوكول MTS والاعتبارات السريرية المحتملة والعلامات الحيوية.','f3.tag1':'بروتوكول MTS',
     'f4.t':'الإدخال الصوتي وتحويل النص','f4.d':'إدخال إجابات صوتية بالعربية/الإنجليزية/التركية عبر Web Speech API. يمكن الاستماع لأسئلة الذكاء الاصطناعي. مثالي لوضع الكشك.',
     'f5.t':'لوحة تحكم الطبيب والمدير','f5.d':'لوحة إدارة شاملة تضم جميع جلسات المرضى ودرجات الفرز والتقارير التاريخية وواجهة المراجعة السريرية.','f5.tag1':'وصول قائم على الأدوار',
     'f6.t':'PWA — دعم بدون إنترنت','f6.d':'قابل للتثبيت كتطبيق ويب تدريجي على الهاتف أو الجهاز اللوحي. يعمل بسلاسة على شاشات اللمس في وضع الكشك.','f6.tag':'وضع الكشك',
@@ -1367,7 +1378,7 @@ const LP_I18N = {
     'step.1t':'تسجيل المريض','step.1d':'يُدخَل الاسم والعمر والجنس والعلامات الحيوية الاختيارية.',
     'step.2t':'مقابلة الذكاء الاصطناعي','step.2d':'يطرح Gemma 4 خمسة أسئلة سريرية مهمة ويحلل الإجابات.',
     'step.3t':'تحليل الصور','step.3d':'اختياري: رفع صورة طبية لتحليلها بـ MedGemma Vision.',
-    'step.4t':'الملخص السريري','step.4d':'يُنشأ تقرير بدرجة فرز MTS والتشخيصات الأولية والتوصيات.',
+    'step.4t':'الملخص السريري','step.4d':'يُنشأ تقرير بدرجة فرز MTS والاعتبارات السريرية المحتملة والتوصيات.',
     'step.5t':'استشارة الطبيب','step.5d':'يُقيّم الطبيب المريض بسرعة أكبر بكثير مع الملخص السريري الجاهز.',
     'res.1':'وقت استقبال مريض أقصر','res.2':'دقة فرز محسّنة','res.3':'طاقة خدمة على مدار الساعة',
     'tech.chip':'البنية التحتية والتكنولوجيا',
