@@ -1367,15 +1367,52 @@ function toggleAnalytics() {
 
 async function exportFHIR(sid) {
   try {
-    const res = await fetch(`${API}/api/session/${sid}/fhir`, { headers: authHeaders() });
-    if (!res.ok) throw new Error('FHIR export başarısız.');
-    const data = await res.json();
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    let fhirData;
+    const isDemo = sid.startsWith('demo-') || !API;
+    if (!isDemo) {
+      const res = await fetch(`${API}/api/session/${sid}/fhir`, { headers: authHeaders() });
+      if (res.ok) {
+        fhirData = await res.json();
+      } else {
+        // API hatası → local veriden oluştur
+        const p = allPatients[sid];
+        if (!p) throw new Error(`FHIR export başarısız (HTTP ${res.status})`);
+        fhirData = buildFHIRBundle(p, sid);
+      }
+    } else {
+      const p = allPatients[sid];
+      if (!p) throw new Error('Hasta verisi bulunamadı.');
+      fhirData = buildFHIRBundle(p, sid);
+    }
+    const blob = new Blob([JSON.stringify(fhirData, null, 2)], {type: 'application/fhir+json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `fhir_${sid.slice(0,8)}.json`;
+    a.href = url;
+    a.download = `FHIR_R4_AnamnezAI_${(allPatients[sid]?.patient_name||'Hasta').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
     a.click(); URL.revokeObjectURL(url);
   } catch(e) { alert(e.message || 'FHIR export başarısız.'); }
+}
+
+function buildFHIRBundle(p, sid) {
+  const now = new Date().toISOString();
+  const uid = sid.replace(/[^a-zA-Z0-9]/g,'-');
+  const vitalsObs = Object.entries(p.vitals||{}).map(([k,v])=>{
+    const loinc = {blood_pressure:['85354-9','Blood pressure','mmHg'],pulse:['8867-4','Heart rate','/min'],temperature:['8310-5','Body temperature','Cel'],spo2:['59408-5','Oxygen saturation','%'],respiratory_rate:['9279-1','Respiratory rate','/min']};
+    const [code,disp,unit] = loinc[k]||[k,k,''];
+    return {fullUrl:`urn:uuid:obs-${k}-${uid}`,resource:{resourceType:'Observation',id:`obs-${k}-${uid}`,status:'final',code:{coding:[{system:'http://loinc.org',code,display:disp}],text:disp},subject:{reference:`urn:uuid:pat-${uid}`},effectiveDateTime:p.generated_at||now,valueQuantity:{value:parseFloat(v)||v,unit,system:'http://unitsofmeasure.org',code:unit}}};
+  });
+  return {
+    resourceType:'Bundle',id:`anamnezai-${uid.slice(0,16)}`,
+    meta:{lastUpdated:now,profile:['http://hl7.org/fhir/R4/Bundle']},
+    type:'document',timestamp:now,
+    entry:[
+      {fullUrl:`urn:uuid:comp-${uid}`,resource:{resourceType:'Composition',id:`comp-${uid}`,status:'final',type:{coding:[{system:'http://loinc.org',code:'34133-9',display:'Summary of episode note'}]},date:now,title:'AnamnezAI Clinical Pre-Triage Report',author:[{display:'AnamnezAI · Gemma 4'}],subject:{reference:`urn:uuid:pat-${uid}`},section:[{title:'Chief Complaint',text:{status:'generated',div:`<div xmlns="http://www.w3.org/1999/xhtml">${p.symptoms_summary||'—'}</div>`}},{title:'Triage Assessment',text:{status:'generated',div:`<div xmlns="http://www.w3.org/1999/xhtml">MTS ${p.triage_level} — Confidence: ${p.confidence_score||0}%</div>`}},{title:'Clinical Impression',text:{status:'generated',div:`<div xmlns="http://www.w3.org/1999/xhtml">${p.clinical_notes||'—'}</div>`}},{title:'Recommended Action',text:{status:'generated',div:`<div xmlns="http://www.w3.org/1999/xhtml">${p.recommended_action||'—'}</div>`}}]}},
+      {fullUrl:`urn:uuid:pat-${uid}`,resource:{resourceType:'Patient',id:`pat-${uid}`,name:[{use:'official',text:p.patient_name||'—'}],gender:['Erkek','Male'].includes(p.gender)?'male':['Kadın','Female'].includes(p.gender)?'female':'unknown',birthDate:p.age?String(new Date().getFullYear()-p.age)+'-01-01':undefined}},
+      {fullUrl:`urn:uuid:enc-${uid}`,resource:{resourceType:'Encounter',id:`enc-${uid}`,status:'finished',class:{system:'http://terminology.hl7.org/CodeSystem/v3-ActCode',code:'AMB'},type:[{text:'AI Pre-Triage Assessment'}],subject:{reference:`urn:uuid:pat-${uid}`},period:{start:p.generated_at||now,end:now},priority:{coding:[{system:'http://terminology.hl7.org/CodeSystem/v3-ActPriority',code:p.triage_level==='RED'?'EM':p.triage_level==='YELLOW'?'UR':'R',display:p.triage_level==='RED'?'emergency':p.triage_level==='YELLOW'?'urgent':'routine'}]}}},
+      {fullUrl:`urn:uuid:imp-${uid}`,resource:{resourceType:'ClinicalImpression',id:`imp-${uid}`,status:'completed',description:p.clinical_notes||p.symptoms_summary||'—',subject:{reference:`urn:uuid:pat-${uid}`},encounter:{reference:`urn:uuid:enc-${uid}`},date:p.generated_at||now,finding:(p.possible_conditions||[]).map(c=>({itemCodeableConcept:{text:c}})),note:[{text:p.recommended_action||'—'}],extension:[{url:'http://anamnezai.tr/fhir/ext/triage-level',valueString:p.triage_level||'UNKNOWN'},{url:'http://anamnezai.tr/fhir/ext/confidence-score',valueDecimal:p.confidence_score||0},{url:'http://anamnezai.tr/fhir/ext/ai-model',valueString:'gemma4:e4b · AnamnezAI'},{url:'http://anamnezai.tr/fhir/ext/urgency-flags',valueString:(p.urgency_flags||[]).join('; ')||'none'}]}},
+      ...vitalsObs
+    ]
+  };
 }
 
 let _reportModalSid = null;
