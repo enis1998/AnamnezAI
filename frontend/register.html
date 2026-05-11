@@ -248,7 +248,7 @@ async function doRegister(e) {
   const token = localStorage.getItem('anamnez_token');
   const user = JSON.parse(localStorage.getItem('anamnez_user') || 'null');
   if (token && user) {
-    window.location.href = ['doctor','admin','personnel'].includes(user.role) ? 'doctor.html' : 'index.html';
+    window.location.href = ['doctor','admin','personnel'].includes(user.role) ? 'doctor.html' : 'patient_dashboard.html';
   }
 })();
 </script>
