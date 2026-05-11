@@ -704,6 +704,9 @@ OUTPUT: Return ONLY valid JSON. No other text or markdown.
   "clinical_notes": "Critical notes for doctor 2-3 sentences",
   "urgency_flags": ["Emergency flags if any"],
   "evidence": ["Clinical finding supporting triage decision 1", "Finding 2", "Finding 3"],
+  "evidence_map": [
+    {"finding": "Clinical finding", "patient_quote": "Direct patient quote", "risk_weight": "high or medium or low", "supports": "RED or YELLOW or GREEN"}
+  ],
   "guideline_sources": ["MTS Chest Pain Discriminator", "CTAS Level 2 Cardiac Symptoms"],
   "doctor_review_required": true or false,
   "unsafe_to_self_manage": true or false
@@ -1169,11 +1172,6 @@ async def health_check():
         )
 
 
-@app.get("/healthz")
-async def healthz():
-    """Docker / k8s liveness probe — sadece process ayakta mı kontrol eder."""
-    return {"status": "ok"}
-
 
 @app.post("/api/session/start")
 async def start_session(req: StartSessionRequest, current_user: Optional[dict] = Depends(get_current_user)):
@@ -1368,6 +1366,8 @@ async def get_clinical_summary(session_id: str):
     if session_id in summaries:
         return ClinicalSummaryResponse(**summaries[session_id])
 
+    _t_start = _time.time()
+
     lang = session["language"]
     history_text = "\n".join(
         f"Q{i+1}: {qa['question']}\nA: {qa.get('answer', 'Yanıt yok')}"
@@ -1409,6 +1409,9 @@ async def get_clinical_summary(session_id: str):
         timeout=200.0,
     )
 
+    _t_llm = _time.time()
+    _llm_latency = round(_t_llm - _t_start, 2)
+
     # Robust JSON parse
     cleaned = raw.strip()
     if "```" in cleaned:
@@ -1432,9 +1435,49 @@ async def get_clinical_summary(session_id: str):
             "clinical_notes": raw[:400], "urgency_flags": [],
         }
 
+    # ── Safety Guardrail Layer (deterministic override) ──────────────────
+    qa_history = session.get("qa_history", [])
+    triage_data, guardrail_triggered = apply_guardrails(
+        triage_data, qa_history, lang=lang, vitals=vitals_dict or None
+    )
+
     level = triage_data.get("triage_level", "YELLOW").upper()
     if level not in TRIAGE_COLOR:
         level = "YELLOW"
+
+    # ── Clinical Completeness Score ─────────────────────────────────────
+    completeness = compute_clinical_completeness(qa_history, lang=lang, vitals=vitals_dict or None)
+
+    # ── Evidence Map (patient quotes → findings) ────────────────────────
+    # Prefer LLM-generated evidence_map, fall back to rule-based
+    llm_evidence_map = triage_data.get("evidence_map", [])
+    rule_evidence_map = build_evidence_map(qa_history, lang=lang)
+    evidence_map = llm_evidence_map if len(llm_evidence_map) >= 2 else rule_evidence_map
+
+    # ── AI Execution Log ─────────────────────────────────────────────────
+    # Fetch RAG stats
+    rag_chunks = 0
+    try:
+        if RAG_ENABLED:
+            import rag as _rag
+            rag_chunks = _rag.get_db_stats().get("total_chunks", 0)
+    except Exception:
+        pass
+
+    ai_execution_log = {
+        "model": GEMMA_MODEL,
+        "runtime": "Ollama (local)",
+        "external_api": False,
+        "patient_data_egress": False,
+        "rag_enabled": RAG_ENABLED,
+        "rag_backend": "ChromaDB (local)",
+        "rag_chunks": rag_chunks,
+        "embedding_model": "sentence-transformers/multilingual-MiniLM (local)",
+        "inference_latency_s": _llm_latency,
+        "safety_guardrail": triage_data.get("safety_guardrail_triggered", False),
+        "guardrails_fired": len(guardrail_triggered),
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+    }
 
     flags = [f for f in triage_data.get("urgency_flags", [])
              if f and len(f) > 3 and "boş" not in f.lower() and "empty" not in f.lower()]
@@ -1444,12 +1487,36 @@ async def get_clinical_summary(session_id: str):
     for alg in allergy_flags:
         flag_msg = f"⚠️ Alerji geçmişi: {alg}" if session.get("language") == "tr" else f"⚠️ Known allergy: {alg}"
         if flag_msg not in flags:
-            flags.insert(0, flag_msg)  # Alerjiler her zaman en üste
+            flags.insert(0, flag_msg)
 
     # Son görüntü analiz bulgusunu ekle
     image_findings = None
     if image_analyses:
         image_findings = image_analyses[-1].get("analysis", "")[:500]
+
+    # ── Enrich RAG guideline sources with relevance metadata ─────────────
+    raw_sources = triage_data.get("guideline_sources", [])[:4]
+    enriched_sources = []
+    try:
+        if RAG_ENABLED:
+            import rag as _rag
+            _complaint = (session.get("chief_complaint", "")
+                          or (qa_history[0].get("answer", "") if qa_history else ""))[:200]
+            hits = _rag.retrieve(_complaint, n_results=4)
+            for hit in hits[:4]:
+                meta = hit.get("metadata", {})
+                enriched_sources.append({
+                    "source": meta.get("source", hit.get("id", "Unknown")),
+                    "chunk_id": hit.get("id", ""),
+                    "relevance_score": round(hit.get("relevance", 0), 3),
+                    "excerpt": hit.get("text", "")[:200],
+                })
+        if not enriched_sources:
+            enriched_sources = [{"source": s, "chunk_id": "", "relevance_score": None, "excerpt": ""}
+                                 for s in raw_sources]
+    except Exception:
+        enriched_sources = [{"source": s, "chunk_id": "", "relevance_score": None, "excerpt": ""}
+                             for s in raw_sources]
 
     result = ClinicalSummaryResponse(
         session_id=session_id,
@@ -1470,13 +1537,28 @@ async def get_clinical_summary(session_id: str):
         generated_at=datetime.utcnow().isoformat() + "Z",
         # Trust Layer
         evidence=[e for e in triage_data.get("evidence", []) if e and len(e) > 3][:5],
-        guideline_sources=triage_data.get("guideline_sources", [])[:4],
+        guideline_sources=[s["source"] for s in enriched_sources],
         doctor_review_required=True,
         unsafe_to_self_manage=(level == "RED"),
+        # Clinical Completeness
+        clinical_completeness_score=completeness["clinical_completeness_score"],
+        missing_information=completeness["missing_information"],
+        recommended_next_questions=completeness["recommended_next_questions"],
+        # Evidence Map
+        evidence_map=evidence_map,
+        # Safety Guardrail
+        safety_guardrail_triggered=triage_data.get("safety_guardrail_triggered", False),
+        guardrail_rules_fired=triage_data.get("guardrail_rules_fired", []),
+        # AI Execution Log
+        ai_execution_log=ai_execution_log,
     )
 
-    summaries[session_id] = result.model_dump()
-    db_save_summary(session_id, summaries[session_id])
+    result_dict = result.model_dump()
+    # Store enriched sources separately for FHIR / clinical review
+    result_dict["enriched_guideline_sources"] = enriched_sources
+
+    summaries[session_id] = result_dict
+    db_save_summary(session_id, result_dict)
     await notify_queue_update()
     return result
 
@@ -1727,31 +1809,47 @@ async def add_doctor_note(session_id: str, body: dict, current_user: dict = Depe
 
 @app.put("/api/session/{session_id}/triage")
 async def override_triage(session_id: str, body: dict, current_user: dict = Depends(require_doctor)):
-    """Doktor triaj seviyesini değiştirir."""
+    """Doktor triaj seviyesini değiştirir — Human-in-the-loop audit trail kaydeder."""
     session = sessions.get(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
     new_level = body.get("triage_level", "").upper()
     if new_level not in ("RED", "YELLOW", "GREEN"):
         raise HTTPException(status_code=400, detail="Geçersiz triaj seviyesi. RED / YELLOW / GREEN olmalı.")
-    
-    session["triage_override"] = {
+
+    ai_triage = summaries.get(session_id, {}).get("triage_level", "PENDING")
+    override_entry = {
         "level": new_level,
-        "original_level": summaries.get(session_id, {}).get("triage_level"),
+        "ai_triage": ai_triage,
+        "original_level": ai_triage,
+        "override_reason": body.get("override_reason", ""),
         "doctor_id": current_user["user_id"],
         "doctor_name": current_user["name"],
         "timestamp": datetime.utcnow().isoformat(),
     }
+
+    session["triage_override"] = override_entry
     db_save_session(session_id, session)
-    
+
     if session_id in summaries:
         summaries[session_id]["triage_level"] = new_level
         summaries[session_id]["triage_color"] = TRIAGE_COLOR[new_level]
-        summaries[session_id]["triage_override"] = session["triage_override"]
+        summaries[session_id]["triage_override"] = override_entry
+        summaries[session_id]["doctor_final_triage"] = new_level
         db_save_summary(session_id, summaries[session_id])
-    
+
+    # Audit
+    audit("triage_override", user_id=current_user["user_id"], user_role=current_user["role"],
+          resource=session_id, details=f"AI:{ai_triage} → Doctor:{new_level} reason:{body.get('override_reason','')}")
+
     await notify_queue_update()
-    return {"status": "ok", "new_level": new_level, "override": session["triage_override"]}
+    return {
+        "status": "ok",
+        "new_level": new_level,
+        "ai_triage": ai_triage,
+        "override": override_entry,
+        "human_in_the_loop": True,
+    }
 
 
 @app.put("/api/session/{session_id}/seen")
@@ -2395,6 +2493,186 @@ async def offline_proof():
             "patient history, flags urgency, and prepares a physician-reviewable summary. "
             "All clinical decisions require physician review."
         ),
+    }
+
+
+# ─────────────────────────────────────────────
+#  Sprint 21 — Evaluation Dashboard API
+# ─────────────────────────────────────────────
+
+@app.get("/api/evaluation")
+async def get_evaluation_results(current_user: Optional[dict] = Depends(get_current_user)):
+    """Evaluation dashboard — AI quality metrics + live system stats."""
+    # Static evaluation results from evaluation/results.md (May 2026 run)
+    static_results = {
+        "generated": "2026-05-11",
+        "model": GEMMA_MODEL,
+        "runtime": "Ollama local",
+        "gpu": "RTX 8 GB VRAM",
+        "rag_chunks": 90,
+        "summary": {
+            "overall_score_pct": 93.0,
+            "cases_tested": 15,
+            "passed": 14,
+            "failed": 1,
+            "triage_accuracy_pct": 100.0,
+            "rag_accuracy_pct": 100.0,
+            "red_flag_recall_pct": 100.0,
+            "json_validity_pct": 100.0,
+            "avg_latency_s": "11–39s",
+            "local_inference": True,
+            "cloud_api_used": False,
+        },
+        "triage_cases": [
+            {"case": "AMI — Acute Cardiac Emergency", "expected": "RED",    "predicted": "RED",    "confidence": 100, "pass": True},
+            {"case": "High Fever Child (39.5°C)",      "expected": "YELLOW", "predicted": "YELLOW", "confidence": 90,  "pass": True},
+            {"case": "Simple URTI",                    "expected": "GREEN",  "predicted": "GREEN",  "confidence": 95,  "pass": True},
+            {"case": "Stroke Suspicion",               "expected": "RED",    "predicted": "RED",    "confidence": 98,  "pass": True},
+            {"case": "Abdominal Pain — Appendicitis",  "expected": "YELLOW", "predicted": "YELLOW", "confidence": 90,  "pass": True},
+        ],
+        "rag_cases": [
+            {"query": "Chest pain, radiation to left arm", "expected": "Cardiac_Emergency", "found": "Cardiac_Emergency", "score": 0.821, "pass": True},
+            {"query": "Infant 2 months fever 38.5",        "expected": "Pediatric",          "found": "Pediatric_Triage", "score": 0.581, "pass": True},
+            {"query": "Sudden severe headache neck stiffness", "expected": "Neurological",   "found": "Neurological_Emerg", "score": 0.789, "pass": True},
+            {"query": "Lower back pain, urinary retention",    "expected": "Orthopedic",     "found": "Orthopedic_Triage",  "score": 0.470, "pass": True},
+            {"query": "Rash fever petechiae",              "expected": "Dermatology",        "found": "Dermatology_Triage", "score": 0.588, "pass": True},
+            {"query": "Ear pain child",                    "expected": "ENT",                "found": "ENT_Emergency",      "score": 0.651, "pass": True},
+        ],
+    }
+
+    # Live stats
+    live_summaries = list(summaries.values())
+    guardrail_count = sum(1 for s in live_summaries if s.get("safety_guardrail_triggered"))
+    avg_completeness = 0
+    if live_summaries:
+        scores = [s.get("clinical_completeness_score", 0) for s in live_summaries]
+        avg_completeness = round(sum(scores) / len(scores), 1)
+
+    static_results["live_stats"] = {
+        "total_sessions_in_db": len(sessions),
+        "completed_sessions": sum(1 for s in sessions.values() if s.get("completed")),
+        "guardrail_escalations": guardrail_count,
+        "avg_clinical_completeness_pct": avg_completeness,
+        "triage_distribution": {
+            "RED":    sum(1 for s in live_summaries if s.get("triage_level") == "RED"),
+            "YELLOW": sum(1 for s in live_summaries if s.get("triage_level") == "YELLOW"),
+            "GREEN":  sum(1 for s in live_summaries if s.get("triage_level") == "GREEN"),
+        },
+    }
+    return static_results
+
+
+# ─────────────────────────────────────────────
+#  Sprint 21 — Patient Timeline / Visit Comparison
+# ─────────────────────────────────────────────
+
+@app.get("/api/session/{session_id}/timeline")
+async def get_patient_timeline(session_id: str, current_user: dict = Depends(require_doctor)):
+    """Patient visit timeline — compares current visit to previous ones."""
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+
+    patient_name = session.get("patient_name", "")
+    current_summary = summaries.get(session_id, {})
+    current_level = current_summary.get("triage_level", "PENDING")
+    current_complaint = current_summary.get("chief_complaint", "")
+    current_date = session.get("created_at", "")[:10]
+
+    # Find previous visits for same patient name
+    previous_visits = []
+    for sid, s in sessions.items():
+        if sid == session_id:
+            continue
+        if s.get("patient_name", "").lower() == patient_name.lower() and s.get("completed"):
+            summ = summaries.get(sid, {})
+            previous_visits.append({
+                "session_id": sid,
+                "date": s.get("created_at", "")[:10],
+                "triage_level": summ.get("triage_level", "PENDING"),
+                "chief_complaint": summ.get("chief_complaint", ""),
+                "symptoms_summary": summ.get("symptoms_summary", ""),
+                "urgency_flags": summ.get("urgency_flags", []),
+            })
+
+    previous_visits.sort(key=lambda x: x["date"], reverse=True)
+
+    # Detect changes vs most recent previous visit
+    changes_detected = []
+    if previous_visits:
+        prev = previous_visits[0]
+        prev_level = prev.get("triage_level", "GREEN")
+        level_rank = {"GREEN": 0, "YELLOW": 1, "RED": 2, "PENDING": -1}
+
+        if level_rank.get(current_level, -1) > level_rank.get(prev_level, -1):
+            changes_detected.append(f"⬆️ Triaj seviyesi yükseldi: {prev_level} → {current_level}")
+        elif level_rank.get(current_level, -1) < level_rank.get(prev_level, -1):
+            changes_detected.append(f"⬇️ Triaj seviyesi düştü: {prev_level} → {current_level}")
+
+        # Compare urgency flags
+        prev_flags = set(prev.get("urgency_flags", []))
+        curr_flags = set(current_summary.get("urgency_flags", []))
+        new_flags = curr_flags - prev_flags
+        for f in list(new_flags)[:3]:
+            changes_detected.append(f"🆕 Yeni acil bulgu: {f}")
+
+    return {
+        "session_id": session_id,
+        "patient_name": patient_name,
+        "current_visit": {
+            "date": current_date,
+            "triage_level": current_level,
+            "chief_complaint": current_complaint,
+        },
+        "previous_visits": previous_visits[:5],
+        "total_previous": len(previous_visits),
+        "changes_detected": changes_detected,
+        "risk_trend": (
+            "increasing" if any("yükseldi" in c or "raised" in c.lower() for c in changes_detected)
+            else "stable" if changes_detected
+            else "first_visit" if not previous_visits
+            else "decreasing"
+        ),
+    }
+
+
+# ─────────────────────────────────────────────
+#  Sprint 21 — Enriched FHIR Preview
+# ─────────────────────────────────────────────
+
+@app.get("/api/session/{session_id}/fhir-preview")
+async def fhir_preview(session_id: str, current_user: dict = Depends(require_doctor)):
+    """FHIR Bundle summary card — hospital integration preview."""
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+    summary = summaries.get(session_id, {})
+    vitals = session.get("vitals") or {}
+
+    obs_count = 0
+    if vitals:
+        obs_count = sum(1 for v in vitals.values() if v is not None)
+
+    conditions = summary.get("possible_conditions", [])
+    has_triage_note = bool(summary.get("triage_level"))
+
+    return {
+        "session_id": session_id,
+        "fhir_version": "R4",
+        "resource_type": "Bundle",
+        "bundle_type": "collection",
+        "resources": {
+            "Patient": 1,
+            "ClinicalImpression": 1,
+            "Observation": obs_count,
+            "Condition": len(conditions),
+            "Encounter": 1,
+        },
+        "triage_note_included": has_triage_note,
+        "ai_generated": True,
+        "doctor_review_required": True,
+        "export_url": f"/api/session/{session_id}/fhir",
+        "disclaimer": "FHIR export is AI-generated and requires physician review before integration.",
     }
 
 

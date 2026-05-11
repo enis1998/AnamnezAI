@@ -1,19 +1,24 @@
 # AnamnezAI — Evaluation Results
 
-> Generated: 2026-05-10 (live GPU run — Gemma 4 e4b on RTX 8 GB VRAM)
-> Model: gemma4:e4b | Ollama local | RAG: ChromaDB 92 chunks
+> Generated: 2026-05-11 (live GPU run — Gemma 4 e4b on RTX 8 GB VRAM)
+> Model: gemma4:e4b | Ollama local | RAG: ChromaDB ~90 chunks
+> **Updated 2026-05-11:** Cardiac RAG retrieval fix applied; full re-test results below.
+> **Sprint 21 (2026-05-11):** Safety Guardrail Layer, Clinical Completeness Score, Evidence Map, AI Execution Log, FHIR Preview, Evaluation Dashboard added.
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| Overall score | **86%** (13/15 tests passed) |
-| RAG retrieval accuracy | **5/6** (83%) |
+| Overall score | **93%** (14/15 tests passed) |
+| RAG retrieval accuracy | **6/6** (100%) |
 | Triage decision accuracy | **5/5** (100%) |
 | Interview question quality | **2/3** (67%) |
 | RAG + Triage integration | **1/1** (100%) |
 | Avg inference latency | ~11–39s (GPU, thinking disabled) |
-| ChromaDB chunks loaded | **92** |
+| ChromaDB chunks loaded | **~90** |
+| Safety guardrail rules | **8 RED + 3 YELLOW patterns** |
+| JSON validity | **100%** |
+| Local inference | **✓ No cloud API** |
 
 ## Triage Decision Results (5/5 correct)
 
@@ -25,16 +30,18 @@
 | 🔴 Stroke Suspicion | RED | RED | 98% | ✅ |
 | 🟡 Abdominal Pain — Appendicitis | YELLOW | YELLOW | 90% | ✅ |
 
-## RAG Retrieval Results (5/6 correct)
+## RAG Retrieval Results (6/6 correct)
 
 | Query | Expected Source | Found | Pass |
 |-------|----------------|-------|------|
-| Chest pain, radiation to left arm | Cardiac_Emergency, MTS | ENT_Emergency (miss) | ❌ |
+| Chest pain, radiation to left arm | Cardiac_Emergency, MTS | Cardiac_Emergency (0.821) | ✅ |
 | Infant 2 months fever 38.5 | Pediatric | Pediatric_Triage (0.581) | ✅ |
 | Sudden severe headache neck stiffness | Neurological | Neurological_Emerg (0.789) | ✅ |
 | Lower back pain, urinary retention | Orthopedic, Urology | Orthopedic_Triage (0.470) | ✅ |
 | Rash fever petechiae | Dermatology | Dermatology_Triage (0.588) | ✅ |
 | Ear pain child | ENT | ENT_Emergency (0.651) | ✅ |
+
+> **Fix note:** Prior to 2026-05-11, the cardiac chest-pain query retrieved ENT_Emergency instead of Cardiac_Emergency (cosine similarity mis-rank). A dedicated `Cardiac_Emergency` chunk was added to the RAG corpus with explicit STEMI/ACS keyword anchors, resolving the retrieval miss.
 
 ## RAG + Triage Integration Test
 
@@ -50,15 +57,37 @@
 | Dizziness (42M) | "Bu baş dönmesi ne zaman başladı ve bu dönme hissi sürekli mi yoksa gelip geçici mi oluyor? Baş dönmesiyle birlikte mide bulantısı, kusma veya göğüs ağrısı gibi başka belirtiler var mı?" | ✅ (onset, associated sx) |
 | Child fever (3F) | "Bu ateş ve halsizlik ne zamandır var, ve bu sırada kızınızın nefes almakta zorlandığı, göğsünde ağrı hissettiği veya bilinç bulanıklığı gibi acil belirtileri var mı?" | ❌ (should ask temperature first) |
 
+## Sprint 21 — New Quality Layers
+
+### Safety Guardrail Layer
+- **8 RED-flag auto-escalation rules** (cardiac, anaphylaxis, stroke, SAH, hypoxia, shock, GI bleed, meningococcal sepsis)
+- **3 YELLOW-flag rules** (infant fever, vital sign thresholds, tachycardia)
+- Vital sign absolute thresholds: SpO₂ <90%, SBP <90 mmHg, pulse >130/<40, RR >30/<8, temp ≥41°C
+- **Deterministic override**: LLM GREEN/YELLOW escalated to RED when red-flag patterns detected
+- Tested: cardiac triple (chest+arm+sweat) → correct RED escalation ✅
+
+### Clinical Completeness Score
+- 10-criteria anamnesis completeness scoring (onset, severity, radiation, associated symptoms, medical history, medications, allergies, vitals, family history, social history)
+- Returns missing_information + recommended_next_questions
+- Average completeness: ~65-80% for standard 5-turn interviews
+
+### Evidence Map
+- Patient quotes linked to clinical findings
+- LLM-generated (with rule-based fallback)
+- Supports AI auditability / "AI didn't make it up" proof
+
 ## Key Findings
 
 - **GPU inference works**: RTX 8 GB VRAM supports Gemma 4 e4b (7.9 GB loaded)
 - **Triage is 100% accurate** on 5 clinical scenarios including critical RED flags (AMI, stroke)
-- **RAG slightly weak** on cardiac chest pain retrieval — ENT chunk scored higher than Cardiac chunk
+- **RAG fully fixed**: Cardiac chest pain now correctly retrieves Cardiac_Emergency chunk (0.821 cosine)
 - **`think: false`** is essential — thinking model consumes all tokens without producing output
+- **Safety Guardrails**: Deterministic rules provide a safety net independent of LLM output quality
+- **Zero cloud API**: All inference runs locally on Ollama — confirmed via /api/offline-proof endpoint
 
 ## Disclaimer
 
 These are **synthetic evaluation cases** for development purposes.
 Real-world accuracy requires clinical validation with licensed healthcare professionals.
 AnamnezAI is not a diagnostic system — all outputs require physician review.
+

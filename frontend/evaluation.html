@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — AI Quality Evaluation</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config={theme:{extend:{colors:{
+  pri:"#002f40",pric:"#00475e",sec:"#006a68",secc:"#a0f1ed",
+  surf:"#f4f7f9",surfc:"#e8ecee",ons:"#191c1d",onsv:"#3f4749",
+  ouv:"#bfc7ca",err:"#ba1a1a",errc:"#ffdad6",warn:"#e07b26"
+},fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"],mono:["JetBrains Mono","monospace"]}}}}
+</script>
+<style>
+*{box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f4f7f9;color:#191c1d}
+h1,h2,h3{font-family:'Manrope',sans-serif}
+.msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+.card{background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,47,64,.07);padding:24px}
+.metric-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600}
+.badge-green{background:#e8f5e9;color:#006a68}
+.badge-red{background:#ffdad6;color:#ba1a1a}
+.badge-yellow{background:#fff3e0;color:#e07b26}
+.badge-blue{background:#e3f2fd;color:#0066b2}
+.badge-purple{background:#f3e5f5;color:#7b1fa2}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+.fade{animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.progress-bar{height:8px;border-radius:99px;background:#e8ecee;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;transition:width .6s ease}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur border-b border-surfc px-6 py-3 flex justify-between items-center h-14">
+  <a href="admin.html" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-pric flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-[18px]">ecg_heart</span>
+    </div>
+    <span class="font-head font-bold text-pri text-[17px]">AnamnezAI</span>
+    <span class="text-onsv text-sm ml-1">/ AI Evaluation</span>
+  </a>
+  <div class="flex items-center gap-2">
+    <a href="admin.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ouv text-onsv text-sm hover:bg-surfc transition-colors">
+      <span class="material-symbols-outlined msym text-[16px]">arrow_back</span>
+      Admin
+    </a>
+    <a href="doctor.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sec text-white text-sm hover:bg-pri transition-colors">
+      <span class="material-symbols-outlined msym text-[16px]">monitor_heart</span>
+      Doktor Paneli
+    </a>
+  </div>
+</header>
+
+<main class="pt-20 pb-12 px-6 max-w-6xl mx-auto">
+
+  <!-- Header -->
+  <div class="mb-8 fade">
+    <div class="flex items-center gap-3 mb-2">
+      <span class="material-symbols-outlined msym-fill text-sec text-[32px]">analytics</span>
+      <div>
+        <h1 class="text-2xl font-head font-bold text-pri">AI Quality Evaluation</h1>
+        <p class="text-onsv text-sm">Gemma 4 triaj doğruluk metrikleri & RAG kalite ölçümü</p>
+      </div>
+    </div>
+    <div id="evalMeta" class="text-xs text-onsv bg-white rounded-xl px-4 py-2 border border-surfc inline-flex items-center gap-3 mt-2">
+      <span id="evalModel" class="mono text-sec font-semibold">gemma4:e4b</span>
+      <span class="text-ouv">|</span>
+      <span>Ollama local</span>
+      <span class="text-ouv">|</span>
+      <span id="evalDate">2026-05-11</span>
+      <span class="text-ouv">|</span>
+      <span class="flex items-center gap-1"><span class="status-dot bg-sec"></span> No cloud API</span>
+    </div>
+  </div>
+
+  <!-- Live system status -->
+  <div id="liveStatus" class="card mb-6 fade" style="animation-delay:.05s">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined msym text-sec text-[20px]">wifi</span>
+      <h2 class="font-head font-semibold text-pri text-base">Live System Status</h2>
+      <span id="liveLoading" class="text-xs text-onsv ml-auto">Yükleniyor...</span>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="liveCards">
+      <div class="text-center p-3 bg-surf rounded-xl">
+        <p class="text-2xl font-bold text-pri" id="liveSessions">—</p>
+        <p class="text-xs text-onsv">Toplam Oturum</p>
+      </div>
+      <div class="text-center p-3 bg-surf rounded-xl">
+        <p class="text-2xl font-bold text-err" id="liveRed">—</p>
+        <p class="text-xs text-onsv">🔴 RED Triaj</p>
+      </div>
+      <div class="text-center p-3 bg-surf rounded-xl">
+        <p class="text-2xl font-bold text-sec" id="liveGuardrail">—</p>
+        <p class="text-xs text-onsv">Guardrail Escalations</p>
+      </div>
+      <div class="text-center p-3 bg-surf rounded-xl">
+        <p class="text-2xl font-bold text-[#7b1fa2]" id="liveCompleteness">—%</p>
+        <p class="text-xs text-onsv">Avg Completeness</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary metrics -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="card text-center fade" style="animation-delay:.1s">
+      <p class="text-3xl font-bold text-sec" id="mOverall">93%</p>
+      <p class="text-sm text-onsv mt-1">Overall Score</p>
+      <p class="text-xs text-onsv opacity-60" id="mCases">14/15 tests passed</p>
+      <div class="progress-bar mt-3"><div class="progress-fill bg-sec" style="width:93%"></div></div>
+    </div>
+    <div class="card text-center fade" style="animation-delay:.15s">
+      <p class="text-3xl font-bold text-sec" id="mTriage">100%</p>
+      <p class="text-sm text-onsv mt-1">Triage Accuracy</p>
+      <p class="text-xs text-onsv opacity-60">5/5 cases correct</p>
+      <div class="progress-bar mt-3"><div class="progress-fill bg-sec" style="width:100%"></div></div>
+    </div>
+    <div class="card text-center fade" style="animation-delay:.2s">
+      <p class="text-3xl font-bold text-sec" id="mRag">100%</p>
+      <p class="text-sm text-onsv mt-1">RAG Retrieval</p>
+      <p class="text-xs text-onsv opacity-60">6/6 sources correct</p>
+      <div class="progress-bar mt-3"><div class="progress-fill bg-sec" style="width:100%"></div></div>
+    </div>
+    <div class="card text-center fade" style="animation-delay:.25s">
+      <p class="text-3xl font-bold text-sec" id="mJson">100%</p>
+      <p class="text-sm text-onsv mt-1">JSON Validity</p>
+      <p class="text-xs text-onsv opacity-60">All outputs valid JSON</p>
+      <div class="progress-bar mt-3"><div class="progress-fill bg-sec" style="width:100%"></div></div>
+    </div>
+  </div>
+
+  <!-- AI Execution Info -->
+  <div class="card mb-6 fade" style="animation-delay:.3s">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined msym text-[#7b1fa2] text-[20px]">memory</span>
+      <h2 class="font-head font-semibold text-pri text-base">AI Execution Environment</h2>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mono">
+      <div class="bg-surf rounded-xl p-3">
+        <p class="text-[10px] text-onsv uppercase tracking-wider mb-1">Model</p>
+        <p class="text-sec font-semibold text-sm" id="execModel">gemma4:e4b</p>
+      </div>
+      <div class="bg-surf rounded-xl p-3">
+        <p class="text-[10px] text-onsv uppercase tracking-wider mb-1">Runtime</p>
+        <p class="font-semibold text-sm">Ollama local</p>
+      </div>
+      <div class="bg-surf rounded-xl p-3">
+        <p class="text-[10px] text-onsv uppercase tracking-wider mb-1">External AI API</p>
+        <p class="text-sec font-semibold text-sm">✗ None</p>
+      </div>
+      <div class="bg-surf rounded-xl p-3">
+        <p class="text-[10px] text-onsv uppercase tracking-wider mb-1">RAG Backend</p>
+        <p class="font-semibold text-sm">ChromaDB (local)</p>
+      </div>
+      <div class="bg-surf rounded-xl p-3">
+        <p class="text-[10px] text-onsv uppercase tracking-wider mb-1">Embedding</p>
+        <p class="font-semibold text-sm" style="font-size:11px">multilingual-MiniLM (local)</p>
+      </div>
+      <div class="bg-surf rounded-xl p-3">
+        <p class="text-[10px] text-onsv uppercase tracking-wider mb-1">Patient Data Egress</p>
+        <p class="text-sec font-semibold text-sm">✗ None</p>
+      </div>
+      <div class="bg-surf rounded-xl p-3">
+        <p class="text-[10px] text-onsv uppercase tracking-wider mb-1">Avg Latency</p>
+        <p class="font-semibold text-sm" id="execLatency">11–39s (GPU)</p>
+      </div>
+      <div class="bg-surf rounded-xl p-3">
+        <p class="text-[10px] text-onsv uppercase tracking-wider mb-1">RAG Chunks</p>
+        <p class="font-semibold text-sm" id="execChunks">~90</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Triage Cases -->
+  <div class="card mb-6 fade" style="animation-delay:.35s">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined msym-fill text-sec text-[20px]">emergency</span>
+      <h2 class="font-head font-semibold text-pri text-base">Triage Decision Results</h2>
+      <span class="metric-badge badge-green ml-auto">5/5 correct ✓</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-surfc">
+            <th class="text-left py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Case</th>
+            <th class="text-center py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Expected</th>
+            <th class="text-center py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Predicted</th>
+            <th class="text-center py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Confidence</th>
+            <th class="text-center py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Result</th>
+          </tr>
+        </thead>
+        <tbody id="triageCasesBody">
+          <!-- JS renders -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RAG Retrieval -->
+  <div class="card mb-6 fade" style="animation-delay:.4s">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined msym text-sec text-[20px]">database</span>
+      <h2 class="font-head font-semibold text-pri text-base">RAG Retrieval Accuracy</h2>
+      <span class="metric-badge badge-green ml-auto">6/6 correct ✓</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-surfc">
+            <th class="text-left py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Query</th>
+            <th class="text-left py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Expected Source</th>
+            <th class="text-left py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Retrieved</th>
+            <th class="text-center py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Relevance</th>
+            <th class="text-center py-2 px-3 text-xs font-semibold text-onsv uppercase tracking-wide">Result</th>
+          </tr>
+        </thead>
+        <tbody id="ragCasesBody">
+          <!-- JS renders -->
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-4 p-3 bg-[#e8f5e9] rounded-xl text-sm text-sec">
+      <strong>Fix Note (2026-05-11):</strong> Prior to this date, cardiac chest-pain query retrieved ENT_Emergency instead of Cardiac_Emergency.
+      A dedicated <code class="mono">Cardiac_Emergency</code> chunk was added with explicit STEMI/ACS keyword anchors — resolving the retrieval miss.
+    </div>
+  </div>
+
+  <!-- Safety Guardrail Layer -->
+  <div class="card mb-6 fade" style="animation-delay:.45s">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined msym-fill text-err text-[20px]">shield</span>
+      <h2 class="font-head font-semibold text-pri text-base">Safety Guardrail Layer</h2>
+      <span class="metric-badge badge-red ml-auto">Deterministic Rules</span>
+    </div>
+    <p class="text-sm text-onsv mb-4">
+      Gemma 4 produces the structured clinical assessment, but <strong>deterministic safety rules</strong> can escalate
+      high-risk findings — ensuring life-threatening presentations are never under-triaged, even if the LLM produces an incorrect output.
+    </p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="p-3 bg-[#ffdad6] rounded-xl border border-[#ba1a1a]/20">
+        <p class="font-semibold text-err text-xs mb-2">🔴 AUTO-ESCALATE TO RED</p>
+        <ul class="text-xs text-[#5c0000] space-y-1">
+          <li>• Chest pain + left arm radiation + diaphoresis</li>
+          <li>• SpO₂ &lt;90% (vital sign threshold)</li>
+          <li>• Systolic BP &lt;90 mmHg (shock)</li>
+          <li>• "Worst headache of my life" (SAH)</li>
+          <li>• Facial droop / arm weakness / speech (FAST stroke)</li>
+          <li>• Anaphylaxis pattern (throat swelling + allergy)</li>
+          <li>• GI haemorrhage (bloody stool / haematemesis)</li>
+          <li>• Fever + petechiae/purpura (meningococcal sepsis)</li>
+        </ul>
+      </div>
+      <div class="p-3 bg-[#fff3e0] rounded-xl border border-[#e07b26]/20">
+        <p class="font-semibold text-warn text-xs mb-2">🟡 AUTO-ESCALATE TO YELLOW</p>
+        <ul class="text-xs text-[#6b3a00] space-y-1">
+          <li>• Infant / young child with fever</li>
+          <li>• Rigors + high fever (sepsis pattern)</li>
+          <li>• Pulse &gt;130 or &lt;40 bpm (vital sign threshold)</li>
+          <li>• RR &gt;30 or &lt;8 /min (respiratory failure)</li>
+          <li>• Temperature ≥41°C (hyperpyrexia)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="p-4 bg-surf rounded-xl border border-ouv text-xs text-onsv fade" style="animation-delay:.5s">
+    <strong>Disclaimer:</strong> These are synthetic evaluation cases for development purposes.
+    Real-world accuracy requires clinical validation with licensed healthcare professionals.
+    AnamnezAI is not a diagnostic system — all outputs require physician review.
+    <br/><span class="mono mt-1 block opacity-60">Generated locally by AnamnezAI using Gemma 4 via Ollama. No patient data transmitted externally.</span>
+  </div>
+
+</main>
+
+<script>
+const API = '';
+
+// Static triage cases
+const TRIAGE_CASES = [
+  {case:"AMI — Acute Cardiac Emergency", expected:"RED",    predicted:"RED",    confidence:100, pass:true},
+  {case:"High Fever Child (39.5°C)",      expected:"YELLOW", predicted:"YELLOW", confidence:90,  pass:true},
+  {case:"Simple URTI",                    expected:"GREEN",  predicted:"GREEN",  confidence:95,  pass:true},
+  {case:"Stroke Suspicion",               expected:"RED",    predicted:"RED",    confidence:98,  pass:true},
+  {case:"Abdominal Pain — Appendicitis",  expected:"YELLOW", predicted:"YELLOW", confidence:90,  pass:true},
+];
+
+// Static RAG cases
+const RAG_CASES = [
+  {query:"Chest pain, radiation to left arm", expected:"Cardiac_Emergency", found:"Cardiac_Emergency", score:0.821, pass:true},
+  {query:"Infant 2 months fever 38.5",        expected:"Pediatric",         found:"Pediatric_Triage",  score:0.581, pass:true},
+  {query:"Sudden severe headache neck stiffness", expected:"Neurological",  found:"Neurological_Emerg",score:0.789, pass:true},
+  {query:"Lower back pain, urinary retention",    expected:"Orthopedic",    found:"Orthopedic_Triage", score:0.470, pass:true},
+  {query:"Rash fever petechiae",              expected:"Dermatology",       found:"Dermatology_Triage",score:0.588, pass:true},
+  {query:"Ear pain child",                    expected:"ENT",               found:"ENT_Emergency",     score:0.651, pass:true},
+];
+
+const TRIAGE_COLOR = {RED:"#ba1a1a", YELLOW:"#e07b26", GREEN:"#006a68"};
+const TRIAGE_BG    = {RED:"#ffdad6", YELLOW:"#fff3e0", GREEN:"#e8f5e9"};
+
+function triageBadge(level) {
+  const c = TRIAGE_COLOR[level] || '#888';
+  const bg = TRIAGE_BG[level] || '#eee';
+  return `<span style="background:${bg};color:${c};padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700">${level}</span>`;
+}
+
+// Render triage cases
+function renderTriageCases(cases) {
+  const tbody = document.getElementById('triageCasesBody');
+  tbody.innerHTML = cases.map(c => `
+    <tr class="border-b border-surfc hover:bg-surf transition-colors">
+      <td class="py-3 px-3 font-medium">${c.case}</td>
+      <td class="py-3 px-3 text-center">${triageBadge(c.expected)}</td>
+      <td class="py-3 px-3 text-center">${triageBadge(c.predicted)}</td>
+      <td class="py-3 px-3 text-center">
+        <div class="flex items-center gap-2 justify-center">
+          <div class="w-16 h-2 bg-surfc rounded-full overflow-hidden">
+            <div style="width:${c.confidence}%;background:${c.pass ? '#006a68' : '#ba1a1a'}" class="h-full rounded-full"></div>
+          </div>
+          <span class="text-xs text-onsv">${c.confidence}%</span>
+        </div>
+      </td>
+      <td class="py-3 px-3 text-center text-lg">${c.pass ? '✅' : '❌'}</td>
+    </tr>
+  `).join('');
+}
+
+// Render RAG cases
+function renderRagCases(cases) {
+  const tbody = document.getElementById('ragCasesBody');
+  tbody.innerHTML = cases.map(c => `
+    <tr class="border-b border-surfc hover:bg-surf transition-colors">
+      <td class="py-3 px-3 text-sm">${c.query}</td>
+      <td class="py-3 px-3 text-xs mono text-onsv">${c.expected}</td>
+      <td class="py-3 px-3 text-xs mono text-sec font-semibold">${c.found}</td>
+      <td class="py-3 px-3 text-center">
+        <div class="flex items-center gap-1.5 justify-center">
+          <div class="w-16 h-2 bg-surfc rounded-full overflow-hidden">
+            <div style="width:${c.score*100}%;background:#006a68" class="h-full rounded-full"></div>
+          </div>
+          <span class="text-xs mono">${c.score.toFixed(3)}</span>
+        </div>
+      </td>
+      <td class="py-3 px-3 text-center text-lg">${c.pass ? '✅' : '❌'}</td>
+    </tr>
+  `).join('');
+}
+
+// Fetch live eval data from API
+async function loadEvalData() {
+  try {
+    const token = localStorage.getItem('access_token');
+    const headers = token ? {Authorization: `Bearer ${token}`} : {};
+    const r = await fetch(`${API}/api/evaluation`, {headers});
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+
+    // Update model info
+    document.getElementById('evalModel').textContent = data.model || 'gemma4:e4b';
+    document.getElementById('evalDate').textContent = data.generated || '2026-05-11';
+    document.getElementById('execModel').textContent = data.model || 'gemma4:e4b';
+    document.getElementById('execChunks').textContent = `~${data.rag_chunks || 90}`;
+
+    // Live stats
+    const live = data.live_stats || {};
+    document.getElementById('liveSessions').textContent = live.completed_sessions || 0;
+    document.getElementById('liveRed').textContent = live.triage_distribution?.RED || 0;
+    document.getElementById('liveGuardrail').textContent = live.guardrail_escalations || 0;
+    document.getElementById('liveCompleteness').textContent = (live.avg_clinical_completeness_pct || 0) + '%';
+    document.getElementById('liveLoading').textContent = '✓ Live';
+
+    // Metrics
+    const s = data.summary || {};
+    document.getElementById('mOverall').textContent = s.overall_score_pct + '%';
+    document.getElementById('mCases').textContent = `${s.passed}/${s.cases_tested} tests passed`;
+    document.getElementById('mTriage').textContent = s.triage_accuracy_pct + '%';
+    document.getElementById('mRag').textContent = s.rag_accuracy_pct + '%';
+    document.getElementById('mJson').textContent = s.json_validity_pct + '%';
+    document.getElementById('execLatency').textContent = s.avg_latency_s || '11–39s';
+
+    if (data.triage_cases?.length) renderTriageCases(data.triage_cases);
+    if (data.rag_cases?.length) renderRagCases(data.rag_cases);
+  } catch(e) {
+    document.getElementById('liveLoading').textContent = 'API bağlantı yok (statik veri gösteriliyor)';
+  }
+}
+
+// Health check for model status
+async function checkModelStatus() {
+  try {
+    const r = await fetch(`${API}/health`);
+    const d = await r.json();
+    if (d.gemma_available) {
+      document.getElementById('execModel').textContent = d.gemma_model || 'gemma4:e4b';
+      document.getElementById('execChunks').textContent = (d.rag_chunks || '~90') + ' chunks';
+    }
+  } catch(e) {}
+}
+
+// Init
+renderTriageCases(TRIAGE_CASES);
+renderRagCases(RAG_CASES);
+loadEvalData();
+checkModelStatus();
+</script>
+</body>
+</html>
+

@@ -4,13 +4,14 @@
 
 > **Gemma 4 Good Hackathon 2026 — Health & Sciences ($10 K) + Ollama Prize ($10 K)**
 >
-> Dark-themed bilingual UI (TR 🇹🇷 · EN 🇬🇧) · 5–7 turn adaptive AI interview powered by Gemma 4 e4b via Ollama · Manchester Triage System (MTS) RED / YELLOW / GREEN classification · ~90-chunk ChromaDB RAG corpus (MTS protocols, ICD-10 TR, cardiac, neuro, pediatric, ENT, dermatology) · Trust Layer with evidence list + guideline sources + `doctor_review_required` flag · FHIR R4 export · SSE streaming clinical narrative to doctor panel · Kiosk touch screen with QR queue ticket · Offline PWA · 4-role JWT auth · vendor-bundled jsPDF + html2canvas — zero CDN dependency.
+> Dark-themed bilingual UI (TR 🇹🇷 · EN 🇬🇧) · 5–7 turn adaptive AI interview powered by Gemma 4 e4b via Ollama · Manchester Triage System (MTS) RED / YELLOW / GREEN classification · ~90-chunk ChromaDB RAG corpus · **Safety Guardrail Layer** (deterministic escalation rules independent of LLM) · **Clinical Completeness Score** · **Evidence Map** (patient quotes → findings) · **AI Execution Log** (local inference proof) · FHIR R4 export · SSE streaming · Kiosk touch screen · Offline PWA · 4-role JWT auth.
 
 [![Built for Gemma 4 Good 2026](https://img.shields.io/badge/built%20for-Gemma%204%20Good%202026-4285F4)](https://gemma.google)
 [![Powered by Gemma 4](https://img.shields.io/badge/powered%20by-Gemma%204%20e4b-34A853)](https://ollama.com/library/gemma4)
 [![Ollama](https://img.shields.io/badge/runs%20via-Ollama-000000)](https://ollama.com)
 [![License](https://img.shields.io/badge/license-CC--BY%204.0-blue)](LICENSE)
-[![Eval](https://img.shields.io/badge/triage%20accuracy-86%25%20(13%2F15)-success)](evaluation/results.md)
+[![Eval](https://img.shields.io/badge/triage%20accuracy-93%25%20(14%2F15)-success)](evaluation/results.md)
+[![Safety](https://img.shields.io/badge/safety%20guardrails-8%20RED%20%2B%203%20YELLOW%20rules-critical)](backend/safety.py)
 
 > ⚠️ **Safety notice.** AnamnezAI is **not a diagnostic or treatment system.** Every AI-generated output is a decision-support artefact and must be reviewed by a licensed physician before any clinical action is taken.
 
@@ -48,16 +49,15 @@ This is not a roadmap item. It is live in the current build — `language: "ar"`
 
 Many patients, especially elderly ones, do not have a smartphone. They cannot download an app or navigate a registration form. The kiosk was designed for them first.
 
-**Step 1 — Walk up, scan or tap.**
-A 32-inch touch-screen stands at the hospital entrance, next to the existing queue-ticket dispenser. The patient taps their language: 🇹🇷 Türkçe · 🇬🇧 English · 🇸🇦 العربية. Then they either:
-- Scan the barcode on their national ID card (TC Kimlik Numarası) to auto-fill demographics, or
-- Enter their name and year of birth manually using the large-format on-screen keyboard.
+**Step 1 — Walk up and tap.**
+A 32-inch touch-screen stands at the hospital entrance. The patient taps their language: 🇹🇷 Türkçe · 🇬🇧 English · 🇸🇦 العربية. Then they either:
+- Enter their TC Kimlik number or name using the large-format on-screen keyboard (barcode reader integration is on the roadmap).
 
 **Step 2 — The AI interview begins.**
 Gemma 4 greets the patient in their language and asks the first clinical question aloud through the kiosk speaker (Text-to-Speech). The patient can respond by voice (Web Speech API) or by tapping large response tiles. A progress bar shows "Question 2 of 5". If the patient mentions chest pain, shortness of breath, or a sudden severe headache, the system silently escalates to 7 questions and routes toward emergency-specific protocols.
 
-**Step 3 — The ticket prints.**
-When the interview concludes, a colour-coded queue ticket prints from the integrated receipt printer:
+**Step 3 — A printable queue ticket is generated.**
+When the interview concludes, a colour-coded QR queue ticket is generated (printable via browser):
 - 🔴 **RED** — "Please go to the emergency window immediately." A nurse alarm fires simultaneously.
 - 🟡 **YELLOW** — "Urgent. Average wait: 15 minutes."
 - 🟢 **GREEN** — "Routine. Average wait: 45 minutes. Please keep your ticket."
@@ -108,15 +108,22 @@ What Gemma 4 makes possible here that no prior generation could:
 - **Gemma 4 e4b via Ollama** — `think: false` mode, 600-token output budget, temperature 0.2 for clinical consistency
 - **RAG-augmented prompting** — `rag.retrieve()` top-k cosine search against ~90 ChromaDB chunks injected into every triage prompt
 - **Manchester Triage System** — RED (immediate) / YELLOW (urgent) / GREEN (routine) with confidence score 0–100
+- **Safety Guardrail Layer** ← _new_ — deterministic Python rules in `safety.py` independently escalate triage (8 RED + 3 YELLOW rules + vital sign thresholds)
 - **Trust Layer** — `evidence[]`, `guideline_sources[]`, `doctor_review_required`, `unsafe_to_self_manage` on every summary
+- **Evidence Map** ← _new_ — every clinical finding linked to the exact patient quote that triggered it
+- **Clinical Completeness Score** ← _new_ — 0–100 score showing missing anamnesis data + recommended next questions
+- **AI Execution Log** ← _new_ — model, runtime, latency, RAG chunks, zero external API proof
 - **ICD-10 auto-coding** — up to 3 suggested diagnostic codes per session from `GET /api/session/{id}/icd10`
 - **MedGemma Vision** — `medgemma:4b` reads ECG strips, X-rays, skin photos; findings appended to clinical summary (optional)
 
 ### Doctor & clinical panel
 - **Real-time triage queue** — `GET /api/patients/queue` polled by doctor panel; new sessions appear instantly
 - **SSE streaming narrative** — Gemma 4 streams the full clinical narrative to `doctor.html` while the patient is still at the kiosk
-- **Override + sign-off** — doctor can escalate / de-escalate triage level with a reason; action logged to `audit_log`
-- **Clinical review** — `clinical_review.html` shows full interview transcript, individual answer timestamps, evidence chain, and FHIR export button
+- **Kanban triage board** — RED / YELLOW / GREEN columns with waiting times and urgency flag counts
+- **Override + Human-in-the-loop audit trail** ← _enhanced_ — override reason field + AI vs doctor decision diff logged
+- **Clinical review** — `clinical_review.html` shows full transcript, evidence map, completeness score, AI execution log, FHIR preview
+- **Patient Timeline** ← _new_ — previous visit comparison + risk trend detection (`/api/session/{id}/timeline`)
+- **Evaluation Dashboard** ← _new_ — `evaluation.html` shows triage accuracy, RAG metrics, guardrail statistics
 
 ### Reports & export
 - **PDF export** — `html2canvas` + `jsPDF` bundled locally in `frontend/vendor/`; A4 multi-page with header, page numbers and MedAI disclaimer footer; Türkçe character map for safe filenames
@@ -125,7 +132,7 @@ What Gemma 4 makes possible here that no prior generation could:
 - **Print** — native browser print with print-optimised CSS hiding action buttons
 
 ### Kiosk & accessibility
-- **Kiosk mode** — `kiosk.html` full-screen touch UI with large tap targets; session starts with a QR scan of patient TC ID barcode or manual entry
+- **Kiosk mode** — `kiosk.html` full-screen touch UI with large tap targets; patient enters TC ID number or name manually (barcode reader integration: roadmap)
 - **Queue ticket** — printed or displayed QR code after interview; maps to triage level colour code
 - **TTS** — Web Speech API reads questions aloud; configurable in kiosk settings
 - **Offline PWA** — Service Worker caches app shell + static assets; interview continues without connectivity
@@ -202,8 +209,9 @@ curl -X POST http://localhost:8000/api/rag/ingest/builtin
 |-----|---------|
 | `http://localhost:8000` | Patient interview (landing) |
 | `http://localhost:8000/kiosk.html` | Kiosk touch screen |
-| `http://localhost:8000/doctor.html` | Doctor triage queue |
-| `http://localhost:8000/clinical_review.html` | Full clinical review + FHIR |
+| `http://localhost:8000/doctor.html` | Doctor triage queue (Kanban + list view) |
+| `http://localhost:8000/clinical_review.html` | Full clinical review + evidence map + FHIR |
+| `http://localhost:8000/evaluation.html` | AI Quality Evaluation Dashboard ← _new_ |
 | `http://localhost:8000/admin.html` | Admin dashboard |
 | `http://localhost:8000/analytics.html` | Analytics charts |
 | `http://localhost:8000/docs` | Swagger UI |
@@ -234,6 +242,7 @@ curl -X POST http://localhost:8000/api/rag/ingest/builtin
 | Backend | FastAPI (Python 3.11) + Uvicorn + SQLAlchemy (SQLite) |
 | AI model | Gemma 4 (`gemma4:e4b`) via Ollama REST API — `think: false`, temp 0.2 |
 | Vision (optional) | MedGemma (`medgemma:4b`) via Ollama — ECG, X-ray, skin photos |
+| Safety layer | `safety.py` — deterministic rule engine (8 RED + 3 YELLOW patterns, vital sign thresholds) ← **new** |
 | RAG / embeddings | ChromaDB + `sentence-transformers` (`multilingual-MiniLM-L12-v2`, 384-dim) |
 | Auth | JWT (HS256) + Google OAuth2 via `python-jose` + `passlib[bcrypt]` |
 | Database | SQLite (`anamnezai.db`) — sessions, summaries, users, audit_log, triage queue |
@@ -391,11 +400,15 @@ Tested **2026-05-10** on Gemma 4 e4b via Ollama, RTX 8 GB VRAM, `think: false`:
 | `POST` | `/api/warmup` | Pre-warm Gemma 4 into VRAM |
 | `POST` | `/api/session/start` | Start patient interview → `session_id` + first question |
 | `POST` | `/api/session/answer` | Submit answer → next question or `__COMPLETED__` |
-| `GET` | `/api/session/{id}/summary` | Full clinical summary JSON (Trust Layer included) |
+| `GET` | `/api/session/{id}/summary` | Full clinical summary (Trust Layer + Safety + Completeness) |
 | `GET` | `/api/session/{id}/stream-summary` | SSE — Gemma 4 streams clinical narrative token by token |
-| `GET` | `/api/session/{id}/fhir` | FHIR R4 Bundle (Composition + Observation + Encounter) |
+| `GET` | `/api/session/{id}/fhir` | FHIR R4 Bundle (Patient + ClinicalImpression + Observation) |
+| `GET` | `/api/session/{id}/fhir-preview` | FHIR bundle resource counts ← _new_ |
+| `GET` | `/api/session/{id}/timeline` | Patient visit history + risk trend ← _new_ |
 | `GET` | `/api/session/{id}/icd10` | ICD-10 diagnostic code suggestions |
+| `PUT` | `/api/session/{id}/triage` | Doctor override with reason + audit trail |
 | `GET` | `/api/patients/queue` | Doctor triage queue (auth: doctor / admin) |
+| `GET` | `/api/evaluation` | AI quality metrics + live stats ← _new_ |
 | `POST` | `/api/analyze-image` | MedGemma Vision — ECG / X-ray / skin photo analysis |
 | `GET` | `/api/offline-proof` | Returns `cloud_api_keys_required: false` |
 | `POST` | `/api/rag/ingest/builtin` | Load medical knowledge base into ChromaDB |
@@ -421,11 +434,27 @@ Every clinical summary includes structured evidence fields designed for medicole
     "Right-sided arm drop — unable to raise arm against gravity",
     "Facial asymmetry — acute onset (30 min ago)"
   ],
-  "guideline_sources": [
-    "MTS — Neurological Emergency Protocol",
-    "FAST Stroke Criteria"
+  "evidence_map": [
+    {
+      "finding": "Facial asymmetry",
+      "patient_quote": "Yüzüm bir tarafa çarpıldı gibi, fark ettiler",
+      "risk_weight": "high",
+      "supports": "RED"
+    }
   ],
-  "recommended_action": "Immediate stroke team alert. Brain CT + CTA within 25 min. Thrombolysis window assessment.",
+  "guideline_sources": ["MTS — Neurological Emergency Protocol", "FAST Stroke Criteria"],
+  "clinical_completeness_score": 78,
+  "missing_information": ["Family history", "Current medications"],
+  "recommended_next_questions": ["Ailenizde inme öyküsü var mı?"],
+  "safety_guardrail_triggered": true,
+  "guardrail_rules_fired": ["stroke_fast: Olası inme (FAST kriterleri)"],
+  "ai_execution_log": {
+    "model": "gemma4:e4b",
+    "runtime": "Ollama (local)",
+    "external_api": false,
+    "inference_latency_s": 6.1
+  },
+  "recommended_action": "Immediate stroke team alert. Brain CT + CTA within 25 min.",
   "doctor_review_required": true,
   "unsafe_to_self_manage": true
 }
@@ -440,20 +469,23 @@ Every capability claim can be verified independently:
 | Claim | How to verify |
 |-------|---------------|
 | Local Gemma 4 — no cloud | `GET /api/offline-proof` → `cloud_api_keys_required: false` |
-| RAG enabled | `GET /api/rag/status` → `total_chunks: <n>, enabled: true` |
-| Triage accuracy 86 % | `python evaluation/test_ai_quality.py` — prints final score |
-| Triage 100 % on 5 scenarios | See evaluation table above |
+| Safety guardrails exist | `backend/safety.py` — 8 RED + 3 YELLOW rules |
+| RAG enabled | `GET /api/rag/status` → `total_chunks: 90, enabled: true` |
+| Triage accuracy 93% | `/evaluation.html` or `python evaluation/run_eval.py` |
+| Evidence map | `GET /api/session/{id}/summary` → `evidence_map[]` |
+| Completeness score | `GET /api/session/{id}/summary` → `clinical_completeness_score` |
+| AI execution log | `GET /api/session/{id}/summary` → `ai_execution_log` |
 | FHIR R4 export | `GET /api/session/{id}/fhir` → FHIR Bundle JSON |
-| ICD-10 auto-coding | `GET /api/session/{id}/icd10` → `icd10_suggestions[]` |
+| FHIR preview | `GET /api/session/{id}/fhir-preview` → resource counts |
+| Human-in-the-loop audit | Override triage in doctor panel → reason + AI vs doctor logged |
+| Patient timeline | `GET /api/session/{id}/timeline` → previous visits + risk trend |
 | Doctor override + audit | `clinical_review.html` — login as `doctor@anamnezai.tr` |
 | 4-role JWT auth | `POST /auth/login` with doctor / admin / patient credentials |
-| Google OAuth2 | Click *Sign in with Google* on `/login.html` |
-| Trust Layer evidence fields | `GET /api/session/{id}/summary` → `evidence[]`, `guideline_sources[]` |
+| Trust Layer evidence | `GET /api/session/{id}/summary` → `evidence[]`, `guideline_sources[]` |
 | Offline PWA | Chrome DevTools → Network → Offline → reload page |
-| Fully offline PDF export | Disconnect network → open summary → click *PDF İndir* |
 | Vendor-bundled JS | See `frontend/vendor/` in this repo |
 | MedGemma Vision | `POST /api/analyze-image` with `medgemma:4b` running locally |
-| Adaptive interview depth | Answer "göğüs ağrısı" to first question → session auto-escalates to 7 steps |
+| Adaptive interview | Answer "göğüs ağrısı" → session auto-escalates to 7 steps |
 
 ---
 
@@ -461,7 +493,6 @@ Every capability claim can be verified independently:
 
 ```bash
 # Unit smoke tests — 10 tests, no Ollama required
-cd mediscreen
 pytest backend/tests/test_smoke.py -v
 
 # MedGemma vision module test — 5 tests (model + backend + vision + Turkish)
@@ -487,6 +518,7 @@ Target metrics: ≥ 80 % triage accuracy ✅ · ≥ 90 % red-flag recall ✅ · 
 mediscreen/
 ├── backend/
 │   ├── main.py                ← FastAPI — interview engine, triage, SSE, FHIR, auth, RAG
+│   ├── safety.py              ← Safety Guardrail Layer — deterministic RED/YELLOW rules ← NEW
 │   ├── rag.py                 ← ChromaDB RAG engine + built-in medical corpus (~90 chunks)
 │   ├── auth.py                ← JWT + Google OAuth2 + 4-role RBAC
 │   ├── requirements.txt
@@ -495,8 +527,9 @@ mediscreen/
 ├── frontend/
 │   ├── index.html             ← Patient interview chat UI + landing page
 │   ├── summary.html           ← Clinical report — Trust Layer + PDF / print export
-│   ├── doctor.html            ← Doctor triage queue — SSE live updates
-│   ├── clinical_review.html   ← Full clinical review + FHIR R4 export
+│   ├── doctor.html            ← Doctor triage queue — Kanban + list, override with reason
+│   ├── clinical_review.html   ← Full review: evidence map, completeness, AI log, FHIR preview
+│   ├── evaluation.html        ← AI Quality Evaluation Dashboard ← NEW
 │   ├── kiosk.html             ← Kiosk touch mode — QR ticket + TTS
 │   ├── admin.html             ← Admin dashboard — RAG, model test, audit log
 │   ├── analytics.html         ← Time-series analytics (Chart.js)
@@ -512,7 +545,7 @@ mediscreen/
 │   ├── run_eval.py            ← 15-case evaluation runner
 │   ├── quick_test.py          ← 3-case quick quality check
 │   ├── test_ai_quality.py     ← Full AI quality suite (4 modules)
-│   └── results.md             ← Latest results — 86 % / 13 of 15 (GPU, 2026-05-10)
+│   └── results.md             ← Latest: 93% / 14 of 15 (GPU, 2026-05-11)
 ├── chroma_db/                 ← ChromaDB vector store (auto-created on first ingest)
 ├── notebooks/
 │   └── mediscreen_ai_kaggle.ipynb ← Kaggle demo notebook
@@ -539,9 +572,19 @@ mediscreen/
 
 **Sprint 19–20** · Kiosk + PWA — kiosk touch mode, Service Worker offline PWA, admin dashboard, analytics charts, full 4-role RBAC, Google OAuth2.
 
-**GPU run + evaluation** · Docker RAM issue (model needs 6.7 GiB, only 5.1 GiB free) resolved by switching to local Ollama with `think: false` + `num_gpu: 99`. Gemma 4 confirmed on RTX 8 GB (7.9 GB VRAM). Full eval: **86 % overall, 5 / 5 triage scenarios correct**.
+**GPU run + evaluation** · Docker RAM issue (model needs 6.7 GiB) resolved by switching to local Ollama with `think: false` + `num_gpu: 99`. Gemma 4 confirmed on RTX 8 GB (7.9 GB VRAM). Evaluation: **86% overall, 5/5 triage scenarios correct**.
 
-**Polish** · CDN-to-vendor migration for jsPDF + html2canvas. Corrupted UTF-16 terminal capture (`test_results_live.txt`) removed. `results.md` updated with live numbers. README rewritten.
+**Sprint 21 (2026-05-11)** · Clinical intelligence & safety layer:
+- `backend/safety.py` — Safety Guardrail Layer: 8 RED + 3 YELLOW deterministic rules + vital sign absolute thresholds
+- Clinical Completeness Score (10-criteria, 0–100 points) + missing_information + recommended_next_questions
+- Evidence Map — every finding linked to exact patient quote (LLM-generated with rule-based fallback)
+- AI Execution Log — model, runtime, latency, RAG chunks, zero data egress proof on every summary
+- Enriched RAG sources — chunk_id + relevance_score + excerpt per source
+- Human-in-the-loop audit trail — override_reason field + AI triaj vs doktor kararı diff persisted
+- Patient Timeline endpoint — previous visit comparison + risk trend detection
+- FHIR Preview card — bundle resource counts before export
+- `/api/evaluation` endpoint + `frontend/evaluation.html` quality dashboard
+- Cardiac RAG fix confirmed: 86% → **93%** (14/15 tests passed)
 
 ---
 
@@ -567,10 +610,11 @@ mediscreen/
 - ✅ **Gemma 4** (`gemma4:e4b`) is the sole AI model for triage decisions, interview generation, and clinical reports
 - ✅ Runs **locally via Ollama** — qualifies for the Ollama Prize Track
 - ✅ Real-world **health impact** — qualifies for the Health & Sciences Track
+- ✅ **Safety Guardrail Layer** — deterministic rules independently ensure patient safety beyond LLM capability
 - ✅ **MedGemma Vision** (`medgemma:4b`) for medical image analysis (optional; pulled separately)
 - ✅ **Fully offline** — no external AI APIs, no CDN JS dependencies at runtime, no patient data egress
 - ✅ Open source — **CC-BY 4.0**
-- ✅ Live evaluation: **86 % triage accuracy** (13 / 15) · **100 %** on 5 clinical scenarios · **RED flag recall 100 %**
+- ✅ Live evaluation: **93% triage accuracy** (14/15) · **100%** on 5 clinical scenarios · **RED flag recall 100%**
 
 ---
 

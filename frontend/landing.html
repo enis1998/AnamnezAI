@@ -340,7 +340,7 @@ tailwind.config = {
             </div>
             <div class="flex items-center gap-1.5">
               <div class="w-1 h-1 rounded-full bg-sec flex-shrink-0"></div>
-              <span class="text-[11px] text-ons" data-i18n="chat.result.diagnosis">Öncel tanı: Üst solunum yolu enfeksiyonu</span>
+              <span class="text-[11px] text-ons" data-i18n="chat.result.diagnosis">Ön değerlendirme: ÜSYE ile uyumlu bulgular</span>
             </div>
           </div>
         </div>
@@ -675,7 +675,7 @@ tailwind.config = {
         </div>
         <div class="step-line hidden md:block"></div>
         <h4 class="font-head font-bold text-pri text-[14px] mb-1" data-i18n="step.4t">Klinik Özet</h4>
-        <p class="text-onsv text-[12px] leading-relaxed" data-i18n="step.4d">MTS triaj skoru, öncel tanılar ve öneriler içeren rapor oluşturulur.</p>
+        <p class="text-onsv text-[12px] leading-relaxed" data-i18n="step.4d">MTS triaj skoru, ön değerlendirme özeti ve öneriler içeren yapılandırılmış rapor oluşturulur.</p>
       </div>
 
       <!-- Step 5 -->
@@ -1094,7 +1094,7 @@ const LP_I18N = {
     'chat.ai.2':'Anlıyorum. Ateşiniz kaç derece? Boğaz ağrısı veya öksürük var mı?',
     'chat.result.title':'Triaj Raporu Hazır','chat.result.sub':'Dr. Mehmet Yılmaz için oluşturuldu',
     'chat.result.symptoms':'Baş ağrısı + ateş (37.8°C) + halsizlik, 3 gün',
-    'chat.result.diagnosis':'Öncel tanı: Üst solunum yolu enfeksiyonu',
+    'chat.result.diagnosis':'Ön değerlendirme: ÜSYE ile uyumlu bulgular',
     // story
     'story.chip':'Neden İnşa Ettik',
     'story.h2a':'Kimse bu bekleme odasında','story.h2b':'olmak istemez.',
@@ -1103,7 +1103,7 @@ const LP_I18N = {
     's1.stat':'Türkiye\'de yılda 117 milyon acil servise erişim — triaj hatası önlenebilir bir ölüm sebebi',
     's2.loc':'Türkiye Geneli — Dil Bariyeri Kalktı','s2.sub':'Muğla, Şanlıurfa, Gaziantep, Antalya, Hatay, Mardin...',
     's2.body1':'Türkiye, son 10 yılda dünyada en fazla mülteci kabul eden ülkeler arasına girdi. Güneydoğu illeri — Gaziantep, Şanlıurfa, Hatay, Mersin — yalnızca sınır ötesi göç yollarının değil, Arapça konuşan milyonlarca insanın artık yaşam kurduğu şehirler hâline geldi. Bu hastalar kliniğe geldiğinde çifte engelle karşılaşıyorlar: hem hasta hem de semptomlarını Türkçe aktaramıyorlar. Boyun tutukluğu olan, 39,8°C ateşli küçük bir çocuk, iletişim bariyeri yüzünden <strong>YEŞİL</strong> olarak kodlanıyor. Öte yanda Muğla ve Bodrum\'da turizm sezonunda on binlerce İngilizce konuşan yabancı hasta acil servislere başvuruyor; hemşire "Ne zamandan beri?" sorusunu sorduğunda hiçbiri yanıt veremiyor.',
-    's2.body2':'AnamnezAI kiosku <strong>üç dilde konuşuyor</strong> — Türkçe, İngilizce ve Arapça. Gemma 4, salt çeviri değil gerçek anlamda doğal konuşma kuruyor. Hasta kendi dilinde cevap veriyor, doktor her zaman Türkçe klinik özet okuyor. Muğla\'da ya da Şanlıurfa\'da, turizmde ya da mülteci yoğunluğunda — dil farkı artık tanıyı etkilemiyor.',
+    's2.body2':'AnamnezAI kiosku <strong>üç dilde konuşuyor</strong> — Türkçe, İngilizce ve Arapça. Gemma 4, salt çeviri değil gerçek anlamda doğal konuşma kuruyor. Hasta kendi dilinde cevap veriyor, doktor her zaman Türkçe klinik özet okuyor. Muğla\'da ya da Şanlıurfa\'da, turizmde ya da mülteci yoğunluğunda — dil farkı artık yapılandırılmış anamnez alınmasını engellemez.',
     's2.l1':'🇹🇷 Türkçe','s2.l2':'🇬🇧 English','s2.l3':'🇸🇦 العربية — Şu an aktif',
     's3.title':'Kiosk modu — Kapıdan girersin, doktor seni zaten bekler',
     's3.sub':'5 dakikada kapıdan muayene odasına hazır',
@@ -1133,7 +1133,7 @@ const LP_I18N = {
     'step.1t':'Hasta Kaydı','step.1d':'İsim, yaş, cinsiyet ve isteğe bağlı vital bulgular girilir.',
     'step.2t':'AI Mülakatı','step.2d':'Gemma 4, klinik açıdan önemli 5 soru sorar ve cevapları analiz eder.',
     'step.3t':'Görüntü Analizi','step.3d':'İsteğe bağlı: MedGemma Vision ile tıbbi görüntü yüklenir ve analiz edilir.',
-    'step.4t':'Klinik Özet','step.4d':'MTS triaj skoru, öncel tanılar ve öneriler içeren rapor oluşturulur.',
+    'step.4t':'Klinik Özet','step.4d':'MTS triaj skoru, ön değerlendirme özeti ve öneriler içeren yapılandırılmış rapor oluşturulur.',
     'step.5t':'Doktor Görüşmesi','step.5d':'Doktor, hazır klinik özetle hastayı çok daha kısa sürede değerlendirir.',
     'res.1':'Daha kısa hasta kabul süresi','res.2':'Artmış triaj doğruluğu','res.3':'Kesintisiz hizmet kapasitesi',
     // technology
@@ -1197,7 +1197,7 @@ const LP_I18N = {
     'chat.ai.2':'I understand. What is your temperature? Do you have a sore throat or cough?',
     'chat.result.title':'Triage Report Ready','chat.result.sub':'Generated for Dr. Mehmet Yılmaz',
     'chat.result.symptoms':'Headache + fever (37.8°C) + fatigue, 3 days',
-    'chat.result.diagnosis':'Preliminary: Upper respiratory tract infection',
+    'chat.result.diagnosis':'Pre-triage impression: symptoms consistent with URTI',
     'story.chip':'Why We Built This',
     'story.h2a':'Nobody wants to be','story.h2b':'in this waiting room.',
     's1.loc':'Gaziantep State Hospital — Tuesday morning, 09:15','s1.sub':'A real scenario',
@@ -1205,7 +1205,7 @@ const LP_I18N = {
     's1.stat':'117 million emergency room visits per year in Turkey — triage error is a preventable cause of death',
     's2.loc':'All of Turkey — Language Barrier Removed','s2.sub':'Muğla, Şanlıurfa, Gaziantep, Antalya, Hatay, Mardin...',
     's2.body1':'Turkey has become one of the world\'s largest refugee-hosting countries over the past decade. Southeastern provinces — Gaziantep, Şanlıurfa, Hatay, Mersin — are now home to millions of Arabic-speaking people who arrived as refugees. When these patients visit a clinic, they face a double barrier: they are sick and cannot communicate their symptoms in Turkish. A small child with neck stiffness and a 39.8°C fever gets coded <strong>GREEN</strong> due to a communication gap. Meanwhile, in Muğla and Bodrum, tens of thousands of English-speaking tourists visit emergency services every tourism season — when a nurse asks "How long has it been going on?" none of them can answer.',
-    's2.body2':'The AnamnezAI kiosk <strong>speaks three languages</strong> — Turkish, English and Arabic. Gemma 4 doesn\'t just translate; it builds real natural conversation. The patient answers in their own language; the doctor always reads a Turkish clinical summary. In Muğla or Şanlıurfa, for tourism or refugee density — language difference no longer affects diagnosis.',
+    's2.body2':'The AnamnezAI kiosk <strong>speaks three languages</strong> — Turkish, English and Arabic. Gemma 4 doesn\'t just translate; it builds real natural conversation. The patient answers in their own language; the doctor always reads a Turkish clinical summary. In Muğla or Şanlıurfa, for tourism or refugee density — language differences no longer block structured intake.',
     's2.l1':'🇹🇷 Turkish','s2.l2':'🇬🇧 English','s2.l3':'🇸🇦 Arabic — Now Active',
     's3.title':'Kiosk Mode — You walk in, your doctor is already ready',
     's3.sub':'From door to exam room in 5 minutes',
@@ -1291,7 +1291,7 @@ const LP_I18N = {
     'chat.ai.2':'أفهم. كم درجة حرارتك؟ هل تعاني من ألم في الحلق أو سعال؟',
     'chat.result.title':'تقرير الفرز جاهز','chat.result.sub':'تم إنشاؤه للدكتور مهمت يلماز',
     'chat.result.symptoms':'صداع + حمى (37.8°م) + إجهاد، منذ 3 أيام',
-    'chat.result.diagnosis':'التشخيص الأولي: التهاب الجهاز التنفسي العلوي',
+    'chat.result.diagnosis':'التقييم الأولي: نتائج متوافقة مع التهاب الجهاز التنفسي العلوي',
     'story.chip':'لماذا بنيناه',
     'story.h2a':'لا أحد يريد أن يكون','story.h2b':'في غرفة الانتظار هذه.',
     's1.loc':'مستشفى غازي عنتاب الحكومي — صباح الثلاثاء، 09:15','s1.sub':'سيناريو حقيقي',
@@ -1299,7 +1299,7 @@ const LP_I18N = {
     's1.stat':'117 مليون زيارة لقسم الطوارئ سنوياً في تركيا — خطأ الفرز سبب وفاة يمكن تفاديه',
     's2.loc':'تركيا بأكملها — إزالة حاجز اللغة','s2.sub':'موغلا، شانلي أورفا، غازي عنتاب، أنطاليا، هاتاي، ماردين...',
     's2.body1':'أصبحت تركيا خلال العقد الماضي من أكبر الدول استضافةً للاجئين في العالم. تحولت المحافظات الجنوبية الشرقية — غازي عنتاب، شانلي أورفا، هاتاي، مرسين — إلى مدن يقطنها الآن ملايين اللاجئين الناطقين بالعربية. حين يأتي هؤلاء المرضى إلى العيادة يواجهون عائقاً مزدوجاً: يعانون من المرض ولا يستطيعون توصيف أعراضهم بالتركية. طفل صغير يعاني من تيبس الرقبة وحمى 39.8°م يُصنَّف على أنه <strong>أخضر</strong> بسبب حاجز التواصل. وفي موغلا وبودروم، يتوافد عشرات الآلاف من السياح الناطقين بالإنجليزية على أقسام الطوارئ في موسم السياحة.',
-    's2.body2':'كشك AnamnezAI <strong>يتحدث ثلاث لغات</strong> — التركية والإنجليزية والعربية. لا يترجم Gemma 4 فحسب، بل يُجري محادثة طبيعية حقيقية. يجيب المريض بلغته، ويقرأ الطبيب دائماً ملخصاً سريرياً بالتركية. في موغلا أو شانلي أورفا، في السياحة أو في مناطق كثافة اللاجئين — لم تعد اللغة تؤثر على التشخيص.',
+    's2.body2':'كشك AnamnezAI <strong>يتحدث ثلاث لغات</strong> — التركية والإنجليزية والعربية. لا يترجم Gemma 4 فحسب، بل يُجري محادثة طبيعية حقيقية. يجيب المريض بلغته، ويقرأ الطبيب دائماً ملخصاً سريرياً بالتركية. في موغلا أو شانلي أورفا، في السياحة أو في مناطق كثافة اللاجئين — لم يعد اختلاف اللغة يحول دون إجراء مقابلة أنامنيز منظمة.',
     's2.l1':'🇹🇷 التركية','s2.l2':'🇬🇧 الإنجليزية','s2.l3':'🇸🇦 العربية — نشط الآن',
     's3.title':'وضع الكشك — تدخل، وطبيبك في انتظارك','s3.sub':'من الباب إلى غرفة الفحص في 5 دقائق',
     'ksk.1t':'شاشة اللمس','ksk.1d':'اختر اللغة (TR/EN/AR)، أدخل رقم الهوية أو الاسم',

@@ -268,6 +268,75 @@ tailwind.config = {
             </div>
           </section>
 
+          <!-- Sprint 21: Evidence Map — Patient Quotes → Findings -->
+          <section class="card p-6 editorial-shadow fade hidden" id="evidenceMapSection" style="border-left:4px solid #ba1a1a">
+            <h2 class="text-xl font-bold text-pri mb-1 flex items-center gap-2">
+              <span class="material-symbols-outlined msym-fill text-err text-[22px]">format_quote</span>
+              Neden bu triaj? — Hasta Cevabı → Bulgu
+            </h2>
+            <p class="text-[11px] text-onsv mb-4">Her klinik bulgular için hastanın doğrudan cevabına bağlantı kurulmuştur. "AI uydurdu" algısını engeller.</p>
+            <div id="evidenceMapList" class="space-y-2"></div>
+          </section>
+
+          <!-- Sprint 21: Clinical Completeness Score -->
+          <section class="card p-6 editorial-shadow fade hidden" id="completenessSection" style="border-left:4px solid #7b1fa2">
+            <h2 class="text-xl font-bold text-pri mb-1 flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-[#7b1fa2] text-[22px]">checklist</span>
+              Anamnez Tamamlanma Skoru
+            </h2>
+            <div class="flex items-center gap-4 mb-4">
+              <div class="flex-1">
+                <div class="h-3 bg-surfc rounded-full overflow-hidden">
+                  <div id="completenessBar" class="h-full rounded-full transition-all duration-700" style="width:0%;background:#006a68"></div>
+                </div>
+              </div>
+              <span id="completenessScore" class="text-2xl font-bold text-pri">—</span>
+            </div>
+            <div class="mb-3">
+              <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Eksik Bilgiler</p>
+              <div id="completenessMissing" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div id="completenessRecommended" class="space-y-1.5">
+              <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1">Önerilen Sonraki Sorular</p>
+            </div>
+          </section>
+
+          <!-- Sprint 21: Safety Guardrail Info -->
+          <section class="card p-6 editorial-shadow fade hidden" id="guardrailSection" style="border-left:4px solid #e07b26">
+            <h2 class="text-xl font-bold text-pri mb-1 flex items-center gap-2">
+              <span class="material-symbols-outlined msym-fill text-warn text-[22px]">shield</span>
+              Safety Guardrail — Deterministik Kural Tetiklendi
+            </h2>
+            <p class="text-[11px] text-onsv mb-3">LLM çıktısı bu deterministik güvenlik kuralları tarafından kademeli yükseltilmiştir.</p>
+            <div id="guardrailBody"></div>
+          </section>
+
+          <!-- Sprint 21: AI Execution Log -->
+          <section class="card p-6 editorial-shadow fade hidden" id="aiLogSection" style="background:#001f2e">
+            <h2 class="text-xl font-bold text-white mb-1 flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-secc text-[22px]">memory</span>
+              AI Execution Log
+              <span class="ml-auto text-[9px] bg-secc/20 text-secc px-2 py-0.5 rounded-full font-bold">Ollama Local Inference Proof</span>
+            </h2>
+            <p class="text-[11px] text-white/50 mb-4">Tüm AI işlemleri yerel olarak çalıştırılmıştır. Hiçbir hasta verisi dışarıya gönderilmemiştir.</p>
+            <div id="aiLogGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+          </section>
+
+          <!-- Sprint 21: FHIR Preview Card -->
+          <section class="card p-6 editorial-shadow fade hidden" id="fhirPreviewSection" style="border-left:4px solid #0066b2">
+            <h2 class="text-xl font-bold text-pri mb-1 flex items-center gap-2">
+              <span class="material-symbols-outlined msym text-blue-600 text-[22px]">folder_shared</span>
+              FHIR R4 Export Preview
+              <span class="ml-auto text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Hospital Integration Ready</span>
+            </h2>
+            <p class="text-[11px] text-onsv mb-4">FHIR Bundle kaynakları — doğrudan hastane sistemiyle entegrasyon için.</p>
+            <div id="fhirPreviewContent"></div>
+            <button onclick="exportFHIR()" class="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">
+              <span class="material-symbols-outlined msym text-[18px]">download</span>
+              FHIR R4 JSON İndir
+            </button>
+          </section>
+
           <!-- Doctor Notes -->
           <section class="card p-6 editorial-shadow fade no-print">
             <h2 class="text-xl font-bold text-ons mb-4 flex items-center gap-2">
@@ -557,6 +626,22 @@ function renderPage() {
   const evidence = (s.evidence || []).filter(e => e && e.length > 3);
   const guidelines = (s.guideline_sources || []).filter(g => g && g.length > 2);
 
+  // Sprint 21: Render Evidence Map
+  const evidenceMap = s.evidence_map || [];
+  renderEvidenceMap(evidenceMap);
+
+  // Sprint 21: Render Clinical Completeness Score
+  renderClinicalCompleteness(s);
+
+  // Sprint 21: Render AI Execution Log
+  renderAIExecutionLog(s.ai_execution_log || null);
+
+  // Sprint 21: Render FHIR Preview
+  loadFhirPreview(sessionId);
+
+  // Sprint 21: Render Safety Guardrail info
+  renderGuardrailInfo(s);
+
   if (evidence.length > 0) {
     const evSec = document.getElementById('trustEvidenceSection');
     const evList = document.getElementById('trustEvidenceList');
@@ -776,6 +861,145 @@ async function exportPDF() {
     document.body.style.background = '';
     if (btn) { btn.disabled = false; btn.innerHTML = original; }
   }
+}
+
+// ── Sprint 21: Evidence Map ─────────────────────────────────────────────────
+function renderEvidenceMap(evidenceMap) {
+  const container = document.getElementById('evidenceMapSection');
+  if (!container) return;
+  if (!evidenceMap || !evidenceMap.length) { container.classList.add('hidden'); return; }
+  container.classList.remove('hidden');
+  const list = document.getElementById('evidenceMapList');
+  if (!list) return;
+  const RISK_BADGE = {
+    high: 'background:#ffdad6;color:#ba1a1a',
+    medium: 'background:#fff3e0;color:#e07b26',
+    low: 'background:#e8f5e9;color:#006a68',
+  };
+  const TRIAGE_EMOJI = {RED: '🔴', YELLOW: '🟡', GREEN: '🟢'};
+  list.innerHTML = evidenceMap.map((item, i) => `
+    <div class="border border-surfc rounded-xl p-3 bg-white mb-2">
+      <div class="flex items-center gap-2 mb-2 flex-wrap">
+        <span class="text-[10px] font-bold text-onsv uppercase tracking-widest">${i+1}.</span>
+        <span class="font-semibold text-[13px] text-pri">${escapeHtml(item.finding)}</span>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" style="${RISK_BADGE[item.risk_weight||'medium']}">
+          ${item.risk_weight||'medium'}
+        </span>
+        <span class="ml-auto text-[11px] font-bold">${TRIAGE_EMOJI[item.supports]||''} ${item.supports||''}</span>
+      </div>
+      <div class="bg-surf rounded-lg px-3 py-2">
+        <p class="text-[9px] font-bold text-onsv uppercase tracking-widest mb-1">Hasta cevabı</p>
+        <p class="text-[12px] text-ons italic">"${escapeHtml(item.patient_quote)}"</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Sprint 21: Clinical Completeness ───────────────────────────────────────
+function renderClinicalCompleteness(s) {
+  const container = document.getElementById('completenessSection');
+  if (!container) return;
+  const score = s.clinical_completeness_score || 0;
+  if (score === 0 && !s.missing_information?.length) { container.classList.add('hidden'); return; }
+  container.classList.remove('hidden');
+  const bar = document.getElementById('completenessBar');
+  const scoreEl = document.getElementById('completenessScore');
+  const missingEl = document.getElementById('completenessMissing');
+  const suggestEl = document.getElementById('completenessRecommended');
+  if (bar) { bar.style.width = score + '%'; bar.style.background = score >= 80 ? '#006a68' : score >= 50 ? '#e07b26' : '#ba1a1a'; }
+  if (scoreEl) scoreEl.textContent = score + '%';
+  const missing = s.missing_information || [];
+  if (missingEl) missingEl.innerHTML = missing.length
+    ? missing.map(m => `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-errc text-err">⚠ ${escapeHtml(m)}</span>`).join('')
+    : '<span class="text-sec text-xs">Tüm bilgiler mevcut</span>';
+  const suggested = s.recommended_next_questions || [];
+  if (suggestEl) suggestEl.innerHTML = suggested.length
+    ? suggested.map(q => `<div class="text-[12px] text-ons flex gap-2"><span class="text-pric font-bold">→</span>${escapeHtml(q)}</div>`).join('')
+    : '';
+}
+
+// ── Sprint 21: AI Execution Log ─────────────────────────────────────────────
+function renderAIExecutionLog(log) {
+  const container = document.getElementById('aiLogSection');
+  if (!container) return;
+  if (!log) { container.classList.add('hidden'); return; }
+  container.classList.remove('hidden');
+  const grid = document.getElementById('aiLogGrid');
+  if (!grid) return;
+  const items = [
+    {label:'Model', value: log.model || 'gemma4:e4b', mono: true, color:'#006a68'},
+    {label:'Runtime', value: log.runtime || 'Ollama (local)'},
+    {label:'External API', value: log.external_api ? '✓ Yes' : '✗ None', color: log.external_api ? '#ba1a1a' : '#006a68'},
+    {label:'Patient Data Egress', value: log.patient_data_egress ? '⚠ Yes' : '✗ None', color: log.patient_data_egress ? '#ba1a1a' : '#006a68'},
+    {label:'RAG Backend', value: log.rag_backend || 'ChromaDB (local)'},
+    {label:'RAG Chunks', value: log.rag_chunks ? `${log.rag_chunks} chunks` : 'N/A'},
+    {label:'Embedding', value: log.embedding_model || 'multilingual-MiniLM'},
+    {label:'Latency', value: log.inference_latency_s ? `${log.inference_latency_s}s` : 'N/A'},
+    {label:'Safety Guardrail', value: log.safety_guardrail ? `⚡ ${log.guardrails_fired} fired` : '✓ No escalation', color: log.safety_guardrail ? '#e07b26' : '#006a68'},
+  ];
+  grid.innerHTML = items.map(item => `
+    <div class="bg-surf rounded-xl p-3">
+      <p class="text-[9px] font-bold text-onsv uppercase tracking-widest mb-1">${item.label}</p>
+      <p class="text-[12px] font-semibold ${item.mono ? 'font-mono' : ''}" style="${item.color ? `color:${item.color}` : ''}">${escapeHtml(String(item.value))}</p>
+    </div>
+  `).join('');
+}
+
+// ── Sprint 21: FHIR Preview ─────────────────────────────────────────────────
+async function loadFhirPreview(sid) {
+  const container = document.getElementById('fhirPreviewSection');
+  if (!container || !sid || !token) return;
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/fhir-preview`, {headers: {Authorization:`Bearer ${token}`}});
+    if (!res.ok) { container.classList.add('hidden'); return; }
+    const data = await res.json();
+    container.classList.remove('hidden');
+    const el = document.getElementById('fhirPreviewContent');
+    if (!el) return;
+    const resources = data.resources || {};
+    el.innerHTML = `
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+        ${Object.entries(resources).map(([type, count]) => `
+          <div class="bg-surf rounded-xl p-2.5 text-center">
+            <p class="text-[18px] font-bold text-pric">${count}</p>
+            <p class="text-[9px] font-bold text-onsv uppercase tracking-wide">${type}</p>
+          </div>
+        `).join('')}
+      </div>
+      <div class="flex flex-wrap gap-2 text-[10px]">
+        <span class="px-2 py-1 rounded-full bg-secc/40 text-sec font-semibold">FHIR R4</span>
+        <span class="px-2 py-1 rounded-full ${data.triage_note_included ? 'bg-secc/40 text-sec' : 'bg-surfc text-onsv'} font-semibold">Triage Note ${data.triage_note_included ? '✓' : '—'}</span>
+        <span class="px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-semibold">Hospital Integration Ready</span>
+      </div>
+      <p class="text-[9px] text-onsv mt-2 italic">${escapeHtml(data.disclaimer || '')}</p>
+    `;
+  } catch(e) { container.classList.add('hidden'); }
+}
+
+// ── Sprint 21: Guardrail info ─────────────────────────────────────────────────
+function renderGuardrailInfo(s) {
+  const container = document.getElementById('guardrailSection');
+  if (!container) return;
+  if (!s.safety_guardrail_triggered && !(s.guardrail_rules_fired?.length)) {
+    container.classList.add('hidden'); return;
+  }
+  container.classList.remove('hidden');
+  const el = document.getElementById('guardrailBody');
+  if (!el) return;
+  const rules = s.guardrail_rules_fired || [];
+  el.innerHTML = `
+    <div class="flex items-center gap-2 mb-2">
+      <span class="px-2.5 py-1 rounded-full text-[11px] font-bold" style="background:#fff3e0;color:#e07b26">
+        ⚡ ${rules.length} kural tetiklendi
+      </span>
+    </div>
+    <ul class="space-y-1">
+      ${rules.map(r => `<li class="text-[12px] text-ons font-medium flex gap-1.5">
+        <span class="text-warn font-bold">→</span>${escapeHtml(r)}
+      </li>`).join('')}
+    </ul>
+    <p class="text-[10px] text-onsv mt-2 italic">Deterministic safety rules escalated the LLM output to ensure patient safety.</p>
+  `;
 }
 
 function showError() {

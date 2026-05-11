@@ -86,6 +86,10 @@ tailwind.config={theme:{extend:{colors:{
         class="w-full flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors" id="sidebar-analytics-btn">
         <span class="material-symbols-outlined msym text-[17px]">bar_chart</span>Analitik
       </button>
+      <a href="evaluation.html"
+        class="w-full flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors">
+        <span class="material-symbols-outlined msym text-[17px]">analytics</span>AI Evaluation
+      </a>
     </nav>
 
     <!-- Status -->
@@ -815,12 +819,19 @@ function showDetail(sid){
     <!-- Triaj Override -->
     <div class="rounded-xl p-3.5 bg-surfc">
       <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Triaj Seviyesini Değiştir</p>
-      <div class="flex gap-2">
+      <div class="flex gap-2 mb-2">
         <button onclick="overrideTriage('${sid}','RED')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#ba1a1a">🔴 ACİL</button>
         <button onclick="overrideTriage('${sid}','YELLOW')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#e07b26">🟡 İKİNCİL</button>
         <button onclick="overrideTriage('${sid}','GREEN')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#006a68">🟢 RUTİN</button>
       </div>
-      ${p.triage_override ? `<p class="text-[9px] text-blue-600 mt-1 font-semibold">Override: ${p.triage_override.doctor_name} · ${new Date(p.triage_override.timestamp).toLocaleTimeString('tr-TR')}</p>` : ''}
+      <input id="inp-override-reason-${sid}" type="text" placeholder="Override gerekçesi (opsiyonel)..."
+        class="w-full px-3 py-1.5 border border-surfc rounded-xl text-[11px] bg-white focus:border-pric transition-all" style="outline:none"/>
+      ${p.triage_override ? `
+      <div class="mt-2 p-2 bg-blue-50 rounded-lg text-[10px] text-blue-700">
+        <strong>Human Override Kaydedildi:</strong> ${p.triage_override.ai_triage||'—'} → ${p.triage_override.level}
+        ${p.triage_override.override_reason ? `<br>Gerekçe: ${p.triage_override.override_reason}` : ''}
+        <br>${p.triage_override.doctor_name} · ${new Date(p.triage_override.timestamp).toLocaleString('tr-TR')}
+      </div>` : ''}
     </div>
     <!-- AI Gerekçe (Trust Layer) -->
     ${(p.evidence&&p.evidence.length)||(p.guideline_sources&&p.guideline_sources.length) ? `
@@ -901,17 +912,21 @@ async function addNote(sid) {
 
 async function overrideTriage(sid, newLevel) {
   if (!confirm(`Triaj seviyesini ${newLevel} olarak değiştirmek istediğinize emin misiniz?`)) return;
+  const reasonInput = document.getElementById(`inp-override-reason-${sid}`);
+  const overrideReason = reasonInput ? reasonInput.value.trim() : '';
   try {
     const res = await fetch(`${API}/api/session/${sid}/triage`, {
       method: 'PUT',
       headers: authHeaders(),
-      body: JSON.stringify({triage_level: newLevel})
+      body: JSON.stringify({triage_level: newLevel, override_reason: overrideReason})
     });
     if (!res.ok) throw new Error();
+    const data = await res.json();
     if (allPatients[sid]) {
       allPatients[sid].triage_level = newLevel;
       allPatients[sid].triage_color = {RED:'#ba1a1a',YELLOW:'#e07b26',GREEN:'#006a68'}[newLevel];
-      allPatients[sid].triage_override = true;
+      allPatients[sid].triage_override = data.override || {level: newLevel, override_reason: overrideReason};
+      allPatients[sid].doctor_final_triage = newLevel;
     }
     showDetail(sid);
   } catch(e) {
