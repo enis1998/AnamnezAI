@@ -19,8 +19,14 @@ env/
 
 # Sensitive / persisted at runtime (NOT baked into image)
 backend/.env
-backend/anamnezai.db
+backend/*.db
+backend/*.sqlite3
 chroma_db/
+
+# Backend: test ve cache dosyaları image'e girmesin
+backend/tests/
+backend/__pycache__/
+backend/.pytest_cache/
 
 # Dev tools
 .idea/

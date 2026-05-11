@@ -5,26 +5,24 @@ WORKDIR /app
 # Sistem bağımlılıkları
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Kalıcı veri dizini oluştur (DB + ChromaDB mount noktaları)
-RUN mkdir -p /app/data /app/chroma_db
+# Kalıcı veri dizini oluştur (ChromaDB mount noktası)
+RUN mkdir -p /app/chroma_db
 
 # Python bağımlılıkları — önce CPU-only torch yükle (CUDA sürümü ~1.5GB yerine ~200MB)
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Backend kaynak kodları
-COPY backend/main.py ./main.py
-COPY backend/auth.py ./auth.py
-COPY backend/rag.py ./rag.py
+# Backend kaynak kodlarının tamamı (safety.py, database.py, auth.py, rag.py, main.py …)
+# tests/ ve __pycache__/ .dockerignore ile dışarıda bırakılır
+COPY backend/ /app/
 
 # Frontend statik dosyaları
 COPY frontend/ /app/frontend/
 
 EXPOSE 8000
 
-# DB_PATH kalıcı veri dizinini göstersin (volume mount'tan gelir)
-ENV DB_PATH=/app/data/anamnezai.db
+# ChromaDB konumu
 ENV CHROMA_DIR=/app/chroma_db
 
 # Docker healthcheck — /healthz lightweight endpoint
