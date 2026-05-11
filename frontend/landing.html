@@ -143,13 +143,10 @@ tailwind.config = {
         <button onclick="setLandingLang('en')" id="lp-btn-en" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv" data-i18n="lang.en">EN</button>
         <button onclick="setLandingLang('ar')" id="lp-btn-ar" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv" data-i18n="lang.ar">AR</button>
       </div>
-      <a href="login.html" class="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold text-pric hover:text-pri transition-colors" id="nav-login" data-i18n="nav.login">
-        Giriş Yap
-      </a>
-      <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[13px] font-bold hover:bg-pri transition-all shadow-sm hover:shadow-md active:scale-[.97]" id="nav-register">
-        <span class="material-symbols-outlined msym text-[15px]">rocket_launch</span>
-        <span class="hidden sm:inline" id="nav-register-txt" data-i18n="nav.register">Ücretsiz Başla</span>
-        <span class="sm:hidden" id="nav-register-txt-sm" data-i18n="nav.register.sm">Başla</span>
+      <a href="index.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[13px] font-bold hover:bg-pri transition-all shadow-sm hover:shadow-md active:scale-[.97]" id="nav-register">
+        <span class="material-symbols-outlined msym text-[15px]">play_circle</span>
+        <span class="hidden sm:inline" id="nav-register-txt" data-i18n="nav.register">Hemen Dene</span>
+        <span class="sm:hidden" id="nav-register-txt-sm" data-i18n="nav.register.sm">Dene</span>
       </a>
       <!-- Mobile menu btn -->
       <button id="menu-btn" onclick="toggleMenu()" class="md:hidden p-2 rounded-lg hover:bg-surf transition-colors">
@@ -178,9 +175,11 @@ tailwind.config = {
       <button onclick="setLandingLang('en')" id="lp-btn-en-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-surfc text-onsv transition-all" data-i18n="lang.en">EN</button>
       <button onclick="setLandingLang('ar')" id="lp-btn-ar-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-surfc text-onsv transition-all" data-i18n="lang.ar">AR</button>
     </div>
-    <div class="pt-1 border-t border-surfc flex gap-3">
-      <a href="login.html" class="flex-1 text-center py-2.5 rounded-xl border border-pric text-pric text-[13px] font-bold" id="mob-nav-login" data-i18n="nav.login">Giriş Yap</a>
-      <a href="register.html" class="flex-1 text-center py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold" id="mob-nav-register" data-i18n="nav.register">Kayıt Ol</a>
+    <div class="pt-1 border-t border-surfc">
+      <a href="index.html" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold" id="mob-nav-register" data-i18n="nav.register">
+        <span class="material-symbols-outlined msym text-[15px]">play_circle</span>
+        Hemen Dene
+      </a>
     </div>
   </div>
 </nav>
@@ -1116,7 +1115,7 @@ const LP_I18N = {
     'nav.brand':'by MediScreen',
     'nav.features':'Özellikler','nav.how':'Nasıl Çalışır','nav.tech':'Teknoloji','nav.audience':'Kimler İçin',
     'lang.tr':'TR','lang.en':'EN','lang.ar':'AR',
-    'nav.login':'Giriş Yap','nav.register':'Ücretsiz Başla','nav.register.sm':'Başla',
+    'nav.register':'Hemen Dene','nav.register.sm':'Dene',
     // hero
     'hero.badge':'Gemma 4 · MedGemma Vision ile Güçlendirildi',
     'hero.h1':'Doktorunuz sizi görmeden önce','hero.h1b':'AI sizi dinler.',
@@ -1226,7 +1225,7 @@ const LP_I18N = {
     'nav.brand':'by MediScreen',
     'nav.features':'Features','nav.how':'How It Works','nav.tech':'Technology','nav.audience':'For Whom',
     'lang.tr':'TR','lang.en':'EN','lang.ar':'AR',
-    'nav.login':'Log In','nav.register':'Get Started Free','nav.register.sm':'Start',
+    'nav.register':'Try Now','nav.register.sm':'Try',
     'hero.badge':'Powered by Gemma 4 · MedGemma Vision',
     'hero.h1':'Before your doctor sees you,','hero.h1b':'AI listens to you.',
     'hero.sub':'AnamnezAI analyzes your symptoms with smart questions, determines triage priority, and delivers a clinical summary to your doctor. Reduce wait times, improve clinical intake quality.',
@@ -1326,7 +1325,7 @@ const LP_I18N = {
     'nav.brand':'by MediScreen',
     'nav.features':'المميزات','nav.how':'كيف يعمل','nav.tech':'التكنولوجيا','nav.audience':'لمن',
     'lang.tr':'TR','lang.en':'EN','lang.ar':'AR',
-    'nav.login':'تسجيل الدخول','nav.register':'ابدأ مجاناً','nav.register.sm':'ابدأ',
+    'nav.register':'جرّب الآن','nav.register.sm':'جرّب',
     'hero.badge':'مدعوم بـ Gemma 4 · MedGemma Vision',
     'hero.h1':'قبل أن يراك طبيبك،','hero.h1b':'الذكاء الاصطناعي يستمع إليك.',
     'hero.sub':'يحلّل AnamnezAI أعراضك بأسئلة ذكية، ويحدد أولوية الفرز الطبي، ويقدم ملخصاً سريرياً لطبيبك. قلّل أوقات الانتظار وحسّن جودة استقبال المريض سريرياً.',
