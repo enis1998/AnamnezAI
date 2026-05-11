@@ -129,21 +129,27 @@ tailwind.config = {
 
     <!-- Desktop nav links -->
     <div class="hidden md:flex items-center gap-7">
-      <a href="#features" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors">Özellikler</a>
-      <a href="#how-it-works" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors">Nasıl Çalışır</a>
-      <a href="#technology" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors">Teknoloji</a>
-      <a href="#audience" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors">Kimler İçin</a>
+      <a href="#features" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-features">Özellikler</a>
+      <a href="#how-it-works" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-how">Nasıl Çalışır</a>
+      <a href="#technology" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-tech">Teknoloji</a>
+      <a href="#audience" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-audience">Kimler İçin</a>
     </div>
 
     <!-- CTA buttons -->
     <div class="flex items-center gap-3">
-      <a href="login.html" class="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold text-pric hover:text-pri transition-colors">
+      <!-- Dil Seçici -->
+      <div class="hidden sm:flex bg-surfc rounded-full p-0.5 gap-0.5">
+        <button onclick="setLandingLang('tr')" id="lp-btn-tr" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white">TR</button>
+        <button onclick="setLandingLang('en')" id="lp-btn-en" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">EN</button>
+        <button onclick="setLandingLang('ar')" id="lp-btn-ar" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">AR</button>
+      </div>
+      <a href="login.html" class="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold text-pric hover:text-pri transition-colors" id="nav-login">
         Giriş Yap
       </a>
       <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[13px] font-bold hover:bg-pri transition-all shadow-sm hover:shadow-md active:scale-[.97]">
         <span class="material-symbols-outlined msym text-[15px]">rocket_launch</span>
-        <span class="hidden sm:inline">Ücretsiz Başla</span>
-        <span class="sm:hidden">Başla</span>
+        <span class="hidden sm:inline" id="nav-register-txt">Ücretsiz Başla</span>
+        <span class="sm:hidden" id="nav-register-txt-sm">Başla</span>
       </a>
       <!-- Mobile menu btn -->
       <button id="menu-btn" onclick="toggleMenu()" class="md:hidden p-2 rounded-lg hover:bg-surf transition-colors">
@@ -155,20 +161,26 @@ tailwind.config = {
   <!-- Mobile dropdown -->
   <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-surfc px-5 py-4 space-y-3">
     <a href="#features" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
-      <span class="material-symbols-outlined msym text-sec text-[18px]">auto_awesome</span>Özellikler
+      <span class="material-symbols-outlined msym text-sec text-[18px]">auto_awesome</span><span id="mob-nav-features">Özellikler</span>
     </a>
     <a href="#how-it-works" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
-      <span class="material-symbols-outlined msym text-sec text-[18px]">route</span>Nasıl Çalışır
+      <span class="material-symbols-outlined msym text-sec text-[18px]">route</span><span id="mob-nav-how">Nasıl Çalışır</span>
     </a>
     <a href="#technology" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
-      <span class="material-symbols-outlined msym text-sec text-[18px]">memory</span>Teknoloji
+      <span class="material-symbols-outlined msym text-sec text-[18px]">memory</span><span id="mob-nav-tech">Teknoloji</span>
     </a>
     <a href="#audience" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
-      <span class="material-symbols-outlined msym text-sec text-[18px]">groups</span>Kimler İçin
+      <span class="material-symbols-outlined msym text-sec text-[18px]">groups</span><span id="mob-nav-audience">Kimler İçin</span>
     </a>
-    <div class="pt-2 border-t border-surfc flex gap-3">
-      <a href="login.html" class="flex-1 text-center py-2.5 rounded-xl border border-pric text-pric text-[13px] font-bold">Giriş Yap</a>
-      <a href="register.html" class="flex-1 text-center py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Kayıt Ol</a>
+    <!-- Mobil dil seçici -->
+    <div class="flex gap-1.5 pt-1">
+      <button onclick="setLandingLang('tr')" id="lp-btn-tr-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-pric text-white transition-all">TR</button>
+      <button onclick="setLandingLang('en')" id="lp-btn-en-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-surfc text-onsv transition-all">EN</button>
+      <button onclick="setLandingLang('ar')" id="lp-btn-ar-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-surfc text-onsv transition-all">AR</button>
+    </div>
+    <div class="pt-1 border-t border-surfc flex gap-3">
+      <a href="login.html" class="flex-1 text-center py-2.5 rounded-xl border border-pric text-pric text-[13px] font-bold" id="mob-nav-login">Giriş Yap</a>
+      <a href="register.html" class="flex-1 text-center py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold" id="mob-nav-register">Kayıt Ol</a>
     </div>
   </div>
 </nav>
@@ -193,17 +205,17 @@ tailwind.config = {
         <!-- Badge -->
         <div class="highlight-chip inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 fade-up">
           <span class="material-symbols-outlined msym-fill text-secc text-[14px]">auto_awesome</span>
-          <span class="text-[11px] font-bold text-secc uppercase tracking-widest">Gemma 4 · MedGemma Vision ile Güçlendirildi</span>
+          <span class="text-[11px] font-bold text-secc uppercase tracking-widest" id="txt-hero-badge">Gemma 4 · MedGemma Vision ile Güçlendirildi</span>
         </div>
 
         <!-- Headline -->
         <h1 class="font-head font-black text-white text-[42px] md:text-[56px] leading-[1.1] mb-5 fade-up-1">
-          Doktorunuz sizi görmeden önce<br/>
-          <span class="grad-text">AI sizi dinler.</span>
+          <span id="txt-hero-h1">Doktorunuz sizi görmeden önce</span><br/>
+          <span class="grad-text" id="txt-hero-h1b">AI sizi dinler.</span>
         </h1>
 
         <!-- Sub -->
-        <p class="text-white/70 text-[16px] leading-relaxed mb-8 max-w-lg fade-up-2">
+        <p class="text-white/70 text-[16px] leading-relaxed mb-8 max-w-lg fade-up-2" id="txt-hero-sub">
           AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, tanı kalitesini artırın.
         </p>
 
@@ -211,11 +223,11 @@ tailwind.config = {
         <div class="flex flex-wrap gap-4 mb-10 fade-up-3">
           <a href="/index.html" class="pulse-btn flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-sec text-white font-bold text-[15px] hover:bg-secc hover:text-pri transition-all shadow-lg">
             <span class="material-symbols-outlined msym text-[20px]">play_circle</span>
-            Hemen Deneyin — Ücretsiz
+            <span id="txt-hero-cta1">Hemen Deneyin — Ücretsiz</span>
           </a>
           <a href="#how-it-works" class="flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white font-semibold text-[15px] hover:bg-white/20 transition-all backdrop-blur-sm">
             <span class="material-symbols-outlined msym text-[20px]">play_arrow</span>
-            Nasıl Çalışır
+            <span id="txt-hero-cta2">Nasıl Çalışır</span>
           </a>
         </div>
 
@@ -223,15 +235,15 @@ tailwind.config = {
         <div class="flex flex-wrap items-center gap-5 fade-up-4">
           <div class="flex items-center gap-1.5">
             <span class="material-symbols-outlined msym-fill text-secc text-[16px]">shield</span>
-            <span class="text-white/60 text-[12px] font-medium">GDPR Uyumlu</span>
+            <span class="text-white/60 text-[12px] font-medium" id="txt-trust-gdpr">GDPR Uyumlu</span>
           </div>
           <div class="flex items-center gap-1.5">
             <span class="material-symbols-outlined msym-fill text-secc text-[16px]">lock</span>
-            <span class="text-white/60 text-[12px] font-medium">Yerel AI — Veri Dışarı Çıkmaz</span>
+            <span class="text-white/60 text-[12px] font-medium" id="txt-trust-local">Yerel AI — Veri Dışarı Çıkmaz</span>
           </div>
           <div class="flex items-center gap-1.5">
               <span class="material-symbols-outlined msym-fill text-secc text-[16px]">language</span>
-              <span class="text-white/60 text-[12px] font-medium">TR · EN · AR — Mülteci yoğunluğu için Arapça desteği</span>
+              <span class="text-white/60 text-[12px] font-medium" id="txt-trust-lang">TR · EN · AR — Mülteci yoğunluğu için Arapça desteği</span>
             </div>
         </div>
       </div>
@@ -1081,6 +1093,78 @@ tailwind.config = {
 
 
 <script>
+// ── Landing Page i18n ─────────────────────────────────────────────
+const LP_I18N = {
+  tr:{
+    badge:'Gemma 4 · MedGemma Vision ile Güçlendirildi',
+    heroH1:'Doktorunuz sizi görmeden önce', heroH1b:'AI sizi dinler.',
+    heroSub:'AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, tanı kalitesini artırın.',
+    cta1:'Hemen Deneyin — Ücretsiz', cta2:'Nasıl Çalışır',
+    trustGdpr:'GDPR Uyumlu', trustLocal:'Yerel AI — Veri Dışarı Çıkmaz',
+    trustLang:'TR · EN · AR — Mülteci yoğunluğu için Arapça desteği',
+    navFeatures:'Özellikler', navHow:'Nasıl Çalışır', navTech:'Teknoloji', navAudience:'Kimler İçin',
+    navLogin:'Giriş Yap', navRegister:'Ücretsiz Başla', navRegisterSm:'Başla',
+    navLoginMob:'Giriş Yap', navRegisterMob:'Kayıt Ol',
+  },
+  en:{
+    badge:'Powered by Gemma 4 · MedGemma Vision',
+    heroH1:'Before your doctor sees you,', heroH1b:'AI listens to you.',
+    heroSub:'AnamnezAI analyzes your symptoms with smart questions, determines triage priority, and delivers a clinical summary to your doctor. Reduce wait times, improve diagnostic quality.',
+    cta1:'Try It Now — Free', cta2:'How It Works',
+    trustGdpr:'GDPR Compliant', trustLocal:'Local AI — Data Never Leaves',
+    trustLang:'TR · EN · AR — Arabic support for refugee-dense regions',
+    navFeatures:'Features', navHow:'How It Works', navTech:'Technology', navAudience:'For Whom',
+    navLogin:'Log In', navRegister:'Get Started Free', navRegisterSm:'Start',
+    navLoginMob:'Log In', navRegisterMob:'Sign Up',
+  },
+  ar:{
+    badge:'مدعوم بـ Gemma 4 · MedGemma Vision',
+    heroH1:'قبل أن يراك طبيبك،', heroH1b:'الذكاء الاصطناعي يستمع إليك.',
+    heroSub:'يحلّل AnamnezAI أعراضك بأسئلة ذكية، ويحدد أولوية الفرز، ويقدم ملخصاً سريرياً لطبيبك. قلّل أوقات الانتظار وحسّن جودة التشخيص.',
+    cta1:'جرّبه الآن — مجاناً', cta2:'كيف يعمل',
+    trustGdpr:'متوافق مع GDPR', trustLocal:'ذكاء اصطناعي محلي — البيانات لا تغادر',
+    trustLang:'TR · EN · AR — دعم اللغة العربية للمناطق كثيفة اللاجئين',
+    navFeatures:'المميزات', navHow:'كيف يعمل', navTech:'التكنولوجيا', navAudience:'لمن',
+    navLogin:'تسجيل الدخول', navRegister:'ابدأ مجاناً', navRegisterSm:'ابدأ',
+    navLoginMob:'تسجيل الدخول', navRegisterMob:'إنشاء حساب',
+  }
+};
+
+let lpLang = localStorage.getItem('ui_lang') || 'tr';
+
+function setLandingLang(l) {
+  lpLang = l;
+  localStorage.setItem('ui_lang', l);
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = l;
+  const d = LP_I18N[l] || LP_I18N.tr;
+  const m = {
+    'txt-hero-badge': d.badge,
+    'txt-hero-h1': d.heroH1, 'txt-hero-h1b': d.heroH1b,
+    'txt-hero-sub': d.heroSub,
+    'txt-hero-cta1': d.cta1, 'txt-hero-cta2': d.cta2,
+    'txt-trust-gdpr': d.trustGdpr, 'txt-trust-local': d.trustLocal, 'txt-trust-lang': d.trustLang,
+    'nav-features': d.navFeatures, 'nav-how': d.navHow, 'nav-tech': d.navTech, 'nav-audience': d.navAudience,
+    'nav-login': d.navLogin, 'nav-register-txt': d.navRegister, 'nav-register-txt-sm': d.navRegisterSm,
+    'mob-nav-features': d.navFeatures, 'mob-nav-how': d.navHow, 'mob-nav-tech': d.navTech, 'mob-nav-audience': d.navAudience,
+    'mob-nav-login': d.navLoginMob, 'mob-nav-register': d.navRegisterMob,
+  };
+  Object.entries(m).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.textContent = val; });
+
+  // Dil buton stilleri — desktop + mobile
+  ['tr','en','ar'].forEach(lang => {
+    ['lp-btn-'+lang, 'lp-btn-'+lang+'-mob'].forEach(id => {
+      const el = document.getElementById(id); if (!el) return;
+      el.className = el.id.includes('mob')
+        ? `flex-1 py-2 rounded-xl text-[12px] font-bold transition-all ${lang===l ? 'bg-pric text-white' : 'bg-surfc text-onsv'}`
+        : `px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${lang===l ? 'bg-pric text-white' : 'text-onsv'}`;
+    });
+  });
+}
+
+// Sayfa açılışında kayıtlı dili uygula
+(function(){ setLandingLang(lpLang); })();
+
 // Mobile menu toggle
 function toggleMenu() {
   const menu = document.getElementById('mobile-menu');
