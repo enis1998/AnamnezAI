@@ -18,8 +18,6 @@ import json
 import uuid
 import os
 import tempfile
-import sqlite3
-import threading
 import asyncio
 import base64
 import re
@@ -29,6 +27,10 @@ import secrets
 import string
 from datetime import datetime
 import time as _time
+
+# PostgreSQL
+from database import get_cursor, get_conn, init_db as pg_init_db, close_pool
+import psycopg2.errors
 
 # Load .env file if present
 try:
@@ -77,7 +79,6 @@ OLLAMA_BASE_URL  = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 GEMMA_MODEL      = os.getenv("GEMMA_MODEL", "gemma4:e4b")
 MEDGEMMA_MODEL   = os.getenv("MEDGEMMA_MODEL", "medgemma:4b")   # Vision — multimodal analysis
 RAG_ENABLED      = os.getenv("RAG_ENABLED", "true").lower() == "true"
-DB_PATH          = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "anamnezai.db"))
 
 # Sprint Fix — GPU/RAM yetersizse num_gpu=0 ile CPU moduna düş
 OLLAMA_NUM_GPU   = int(os.getenv("OLLAMA_NUM_GPU", "0"))  # 0 = CPU mode
@@ -85,15 +86,16 @@ OLLAMA_NUM_GPU   = int(os.getenv("OLLAMA_NUM_GPU", "0"))  # 0 = CPU mode
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Uygulama başladığında DB'yi başlat, geçmiş verileri yükle ve modeli önceden ısıt."""
-    init_db()
+    pg_init_db()
     init_auth_tables()      # ← Kullanıcı tablolarını oluştur (+ demo doktor)
     db_load_all()
-    print(f"[AnamnezAI v5.0] DB hazır: {DB_PATH}")
+    print(f"[AnamnezAI v5.0] PostgreSQL DB hazır")
     # Modeli arka planda ısıt — ilk hasta gelene kadar hazır olsun
     asyncio.create_task(_background_warmup())
     # Sprint 14: Oturum timeout cleanup (30 dk boş kalan oturumlar)
     asyncio.create_task(_session_cleanup_loop())
     yield  # Uygulama çalışıyor
+    close_pool()  # Bağlantı havuzunu kapat
 
 
 app = FastAPI(
