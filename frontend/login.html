@@ -62,6 +62,43 @@ tailwind.config = {
 <main class="pt-14 min-h-screen flex items-center justify-center px-4">
 <div class="w-full max-w-md fade">
 
+  <!-- Zaten giriş yapılmışsa banner (JS ile gösterilir) -->
+  <div id="already-logged-in-banner" class="hidden mb-5 p-4 rounded-2xl border border-sec/30 bg-secc/10">
+    <div class="flex items-center gap-3 mb-3">
+      <span class="material-symbols-outlined msym-fill text-sec text-[22px]">check_circle</span>
+      <div>
+        <p class="font-semibold text-pri text-sm" id="banner-name">Dr. Kullanıcı</p>
+        <p class="text-xs text-onsv" id="banner-role">olarak giriş yaptınız</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <a id="banner-panel-link" href="doctor.html"
+        class="flex-1 py-2 text-center rounded-xl bg-pri text-white text-sm font-semibold hover:bg-pric transition-all">
+        Panele Git
+      </a>
+      <button onclick="doLogoutAndStay()"
+        class="flex-1 py-2 rounded-xl bg-surfc text-onsv text-sm font-semibold hover:bg-ouv/30 transition-all">
+        Farklı Hesap
+      </button>
+    </div>
+  </div>
+
+  <!-- Giriş yapmadan mülakat başlat -->
+  <div class="mb-5 p-4 rounded-2xl border border-surfc bg-surf flex items-center justify-between gap-3">
+    <div class="flex items-center gap-2.5">
+      <span class="material-symbols-outlined msym-fill text-sec text-[20px]">play_circle</span>
+      <div>
+        <p class="text-sm font-semibold text-pri">Giriş Yapmadan Dene</p>
+        <p class="text-xs text-onsv">Kayıt olmadan hızlı mülakat başlat</p>
+      </div>
+    </div>
+    <a href="index.html"
+      class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-xs font-bold hover:bg-pric transition-all whitespace-nowrap">
+      <span class="material-symbols-outlined msym text-[14px]">arrow_forward</span>
+      Başla
+    </a>
+  </div>
+
   <!-- Hero -->
   <div class="text-center mb-8">
     <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-pric to-sec flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -336,19 +373,27 @@ async function handleGoogleResponse(response) {
 // Google GIS scripti: GOOGLE_CLIENT_ID varsa zaten yükle
 if (GOOGLE_CLIENT_ID) loadGoogleScript();
 
-// Zaten giriş yapılmışsa yönlendir
+// Zaten giriş yapılmışsa → otomatik yönlendirme YOK, kullanıcıya seçenek sun
 (function checkAlreadyLoggedIn() {
   const token = localStorage.getItem('anamnez_token');
   const user = JSON.parse(localStorage.getItem('anamnez_user') || 'null');
   if (token && user) {
-    if (['doctor','admin','personnel'].includes(user.role)) {
-      window.location.href = 'doctor.html';
-    } else {
-      // Hasta kullanıcı → önce panele yönlendir
-      window.location.href = 'patient_dashboard.html';
-    }
+    const isDoctor = ['doctor','admin','personnel'].includes(user.role);
+    const panelHref = isDoctor ? 'doctor.html' : 'patient_dashboard.html';
+    const roleLabel = isDoctor ? 'Doktor olarak giriş yaptınız' : 'Hasta olarak giriş yaptınız';
+
+    document.getElementById('banner-name').textContent = user.name || user.email || 'Kullanıcı';
+    document.getElementById('banner-role').textContent = roleLabel;
+    document.getElementById('banner-panel-link').href = panelHref;
+    document.getElementById('already-logged-in-banner').classList.remove('hidden');
   }
 })();
+
+function doLogoutAndStay() {
+  localStorage.removeItem('anamnez_token');
+  localStorage.removeItem('anamnez_user');
+  document.getElementById('already-logged-in-banner').classList.add('hidden');
+}
 </script>
 </body>
 </html>
