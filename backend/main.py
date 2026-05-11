@@ -25,6 +25,8 @@ import base64
 import re
 import io
 import csv
+import secrets
+import string
 from datetime import datetime
 
 # Load .env file if present
@@ -372,9 +374,16 @@ class SessionResponse(BaseModel):
     question: str
     step: int
     total_steps: int
+    claim_code: Optional[str] = None   # misafir oturumda gösterilir
 
 class ClaimSessionRequest(BaseModel):
-    session_id: str
+    claim_code: str   # 6 haneli kısa kod (örn: K7M2P9)
+
+# ── Kısa talep kodu üretici ──────────────────
+def _generate_claim_code() -> str:
+    """6 haneli benzersiz talep kodu üretir (büyük harf + rakam, karışık değil: 0/O/1/I yok)."""
+    chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    return "".join(secrets.choice(chars) for _ in range(6))
 
 class ClinicalSummaryResponse(BaseModel):
     session_id: str
@@ -1205,6 +1214,9 @@ async def start_session(req: StartSessionRequest, current_user: Optional[dict] =
             f"{_vitals_note}"
         )
 
+    # 6 haneli kısa talep kodu — misafir oturum iken kullanıcı bu kodu girerek mülakatı hesabına ekler
+    claim_code = _generate_claim_code() if not (current_user) else None
+
     sessions[session_id] = {
         "patient_name": req.patient_name,
         "age": req.age,
@@ -1217,46 +1229,62 @@ async def start_session(req: StartSessionRequest, current_user: Optional[dict] =
         "vitals": vitals_dict,
         "image_analyses": [],
         "patient_id": current_user["user_id"] if current_user else None,
+        "claim_code": claim_code,
         "created_at": datetime.utcnow().isoformat(),
     }
     db_save_session(session_id, sessions[session_id])
     await notify_queue_update()
 
-    return SessionResponse(session_id=session_id, question=first_question, step=1, total_steps=initial_steps)
+    return SessionResponse(session_id=session_id, question=first_question, step=1, total_steps=initial_steps, claim_code=claim_code)
 
 
 @app.post("/api/session/claim")
 async def claim_session(req: ClaimSessionRequest, current_user: dict = Depends(require_auth)):
-    """Misafir olarak yapılan mülakatı giriş yapan kullanıcıya bağlar.
-    Kullanıcı kayıt/giriş yaptıktan sonra pending_session_id varsa çağrılır."""
-    session_id = req.session_id
-    session = sessions.get(session_id)
+    """Kullanıcı 6 haneli talep kodunu girerek misafir mülakatını hesabına bağlar."""
+    code = req.claim_code.strip().upper()
 
-    # Bellekte yoksa DB'den yükle
-    if not session:
+    # Bellekteki ve DB'deki oturumları kısa kod ile ara
+    found_id = None
+    found_session = None
+
+    # 1. Önce in-memory'de ara
+    for sid, s in sessions.items():
+        if s.get("claim_code") == code:
+            found_id = sid
+            found_session = s
+            break
+
+    # 2. Bellekte yoksa DB'de ara
+    if not found_id:
         try:
             conn = sqlite3.connect(DB_PATH)
-            row = conn.execute("SELECT data FROM sessions WHERE session_id=?", (session_id,)).fetchone()
+            rows = conn.execute("SELECT session_id, data FROM sessions").fetchall()
             conn.close()
-            if row:
-                session = json.loads(row[0])
-                sessions[session_id] = session
+            for sid, raw in rows:
+                s = json.loads(raw)
+                if s.get("claim_code") == code:
+                    found_id = sid
+                    found_session = s
+                    sessions[sid] = s  # belleğe yükle
+                    break
         except Exception:
             pass
 
-    if not session:
-        raise HTTPException(status_code=404, detail="Oturum bulunamadı veya süresi dolmuş.")
+    if not found_id or not found_session:
+        raise HTTPException(status_code=404, detail="Geçersiz kod. Lütfen mülakat sonunda gösterilen 6 haneli kodu doğru girin.")
 
-    if session.get("patient_id"):
-        # Zaten bir kullanıcıya bağlı — aynı kullanıcıysa sorun yok
-        if str(session["patient_id"]) == str(current_user["user_id"]):
-            return {"status": "already_claimed", "session_id": session_id}
-        raise HTTPException(status_code=409, detail="Bu oturum zaten başka bir hesaba bağlı.")
+    if found_session.get("patient_id"):
+        if str(found_session["patient_id"]) == str(current_user["user_id"]):
+            return {"status": "already_claimed", "session_id": found_id,
+                    "patient_name": found_session.get("patient_name", "")}
+        raise HTTPException(status_code=409, detail="Bu kod zaten başka bir hesaba bağlı.")
 
-    session["patient_id"] = current_user["user_id"]
-    db_save_session(session_id, session)
-    print(f"[Claim] Session {session_id[:8]}... -> user {current_user['user_id']}")
-    return {"status": "claimed", "session_id": session_id}
+    found_session["patient_id"] = current_user["user_id"]
+    found_session["claim_code"] = None   # kodu tüket — bir kez kullanılabilir
+    db_save_session(found_id, found_session)
+    print(f"[Claim] {code} -> session {found_id[:8]}... -> user {current_user['user_id']}")
+    return {"status": "claimed", "session_id": found_id,
+            "patient_name": found_session.get("patient_name", "")}
 
 
 @app.post("/api/session/answer", response_model=SessionResponse)

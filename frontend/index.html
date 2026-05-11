@@ -851,6 +851,14 @@ async function _doStartInterview(name, age, gender, vitals=null){
     }
     const data = await res.json();
     sessionId = data.session_id;
+    // Misafir mülakatı için claim_code'u sakla
+    if(data.claim_code){
+      localStorage.setItem('pending_claim_code', data.claim_code);
+      localStorage.setItem('pending_session_id', data.session_id);
+    } else {
+      localStorage.removeItem('pending_claim_code');
+      localStorage.removeItem('pending_session_id');
+    }
     updateProgress(data.step, data.total_steps);
     addAIMessage(data.question);
   } catch(e) {
@@ -1005,6 +1013,8 @@ async function fetchSummary(){
       }
     }
 
+    // claim_code'u summary verisine de ekle (summary.html'de gösterilecek)
+    data.claim_code = localStorage.getItem('pending_claim_code') || null;
     localStorage.setItem('anamnez_summary', JSON.stringify(data));
     window.location.href='summary.html';
   } catch {

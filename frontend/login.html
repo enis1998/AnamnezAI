@@ -215,23 +215,8 @@ function hideErr() {
 async function saveAndRedirect(data) {
   localStorage.setItem('anamnez_token', data.access_token);
   localStorage.setItem('anamnez_user', JSON.stringify(data.user));
-
-  // Misafir mülakatı varsa kullanıcıya bağla
-  const pendingSession = localStorage.getItem('pending_session_id');
-  if (pendingSession && data.user.role === 'patient') {
-    try {
-      await fetch(`${API}/api/session/claim`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json','Authorization':'Bearer '+data.access_token},
-        body: JSON.stringify({session_id: pendingSession})
-      });
-    } catch(e){}
-    localStorage.removeItem('pending_session_id');
-    // Mülakat özetine geri dön
-    window.location.href = 'summary.html';
-    return;
-  }
-
+  // pending_claim_code localStorage'da çalınmış olabilir — güvenlik için temizle
+  // (kullanıcı artık Geçmişim sayfasından kodu girerek ekleyecek)
   const role = data.user.role;
   const next = new URLSearchParams(window.location.search).get('next');
   if (next) { window.location.href = next + '.html'; return; }

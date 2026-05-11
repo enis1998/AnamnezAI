@@ -81,24 +81,40 @@ tailwind.config={theme:{extend:{colors:{
 
 <main class="pt-16 pb-16 px-4 max-w-3xl mx-auto" id="main-content">
 
-  <!-- ── CLAIM BANNER — misafir kullanıcı için, giriş/kayıt teşvik ── -->
+  <!-- ── CLAIM BANNER — misafir kullanıcı için talep kodu gösterimi ── -->
   <div id="claim-banner" class="hidden mb-5 fade">
-    <div class="card p-4 flex items-start gap-3" style="border-left:4px solid #006a68;background:linear-gradient(135deg,#f0faf9,#fff)">
-      <span class="material-symbols-outlined msym-fill text-sec text-[28px] flex-shrink-0 mt-0.5">bookmark_add</span>
-      <div class="flex-1 min-w-0">
-        <p class="font-head font-bold text-pri text-[14px] mb-0.5">Bu mülakatı geçmişinize kaydedin</p>
-        <p class="text-[12px] text-onsv mb-3">Giriş yaparsanız bu mülakat otomatik olarak hesabınıza eklenecek ve geçmişinizden erişebileceksiniz.</p>
-        <div class="flex flex-wrap gap-2">
-          <a href="login.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[12px] font-bold hover:opacity-90 transition-all">
-            <span class="material-symbols-outlined msym text-[15px]">login</span>Giriş Yap
-          </a>
-          <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-[12px] font-bold hover:opacity-90 transition-all">
-            <span class="material-symbols-outlined msym text-[15px]">person_add</span>Kayıt Ol
-          </a>
-          <button onclick="document.getElementById('claim-banner').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-medium hover:bg-surfch transition-all">
-            Şimdi değil
-          </button>
+    <div class="card p-5" style="border-left:4px solid #006a68;background:linear-gradient(135deg,#f0faf9,#fff)">
+      <div class="flex items-start gap-3 mb-4">
+        <span class="material-symbols-outlined msym-fill text-sec text-[28px] flex-shrink-0 mt-0.5">bookmark_add</span>
+        <div>
+          <p class="font-head font-bold text-pri text-[14px] mb-0.5">Mülakatınızı hesabınıza ekleyin</p>
+          <p class="text-[12px] text-onsv">Aşağıdaki kodu not alın. Giriş yaptıktan sonra bu kodu "Geçmişim" sayfasına girerek mülakatınızı hesabınıza ekleyebilirsiniz.</p>
         </div>
+      </div>
+      <!-- Büyük kod gösterimi -->
+      <div class="flex items-center justify-center gap-3 mb-4 p-4 rounded-2xl bg-pri/5 border-2 border-dashed border-sec/40">
+        <div class="text-center">
+          <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1">Mülakat Kodunuz</p>
+          <div class="flex items-center gap-2">
+            <span id="claim-code-display" class="font-head font-bold text-pri tracking-[0.3em]" style="font-size:32px;letter-spacing:0.25em">------</span>
+            <button onclick="copyClaimCode()" id="copy-code-btn" title="Kopyala"
+              class="p-2 rounded-xl bg-sec/10 hover:bg-sec/20 transition-all text-sec">
+              <span class="material-symbols-outlined msym text-[18px]">content_copy</span>
+            </button>
+          </div>
+          <p class="text-[10px] text-onsv mt-1 opacity-60">Bu kodu kaydettikten sonra giriş yapabilirsiniz</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="login.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[12px] font-bold hover:opacity-90 transition-all">
+          <span class="material-symbols-outlined msym text-[15px]">login</span>Giriş Yap
+        </a>
+        <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-[12px] font-bold hover:opacity-90 transition-all">
+          <span class="material-symbols-outlined msym text-[15px]">person_add</span>Kayıt Ol
+        </a>
+        <button onclick="document.getElementById('claim-banner').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-medium hover:bg-surfch transition-all">
+          Şimdi değil
+        </button>
       </div>
     </div>
   </div>
@@ -529,7 +545,20 @@ function render(d){
 function showClaimBanner(sessionId){
   const banner = document.getElementById('claim-banner');
   if(!banner) return;
+  // Kodu göster
+  const code = data && data.claim_code ? data.claim_code : localStorage.getItem('pending_claim_code');
+  const display = document.getElementById('claim-code-display');
+  if(display && code) display.textContent = code;
   banner.classList.remove('hidden');
+}
+
+function copyClaimCode(){
+  const code = document.getElementById('claim-code-display')?.textContent;
+  if(!code || code === '------') return;
+  navigator.clipboard.writeText(code).then(()=>{
+    const btn = document.getElementById('copy-code-btn');
+    if(btn){ btn.innerHTML='<span class="material-symbols-outlined msym text-[18px]">check</span>'; setTimeout(()=>{btn.innerHTML='<span class="material-symbols-outlined msym text-[18px]">content_copy</span>';},1800); }
+  });
 }
 
 

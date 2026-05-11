@@ -209,6 +209,27 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px #006a6
           <span class="material-symbols-outlined msym text-pri">history</span>
           Ziyaret Geçmişi
         </h2>
+
+        <!-- Kod ile mülakatı ekle -->
+        <div class="card p-5" style="border-left:4px solid #006a68;background:linear-gradient(135deg,#f0faf9,#fff)">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined msym-fill text-sec text-[22px]">add_circle</span>
+            <p class="font-head font-bold text-pri text-[14px]">Mülakatı Hesabıma Ekle</p>
+          </div>
+          <p class="text-[12px] text-onsv mb-3">Misafir olarak yaptığınız mülakatın sonunda gösterilen 6 haneli kodu girerek geçmişinize ekleyin.</p>
+          <div class="flex gap-2">
+            <input id="inp-claim-code" type="text" maxlength="6" placeholder="K7M2P9"
+              class="flex-1 px-4 py-2.5 border-2 border-surfc rounded-xl text-[16px] font-bold tracking-[0.2em] uppercase text-center focus:border-sec transition-all bg-white"
+              oninput="this.value=this.value.toUpperCase()"
+              onkeydown="if(event.key==='Enter')claimWithCode()"/>
+            <button onclick="claimWithCode()" id="btn-claim"
+              class="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-sec text-white font-bold text-[13px] hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined msym text-[16px]">add_link</span>Ekle
+            </button>
+          </div>
+          <p id="claim-msg" class="hidden mt-2 text-[12px] font-semibold"></p>
+        </div>
+
         <div id="visitListFull" class="space-y-3">
           <div class="card p-6 text-center">
             <span class="material-symbols-outlined msym text-[40px] text-ouv mb-2 block">inbox</span>
@@ -634,6 +655,43 @@ async function saveProfile(){
     btn.disabled=false;
     btn.innerHTML='<span class="material-symbols-outlined msym text-[16px]">save</span> Kaydet';
   }
+}
+
+async function claimWithCode(){
+  const inp = document.getElementById('inp-claim-code');
+  const btn = document.getElementById('btn-claim');
+  const code = inp ? inp.value.trim().toUpperCase() : '';
+  if(code.length !== 6){ showClaimMsg('Lütfen 6 haneli kodu eksiksiz girin.','err'); return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined msym spin text-[16px]">refresh</span>';
+  try {
+    const r = await fetch(`${API}/api/session/claim`,{
+      method:'POST',
+      headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},
+      body: JSON.stringify({claim_code: code})
+    });
+    const d = await r.json();
+    if(r.ok){
+      const nm = d.patient_name ? ` (${d.patient_name})` : '';
+      showClaimMsg(`Mülakat${nm} geçmişinize eklendi!`,'ok');
+      if(inp) inp.value = '';
+      // Listeyi yenile
+      const hr = await fetch(`${API}/api/patient/history`,{headers:{Authorization:`Bearer ${token}`}});
+      if(hr.ok){ const hd=await hr.json(); visitHistory=hd.sessions||hd.history||hd||[]; renderVisits(visitHistory); }
+    } else {
+      showClaimMsg(d.detail || 'Geçersiz kod veya kod zaten kullanılmış.','err');
+    }
+  } catch(e){ showClaimMsg('Sunucu bağlantı hatası.','err'); }
+  finally { btn.disabled=false; btn.innerHTML='<span class="material-symbols-outlined msym text-[16px]">add_link</span>Ekle'; }
+}
+
+function showClaimMsg(text, type){
+  const el = document.getElementById('claim-msg');
+  if(!el) return;
+  el.textContent = text;
+  el.className = 'mt-2 text-[12px] font-semibold ' + (type==='ok' ? 'text-emerald-700' : 'text-red-600');
+  el.classList.remove('hidden');
+  if(type==='ok') setTimeout(()=>el.classList.add('hidden'), 4000);
 }
 
 function openVisitReport(sessionId){
