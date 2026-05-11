@@ -55,6 +55,7 @@ tailwind.config={theme:{extend:{colors:{
     <div class="flex bg-surfc rounded-full p-0.5 gap-0.5 flex-shrink-0">
       <button onclick="setReportLang('tr')" id="rl-tr" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white">TR</button>
       <button onclick="setReportLang('en')" id="rl-en" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">EN</button>
+      <button onclick="setReportLang('ar')" id="rl-ar" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">AR</button>
     </div>
     <button id="pdf-btn" onclick="exportPDF()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sec text-white hover:opacity-90 transition-all text-[12px] font-bold flex-shrink-0">
       <span class="material-symbols-outlined msym text-[15px]">picture_as_pdf</span>
@@ -274,6 +275,35 @@ const I18N = {
     noData:'Summary not found.', goHome:'Go to Home',
     preparingPdf:'Preparing...', patientPanel:'My History', doctorPanel:'Doctor Panel',
     newInterview:'New Interview', pdfBtnBottom:'Download PDF', printBtnBottom:'Print',
+  },
+  ar:{
+    loading:'جارٍ تحميل التقرير...',
+    pdfBtn:'تنزيل PDF', printBtn:'طباعة', newBtn:'مقابلة جديدة', panelBtn:'سجلاتي', docBtn:'لوحة الطبيب',
+    clinicalReport:'تقرير الملخص السريري', yearsOld:'سنة',
+    triageLevel:'مستوى الفرز', aiScore:'نتيجة الذكاء الاصطناعي',
+    urgencyFlags:'علامات الطوارئ',
+    vitals:'العلامات الحيوية', bp:'ضغط الدم', pulse:'النبض', temp:'الحرارة', spo2:'SpO2', rr:'معدل التنفس',
+    imageFindings:'نتائج الصورة',
+    chiefComplaint:'الشكوى الرئيسية',
+    narrative:'السرد السريري Gemma 4', loading2:'جارٍ التحميل...', streamDone:'Gemma 4 ✓',
+    symptomsSummary:'ملخص الأعراض', doctorNotes:'ملاحظات للطبيب',
+    possibleConditions:'التشخيصات المحتملة', recommendedAction:'الإجراء الموصى به',
+    trustLayer:'الأدلة السريرية ومصادر الإرشادات',
+    trustEvidence:'النتائج السريرية الداعمة لقرار الفرز',
+    trustGuidelines:'الإرشادات السريرية المُطبَّقة',
+    trustDoctorWarn:'⚕️ يجب مراجعة هذا التقرير من قِبَل طبيب مرخَّص. الفرز بالذكاء الاصطناعي لا يُغني عن التقييم السريري.',
+    trustSelfWarn:'⛔ إدارة هذه الأعراض ذاتياً ليست آمنة. التقييم الطبي ضروري.',
+    steps:'الخطوات التالية',
+    step1:'قم بتنزيل هذا التقرير أو طباعته وعرضه على طبيبك.',
+    step2:'توجَّه إلى غرفة الطوارئ أو مكتب المواعيد بناءً على مستوى الفرز.',
+    step3:'إذا تفاقمت الأعراض، اذهب إلى الطوارئ فوراً.',
+    stepWarn:'هذا التقرير أنشأه الذكاء الاصطناعي؛ راجع طبيبك للتشخيص النهائي.',
+    footer:'⚠️ هذا التقرير أنشأه Gemma 4 AI. لا يُعدّ تشخيصاً طبياً.',
+    triage:{RED:'طارئ',YELLOW:'عاجل',GREEN:'روتيني'},
+    streamErr:'تعذّر بدء تيار السرد.', connErr:'فشل الاتصال. يُعرض ملخص الأعراض.',
+    noData:'لم يُعثَر على الملخص.', goHome:'العودة للرئيسية',
+    preparingPdf:'جارٍ الإعداد...', patientPanel:'سجلاتي', doctorPanel:'لوحة الطبيب',
+    newInterview:'مقابلة جديدة', pdfBtnBottom:'تنزيل PDF', printBtnBottom:'طباعة',
   }
 };
 
@@ -282,14 +312,17 @@ function t(key){ return (I18N[reportLang]||I18N.tr)[key]||key; }
 function applyLangUI(){
   const m={'txt-pdf-btn':'pdfBtn','txt-print-btn':'printBtn','txt-new-btn':'newBtn','txt-panel-btn':'panelBtn','txt-doc-btn':'docBtn','txt-loading':'loading'};
   Object.entries(m).forEach(([id,k])=>{ const el=document.getElementById(id); if(el) el.textContent=t(k); });
-  const rlTr=document.getElementById('rl-tr'), rlEn=document.getElementById('rl-en');
+  const rlTr=document.getElementById('rl-tr'), rlEn=document.getElementById('rl-en'), rlAr=document.getElementById('rl-ar');
   if(rlTr) rlTr.className=`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${reportLang==='tr'?'bg-pric text-white':'text-onsv'}`;
   if(rlEn) rlEn.className=`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${reportLang==='en'?'bg-pric text-white':'text-onsv'}`;
+  if(rlAr) rlAr.className=`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${reportLang==='ar'?'bg-pric text-white':'text-onsv'}`;
 }
 
 function setReportLang(lang){
   reportLang=lang;
   localStorage.setItem('report_lang',lang);
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = lang;
   applyLangUI();
   const rc=document.getElementById('report-content');
   if(rc) rc.remove();

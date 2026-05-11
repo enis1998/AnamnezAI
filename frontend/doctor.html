@@ -59,10 +59,10 @@ tailwind.config={theme:{extend:{colors:{
 
     <nav class="flex-1 p-3 space-y-1 pt-4">
       <div class="flex items-center gap-2.5 bg-surfc text-pric font-semibold rounded-xl px-3 py-2.5 text-[13px]">
-        <span class="material-symbols-outlined msym text-[17px]">dashboard</span>Triaj Paneli
+        <span class="material-symbols-outlined msym text-[17px]">dashboard</span><span id="txt-nav-triage">Triaj Paneli</span>
       </div>
       <div class="flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors cursor-pointer" onclick="loadQueue()">
-        <span class="material-symbols-outlined msym text-[17px]">refresh</span>Listeyi Yenile
+        <span class="material-symbols-outlined msym text-[17px]">refresh</span><span id="txt-nav-refresh">Listeyi Yenile</span>
       </div>
 
       <!-- Sprint 13: Kiosk Yönetim -->
@@ -71,11 +71,11 @@ tailwind.config={theme:{extend:{colors:{
       </div>
       <button onclick="kioskLock(true)"
         class="w-full flex items-center gap-2.5 text-onsv hover:bg-errc hover:text-err rounded-xl px-3 py-2.5 text-[13px] transition-colors">
-        <span class="material-symbols-outlined msym text-[17px]">lock</span>Kiosk'u Kilitle
+        <span class="material-symbols-outlined msym text-[17px]">lock</span><span id="txt-nav-lock">Kiosk'u Kilitle</span>
       </button>
       <button onclick="kioskLock(false)"
         class="w-full flex items-center gap-2.5 text-onsv hover:bg-secc hover:text-sec rounded-xl px-3 py-2.5 text-[13px] transition-colors">
-        <span class="material-symbols-outlined msym text-[17px]">lock_open</span>Kiosk'u Aç
+        <span class="material-symbols-outlined msym text-[17px]">lock_open</span><span id="txt-nav-unlock">Kiosk'u Aç</span>
       </button>
 
       <!-- Admin Paneli -->
@@ -153,7 +153,7 @@ tailwind.config={theme:{extend:{colors:{
           <span class="material-symbols-outlined msym text-pri text-[22px]">menu</span>
         </button>
         <div>
-          <h1 class="font-head font-bold text-pri text-[15px] sm:text-[17px]">Klinik Triaj Paneli</h1>
+          <h1 class="font-head font-bold text-pri text-[15px] sm:text-[17px]" id="txt-panel-title">Klinik Triaj Paneli</h1>
           <p class="text-[11px] text-onsv hidden sm:block" id="txt-date"></p>
         </div>
       </div>
@@ -169,12 +169,18 @@ tailwind.config={theme:{extend:{colors:{
         </div>
         <button onclick="loadQueue()"
           class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
-          <span class="material-symbols-outlined msym text-[15px]">refresh</span>Yenile
+          <span class="material-symbols-outlined msym text-[15px]">refresh</span><span id="txt-refresh-btn">Yenile</span>
         </button>
         <a href="kiosk.html" target="_blank"
           class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sec text-white text-[12px] font-bold hover:bg-pric transition-all">
-          <span class="material-symbols-outlined msym text-[15px]">monitor</span>Kiosk Ekranı
+          <span class="material-symbols-outlined msym text-[15px]">monitor</span><span id="txt-kiosk-btn">Kiosk Ekranı</span>
         </a>
+        <!-- Dil Seçici -->
+        <div class="flex bg-surfc rounded-full p-0.5 gap-0.5">
+          <button onclick="setLang('tr')" id="dlbtn-tr" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white">TR</button>
+          <button onclick="setLang('en')" id="dlbtn-en" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">EN</button>
+          <button onclick="setLang('ar')" id="dlbtn-ar" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">AR</button>
+        </div>
       </div>
     </header>
 
@@ -1162,6 +1168,52 @@ checkModelStatus();  // Top-bar model durum pill
 setInterval(checkStatus, 15000);
 setInterval(checkModelStatus, 30000);  // 30sn'de bir model durumu güncelle
 // SSE yoksa backup polling (sadece retry bağlantıda)
+
+// ── Dil Desteği (TR / EN / AR) ──────────────────────────────────
+let uiLang = localStorage.getItem('ui_lang') || 'tr';
+
+const DL = {
+  tr:{
+    navTriage:'Triaj Paneli', navRefresh:'Listeyi Yenile', navLock:"Kiosk'u Kilitle", navUnlock:"Kiosk'u Aç",
+    panelTitle:'Klinik Triaj Paneli', refreshBtn:'Yenile', kioskBtn:'Kiosk Ekranı',
+    logout:'Çıkış Yap',
+  },
+  en:{
+    navTriage:'Triage Panel', navRefresh:'Refresh List', navLock:'Lock Kiosk', navUnlock:'Unlock Kiosk',
+    panelTitle:'Clinical Triage Panel', refreshBtn:'Refresh', kioskBtn:'Kiosk Screen',
+    logout:'Log Out',
+  },
+  ar:{
+    navTriage:'لوحة الفرز', navRefresh:'تحديث القائمة', navLock:'قفل الكشك', navUnlock:'فتح الكشك',
+    panelTitle:'لوحة الفرز السريري', refreshBtn:'تحديث', kioskBtn:'شاشة الكشك',
+    logout:'تسجيل الخروج',
+  }
+};
+
+function setLang(l){
+  uiLang = l;
+  localStorage.setItem('ui_lang', l);
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = l;
+  const d = DL[l] || DL.tr;
+  const m = {
+    'txt-nav-triage': d.navTriage, 'txt-nav-refresh': d.navRefresh,
+    'txt-nav-lock': d.navLock, 'txt-nav-unlock': d.navUnlock,
+    'txt-panel-title': d.panelTitle, 'txt-refresh-btn': d.refreshBtn,
+    'txt-kiosk-btn': d.kioskBtn,
+  };
+  Object.entries(m).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.textContent = val; });
+  ['dlbtn-tr','dlbtn-en','dlbtn-ar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = id.endsWith(l)
+      ? 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white'
+      : 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
+  });
+}
+
+// Sayfa yüklenince kayıtlı dili uygula
+(function(){ setLang(uiLang); })();
 </script>
 </body>
 </html>

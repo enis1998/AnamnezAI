@@ -42,11 +42,19 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px #006a6
     </div>
     <span class="font-head font-bold text-pri text-[17px]">AnamnezAI</span>
   </a>
-  <button onclick="logout()" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surf border border-surfc text-sm hover:bg-surfc transition-colors">
-    <span class="material-symbols-outlined msym text-[18px] text-sec">account_circle</span>
-    <span id="userName" class="text-ons font-medium hidden sm:inline">Yükleniyor...</span>
-    <span class="material-symbols-outlined msym text-[16px] text-onsv">logout</span>
-  </button>
+  <div class="flex items-center gap-2">
+    <!-- Dil seçici -->
+    <div class="flex bg-surfc rounded-full p-0.5 gap-0.5">
+      <button onclick="setLang('tr')" id="pd-btn-tr" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white">TR</button>
+      <button onclick="setLang('en')" id="pd-btn-en" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">EN</button>
+      <button onclick="setLang('ar')" id="pd-btn-ar" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">AR</button>
+    </div>
+    <button onclick="logout()" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surf border border-surfc text-sm hover:bg-surfc transition-colors">
+      <span class="material-symbols-outlined msym text-[18px] text-sec">account_circle</span>
+      <span id="userName" class="text-ons font-medium hidden sm:inline">Yükleniyor...</span>
+      <span class="material-symbols-outlined msym text-[16px] text-onsv">logout</span>
+    </button>
+  </div>
 </header>
 
 <div class="pt-14 flex min-h-screen pb-16 md:pb-0">
@@ -60,24 +68,24 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px #006a6
     </div>
     <nav class="flex-1 px-3 space-y-1 text-sm">
       <button onclick="showSection('overview')" id="nav-overview" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl nav-active">
-        <span class="material-symbols-outlined msym text-[20px]">dashboard</span>Genel Bakış
+        <span class="material-symbols-outlined msym text-[20px]">dashboard</span><span id="txt-nav-overview">Genel Bakış</span>
       </button>
       <button onclick="showSection('history')" id="nav-history" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
-        <span class="material-symbols-outlined msym text-[20px]">history</span>Ziyaret Geçmişi
+        <span class="material-symbols-outlined msym text-[20px]">history</span><span id="txt-nav-history">Ziyaret Geçmişi</span>
       </button>
       <button onclick="showSection('meds')" id="nav-meds" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
-        <span class="material-symbols-outlined msym text-[20px]">medication</span>İlaçlar
+        <span class="material-symbols-outlined msym text-[20px]">medication</span><span id="txt-nav-meds">İlaçlar</span>
       </button>
       <button onclick="showSection('profile')" id="nav-profile" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
-        <span class="material-symbols-outlined msym text-[20px]">manage_accounts</span>Profil Düzenle
+        <span class="material-symbols-outlined msym text-[20px]">manage_accounts</span><span id="txt-nav-profile">Profil Düzenle</span>
       </button>
     </nav>
     <div class="px-3 mt-auto space-y-2">
       <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-sec text-white hover:bg-pric transition-colors text-sm font-semibold">
-        <span class="material-symbols-outlined msym text-[20px]">add_circle</span>Yeni Mülakat
+        <span class="material-symbols-outlined msym text-[20px]">add_circle</span><span id="txt-new-interview">Yeni Mülakat</span>
       </a>
       <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-errc hover:text-err transition-colors text-sm">
-        <span class="material-symbols-outlined msym text-[20px]">logout</span>Çıkış
+        <span class="material-symbols-outlined msym text-[20px]">logout</span><span id="txt-logout">Çıkış</span>
       </button>
     </div>
   </aside>
@@ -714,6 +722,28 @@ function showToast(msg,isErr=false){
 
 function logout(){localStorage.removeItem('anamnez_token');localStorage.removeItem('anamnez_user');location.href='login.html';}
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+
+// ── Dil Desteği (TR / EN / AR) ──────────────────────────────────
+let pdLang = localStorage.getItem('ui_lang') || 'tr';
+const PDL = {
+  tr:{overview:'Genel Bakış',history:'Ziyaret Geçmişi',meds:'İlaçlar',profile:'Profil Düzenle',newInterview:'Yeni Mülakat',logout:'Çıkış'},
+  en:{overview:'Overview',history:'Visit History',meds:'Medications',profile:'Edit Profile',newInterview:'New Interview',logout:'Log Out'},
+  ar:{overview:'نظرة عامة',history:'سجل الزيارات',meds:'الأدوية',profile:'تعديل الملف',newInterview:'مقابلة جديدة',logout:'خروج'}
+};
+function setLang(l){
+  pdLang = l;
+  localStorage.setItem('ui_lang', l);
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = l;
+  const d = PDL[l] || PDL.tr;
+  const m = {'txt-nav-overview':d.overview,'txt-nav-history':d.history,'txt-nav-meds':d.meds,'txt-nav-profile':d.profile,'txt-new-interview':d.newInterview,'txt-logout':d.logout};
+  Object.entries(m).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.textContent=val;});
+  ['pd-btn-tr','pd-btn-en','pd-btn-ar'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.className=id.endsWith(l)?'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white':'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
+  });
+}
+(function(){ setLang(pdLang); })();
 
 document.addEventListener('DOMContentLoaded',init);
 </script>
