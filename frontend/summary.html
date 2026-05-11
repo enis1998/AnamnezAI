@@ -65,12 +65,12 @@ tailwind.config={theme:{extend:{colors:{
       <span class="hbtn-txt" id="txt-print-btn">Yazdır</span>
     </button>
     <a href="index.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium flex-shrink-0">
-      <span class="material-symbols-outlined msym text-[15px]">add</span>
-      <span class="hbtn-txt" id="txt-new-btn">Yeni Hasta</span>
+      <span class="material-symbols-outlined msym text-[15px]">replay</span>
+      <span class="hbtn-txt" id="txt-new-btn">Yeni Mülakat</span>
     </a>
     <a href="patient_dashboard.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium flex-shrink-0">
-      <span class="material-symbols-outlined msym text-[15px]">dashboard</span>
-      <span class="hbtn-txt" id="txt-panel-btn">Panelim</span>
+      <span class="material-symbols-outlined msym text-[15px]">history</span>
+      <span class="hbtn-txt" id="txt-panel-btn">Geçmişim</span>
     </a>
     <a href="doctor.html" id="btn-goto-doctor" style="display:none" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pric text-white hover:opacity-90 transition-all text-[12px] font-medium flex-shrink-0">
       <span class="material-symbols-outlined msym text-[15px]">local_hospital</span>
@@ -180,7 +180,7 @@ function showPatientCard(d) {
 const I18N = {
   tr:{
     loading:'Rapor yükleniyor...',
-    pdfBtn:'PDF İndir', printBtn:'Yazdır', newBtn:'Yeni Hasta', panelBtn:'Panelim', docBtn:'Doktor Paneli',
+    pdfBtn:'PDF İndir', printBtn:'Yazdır', newBtn:'Yeni Mülakat', panelBtn:'Geçmişim', docBtn:'Doktor Paneli',
     clinicalReport:'Klinik Özet Raporu', yearsOld:'yaşında',
     triageLevel:'Triaj Seviyesi', aiScore:'AI Skoru',
     urgencyFlags:'Acil Uyarı Bayrakları',
@@ -204,12 +204,12 @@ const I18N = {
     triage:{RED:'ACİL',YELLOW:'ACİL / BEKLEYEBİLİR',GREEN:'RUTİN'},
     streamErr:'Narrative akışı başlatılamadı.', connErr:'Bağlantı kurulamadı. Semptom özeti gösteriliyor.',
     noData:'Özet bulunamadı.', goHome:'Anasayfaya Dön',
-    preparingPdf:'Hazırlanıyor...', patientPanel:'Hasta Panelim', doctorPanel:'Doktor Paneli',
-    newInterview:'Yeni Hasta', pdfBtnBottom:'PDF İndir', printBtnBottom:'Yazdır',
+    preparingPdf:'Hazırlanıyor...', patientPanel:'Geçmişim', doctorPanel:'Doktor Paneli',
+    newInterview:'Yeni Mülakat', pdfBtnBottom:'PDF İndir', printBtnBottom:'Yazdır',
   },
   en:{
     loading:'Loading report...',
-    pdfBtn:'Download PDF', printBtn:'Print', newBtn:'New Patient', panelBtn:'My Panel', docBtn:'Doctor Panel',
+    pdfBtn:'Download PDF', printBtn:'Print', newBtn:'New Interview', panelBtn:'My History', docBtn:'Doctor Panel',
     clinicalReport:'Clinical Summary Report', yearsOld:'years old',
     triageLevel:'Triage Level', aiScore:'AI Score',
     urgencyFlags:'Urgency Flags',
@@ -233,8 +233,8 @@ const I18N = {
     triage:{RED:'EMERGENCY',YELLOW:'URGENT',GREEN:'ROUTINE'},
     streamErr:'Could not start narrative stream.', connErr:'Connection failed. Showing symptom summary.',
     noData:'Summary not found.', goHome:'Go to Home',
-    preparingPdf:'Preparing...', patientPanel:'My Panel', doctorPanel:'Doctor Panel',
-    newInterview:'New Patient', pdfBtnBottom:'Download PDF', printBtnBottom:'Print',
+    preparingPdf:'Preparing...', patientPanel:'My History', doctorPanel:'Doctor Panel',
+    newInterview:'New Interview', pdfBtnBottom:'Download PDF', printBtnBottom:'Print',
   }
 };
 
@@ -457,10 +457,10 @@ function render(d){
         <span class="material-symbols-outlined msym text-[16px]">dashboard</span>${t('doctorPanel')}
       </a>
       <a href="patient_dashboard.html" id="patient-panel-btn" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surfc text-pri text-[13px] font-bold hover:bg-ouv/30 transition-all shadow-sm">
-        <span class="material-symbols-outlined msym text-[16px]">person</span>${t('patientPanel')}
+        <span class="material-symbols-outlined msym text-[16px]">history</span>${t('patientPanel')}
       </a>
       <a href="index.html" class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-[13px] font-bold hover:opacity-90 transition-all shadow-sm" style="background:#00475e">
-        <span class="material-symbols-outlined msym text-[16px]">add</span>${t('newInterview')}
+        <span class="material-symbols-outlined msym text-[16px]">replay</span>${t('newInterview')}
       </a>
     </div>
 
