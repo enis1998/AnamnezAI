@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AnamnezAI — Yapay Zeka Destekli Akıllı Hasta Ön Triajı</title>
 <meta name="description" content="Gemma 4 ile güçlendirilmiş yapay zeka hasta ön triaj platformu. Doktorunuz sizi görmeden önce AI sizi dinler, analiz eder ve klinik özet sunar."/>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script src="vendor/tailwind.min.js"></script>
+<link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
+<link href="vendor/fonts/material_symbols_local.css" rel="stylesheet"/>
 <script>
 tailwind.config = {
   theme: { extend: {
@@ -216,7 +216,7 @@ tailwind.config = {
 
         <!-- Sub -->
         <p class="text-white/70 text-[16px] leading-relaxed mb-8 max-w-lg fade-up-2" id="txt-hero-sub" data-i18n="hero.sub">
-          AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, tanı kalitesini artırın.
+          AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, doktor öncesi klinik bilgiyi daha hızlı ve yapılandırılmış hale getirin.
         </p>
 
         <!-- CTA buttons -->
@@ -414,7 +414,7 @@ tailwind.config = {
             Türkiye, son 10 yılda dünyada en fazla mülteci kabul eden ülkeler arasına girdi. Güneydoğu illeri — Gaziantep, Şanlıurfa, Hatay, Mersin — yalnızca sınır ötesi göç yollarının değil, Arapça konuşan milyonlarca insanın artık yaşam kurduğu şehirler hâline geldi. Bu hastalar kliniğe geldiğinde çifte engelle karşılaşıyorlar: hem hasta hem de semptomlarını Türkçe aktaramıyorlar. Boyun tutukluğu olan, 39,8°C ateşli küçük bir çocuk, iletişim bariyeri yüzünden <strong>YEŞİL</strong> olarak kodlanıyor. Öte yanda Muğla ve Bodrum'da turizm sezonunda on binlerce İngilizce konuşan yabancı hasta acil servislere başvuruyor; hemşire "Ne zamandan beri?" sorusunu sorduğunda hiçbiri yanıt veremiyor.
           </p>
           <p class="text-ons text-[14px] leading-relaxed mb-4" data-i18n-html="s2.body2">
-            AnamnezAI kiosku <strong>üç dilde konuşuyor</strong> — Türkçe, İngilizce ve Arapça. Gemma 4, salt çeviri değil gerçek anlamda doğal konuşma kuruyor. Hasta kendi dilinde cevap veriyor, doktor her zaman Türkçe klinik özet okuyor. Muğla'da ya da Şanlıurfa'da, turizmde ya da mülteci yoğunluğunda — dil farkı artık tanıyı etkilemiyor.
+            AnamnezAI kiosku <strong>üç dilde konuşuyor</strong> — Türkçe, İngilizce ve Arapça. Gemma 4, salt çeviri değil gerçek anlamda doğal konuşma kuruyor. Hasta kendi dilinde cevap veriyor, doktor her zaman Türkçe klinik özet okuyor. Muğla'da ya da Şanlıurfa'da, turizmde ya da mülteci yoğunluğunda — dil farkı artık yapılandırılmış anamnez alınmasını engellemez.
           </p>
           <div class="flex flex-wrap gap-2">
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold" data-i18n="s2.l1">🇹🇷 Türkçe</span>
@@ -586,7 +586,7 @@ tailwind.config = {
           <span class="material-symbols-outlined msym-fill text-white text-[24px]">assignment</span>
         </div>
         <h3 class="font-head font-bold text-pri text-[17px] mb-2" data-i18n="f3.t">Klinik Triaj Raporu</h3>
-        <p class="text-onsv text-[13px] leading-relaxed" data-i18n="f3.d">MTS (Manchester Triage System) protokolüne uygun öncelik skoru, olası tanı listesi ve vital bulgular içeren yapılandırılmış klinik özet.</p>
+        <p class="text-onsv text-[13px] leading-relaxed" data-i18n="f3.d">MTS (Manchester Triage System) protokolüne uygun öncelik skoru, olası klinik değerlendirme başlıkları ve vital bulgular içeren yapılandırılmış klinik özet.</p>
         <div class="mt-4 flex flex-wrap gap-2">
           <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold" data-i18n="f3.tag1">MTS Protokolü</span>
           <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">PDF Export</span>
@@ -703,7 +703,7 @@ tailwind.config = {
         </div>
         <div class="step-line hidden md:block"></div>
         <h4 class="font-head font-bold text-pri text-[14px] mb-1" data-i18n="step.4t">Klinik Özet</h4>
-        <p class="text-onsv text-[12px] leading-relaxed" data-i18n="step.4d">MTS triaj skoru, ön değerlendirme özeti ve öneriler içeren yapılandırılmış rapor oluşturulur.</p>
+        <p class="text-onsv text-[12px] leading-relaxed" data-i18n="step.4d">MTS triaj skoru, olası klinik değerlendirme başlıkları ve öneriler içeren yapılandırılmış rapor oluşturulur.</p>
       </div>
 
       <!-- Step 5 -->
@@ -1112,7 +1112,7 @@ const LP_I18N = {
     // hero
     'hero.badge':'Gemma 4 · MedGemma Vision ile Güçlendirildi',
     'hero.h1':'Doktorunuz sizi görmeden önce','hero.h1b':'AI sizi dinler.',
-    'hero.sub':'AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, tanı kalitesini artırın.',
+    'hero.sub':'AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, doktor öncesi klinik bilgiyi daha hızlı ve yapılandırılmış hale getirin.',
     'hero.cta1':'Hemen Deneyin — Ücretsiz','hero.cta2':'Nasıl Çalışır',
     'hero.trust.gdpr':'GDPR Uyumlu','hero.trust.local':'Yerel AI — Veri Dışarı Çıkmaz',
     'hero.trust.lang':'TR · EN · AR — Mülteci yoğunluğu için Arapça desteği',
@@ -1130,7 +1130,7 @@ const LP_I18N = {
     's1.body':'Bekleme salonunda 47 kişi var. Tek bir triaj hemşiresi görevde. 66 yaşında bir adam içeri giriyor — göğüs ağrısı, terleme ve sol kola yayılan bir sızı. "Kas ağrısı olmalı" diye düşünerek sabahtan beri bekliyor. Sessizce numara çekiyor. Önünde öksürüklü bir bebek, burnu kırık bir genç ve baş ağrısı olan bir kadın var. Hemşire herkese aynı 6 soruyu aynı sırayla soruyor. <strong>22 dakika sonra</strong> sırası geldiğinde adam STEMI geçiriyor.',
     's1.stat':'Türkiye\'de yılda 117 milyon acil servise erişim — triaj hatası önlenebilir bir ölüm sebebi',
     's2.loc':'Türkiye Geneli — Dil Bariyeri Kalktı','s2.sub':'Muğla, Şanlıurfa, Gaziantep, Antalya, Hatay, Mardin...',
-    's2.body1':'Türkiye, son 10 yılda dünyada en fazla mülteci kabul eden ülkeler arasına girdi. Güneydoğu illeri — Gaziantep, Şanlıurfa, Hatay, Mersin — yalnızca sınır ötesi göç yollarının değil, Arapça konuşan milyonlarca insanın artık yaşam kurduğu şehirler hâline geldi. Bu hastalar kliniğe geldiğinde çifte engelle karşılaşıyorlar: hem hasta hem de semptomlarını Türkçe aktaramıyorlar. Boyun tutukluğu olan, 39,8°C ateşli küçük bir çocuk, iletişim bariyeri yüzünden <strong>YEŞİL</strong> olarak kodlanıyor. Öte yanda Muğla ve Bodrum\'da turizm sezonunda on binlerce İngilizce konuşan yabancı hasta acil servislere başvuruyor; hemşire "Ne zamandan beri?" sorusunu sorduğunda hiçbiri yanıt veremiyor.',
+    's2.body1':'Türkiye, son 10 yılda dünyada en fazla mülteci kabul eden ülkeler arasına girdi. Güneydoğu illeri — Gaziantep, Şanlıurfa, Hatay, Mersin — yalnızca sınır ötesi göç yollarının değil, Arapça konuşan milyonlarca insanın artık yaşam kurduğu şehirler hâline geldi. Bu hastalar kliniğe geldiğinde çifte engelle karşılaşıyorlar: hem hasta hem de semptomlarını Türkçe aktaramıyorlar. Boyun tutukluğu olan, 39,8°C ateşli küçük bir çocuk, iletişim bariyeri yüzünden <strong>YEŞİL</strong> olarak kodlanıyor. Öte yanda Muğla ve Bodrum'da turizm sezonunda on binlerce İngilizce konuşan yabancı hasta acil servislere başvuruyor; hemşire "Ne zamandan beri?" sorusunu sorduğunda hiçbiri yanıt veremiyor.',
     's2.body2':'AnamnezAI kiosku <strong>üç dilde konuşuyor</strong> — Türkçe, İngilizce ve Arapça. Gemma 4, salt çeviri değil gerçek anlamda doğal konuşma kuruyor. Hasta kendi dilinde cevap veriyor, doktor her zaman Türkçe klinik özet okuyor. Muğla\'da ya da Şanlıurfa\'da, turizmde ya da mülteci yoğunluğunda — dil farkı artık yapılandırılmış anamnez alınmasını engellemez.',
     's2.l1':'🇹🇷 Türkçe','s2.l2':'🇬🇧 English','s2.l3':'🇸🇦 العربية — Şu an aktif',
     's3.title':'Kiosk modu — Kapıdan girersin, doktor seni zaten bekler',
@@ -1155,7 +1155,7 @@ const LP_I18N = {
     'feat.sub':'Hasta kabulünden klinik özete kadar tüm ön triaj sürecini yapay zeka ile otomatize eden tek platform.',
     'f1.t':'Akıllı AI Mülakat','f1.d':'Gemma 4 tabanlı dil modeliyle semptomlarınızı derinlemesine anlayan, bağlamsal ve klinik açıdan anlamlı sorular soran konuşma akışı.','f1.tag':'Adaptif Soru',
     'f2.t':'Tıbbi Görüntü Analizi','f2.d':'MedGemma Vision ile yara, cilt döküntüsü, EKG şeridi veya röntgen görüntüleri anında analiz edilir ve klinik rapora eklenir.',
-    'f3.t':'Klinik Triaj Raporu','f3.d':'MTS (Manchester Triage System) protokolüne uygun öncelik skoru, olası tanı listesi ve vital bulgular içeren yapılandırılmış klinik özet.','f3.tag1':'MTS Protokolü',
+    'f3.t':'Klinik Triaj Raporu','f3.d':'MTS (Manchester Triage System) protokolüne uygun öncelik skoru, olası klinik değerlendirme başlıkları ve vital bulgular içeren yapılandırılmış klinik özet.','f3.tag1':'MTS Protokolü',
     'f4.t':'Sesli Giriş & TTS','f4.d':'Web Speech API ile Türkçe/İngilizce/Arapça sesli cevap girilebilir. Text-to-Speech ile AI soruları sesli dinlenebilir. Kiosk modunda ideal.',
     'f5.t':'Doktor & Admin Paneli','f5.d':'Tüm hasta oturumları, triaj skorları, geçmiş raporlar ve klinik inceleme arayüzünü içeren kapsamlı yönetim panosu.','f5.tag1':'Rol Tabanlı Erişim',
     'f6.t':'PWA — Offline Destek','f6.d':'Progressive Web App olarak telefona veya tablete kurulabilir. Kiosk modunda dokunmatik ekranlarda sorunsuz çalışır. İnternet bağlantısı gerekmez.','f6.tag':'Kiosk Modu',
@@ -1165,7 +1165,7 @@ const LP_I18N = {
     'step.1t':'Hasta Kaydı','step.1d':'İsim, yaş, cinsiyet ve isteğe bağlı vital bulgular girilir.',
     'step.2t':'AI Mülakatı','step.2d':'Gemma 4, klinik açıdan önemli 5 soru sorar ve cevapları analiz eder.',
     'step.3t':'Görüntü Analizi','step.3d':'İsteğe bağlı: MedGemma Vision ile tıbbi görüntü yüklenir ve analiz edilir.',
-    'step.4t':'Klinik Özet','step.4d':'MTS triaj skoru, ön değerlendirme özeti ve öneriler içeren yapılandırılmış rapor oluşturulur.',
+    'step.4t':'Klinik Özet','step.4d':'MTS triaj skoru, olası klinik değerlendirme başlıkları ve öneriler içeren yapılandırılmış rapor oluşturulur.',
     'step.5t':'Doktor Görüşmesi','step.5d':'Doktor, hazır klinik özetle hastayı çok daha kısa sürede değerlendirir.',
     'res.1':'Daha kısa hasta kabul süresi','res.2':'Artmış triaj doğruluğu','res.3':'Kesintisiz hizmet kapasitesi',
     // technology
@@ -1263,6 +1263,7 @@ const LP_I18N = {
     'f4.t':'Voice Input & TTS','f4.d':'Voice answers in Turkish/English/Arabic via Web Speech API. Text-to-Speech lets patients listen to AI questions. Ideal for kiosk mode.',
     'f5.t':'Doctor & Admin Panel','f5.d':'Comprehensive management dashboard with all patient sessions, triage scores, historical reports, and clinical review interface.','f5.tag1':'Role-Based Access',
     'f6.t':'PWA — Offline Support','f6.d':'Installable as a Progressive Web App on phones or tablets. Runs smoothly on touchscreens in kiosk mode. No internet connection required.','f6.tag':'Kiosk Mode',
+    // how it works
     'how.chip':'Step by Step','how.h2':'How does it work?',
     'how.sub':'The entire process from patient intake to clinical report is completed in an average of <strong>5–8 minutes</strong>.',
     'step.1t':'Patient Registration','step.1d':'Name, age, gender and optional vital signs are entered.',
@@ -1360,6 +1361,7 @@ const LP_I18N = {
     'f4.t':'الإدخال الصوتي وتحويل النص','f4.d':'إدخال إجابات صوتية بالعربية/الإنجليزية/التركية عبر Web Speech API. يمكن الاستماع لأسئلة الذكاء الاصطناعي. مثالي لوضع الكشك.',
     'f5.t':'لوحة تحكم الطبيب والمدير','f5.d':'لوحة إدارة شاملة تضم جميع جلسات المرضى ودرجات الفرز والتقارير التاريخية وواجهة المراجعة السريرية.','f5.tag1':'وصول قائم على الأدوار',
     'f6.t':'PWA — دعم بدون إنترنت','f6.d':'قابل للتثبيت كتطبيق ويب تدريجي على الهاتف أو الجهاز اللوحي. يعمل بسلاسة على شاشات اللمس في وضع الكشك.','f6.tag':'وضع الكشك',
+    // how it works
     'how.chip':'خطوة بخطوة','how.h2':'كيف يعمل؟',
     'how.sub':'تكتمل العملية بأكملها من استقبال المريض إلى التقرير السريري في المتوسط <strong>خلال 5-8 دقائق</strong>.',
     'step.1t':'تسجيل المريض','step.1d':'يُدخَل الاسم والعمر والجنس والعلامات الحيوية الاختيارية.',

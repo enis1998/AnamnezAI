@@ -28,6 +28,7 @@ import csv
 import secrets
 import string
 from datetime import datetime
+import time as _time
 
 # Load .env file if present
 try:
@@ -64,6 +65,9 @@ from auth import (
     hash_password, audit,
     UserCreate, UserLogin, Token, UserOut, Role
 )
+
+# Safety Guardrails modülü
+from safety import apply_guardrails, compute_clinical_completeness, build_evidence_map
 
 # ─────────────────────────────────────────────
 #  Config
@@ -240,81 +244,68 @@ def _adaptive_steps(complaint: str, age: int, lang: str = "tr") -> int:
 
 
 # ─────────────────────────────────────────────
-#  SQLite Persistence
+#  PostgreSQL Persistence
 # ─────────────────────────────────────────────
-_db_lock = threading.Lock()
-
-def init_db():
-    """SQLite veritabanını başlatır ve tabloları oluşturur."""
-    with _db_lock:
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS sessions (
-                    session_id TEXT PRIMARY KEY,
-                    data TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                )
-            """)
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS summaries (
-                    session_id TEXT PRIMARY KEY,
-                    data TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                )
-            """)
-            conn.commit()
 
 def db_save_session(session_id: str, data: dict):
-    """Oturumu SQLite'a kaydeder (INSERT OR REPLACE)."""
-    with _db_lock:
-        try:
-            with sqlite3.connect(DB_PATH) as conn:
-                conn.execute(
-                    "INSERT OR REPLACE INTO sessions (session_id, data, created_at) VALUES (?, ?, ?)",
-                    (session_id, json.dumps(data, ensure_ascii=False),
-                     data.get("created_at", datetime.utcnow().isoformat()))
-                )
-                conn.commit()
-        except Exception as e:
-            print(f"[DB] Session save error: {e}")
+    """Oturumu PostgreSQL'e kaydeder (upsert)."""
+    try:
+        with get_cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO sessions (session_id, data, created_at)
+                VALUES (%s, %s::jsonb, %s)
+                ON CONFLICT (session_id) DO UPDATE SET data = EXCLUDED.data
+                """,
+                (session_id, json.dumps(data, ensure_ascii=False),
+                 data.get("created_at", datetime.utcnow().isoformat()))
+            )
+    except Exception as e:
+        print(f"[DB] Session save error: {e}")
 
 def db_save_summary(session_id: str, data: dict):
-    """Klinik özeti SQLite'a kaydeder."""
-    with _db_lock:
-        try:
-            with sqlite3.connect(DB_PATH) as conn:
-                conn.execute(
-                    "INSERT OR REPLACE INTO summaries (session_id, data, created_at) VALUES (?, ?, ?)",
-                    (session_id, json.dumps(data, ensure_ascii=False),
-                     data.get("generated_at", datetime.utcnow().isoformat()))
-                )
-                conn.commit()
-        except Exception as e:
-            print(f"[DB] Summary save error: {e}")
+    """Klinik özeti PostgreSQL'e kaydeder (upsert)."""
+    try:
+        with get_cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO summaries (session_id, data, created_at)
+                VALUES (%s, %s::jsonb, %s)
+                ON CONFLICT (session_id) DO UPDATE SET data = EXCLUDED.data
+                """,
+                (session_id, json.dumps(data, ensure_ascii=False),
+                 data.get("generated_at", datetime.utcnow().isoformat()))
+            )
+    except Exception as e:
+        print(f"[DB] Summary save error: {e}")
 
 def db_delete_session(session_id: str):
-    """Oturumu ve özetini SQLite'tan siler."""
-    with _db_lock:
-        try:
-            with sqlite3.connect(DB_PATH) as conn:
-                conn.execute("DELETE FROM sessions WHERE session_id=?", (session_id,))
-                conn.execute("DELETE FROM summaries WHERE session_id=?", (session_id,))
-                conn.commit()
-        except Exception as e:
-            print(f"[DB] Delete error: {e}")
+    """Oturumu ve özetini PostgreSQL'den siler."""
+    try:
+        with get_cursor() as cur:
+            cur.execute("DELETE FROM sessions WHERE session_id = %s", (session_id,))
+            cur.execute("DELETE FROM summaries WHERE session_id = %s", (session_id,))
+    except Exception as e:
+        print(f"[DB] Delete error: {e}")
 
 def db_load_all():
-    """Tüm oturum ve özetleri SQLite'tan belleğe yükler."""
+    """Tüm oturum ve özetleri PostgreSQL'den belleğe yükler."""
     try:
-        with sqlite3.connect(DB_PATH) as conn:
-            for sid, data_str in conn.execute("SELECT session_id, data FROM sessions").fetchall():
+        with get_cursor() as cur:
+            cur.execute("SELECT session_id, data FROM sessions")
+            for row in cur.fetchall():
                 try:
-                    sessions[sid] = json.loads(data_str)
+                    sessions[row["session_id"]] = (
+                        row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
+                    )
                 except Exception:
                     pass
-            for sid, data_str in conn.execute("SELECT session_id, data FROM summaries").fetchall():
+            cur.execute("SELECT session_id, data FROM summaries")
+            for row in cur.fetchall():
                 try:
-                    summaries[sid] = json.loads(data_str)
+                    summaries[row["session_id"]] = (
+                        row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
+                    )
                 except Exception:
                     pass
         print(f"[DB] Yüklendi: {len(sessions)} oturum, {len(summaries)} özet")
@@ -473,11 +464,27 @@ class ClinicalSummaryResponse(BaseModel):
     vitals: Optional[dict] = None
     image_findings: Optional[str] = None
     generated_at: str
+
     # Trust Layer (Sprint 20)
     evidence: list[str] = []
     guideline_sources: list[str] = []
     doctor_review_required: bool = True
     unsafe_to_self_manage: bool = True
+
+    # Sprint 21 — Clinical intelligence
+    clinical_completeness_score: int = 0
+    missing_information: list[str] = []
+    recommended_next_questions: list[str] = []
+
+    # Evidence map: patient quote → clinical finding
+    evidence_map: list[dict] = []
+
+    # Safety guardrails
+    safety_guardrail_triggered: bool = False
+    guardrail_rules_fired: list[str] = []
+
+    # Local AI proof
+    ai_execution_log: dict = {}
 
 # ─────────────────────────────────────────────
 #  Ollama /api/chat Helpers
@@ -902,20 +909,17 @@ async def google_auth(body: dict):
     # Kullanıcı var mı? Yoksa otomatik oluştur
     user = get_user_by_email(email)
     if not user:
-        import uuid as _uuid, sqlite3 as _sq
-        from datetime import datetime as _dt
+        import uuid as _uuid
         user_id = str(_uuid.uuid4())
-        now = _dt.utcnow().isoformat()
-        with threading.Lock():
-            with _sq.connect(DB_PATH) as conn:
-                try:
-                    conn.execute(
-                        "INSERT INTO users (user_id,name,email,password_hash,role,created_at) VALUES (?,?,?,?,?,?)",
-                        (user_id, name, email, hash_password(str(_uuid.uuid4())), "patient", now)
-                    )
-                    conn.commit()
-                except _sq.IntegrityError:
-                    pass
+        now = datetime.utcnow().isoformat()
+        try:
+            with get_cursor() as cur:
+                cur.execute(
+                    "INSERT INTO users (user_id, name, email, password_hash, role, created_at) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (user_id, name, email, hash_password(str(_uuid.uuid4())), "patient", now)
+                )
+        except psycopg2.errors.UniqueViolation:
+            pass
         user = get_user_by_email(email)
         if not user:
             raise HTTPException(status_code=500, detail="Kullanıcı oluşturulamadı.")
@@ -976,12 +980,11 @@ async def update_my_profile(body: dict, current_user: dict = Depends(require_aut
 @app.get("/auth/patients")
 async def list_patients(current_user: dict = Depends(require_doctor)):
     """Doktor/admin için kayıtlı hasta listesi."""
-    import sqlite3 as _sq3
-    with _sq3.connect(DB_PATH) as conn:
-        conn.row_factory = _sq3.Row
-        rows = conn.execute(
-            "SELECT user_id,name,email,created_at FROM users WHERE role='patient' AND is_active=1 ORDER BY created_at DESC"
-        ).fetchall()
+    with get_cursor() as cur:
+        cur.execute(
+            "SELECT user_id, name, email, created_at FROM users WHERE role = 'patient' AND is_active = 1 ORDER BY created_at DESC"
+        )
+        rows = cur.fetchall()
     return {"patients": [dict(r) for r in rows]}
 
 # ─────────────────────────────────────────────
@@ -1236,7 +1239,7 @@ async def health_check():
             "sessions_active": len(sessions),
             "summaries_cached": len(summaries),
             "session_timeout_minutes": SESSION_TIMEOUT_MINUTES,
-            "db_path": DB_PATH,
+            "db_backend": "PostgreSQL",
             **rag_info,
         }
     except Exception as e:
@@ -1340,15 +1343,15 @@ async def claim_session(req: ClaimSessionRequest, current_user: dict = Depends(r
     # 2. Bellekte yoksa DB'de ara
     if not found_id:
         try:
-            conn = sqlite3.connect(DB_PATH)
-            rows = conn.execute("SELECT session_id, data FROM sessions").fetchall()
-            conn.close()
-            for sid, raw in rows:
-                s = json.loads(raw)
+            with get_cursor() as cur:
+                cur.execute("SELECT session_id, data FROM sessions")
+                rows = cur.fetchall()
+            for row in rows:
+                s = row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
                 if s.get("claim_code") == code:
-                    found_id = sid
+                    found_id = row["session_id"]
                     found_session = s
-                    sessions[sid] = s  # belleğe yükle
+                    sessions[found_id] = s  # belleğe yükle
                     break
         except Exception:
             pass
@@ -2025,26 +2028,26 @@ async def get_session_detail(session_id: str, current_user: dict = Depends(requi
     if not session:
         # RAM'de yoksa DB'den yükle
         try:
-            with sqlite3.connect(DB_PATH) as conn:
-                row = conn.execute(
-                    "SELECT data FROM sessions WHERE session_id=?", (session_id,)
-                ).fetchone()
+            with get_cursor() as cur:
+                cur.execute("SELECT data FROM sessions WHERE session_id = %s", (session_id,))
+                row = cur.fetchone()
             if row:
-                session = json.loads(row[0])
+                session = row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
             else:
                 raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+        except HTTPException:
+            raise
         except Exception:
             raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
 
     summary = summaries.get(session_id)
     if not summary:
         try:
-            with sqlite3.connect(DB_PATH) as conn:
-                row = conn.execute(
-                    "SELECT data FROM summaries WHERE session_id=?", (session_id,)
-                ).fetchone()
+            with get_cursor() as cur:
+                cur.execute("SELECT data FROM summaries WHERE session_id = %s", (session_id,))
+                row = cur.fetchone()
             if row:
-                summary = json.loads(row[0])
+                summary = row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
         except Exception:
             summary = None
 
@@ -2274,22 +2277,20 @@ async def fhir_export(session_id: str, current_user: dict = Depends(require_doct
 @app.get("/api/audit-log")
 async def get_audit_log(limit: int = 50, current_user: dict = Depends(require_admin)):
     """Audit log listesi — sadece admin."""
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        rows = conn.execute(
-            "SELECT * FROM audit_log ORDER BY created_at DESC LIMIT ?", (limit,)
-        ).fetchall()
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM audit_log ORDER BY created_at DESC LIMIT %s", (limit,))
+        rows = cur.fetchall()
     return {"logs": [dict(r) for r in rows], "total": len(rows)}
 
 
 @app.get("/api/admin/users")
 async def list_all_users(current_user: dict = Depends(require_admin)):
     """Tüm kullanıcıları listeler — sadece admin."""
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        rows = conn.execute(
+    with get_cursor() as cur:
+        cur.execute(
             "SELECT user_id, name, email, role, specialty, created_at, is_active FROM users ORDER BY created_at DESC"
-        ).fetchall()
+        )
+        rows = cur.fetchall()
     return {"users": [dict(r) for r in rows], "total": len(rows)}
 
 
@@ -2302,12 +2303,9 @@ async def change_user_role(user_id: str, body: dict, current_user: dict = Depend
         raise HTTPException(status_code=400, detail=f"Geçersiz rol. Geçerli roller: {valid_roles}")
     if user_id == current_user["user_id"]:
         raise HTTPException(status_code=400, detail="Kendi rolünüzü değiştiremezsiniz.")
-    with _db_lock:
-        with sqlite3.connect(DB_PATH) as conn:
-            affected = conn.execute(
-                "UPDATE users SET role=? WHERE user_id=?", (new_role, user_id)
-            ).rowcount
-            conn.commit()
+    with get_cursor() as cur:
+        cur.execute("UPDATE users SET role = %s WHERE user_id = %s", (new_role, user_id))
+        affected = cur.rowcount
     if affected == 0:
         raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı.")
     audit("role_change", user_id=current_user["user_id"], user_role=current_user["role"],
@@ -2321,10 +2319,8 @@ async def toggle_user_active(user_id: str, body: dict, current_user: dict = Depe
     if user_id == current_user["user_id"]:
         raise HTTPException(status_code=400, detail="Kendi hesabınızı devre dışı bırakamazsınız.")
     is_active = 1 if body.get("active", True) else 0
-    with _db_lock:
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.execute("UPDATE users SET is_active=? WHERE user_id=?", (is_active, user_id))
-            conn.commit()
+    with get_cursor() as cur:
+        cur.execute("UPDATE users SET is_active = %s WHERE user_id = %s", (is_active, user_id))
     action = "activate" if is_active else "deactivate"
     audit(action, user_id=current_user["user_id"], user_role=current_user["role"],
           details=f"user {user_id}")
@@ -2334,15 +2330,16 @@ async def toggle_user_active(user_id: str, body: dict, current_user: dict = Depe
 @app.get("/api/admin/stats")
 async def admin_stats(current_user: dict = Depends(require_admin)):
     """Sistem istatistikleri — sadece admin."""
-    with sqlite3.connect(DB_PATH) as conn:
-        total_users = conn.execute("SELECT COUNT(*) FROM users WHERE is_active=1").fetchone()[0]
-        by_role = conn.execute(
-            "SELECT role, COUNT(*) as cnt FROM users WHERE is_active=1 GROUP BY role"
-        ).fetchall()
-        total_sessions_db = conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+    with get_cursor() as cur:
+        cur.execute("SELECT COUNT(*) AS cnt FROM users WHERE is_active = 1")
+        total_users = cur.fetchone()["cnt"]
+        cur.execute("SELECT role, COUNT(*) AS cnt FROM users WHERE is_active = 1 GROUP BY role")
+        by_role = {r["role"]: r["cnt"] for r in cur.fetchall()}
+        cur.execute("SELECT COUNT(*) AS cnt FROM sessions")
+        total_sessions_db = cur.fetchone()["cnt"]
     return {
         "total_users": total_users,
-        "by_role": {r[0]: r[1] for r in by_role},
+        "by_role": by_role,
         "sessions_in_memory": len(sessions),
         "sessions_in_db": total_sessions_db,
         "seen_count": sum(1 for s in sessions.values() if s.get("is_seen")),
@@ -2368,11 +2365,9 @@ async def gdpr_delete_user_data(user_id: str, current_user: dict = Depends(requi
         deleted_sessions += 1
     
     # Kullanıcı profilini ve hesabını kaldır (is_active = 0)
-    with _db_lock:
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.execute("UPDATE users SET is_active=0 WHERE user_id=?", (user_id,))
-            conn.execute("DELETE FROM patient_profiles WHERE user_id=?", (user_id,))
-            conn.commit()
+    with get_cursor() as cur:
+        cur.execute("UPDATE users SET is_active = 0 WHERE user_id = %s", (user_id,))
+        cur.execute("DELETE FROM patient_profiles WHERE user_id = %s", (user_id,))
     
     audit("gdpr_delete", user_id=current_user["user_id"], user_role=current_user["role"],
           resource=user_id, details=f"{deleted_sessions} sessions deleted")
@@ -2579,7 +2574,7 @@ async def offline_proof():
         "models": {
             "primary": GEMMA_MODEL,
             "vision": MEDGEMMA_MODEL,
-            "backend": "FastAPI + SQLite — fully local",
+            "backend": "FastAPI + PostgreSQL — fully local",
         },
         "ollama_running": ollama_running,
         "models_loaded": models_loaded,
@@ -2803,17 +2798,17 @@ if os.path.exists(FRONTEND_DIR):
 if __name__ == "__main__":
     import uvicorn
     print(f"\n{'='*60}")
-    print(f"  AnamnezAI v4.0 — Gemma 4 Medical Pre-Triage")
+    print(f"  AnamnezAI v5.0 — Gemma 4 Medical Pre-Triage")
     print(f"  Model    : {GEMMA_MODEL} (via Ollama)")
     print(f"  Ollama   : {OLLAMA_BASE_URL}")
     print(f"  RAG      : {'Aktif' if RAG_ENABLED else 'Devre Dışı'}")
-    print(f"  DB       : {DB_PATH}")
+    print(f"  DB       : PostgreSQL")
     print(f"  API      : http://localhost:8000")
     print(f"  Docs     : http://localhost:8000/docs")
-    print(f"  Features : Multimodal Vision | SSE Kuyruk | SQLite | Vital Bulgular")
+    print(f"  Features : Multimodal Vision | SSE Kuyruk | PostgreSQL | Vital Bulgular")
     print(f"{'='*60}\n")
 
-    init_db()
+    pg_init_db()
     db_load_all()
 
     if RAG_ENABLED:
@@ -2833,4 +2828,6 @@ if __name__ == "__main__":
             print(f"  RAG: Atıldı — {e}")
 
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
 

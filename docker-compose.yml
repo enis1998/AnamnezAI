@@ -1,27 +1,53 @@
 version: "3.9"
 
 services:
+  # ─── PostgreSQL ───────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: anamnezai
+      POSTGRES_USER: anamnezai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-anamnezai_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U anamnezai -d anamnezai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ─── Backend ──────────────────────────────────────────────────────
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - GEMMA_MODEL=${GEMMA_MODEL:-gemma4:e4b}
       - MEDGEMMA_MODEL=${MEDGEMMA_MODEL:-medgemma:4b}
       - FRONTEND_DIR=/app/frontend
-      - DB_PATH=/app/data/anamnezai.db
       - RAG_ENABLED=${RAG_ENABLED:-true}
       - OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU:-0}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_me_in_production}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      # PostgreSQL bağlantısı
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=anamnezai
+      - POSTGRES_USER=anamnezai
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-anamnezai_secret}
     volumes:
-      # Veritabanını kalıcı tut (container silinse bile kaybolmaz)
-      - anamnezai_db:/app/data
-      # ChromaDB vektör deposu da kalıcı
+      # ChromaDB vektör deposu kalıcı
       - chroma_data:/app/chroma_db
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -34,7 +60,7 @@ services:
       start_period: 60s
 
 volumes:
-  anamnezai_db:
+  postgres_data:
   chroma_data:
 
 # Ollama host makinede çalışıyor (Docker içinde olmak zorunda değil)
