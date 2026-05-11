@@ -105,7 +105,7 @@ tailwind.config = {
 <!-- ── ACİL UYARI BANNER ── -->
 <div id="emergency-banner" class="w-full bg-err text-white px-4 py-3 flex items-center justify-center gap-3 text-center" role="alert" aria-live="assertive">
   <span class="material-symbols-outlined msym-fill flex-shrink-0" style="font-size:22px">emergency</span>
-  <p class="text-[13px] font-semibold leading-snug">
+  <p class="text-[13px] font-semibold leading-snug" id="txt-emergency">
     🚨 <strong>Acil durum mu?</strong> Bu uygulamayı kullanmayın — hemen
     <a href="tel:112" class="underline font-bold hover:text-errc transition-colors">112'yi arayın</a>
     veya en yakın acil servise gidin.
@@ -180,29 +180,29 @@ tailwind.config = {
         <div id="vitals-panel" class="hidden mt-3 space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Tansiyon (KB)</label>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1" id="lbl-bp">Tansiyon (KB)</label>
               <input id="inp-bp" type="text" placeholder="120/80 mmHg"
                 class="w-full rounded-xl bg-surfc px-3 py-2.5 text-[13px] border border-transparent transition-all"/>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Nabız (bpm)</label>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1" id="lbl-pulse">Nabız (bpm)</label>
               <input id="inp-pulse" type="number" min="20" max="250" placeholder="72"
                 class="w-full rounded-xl bg-surfc px-3 py-2.5 text-[13px] border border-transparent transition-all"/>
             </div>
           </div>
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Ateş (°C)</label>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1" id="lbl-temp">Ateş (°C)</label>
               <input id="inp-temp" type="number" step="0.1" min="34" max="43" placeholder="36.5"
                 class="w-full rounded-xl bg-surfc px-3 py-2.5 text-[13px] border border-transparent transition-all"/>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">SpO2 (%)</label>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1" id="lbl-spo2">SpO2 (%)</label>
               <input id="inp-spo2" type="number" min="70" max="100" placeholder="98"
                 class="w-full rounded-xl bg-surfc px-3 py-2.5 text-[13px] border border-transparent transition-all"/>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Solunum (/dk)</label>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1" id="lbl-rr">Solunum (/dk)</label>
               <input id="inp-rr" type="number" min="5" max="60" placeholder="16"
                 class="w-full rounded-xl bg-surfc px-3 py-2.5 text-[13px] border border-transparent transition-all"/>
             </div>
@@ -223,7 +223,7 @@ tailwind.config = {
             class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-ouv rounded-xl cursor-pointer bg-surfc hover:bg-surfcl transition-colors">
             <span class="material-symbols-outlined msym text-sec text-[28px] mb-1">add_photo_alternate</span>
             <span class="text-[12px] font-semibold text-onsv" id="lbl-img-drop">Görüntü seç veya sürükle</span>
-            <span class="text-[10px] text-onsv opacity-60">JPG, PNG, WEBP — maks. 15 MB</span>
+            <span class="text-[10px] text-onsv opacity-60" id="lbl-img-hint">JPG, PNG, WEBP — maks. 15 MB</span>
             <input id="inp-image" type="file" accept="image/*" class="hidden" onchange="handleImageSelect(this)"/>
           </label>
           <!-- Preview -->
@@ -330,8 +330,8 @@ tailwind.config = {
     <!-- Image upload (Gemma 4 Multimodal) — mülakat sırasında görüntü ekle -->
     <div id="img-preview-area" class="hidden mb-3 p-3 bg-secc/20 rounded-xl border border-sec/20">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-[11px] font-bold text-sec uppercase tracking-wider">📷 Gemma 4 Vision Analizi</span>
-        <button onclick="clearChatImage()" class="text-[10px] text-onsv hover:text-err transition-colors">✕ Kaldır</button>
+        <span class="text-[11px] font-bold text-sec uppercase tracking-wider" id="txt-vision-title">📷 Gemma 4 Vision Analizi</span>
+        <button onclick="clearChatImage()" class="text-[10px] text-onsv hover:text-err transition-colors"><span id="txt-img-remove">✕ Kaldır</span></button>
       </div>
       <div class="flex items-start gap-3">
         <img id="img-thumb" class="w-16 h-16 object-cover rounded-lg flex-shrink-0 border border-sec/20" src="" alt=""/>
@@ -346,7 +346,7 @@ tailwind.config = {
           <div id="img-analysis-result" class="text-[11px] text-ons leading-relaxed hidden"></div>
           <button id="btn-analyze-img" onclick="analyzeImage()"
             class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sec text-white text-[11px] font-bold hover:opacity-90 transition-all">
-            <span class="material-symbols-outlined msym text-[12px]">biotech</span>Gemma 4 ile Analiz Et
+            <span class="material-symbols-outlined msym text-[12px]">biotech</span><span id="txt-analyze-btn">Gemma 4 ile Analiz Et</span>
           </button>
         </div>
       </div>
@@ -376,7 +376,7 @@ tailwind.config = {
         <span class="material-symbols-outlined msym text-[16px]">send</span>
       </button>
     </div>
-    <p class="text-[10px] text-onsv mt-2 text-right opacity-60">📷 Görüntü yükle · 🎤 Sesli gir · Ctrl+Enter ile gönder</p>
+    <p class="text-[10px] text-onsv mt-2 text-right opacity-60" id="txt-chat-hint">📷 Görüntü yükle · 🎤 Sesli gir · Ctrl+Enter ile gönder</p>
   </div>
 </div>
 
@@ -530,7 +530,19 @@ const T = {
     errName:'Lütfen adınızı girin.', errAge:'Lütfen yaşınızı girin.',
     errAns:'Lütfen cevap yazın.', errConn:'Backend bağlantısı yok.',
     listening:'Dinleniyor...', stopRec:'Durdur',
-    connOk:'Gemma 4 Hazır', connOff:'Offline Mod'
+    connOk:'Gemma 4 Hazır', connOff:'Offline Mod',
+    // Yeni — vitals, görüntü, acil banner
+    emergencyMsg:'🚨 <strong>Acil durum mu?</strong> Bu uygulamayı kullanmayın — hemen <a href="tel:112" class="underline font-bold hover:text-errc transition-colors">112\'yi arayın</a> veya en yakın acil servise gidin.',
+    warmBanner:'Mülakatı şimdi başlatabilirsiniz — ilk yanıt modelin yüklenmesini bekler.',
+    vitalsToggle:'+ Vital Bulgular Ekle (Tansiyon, Nabız, Ateş...)',
+    lblBp:'Tansiyon (KB)', lblPulse:'Nabız (bpm)', lblTemp:'Ateş (°C)', lblSpo2:'SpO2 (%)', lblRr:'Solunum (/dk)',
+    imgToggle:'+ Görüntü Ekle (Yara, Cilt, EKG, Röntgen...)',
+    imgDrop:'Görüntü seç veya sürükle', imgDropHint:'JPG, PNG, WEBP — maks. 15 MB',
+    imgBadge:'MedGemma Vision ile analiz edilecek',
+    visionTitle:'📷 Gemma 4 Vision Analizi', imgRemove:'✕ Kaldır',
+    analyzeBtn:'Gemma 4 ile Analiz Et',
+    chatHint:'📷 Görüntü yükle · 🎤 Sesli gir · Ctrl+Enter ile gönder',
+    imgOpt1:'🩹 Yara / Kesik', imgOpt2:'🔴 Cilt Döküntüsü', imgOpt3:'❤️ EKG / Ritim Şeridi', imgOpt4:'🫁 Röntgen / X-Ray', imgOpt5:'📸 Diğer Tıbbi Görüntü',
   },
   en:{
     powered:'Powered by Gemma 4',
@@ -548,7 +560,18 @@ const T = {
     errName:'Please enter your name.', errAge:'Please enter your age.',
     errAns:'Please write an answer.', errConn:'Backend connection failed.',
     listening:'Listening...', stopRec:'Stop',
-    connOk:'Gemma 4 Ready', connOff:'Offline Mode'
+    connOk:'Gemma 4 Ready', connOff:'Offline Mode',
+    emergencyMsg:'🚨 <strong>Emergency?</strong> Do not use this app — call <a href="tel:112" class="underline font-bold hover:text-errc transition-colors">112</a> immediately or go to the nearest emergency room.',
+    warmBanner:'You can start the interview now — the first response waits for the model to load.',
+    vitalsToggle:'+ Add Vital Signs (Blood Pressure, Pulse, Temperature...)',
+    lblBp:'Blood Pressure', lblPulse:'Pulse (bpm)', lblTemp:'Temperature (°C)', lblSpo2:'SpO2 (%)', lblRr:'Resp. Rate (/min)',
+    imgToggle:'+ Add Image (Wound, Skin, ECG, X-Ray...)',
+    imgDrop:'Select or drag an image', imgDropHint:'JPG, PNG, WEBP — max. 15 MB',
+    imgBadge:'Will be analyzed with MedGemma Vision',
+    visionTitle:'📷 Gemma 4 Vision Analysis', imgRemove:'✕ Remove',
+    analyzeBtn:'Analyze with Gemma 4',
+    chatHint:'📷 Upload image · 🎤 Voice input · Ctrl+Enter to send',
+    imgOpt1:'🩹 Wound / Cut', imgOpt2:'🔴 Skin Rash', imgOpt3:'❤️ ECG / Rhythm Strip', imgOpt4:'🫁 X-Ray / Chest', imgOpt5:'📸 Other Medical Image',
   },
   ar:{
     powered:'مدعوم بـ Gemma 4',
@@ -566,7 +589,18 @@ const T = {
     errName:'الرجاء إدخال اسمك.', errAge:'الرجاء إدخال عمرك.',
     errAns:'الرجاء كتابة إجابة.', errConn:'فشل الاتصال بالخادم.',
     listening:'يستمع...', stopRec:'إيقاف',
-    connOk:'Gemma 4 جاهز', connOff:'وضع بدون إنترنت'
+    connOk:'Gemma 4 جاهز', connOff:'وضع بدون إنترنت',
+    emergencyMsg:'🚨 <strong>حالة طارئة؟</strong> لا تستخدم هذا التطبيق — اتصل بـ <a href="tel:112" class="underline font-bold hover:text-errc transition-colors">112</a> فوراً أو توجه لأقرب طوارئ.',
+    warmBanner:'يمكنك بدء المقابلة الآن — الاستجابة الأولى تنتظر تحميل النموذج.',
+    vitalsToggle:'+ أضف البيانات الحيوية (ضغط الدم، النبض، الحرارة...)',
+    lblBp:'ضغط الدم', lblPulse:'النبض (bpm)', lblTemp:'الحرارة (°C)', lblSpo2:'SpO2 (%)', lblRr:'معدل التنفس',
+    imgToggle:'+ أضف صورة (جرح، جلد، تخطيط قلب، أشعة...)',
+    imgDrop:'اختر صورة أو اسحبها هنا', imgDropHint:'JPG، PNG، WEBP — الحد الأقصى 15 ميجابايت',
+    imgBadge:'سيتم التحليل بـ MedGemma Vision',
+    visionTitle:'📷 تحليل Gemma 4 Vision', imgRemove:'✕ إزالة',
+    analyzeBtn:'تحليل بـ Gemma 4',
+    chatHint:'📷 رفع صورة · 🎤 إدخال صوتي · Ctrl+Enter للإرسال',
+    imgOpt1:'🩹 جرح / قطع', imgOpt2:'🔴 طفح جلدي', imgOpt3:'❤️ تخطيط القلب', imgOpt4:'🫁 أشعة سينية', imgOpt5:'📸 صورة طبية أخرى',
   }
 };
 const t = k => T[lang][k] ?? k;
@@ -595,10 +629,35 @@ function applyT(){
     'lbl-prog':t('lblProg'),'txt-typing':t('typing'),
     'txt-prep':t('prep'),'txt-prep-sub':t('prepSub'),
     'txt-analyzing':t('analyzing'),'txt-analyzing-sub':t('analyzingSub'),
+    // Vitals
+    'lbl-vitals':t('vitalsToggle'),
+    'lbl-bp':t('lblBp'),'lbl-pulse':t('lblPulse'),'lbl-temp':t('lblTemp'),'lbl-spo2':t('lblSpo2'),'lbl-rr':t('lblRr'),
+    // Görüntü
+    'lbl-img-toggle':t('imgToggle'),
+    'lbl-img-drop':t('imgDrop'),'lbl-img-hint':t('imgDropHint'),
+    'txt-img-badge':t('imgBadge'),
+    'txt-vision-title':t('visionTitle'),'txt-img-remove':t('imgRemove'),
+    'txt-analyze-btn':t('analyzeBtn'),
+    // Chat
+    'txt-voice':t('voiceBtn'),'txt-chat-hint':t('chatHint'),
+    'banner-text':t('warmBanner'),
   };
   Object.entries(m).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.textContent=val;});
+  // innerHTML için özel alanlar (link içeriyor)
+  const eb=document.getElementById('txt-emergency');
+  if(eb) eb.innerHTML=t('emergencyMsg');
+  // Textarea placeholder
   const ia = document.getElementById('inp-answer');
   if(ia) ia.placeholder = t('ansPh');
+  // Görüntü context seçenekleri
+  const imgCtx = document.getElementById('img-context');
+  if(imgCtx && imgCtx.options.length>=5){
+    imgCtx.options[0].text=t('imgOpt1');
+    imgCtx.options[1].text=t('imgOpt2');
+    imgCtx.options[2].text=t('imgOpt3');
+    imgCtx.options[3].text=t('imgOpt4');
+    imgCtx.options[4].text=t('imgOpt5');
+  }
 }
 
 // ── Views ──

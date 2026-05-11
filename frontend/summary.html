@@ -94,7 +94,7 @@ tailwind.config={theme:{extend:{colors:{
       <!-- Büyük kod gösterimi -->
       <div class="flex items-center justify-center gap-3 mb-4 p-4 rounded-2xl bg-pri/5 border-2 border-dashed border-sec/40">
         <div class="text-center">
-          <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1">Mülakat Kodunuz</p>
+          <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1" id="claim-title-txt">Mülakat Kodunuz</p>
           <div class="flex items-center gap-2">
             <span id="claim-code-display" class="font-head font-bold text-pri tracking-[0.3em]" style="font-size:32px;letter-spacing:0.25em">------</span>
             <button onclick="copyClaimCode()" id="copy-code-btn" title="Kopyala"
@@ -102,19 +102,19 @@ tailwind.config={theme:{extend:{colors:{
               <span class="material-symbols-outlined msym text-[18px]">content_copy</span>
             </button>
           </div>
-          <p class="text-[10px] text-onsv mt-1 opacity-60">Bu kodu kaydettikten sonra giriş yapabilirsiniz</p>
+          <p class="text-[10px] text-onsv mt-1 opacity-60" id="claim-hint-txt">Bu kodu kaydettikten sonra giriş yapabilirsiniz</p>
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <a href="login.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[12px] font-bold hover:opacity-90 transition-all">
-          <span class="material-symbols-outlined msym text-[15px]">login</span>Giriş Yap
-        </a>
-        <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-[12px] font-bold hover:opacity-90 transition-all">
-          <span class="material-symbols-outlined msym text-[15px]">person_add</span>Kayıt Ol
-        </a>
-        <button onclick="document.getElementById('claim-banner').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-medium hover:bg-surfch transition-all">
-          Şimdi değil
-        </button>
+          <a href="login.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[12px] font-bold hover:opacity-90 transition-all">
+            <span class="material-symbols-outlined msym text-[15px]">login</span><span id="claim-login-txt">Giriş Yap</span>
+          </a>
+          <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-[12px] font-bold hover:opacity-90 transition-all">
+            <span class="material-symbols-outlined msym text-[15px]">person_add</span><span id="claim-reg-txt">Kayıt Ol</span>
+          </a>
+          <button onclick="document.getElementById('claim-banner').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-medium hover:bg-surfch transition-all">
+            <span id="claim-skip-txt">Şimdi değil</span>
+          </button>
       </div>
     </div>
   </div>
@@ -130,25 +130,21 @@ tailwind.config={theme:{extend:{colors:{
       <span class="material-symbols-outlined msym-fill text-sec block mb-4" style="font-size:56px">check_circle</span>
       <h2 class="text-[26px] font-head font-bold text-pri mb-2" id="pr-title">Bilgileriniz doktora iletildi</h2>
       <p class="text-[15px] text-onsv mb-6" id="pr-subtitle">Lütfen bekleme alanında kalın.</p>
-
       <!-- Priority badge -->
       <div id="pr-priority" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-[18px] font-bold mb-6" style="background:#f4f7f9">
         <span id="pr-emoji">🟡</span>
         <span id="pr-level">Öncelik Durumu</span>
       </div>
-      <p class="text-[14px] text-onsv mb-1" id="pr-complaint-label">Ana şikâyetiniz:</p>
-      <p class="text-[16px] font-semibold text-pri mb-8" id="pr-complaint">—</p>
+      <p class="text-[14px] text-onsv mb-1" id="pr-complaint-label">Ana şikâyetiniz:</p>      <p class="text-[16px] font-semibold text-pri mb-8" id="pr-complaint">—</p>
 
       <!-- Wait info row -->
       <div class="grid grid-cols-2 gap-4 mb-8 max-w-sm mx-auto">
         <div class="rounded-2xl bg-surfc p-4">
           <span class="material-symbols-outlined msym text-sec block mb-1" style="font-size:28px">schedule</span>
-          <p class="text-[12px] text-onsv" id="pr-wait">Bekleme süresi için<br/>ekrana bakınız</p>
-        </div>
+          <p class="text-[12px] text-onsv" id="pr-wait">Bekleme süresi için<br/>ekrana bakınız</p>        </div>
         <div class="rounded-2xl bg-surfc p-4">
           <span class="material-symbols-outlined msym text-sec block mb-1" style="font-size:28px">location_on</span>
-          <p class="text-[12px] text-onsv" id="pr-room">Oda bilgisi için<br/>personeli bekleyiniz</p>
-        </div>
+          <p class="text-[12px] text-onsv" id="pr-room">Oda bilgisi için<br/>personeli bekleyiniz</p>        </div>
       </div>
 
       <!-- Safety warning -->
@@ -253,6 +249,14 @@ const I18N = {
     noData:'Özet bulunamadı.', goHome:'Anasayfaya Dön',
     preparingPdf:'Hazırlanıyor...', patientPanel:'Geçmişim', doctorPanel:'Doktor Paneli',
     newInterview:'Yeni Mülakat', pdfBtnBottom:'PDF İndir', printBtnBottom:'Yazdır',
+    // Hasta kartı & claim banner
+    prTitle:'Bilgileriniz doktora iletildi', prSubtitle:'Lütfen bekleme alanında kalın.',
+    prComplaintLabel:'Ana şikâyetiniz:', prWait:'Bekleme süresi için ekrana bakınız',
+    prRoom:'Oda bilgisi için personeli bekleyiniz',
+    prSafety:'Şikâyetleriniz kötüleşirse veya yeni bir belirti eklenirlerse hemen sağlık personelini uyarın.',
+    prDisclaimer:'⚕️ Bu sistem yapay zeka destekli bir ön triaj aracıdır. Kesin tanı için doktorunuzu bekleyiniz.',
+    claimTitle:'Mülakat Kodunuz', claimHint:'Bu kodu kaydettikten sonra hesabınıza ekleyebilirsiniz.',
+    claimLogin:'Giriş Yap', claimRegister:'Kayıt Ol', claimSkip:'Şimdi değil',
   },
   en:{
     loading:'Loading report...',
@@ -282,6 +286,13 @@ const I18N = {
     noData:'Summary not found.', goHome:'Go to Home',
     preparingPdf:'Preparing...', patientPanel:'My History', doctorPanel:'Doctor Panel',
     newInterview:'New Interview', pdfBtnBottom:'Download PDF', printBtnBottom:'Print',
+    prTitle:'Your information has been sent to the doctor', prSubtitle:'Please remain in the waiting area.',
+    prComplaintLabel:'Your main complaint:', prWait:'See screen for wait time',
+    prRoom:'Please wait for staff for room info',
+    prSafety:'If your symptoms worsen or new ones appear, alert a healthcare worker immediately.',
+    prDisclaimer:'⚕️ This is an AI-powered pre-triage tool. Please wait for your doctor for a definitive diagnosis.',
+    claimTitle:'Your Interview Code', claimHint:'You can add this to your account after logging in.',
+    claimLogin:'Log In', claimRegister:'Register', claimSkip:'Not now',
   },
   ar:{
     loading:'جارٍ تحميل التقرير...',
@@ -311,13 +322,27 @@ const I18N = {
     noData:'لم يُعثَر على الملخص.', goHome:'العودة للرئيسية',
     preparingPdf:'جارٍ الإعداد...', patientPanel:'سجلاتي', doctorPanel:'لوحة الطبيب',
     newInterview:'مقابلة جديدة', pdfBtnBottom:'تنزيل PDF', printBtnBottom:'طباعة',
+    prTitle:'تم إرسال معلوماتك إلى الطبيب', prSubtitle:'يرجى البقاء في منطقة الانتظار.',
+    prComplaintLabel:'شكواك الرئيسية:', prWait:'راجع الشاشة لمعرفة وقت الانتظار',
+    prRoom:'انتظر الموظفين للحصول على معلومات الغرفة',
+    prSafety:'إذا تفاقمت أعراضك أو ظهرت أعراض جديدة، أبلغ الكادر الصحي فوراً.',
+    prDisclaimer:'⚕️ هذا النظام أداة فرز مبدئي بالذكاء الاصطناعي. انتظر طبيبك للتشخيص النهائي.',
+    claimTitle:'رمز مقابلتك', claimHint:'يمكنك إضافته لحسابك بعد تسجيل الدخول.',
+    claimLogin:'تسجيل الدخول', claimRegister:'إنشاء حساب', claimSkip:'ليس الآن',
   }
 };
 
 function t(key){ return (I18N[reportLang]||I18N.tr)[key]||key; }
 
 function applyLangUI(){
-  const m={'txt-pdf-btn':'pdfBtn','txt-print-btn':'printBtn','txt-new-btn':'newBtn','txt-panel-btn':'panelBtn','txt-doc-btn':'docBtn','txt-loading':'loading'};
+  const m={'txt-pdf-btn':'pdfBtn','txt-print-btn':'printBtn','txt-new-btn':'newBtn','txt-panel-btn':'panelBtn','txt-doc-btn':'docBtn','txt-loading':'loading',
+    // Hasta kartı
+    'pr-title':'prTitle','pr-subtitle':'prSubtitle','pr-complaint-label':'prComplaintLabel',
+    'pr-wait':'prWait','pr-room':'prRoom','pr-safety':'prSafety','pr-disclaimer':'prDisclaimer',
+    // Claim banner
+    'claim-title-txt':'claimTitle','claim-hint-txt':'claimHint',
+    'claim-login-txt':'claimLogin','claim-reg-txt':'claimRegister','claim-skip-txt':'claimSkip',
+  };
   Object.entries(m).forEach(([id,k])=>{ const el=document.getElementById(id); if(el) el.textContent=t(k); });
   const rlTr=document.getElementById('rl-tr'), rlEn=document.getElementById('rl-en'), rlAr=document.getElementById('rl-ar');
   if(rlTr) rlTr.className=`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${reportLang==='tr'?'bg-pric text-white':'text-onsv'}`;
