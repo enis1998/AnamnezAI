@@ -65,7 +65,7 @@ tailwind.config={theme:{extend:{colors:{
       <span class="material-symbols-outlined msym text-[15px]">print</span>
       <span class="hbtn-txt" id="txt-print-btn">Yazdır</span>
     </button>
-    <a href="index.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium flex-shrink-0">
+    <a href="index.html" id="btn-new-interview" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium flex-shrink-0">
       <span class="material-symbols-outlined msym text-[15px]">replay</span>
       <span class="hbtn-txt" id="txt-new-btn">Yeni Mülakat</span>
     </a>
@@ -180,6 +180,14 @@ let _isDoctor = false;
         _isDoctor = true;
         const b = document.getElementById('btn-goto-doctor');
         if(b) b.style.display='flex';
+        // Doktor için Yeni Mülakat butonu gizle
+        const btnNewInterview = document.getElementById('btn-new-interview');
+        if(btnNewInterview) btnNewInterview.style.display='none';
+        // Doktor panelinden açıldıysa üst logo linki de düzelt
+        if(localStorage.getItem('summary_from_doctor')==='1'){
+          const logoLink = document.querySelector('header a[href="index.html"]');
+          if(logoLink) logoLink.href='doctor.html';
+        }
       }
     }
   } catch(e){}

@@ -78,18 +78,14 @@ tailwind.config={theme:{extend:{colors:{
         <span class="material-symbols-outlined msym text-[17px]">lock_open</span><span id="txt-nav-unlock">Kiosk'u Aç</span>
       </button>
 
-      <!-- Admin Paneli -->
+      <!-- Sistem -->
       <div class="pt-3 pb-1 px-3">
         <p class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Sistem</p>
       </div>
-      <a href="analytics.html"
-        class="flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors">
+      <button onclick="toggleAnalytics()"
+        class="w-full flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors" id="sidebar-analytics-btn">
         <span class="material-symbols-outlined msym text-[17px]">bar_chart</span>Analitik
-      </a>
-      <a href="admin.html"
-        class="flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors">
-        <span class="material-symbols-outlined msym text-[17px]">admin_panel_settings</span>Admin Paneli
-      </a>
+      </button>
     </nav>
 
     <!-- Status -->
@@ -116,34 +112,7 @@ tailwind.config={theme:{extend:{colors:{
   <!-- ── MAIN ── -->
   <div class="flex-1 flex flex-col min-w-0">
 
-    <!-- Sprint 15: Model Durum Bar -->
-    <!-- model-status-bar: add offline badge -->
-    <div id="model-status-bar" class="bg-pri/5 border-b border-surfc px-4 sm:px-6 py-2 flex flex-wrap gap-3 items-center text-[11px] font-semibold">
-      <span class="text-onsv opacity-60 font-bold uppercase tracking-widest text-[9px]">Model Durumu</span>
-      <div class="flex items-center gap-1.5" id="mbar-gemma4">
-        <div class="w-2 h-2 rounded-full bg-ouv dot-pulse" id="mbar-gemma4-dot"></div>
-        <span id="mbar-gemma4-txt" class="text-onsv">Gemma 4 e4b — Kontrol ediliyor</span>
-      </div>
-      <span class="text-ouv">|</span>
-      <div class="flex items-center gap-1.5" id="mbar-medgemma">
-        <div class="w-2 h-2 rounded-full bg-ouv dot-pulse" id="mbar-medgemma-dot"></div>
-        <span id="mbar-medgemma-txt" class="text-onsv">MedGemma 4b — Kontrol ediliyor</span>
-      </div>
-      <span class="text-ouv">|</span>
-      <div class="flex items-center gap-1.5" id="mbar-lite">
-        <div class="w-2 h-2 rounded-full bg-ouv dot-pulse" id="mbar-lite-dot"></div>
-        <span id="mbar-lite-txt" class="text-onsv">Lite 1b — Kontrol ediliyor</span>
-      </div>
-      <div class="ml-auto flex items-center gap-1.5" id="mbar-rag">
-        <span class="material-symbols-outlined text-[12px] text-sec" style="font-variation-settings:'FILL' 0">database</span>
-        <span id="mbar-rag-txt" class="text-onsv">RAG — Kontrol ediliyor</span>
-      </div>
-      <!-- Offline / Local badge -->
-      <div id="offline-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pri/10 border border-pri/20 text-[10px] font-bold text-pric hidden">
-        <span class="material-symbols-outlined text-[11px]" style="font-variation-settings:'FILL' 1">wifi_off</span>
-        Local AI · No Cloud
-      </div>
-    </div>
+    <!-- Model Durum Bar kaldırıldı -->
 
     <!-- Top Bar -->
     <header class="bg-white border-b border-surfc px-4 sm:px-6 py-3 flex justify-between items-center flex-shrink-0">
@@ -263,15 +232,15 @@ tailwind.config={theme:{extend:{colors:{
           <div id="seen-table"><div class="text-center py-8 text-onsv text-[13px]">Yükleniyor...</div></div>
         </div>
       </div>
-      <div id="analytics-panel" class="hidden card mb-5 p-5">
-        <div class="flex items-center gap-2 mb-4">
+      <div id="analytics-panel" class="hidden card mb-5 overflow-hidden">
+        <div class="px-5 py-4 flex items-center gap-2 border-b border-surfc">
           <span class="material-symbols-outlined msym text-sec text-[17px]">bar_chart</span>
-          <h2 class="font-head font-bold text-pri text-[14px]">Triaj Analitik</h2>
+          <h2 class="font-head font-bold text-pri text-[15px]">Triaj Analitik</h2>
           <button onclick="hideAnalytics()" class="ml-auto w-7 h-7 rounded-lg bg-surfc hover:bg-ouv/30 flex items-center justify-center">
             <span class="material-symbols-outlined msym text-onsv text-[15px]">close</span>
           </button>
         </div>
-        <div id="analytics-content">
+        <div id="analytics-content" class="p-5">
           <div class="text-center py-6"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>
         </div>
       </div>
@@ -302,7 +271,24 @@ tailwind.config={theme:{extend:{colors:{
 
 </div>
 
-<script>
+<!-- ── RAPOR MODAL ── -->
+<div id="report-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center" style="background:rgba(0,0,0,0.55);backdrop-filter:blur(4px)" onclick="if(event.target===this)closeReportModal()">
+  <div class="bg-white rounded-2xl shadow-2xl flex flex-col" style="width:92vw;max-width:900px;height:90vh">
+    <div class="flex items-center gap-3 px-5 py-3.5 border-b border-surfc flex-shrink-0">
+      <span class="material-symbols-outlined msym text-sec text-[18px]">summarize</span>
+      <span class="font-head font-bold text-pri text-[15px]" id="report-modal-title">Hasta Raporu</span>
+      <div class="ml-auto flex items-center gap-2">
+        <button onclick="openReportNewTab()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 text-[12px] font-medium transition-all">
+          <span class="material-symbols-outlined msym text-[14px]">open_in_new</span>Yeni Sekmede Aç
+        </button>
+        <button onclick="closeReportModal()" class="w-8 h-8 rounded-xl bg-surfc hover:bg-errc hover:text-err flex items-center justify-center transition-all">
+          <span class="material-symbols-outlined msym text-[16px]">close</span>
+        </button>
+      </div>
+    </div>
+    <iframe id="report-modal-iframe" src="" class="flex-1 w-full rounded-b-2xl" style="border:none"></iframe>
+  </div>
+</div>
 const API = '';
 let allPatients = {};
 let currentDetailSid = null;
@@ -985,8 +971,8 @@ async function viewSeenSummary(sid) {
     const detail = await r.json();
     const summary = detail.summary;
     if (summary) {
-      localStorage.setItem('anamnez_summary', JSON.stringify(summary));
-      window.open('summary.html', '_blank');
+      allPatients[sid] = {...(allPatients[sid]||{}), ...summary};
+      openReportModal(sid, summary.patient_name || sid);
     } else {
       alert('Bu hasta için henüz özet rapor oluşturulmamış.');
     }
@@ -1024,7 +1010,9 @@ async function suggestICD10(sid) {
 }
 
 async function showAnalytics() {
-  document.getElementById('analytics-panel').classList.remove('hidden');
+  const panel = document.getElementById('analytics-panel');
+  panel.classList.remove('hidden');
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
   const content = document.getElementById('analytics-content');
   content.innerHTML = '<div class="text-center py-6"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>';
   try {
@@ -1079,6 +1067,19 @@ async function showAnalytics() {
 
 function hideAnalytics() {
   document.getElementById('analytics-panel').classList.add('hidden');
+  const btn = document.getElementById('sidebar-analytics-btn');
+  if (btn) btn.classList.remove('bg-surfc','text-pric','font-semibold');
+}
+
+function toggleAnalytics() {
+  const panel = document.getElementById('analytics-panel');
+  const btn = document.getElementById('sidebar-analytics-btn');
+  if (panel.classList.contains('hidden')) {
+    showAnalytics();
+    if (btn) { btn.classList.add('bg-surfc','text-pric','font-semibold'); }
+  } else {
+    hideAnalytics();
+  }
 }
 
 async function exportFHIR(sid) {
@@ -1094,11 +1095,41 @@ async function exportFHIR(sid) {
   } catch(e) { alert(e.message || 'FHIR export başarısız.'); }
 }
 
+let _reportModalSid = null;
+
+function openReportModal(sid, patientName) {
+  _reportModalSid = sid;
+  const p = allPatients[sid];
+  if (!p) return;
+  localStorage.setItem('anamnez_summary', JSON.stringify(p));
+  const modal = document.getElementById('report-modal');
+  const iframe = document.getElementById('report-modal-iframe');
+  const title = document.getElementById('report-modal-title');
+  if (title) title.textContent = patientName || p.patient_name || 'Hasta Raporu';
+  // Doktor görünümünü summary'e bildir
+  localStorage.setItem('summary_from_doctor', '1');
+  iframe.src = 'summary.html?t=' + Date.now();
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function openReportNewTab() {
+  if (_reportModalSid) {
+    window.open('summary.html', '_blank');
+  }
+}
+
+function closeReportModal() {
+  document.getElementById('report-modal').classList.add('hidden');
+  document.getElementById('report-modal-iframe').src = '';
+  document.body.style.overflow = '';
+  localStorage.removeItem('summary_from_doctor');
+}
+
 function openFullReport(sid){
   const p = allPatients[sid];
   if(!p) return;
-  localStorage.setItem('anamnez_summary', JSON.stringify(p));
-  window.open('summary.html','_blank');
+  openReportModal(sid, p.patient_name);
 }
 
 function openClinicalReview(sid){
@@ -1114,6 +1145,11 @@ function closePanel(){
 // Init
 checkStatus();
 loadQueue();  // İlk yükleme
+
+// ESC ile rapor modalını kapat
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeReportModal();
+});
 
 // SSE ile gerçek zamanlı kuyruk güncellemeleri
 let sseConnection = null;
