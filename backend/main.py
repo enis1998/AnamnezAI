@@ -2402,6 +2402,20 @@ FRONTEND_DIR = os.getenv(
     "FRONTEND_DIR",
     os.path.join(os.path.dirname(__file__), "..", "frontend"),
 )
+
+# Root "/" → landing.html (Marketing / entry page)
+# Interview form is accessible at /index.html
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def root():
+    """Serve landing.html at the root URL."""
+    landing_path = os.path.join(FRONTEND_DIR, "landing.html")
+    if os.path.exists(landing_path):
+        with open(landing_path, encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    # Fallback: redirect to index.html
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/index.html")
+
 if os.path.exists(FRONTEND_DIR):
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
