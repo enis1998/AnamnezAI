@@ -123,33 +123,33 @@ tailwind.config = {
       </div>
       <div>
         <span class="font-head font-bold text-pri text-[16px]">AnamnezAI</span>
-        <span class="hidden sm:inline text-[10px] font-medium text-sec ml-1.5 bg-secc/40 px-2 py-0.5 rounded-full">by MediScreen</span>
+        <span class="hidden sm:inline text-[10px] font-medium text-sec ml-1.5 bg-secc/40 px-2 py-0.5 rounded-full" data-i18n="nav.brand">by MediScreen</span>
       </div>
     </a>
 
     <!-- Desktop nav links -->
     <div class="hidden md:flex items-center gap-7">
-      <a href="#features" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-features">Özellikler</a>
-      <a href="#how-it-works" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-how">Nasıl Çalışır</a>
-      <a href="#technology" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-tech">Teknoloji</a>
-      <a href="#audience" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-audience">Kimler İçin</a>
+      <a href="#features" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-features" data-i18n="nav.features">Özellikler</a>
+      <a href="#how-it-works" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-how" data-i18n="nav.how">Nasıl Çalışır</a>
+      <a href="#technology" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-tech" data-i18n="nav.tech">Teknoloji</a>
+      <a href="#audience" class="text-[13px] font-medium text-onsv hover:text-pri transition-colors" id="nav-audience" data-i18n="nav.audience">Kimler İçin</a>
     </div>
 
     <!-- CTA buttons -->
     <div class="flex items-center gap-3">
       <!-- Dil Seçici -->
       <div class="hidden sm:flex bg-surfc rounded-full p-0.5 gap-0.5">
-        <button onclick="setLandingLang('tr')" id="lp-btn-tr" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white">TR</button>
-        <button onclick="setLandingLang('en')" id="lp-btn-en" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">EN</button>
-        <button onclick="setLandingLang('ar')" id="lp-btn-ar" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv">AR</button>
+        <button onclick="setLandingLang('tr')" id="lp-btn-tr" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white" data-i18n="lang.tr">TR</button>
+        <button onclick="setLandingLang('en')" id="lp-btn-en" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv" data-i18n="lang.en">EN</button>
+        <button onclick="setLandingLang('ar')" id="lp-btn-ar" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv" data-i18n="lang.ar">AR</button>
       </div>
-      <a href="login.html" class="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold text-pric hover:text-pri transition-colors" id="nav-login">
+      <a href="login.html" class="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold text-pric hover:text-pri transition-colors" id="nav-login" data-i18n="nav.login">
         Giriş Yap
       </a>
-      <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[13px] font-bold hover:bg-pri transition-all shadow-sm hover:shadow-md active:scale-[.97]">
+      <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[13px] font-bold hover:bg-pri transition-all shadow-sm hover:shadow-md active:scale-[.97]" id="nav-register">
         <span class="material-symbols-outlined msym text-[15px]">rocket_launch</span>
-        <span class="hidden sm:inline" id="nav-register-txt">Ücretsiz Başla</span>
-        <span class="sm:hidden" id="nav-register-txt-sm">Başla</span>
+        <span class="hidden sm:inline" id="nav-register-txt" data-i18n="nav.register">Ücretsiz Başla</span>
+        <span class="sm:hidden" id="nav-register-txt-sm" data-i18n="nav.register.sm">Başla</span>
       </a>
       <!-- Mobile menu btn -->
       <button id="menu-btn" onclick="toggleMenu()" class="md:hidden p-2 rounded-lg hover:bg-surf transition-colors">
@@ -161,26 +161,26 @@ tailwind.config = {
   <!-- Mobile dropdown -->
   <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-surfc px-5 py-4 space-y-3">
     <a href="#features" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
-      <span class="material-symbols-outlined msym text-sec text-[18px]">auto_awesome</span><span id="mob-nav-features">Özellikler</span>
+      <span class="material-symbols-outlined msym text-sec text-[18px]">auto_awesome</span><span id="mob-nav-features" data-i18n="nav.features">Özellikler</span>
     </a>
     <a href="#how-it-works" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
-      <span class="material-symbols-outlined msym text-sec text-[18px]">route</span><span id="mob-nav-how">Nasıl Çalışır</span>
+      <span class="material-symbols-outlined msym text-sec text-[18px]">route</span><span id="mob-nav-how" data-i18n="nav.how">Nasıl Çalışır</span>
     </a>
     <a href="#technology" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
-      <span class="material-symbols-outlined msym text-sec text-[18px]">memory</span><span id="mob-nav-tech">Teknoloji</span>
+      <span class="material-symbols-outlined msym text-sec text-[18px]">memory</span><span id="mob-nav-tech" data-i18n="nav.tech">Teknoloji</span>
     </a>
     <a href="#audience" onclick="toggleMenu()" class="flex items-center gap-2 py-2 text-[14px] font-medium text-ons">
-      <span class="material-symbols-outlined msym text-sec text-[18px]">groups</span><span id="mob-nav-audience">Kimler İçin</span>
+      <span class="material-symbols-outlined msym text-sec text-[18px]">groups</span><span id="mob-nav-audience" data-i18n="nav.audience">Kimler İçin</span>
     </a>
     <!-- Mobil dil seçici -->
     <div class="flex gap-1.5 pt-1">
-      <button onclick="setLandingLang('tr')" id="lp-btn-tr-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-pric text-white transition-all">TR</button>
-      <button onclick="setLandingLang('en')" id="lp-btn-en-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-surfc text-onsv transition-all">EN</button>
-      <button onclick="setLandingLang('ar')" id="lp-btn-ar-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-surfc text-onsv transition-all">AR</button>
+      <button onclick="setLandingLang('tr')" id="lp-btn-tr-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-pric text-white transition-all" data-i18n="lang.tr">TR</button>
+      <button onclick="setLandingLang('en')" id="lp-btn-en-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-surfc text-onsv transition-all" data-i18n="lang.en">EN</button>
+      <button onclick="setLandingLang('ar')" id="lp-btn-ar-mob" class="flex-1 py-2 rounded-xl text-[12px] font-bold bg-surfc text-onsv transition-all" data-i18n="lang.ar">AR</button>
     </div>
     <div class="pt-1 border-t border-surfc flex gap-3">
-      <a href="login.html" class="flex-1 text-center py-2.5 rounded-xl border border-pric text-pric text-[13px] font-bold" id="mob-nav-login">Giriş Yap</a>
-      <a href="register.html" class="flex-1 text-center py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold" id="mob-nav-register">Kayıt Ol</a>
+      <a href="login.html" class="flex-1 text-center py-2.5 rounded-xl border border-pric text-pric text-[13px] font-bold" id="mob-nav-login" data-i18n="nav.login">Giriş Yap</a>
+      <a href="register.html" class="flex-1 text-center py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold" id="mob-nav-register" data-i18n="nav.register">Kayıt Ol</a>
     </div>
   </div>
 </nav>
@@ -205,17 +205,17 @@ tailwind.config = {
         <!-- Badge -->
         <div class="highlight-chip inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 fade-up">
           <span class="material-symbols-outlined msym-fill text-secc text-[14px]">auto_awesome</span>
-          <span class="text-[11px] font-bold text-secc uppercase tracking-widest" id="txt-hero-badge">Gemma 4 · MedGemma Vision ile Güçlendirildi</span>
+          <span class="text-[11px] font-bold text-secc uppercase tracking-widest" id="txt-hero-badge" data-i18n="hero.badge">Gemma 4 · MedGemma Vision ile Güçlendirildi</span>
         </div>
 
         <!-- Headline -->
         <h1 class="font-head font-black text-white text-[42px] md:text-[56px] leading-[1.1] mb-5 fade-up-1">
-          <span id="txt-hero-h1">Doktorunuz sizi görmeden önce</span><br/>
-          <span class="grad-text" id="txt-hero-h1b">AI sizi dinler.</span>
+          <span id="txt-hero-h1" data-i18n="hero.h1">Doktorunuz sizi görmeden önce</span><br/>
+          <span class="grad-text" id="txt-hero-h1b" data-i18n="hero.h1b">AI sizi dinler.</span>
         </h1>
 
         <!-- Sub -->
-        <p class="text-white/70 text-[16px] leading-relaxed mb-8 max-w-lg fade-up-2" id="txt-hero-sub">
+        <p class="text-white/70 text-[16px] leading-relaxed mb-8 max-w-lg fade-up-2" id="txt-hero-sub" data-i18n="hero.sub">
           AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, tanı kalitesini artırın.
         </p>
 
@@ -223,11 +223,11 @@ tailwind.config = {
         <div class="flex flex-wrap gap-4 mb-10 fade-up-3">
           <a href="/index.html" class="pulse-btn flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-sec text-white font-bold text-[15px] hover:bg-secc hover:text-pri transition-all shadow-lg">
             <span class="material-symbols-outlined msym text-[20px]">play_circle</span>
-            <span id="txt-hero-cta1">Hemen Deneyin — Ücretsiz</span>
+            <span id="txt-hero-cta1" data-i18n="hero.cta1">Hemen Deneyin — Ücretsiz</span>
           </a>
           <a href="#how-it-works" class="flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white font-semibold text-[15px] hover:bg-white/20 transition-all backdrop-blur-sm">
             <span class="material-symbols-outlined msym text-[20px]">play_arrow</span>
-            <span id="txt-hero-cta2">Nasıl Çalışır</span>
+            <span id="txt-hero-cta2" data-i18n="hero.cta2">Nasıl Çalışır</span>
           </a>
         </div>
 
@@ -235,15 +235,15 @@ tailwind.config = {
         <div class="flex flex-wrap items-center gap-5 fade-up-4">
           <div class="flex items-center gap-1.5">
             <span class="material-symbols-outlined msym-fill text-secc text-[16px]">shield</span>
-            <span class="text-white/60 text-[12px] font-medium" id="txt-trust-gdpr">GDPR Uyumlu</span>
+            <span class="text-white/60 text-[12px] font-medium" id="txt-trust-gdpr" data-i18n="hero.trust.gdpr">GDPR Uyumlu</span>
           </div>
           <div class="flex items-center gap-1.5">
             <span class="material-symbols-outlined msym-fill text-secc text-[16px]">lock</span>
-            <span class="text-white/60 text-[12px] font-medium" id="txt-trust-local">Yerel AI — Veri Dışarı Çıkmaz</span>
+            <span class="text-white/60 text-[12px] font-medium" id="txt-trust-local" data-i18n="hero.trust.local">Yerel AI — Veri Dışarı Çıkmaz</span>
           </div>
           <div class="flex items-center gap-1.5">
               <span class="material-symbols-outlined msym-fill text-secc text-[16px]">language</span>
-              <span class="text-white/60 text-[12px] font-medium" id="txt-trust-lang">TR · EN · AR — Mülteci yoğunluğu için Arapça desteği</span>
+              <span class="text-white/60 text-[12px] font-medium" id="txt-trust-lang" data-i18n="hero.trust.lang">TR · EN · AR — Mülteci yoğunluğu için Arapça desteği</span>
             </div>
         </div>
       </div>
@@ -277,13 +277,13 @@ tailwind.config = {
                 <span class="material-symbols-outlined msym text-white text-[11px]">smart_toy</span>
               </div>
               <div class="chat-msg-ai px-3 py-2 rounded-2xl rounded-tl-sm max-w-[80%]">
-                <p class="text-white text-[12px] leading-relaxed">Merhaba Ayşe Hanım! 👋 Bugün sizi ne rahatsız ediyor? Şikayetinizi anlatır mısınız?</p>
+                <p class="text-white text-[12px] leading-relaxed" data-i18n-html="chat.ai.1">Merhaba Ayşe Hanım! 👋 Bugün sizi ne rahatsız ediyor? Şikayetinizi anlatır mısınız?</p>
               </div>
             </div>
             <!-- User msg -->
             <div class="flex items-start gap-2 justify-end">
               <div class="chat-msg-user px-3 py-2 rounded-2xl rounded-tr-sm max-w-[80%]">
-                <p class="text-white text-[12px] leading-relaxed">3 gündür başım ağrıyor, hafif ateşim var ve yorgun hissediyorum.</p>
+                <p class="text-white text-[12px] leading-relaxed" data-i18n-html="chat.user.1">3 gündür başım ağrıyor, hafif ateşim var ve yorgun hissediyorum.</p>
               </div>
               <div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <span class="material-symbols-outlined msym text-white text-[11px]">person</span>
@@ -295,7 +295,7 @@ tailwind.config = {
                 <span class="material-symbols-outlined msym text-white text-[11px]">smart_toy</span>
               </div>
               <div class="chat-msg-ai px-3 py-2 rounded-2xl rounded-tl-sm max-w-[80%]">
-                <p class="text-white text-[12px] leading-relaxed">Anlıyorum. Ateşiniz kaç derece? Boğaz ağrısı veya öksürük var mı?</p>
+                <p class="text-white text-[12px] leading-relaxed" data-i18n-html="chat.ai.2">Anlıyorum. Ateşiniz kaç derece? Boğaz ağrısı veya öksürük var mı?</p>
               </div>
             </div>
             <!-- Typing -->
@@ -328,19 +328,19 @@ tailwind.config = {
               <span class="material-symbols-outlined msym-fill text-orange-500 text-[16px]">assignment</span>
             </div>
             <div>
-              <p class="text-[11px] font-bold text-pri">Triaj Raporu Hazır</p>
-              <p class="text-[10px] text-onsv">Dr. Mehmet Yılmaz için oluşturuldu</p>
+              <p class="text-[11px] font-bold text-pri" data-i18n="chat.result.title">Triaj Raporu Hazır</p>
+              <p class="text-[10px] text-onsv" data-i18n="chat.result.sub">Dr. Mehmet Yılmaz için oluşturuldu</p>
             </div>
             <div class="ml-auto px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-bold">ORTA</div>
           </div>
           <div class="space-y-1.5">
             <div class="flex items-center gap-1.5">
               <div class="w-1 h-1 rounded-full bg-sec flex-shrink-0"></div>
-              <span class="text-[11px] text-ons">Baş ağrısı + ateş (37.8°C) + halsizlik, 3 gün</span>
+              <span class="text-[11px] text-ons" data-i18n="chat.result.symptoms">Baş ağrısı + ateş (37.8°C) + halsizlik, 3 gün</span>
             </div>
             <div class="flex items-center gap-1.5">
               <div class="w-1 h-1 rounded-full bg-sec flex-shrink-0"></div>
-              <span class="text-[11px] text-ons">Öncel tanı: Üst solunum yolu enfeksiyonu</span>
+              <span class="text-[11px] text-ons" data-i18n="chat.result.diagnosis">Öncel tanı: Üst solunum yolu enfeksiyonu</span>
             </div>
           </div>
         </div>
@@ -365,14 +365,13 @@ tailwind.config = {
     <div class="text-center mb-14 reveal">
       <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 border border-red-200 mb-4">
         <span class="material-symbols-outlined msym-fill text-red-500 text-[14px]">local_hospital</span>
-        <span class="text-[11px] font-bold text-red-500 uppercase tracking-widest">Neden İnşa Ettik</span>
+        <span class="text-[11px] font-bold text-red-500 uppercase tracking-widest" data-i18n="story.chip">Neden İnşa Ettik</span>
       </div>
       <h2 class="font-head font-black text-pri text-[36px] md:text-[44px] leading-tight mb-4">
-        Kimse bu bekleme odasında<br/><span style="background:linear-gradient(90deg,#ba1a1a,#e07b26);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">olmak istemez.</span>
+        <span data-i18n="story.h2a">Kimse bu bekleme odasında</span><br/><span style="background:linear-gradient(90deg,#ba1a1a,#e07b26);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" data-i18n="story.h2b">olmak istemez.</span>
       </h2>
     </div>
 
-    <!-- Story cards -->
     <div class="space-y-8">
 
       <!-- Story 1: The STEMI -->
@@ -384,16 +383,16 @@ tailwind.config = {
               <span class="material-symbols-outlined msym-fill text-red-500 text-[20px]">favorite</span>
             </div>
             <div>
-              <p class="font-head font-bold text-pri text-[15px]">Gaziantep Devlet Hastanesi — Salı sabahı, 09:15</p>
-              <p class="text-onsv text-[12px]">Gerçek bir senaryo</p>
+              <p class="font-head font-bold text-pri text-[15px]" data-i18n="s1.loc">Gaziantep Devlet Hastanesi — Salı sabahı, 09:15</p>
+              <p class="text-onsv text-[12px]" data-i18n="s1.sub">Gerçek bir senaryo</p>
             </div>
           </div>
-          <p class="text-ons text-[14px] leading-relaxed mb-4">
+          <p class="text-ons text-[14px] leading-relaxed mb-4" data-i18n-html="s1.body">
             Bekleme salonunda 47 kişi var. Tek bir triaj hemşiresi görevde. 66 yaşında bir adam içeri giriyor — göğüs ağrısı, terleme ve sol kola yayılan bir sızı. "Kas ağrısı olmalı" diye düşünerek sabahtan beri bekliyor. Sessizce numara çekiyor. Önünde öksürüklü bir bebek, burnu kırık bir genç ve baş ağrısı olan bir kadın var. Hemşire herkese aynı 6 soruyu aynı sırayla soruyor. <strong>22 dakika sonra</strong> sırası geldiğinde adam STEMI geçiriyor.
           </p>
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-50 border border-red-200">
             <span class="material-symbols-outlined msym text-red-500 text-[13px]">warning</span>
-            <span class="text-red-600 text-[12px] font-bold">Türkiye'de yılda 117 milyon acil servise erişim — triaj hatası önlenebilir bir ölüm sebebi</span>
+            <span class="text-red-600 text-[12px] font-bold" data-i18n="s1.stat">Türkiye'de yılda 117 milyon acil servise erişim — triaj hatası önlenebilir bir ölüm sebebi</span>
           </div>
         </div>
       </div>
@@ -407,20 +406,20 @@ tailwind.config = {
               <span class="material-symbols-outlined msym-fill text-amber-600 text-[20px]">translate</span>
             </div>
             <div>
-              <p class="font-head font-bold text-pri text-[15px]">Türkiye Geneli — Dil Bariyeri Kalktı</p>
-              <p class="text-onsv text-[12px]">Muğla, Şanlıurfa, Gaziantep, Antalya, Hatay, Mardin...</p>
+              <p class="font-head font-bold text-pri text-[15px]" data-i18n="s2.loc">Türkiye Geneli — Dil Bariyeri Kalktı</p>
+              <p class="text-onsv text-[12px]" data-i18n="s2.sub">Muğla, Şanlıurfa, Gaziantep, Antalya, Hatay, Mardin...</p>
             </div>
           </div>
-          <p class="text-ons text-[14px] leading-relaxed mb-4">
+          <p class="text-ons text-[14px] leading-relaxed mb-4" data-i18n-html="s2.body1">
             Türkiye, son 10 yılda dünyada en fazla mülteci kabul eden ülkeler arasına girdi. Güneydoğu illeri — Gaziantep, Şanlıurfa, Hatay, Mersin — yalnızca sınır ötesi göç yollarının değil, Arapça konuşan milyonlarca insanın artık yaşam kurduğu şehirler hâline geldi. Bu hastalar kliniğe geldiğinde çifte engelle karşılaşıyorlar: hem hasta hem de semptomlarını Türkçe aktaramıyorlar. Boyun tutukluğu olan, 39,8°C ateşli küçük bir çocuk, iletişim bariyeri yüzünden <strong>YEŞİL</strong> olarak kodlanıyor. Öte yanda Muğla ve Bodrum'da turizm sezonunda on binlerce İngilizce konuşan yabancı hasta acil servislere başvuruyor; hemşire "Ne zamandan beri?" sorusunu sorduğunda hiçbiri yanıt veremiyor.
           </p>
-          <p class="text-ons text-[14px] leading-relaxed mb-4">
+          <p class="text-ons text-[14px] leading-relaxed mb-4" data-i18n-html="s2.body2">
             AnamnezAI kiosku <strong>üç dilde konuşuyor</strong> — Türkçe, İngilizce ve Arapça. Gemma 4, salt çeviri değil gerçek anlamda doğal konuşma kuruyor. Hasta kendi dilinde cevap veriyor, doktor her zaman Türkçe klinik özet okuyor. Muğla'da ya da Şanlıurfa'da, turizmde ya da mülteci yoğunluğunda — dil farkı artık tanıyı etkilemiyor.
           </p>
           <div class="flex flex-wrap gap-2">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold">🇹🇷 Türkçe</span>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold">🇬🇧 English</span>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold">🇸🇦 العربية — Şu an aktif</span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold" data-i18n="s2.l1">🇹🇷 Türkçe</span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold" data-i18n="s2.l2">🇬🇧 English</span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[12px] font-bold" data-i18n="s2.l3">🇸🇦 العربية — Şu an aktif</span>
           </div>
         </div>
       </div>
@@ -434,46 +433,35 @@ tailwind.config = {
               <span class="material-symbols-outlined msym-fill text-sec text-[20px]">point_of_sale</span>
             </div>
             <div>
-              <p class="font-head font-bold text-pri text-[15px]">Kiosk modu — Kapıdan girersin, doktor seni zaten bekler</p>
-              <p class="text-onsv text-[12px]">5 dakikada kapıdan muayene odasına hazır</p>
+              <p class="font-head font-bold text-pri text-[15px]" data-i18n="s3.title">Kiosk modu — Kapıdan girersin, doktor seni zaten bekler</p>
+              <p class="text-onsv text-[12px]" data-i18n="s3.sub">5 dakikada kapıdan muayene odasına hazır</p>
             </div>
           </div>
-
-          <!-- Kiosk steps -->
           <div class="grid sm:grid-cols-4 gap-4 mb-5">
             <div class="text-center p-4 rounded-2xl bg-white border border-surfc">
-              <div class="w-10 h-10 rounded-full bg-secc/50 flex items-center justify-center mx-auto mb-2">
-                <span class="text-sec font-black text-[14px]">1</span>
-              </div>
-              <p class="text-[11px] font-bold text-pri mb-1">Dokunmatik Ekran</p>
-              <p class="text-[10px] text-onsv">Dil seç (TR/EN/AR), TC kimlik barkodunu okut ya da isim gir</p>
+              <div class="w-10 h-10 rounded-full bg-secc/50 flex items-center justify-center mx-auto mb-2"><span class="text-sec font-black text-[14px]">1</span></div>
+              <p class="text-[11px] font-bold text-pri mb-1" data-i18n="ksk.1t">Dokunmatik Ekran</p>
+              <p class="text-[10px] text-onsv" data-i18n="ksk.1d">Dil seç (TR/EN/AR), TC kimlik barkodunu okut ya da isim gir</p>
             </div>
             <div class="text-center p-4 rounded-2xl bg-white border border-surfc">
-              <div class="w-10 h-10 rounded-full bg-secc/50 flex items-center justify-center mx-auto mb-2">
-                <span class="text-sec font-black text-[14px]">2</span>
-              </div>
-              <p class="text-[11px] font-bold text-pri mb-1">AI Mülakat</p>
-              <p class="text-[10px] text-onsv">Gemma 4 sesli soru sorar, hasta sesli ya da büyük tuşlarla cevaplar</p>
+              <div class="w-10 h-10 rounded-full bg-secc/50 flex items-center justify-center mx-auto mb-2"><span class="text-sec font-black text-[14px]">2</span></div>
+              <p class="text-[11px] font-bold text-pri mb-1" data-i18n="ksk.2t">AI Mülakat</p>
+              <p class="text-[10px] text-onsv" data-i18n="ksk.2d">Gemma 4 sesli soru sorar, hasta sesli ya da büyük tuşlarla cevaplar</p>
             </div>
             <div class="text-center p-4 rounded-2xl bg-white border border-surfc">
-              <div class="w-10 h-10 rounded-full bg-secc/50 flex items-center justify-center mx-auto mb-2">
-                <span class="text-sec font-black text-[14px]">3</span>
-              </div>
-              <p class="text-[11px] font-bold text-pri mb-1">Renkli Bilet</p>
-              <p class="text-[10px] text-onsv">🔴 Acil pencereye git · 🟡 15 dk · 🟢 45 dk — QR kodlu bilet</p>
+              <div class="w-10 h-10 rounded-full bg-secc/50 flex items-center justify-center mx-auto mb-2"><span class="text-sec font-black text-[14px]">3</span></div>
+              <p class="text-[11px] font-bold text-pri mb-1" data-i18n="ksk.3t">Renkli Bilet</p>
+              <p class="text-[10px] text-onsv" data-i18n="ksk.3d">🔴 Acil pencereye git · 🟡 15 dk · 🟢 45 dk — QR kodlu bilet</p>
             </div>
             <div class="text-center p-4 rounded-2xl bg-white border border-surfc">
-              <div class="w-10 h-10 rounded-full bg-pric flex items-center justify-center mx-auto mb-2">
-                <span class="text-white font-black text-[14px]">4</span>
-              </div>
-              <p class="text-[11px] font-bold text-pri mb-1">Doktor Hazır</p>
-              <p class="text-[10px] text-onsv">Klinik özet doktorun ekranına gerçek zamanlı akmaya başlar</p>
+              <div class="w-10 h-10 rounded-full bg-pric flex items-center justify-center mx-auto mb-2"><span class="text-white font-black text-[14px]">4</span></div>
+              <p class="text-[11px] font-bold text-pri mb-1" data-i18n="ksk.4t">Doktor Hazır</p>
+              <p class="text-[10px] text-onsv" data-i18n="ksk.4d">Klinik özet doktorun ekranına gerçek zamanlı akmaya başlar</p>
             </div>
           </div>
-
           <div class="flex items-start gap-3 p-4 rounded-2xl bg-sec/10 border border-sec/20">
             <span class="material-symbols-outlined msym-fill text-sec text-[20px] flex-shrink-0 mt-0.5">lightbulb</span>
-            <p class="text-[13px] text-ons leading-relaxed">
+            <p class="text-[13px] text-ons leading-relaxed" data-i18n-html="ksk.smart">
               <strong>Akıllı yükseltme:</strong> Hasta "göğüs ağrısı", "nefes alamıyorum" veya "ani şiddetli baş ağrısı" derse sistem sessizce 7 soruya geçer, OPQRST ağrı profili ve sepsis taramasına yönlendirir. Kiosk hiç uyarmadan daha derin bir görüşme yapar.
             </p>
           </div>
@@ -493,23 +481,23 @@ tailwind.config = {
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
       <div class="text-center reveal">
         <div class="text-[40px] font-head font-black grad-text-warm counter" data-target="5">0</div>
-        <div class="text-[12px] font-semibold text-onsv mt-1">Akıllı Soru</div>
-        <div class="text-[11px] text-ouv">Ortalama mülakat</div>
+        <div class="text-[12px] font-semibold text-onsv mt-1" data-i18n="stat.1l">Akıllı Soru</div>
+        <div class="text-[11px] text-ouv" data-i18n="stat.1s">Ortalama mülakat</div>
       </div>
       <div class="text-center reveal">
         <div class="text-[40px] font-head font-black grad-text-warm counter" data-target="86" data-suffix="%">0</div>
-        <div class="text-[12px] font-semibold text-onsv mt-1">Triaj Doğruluğu</div>
-        <div class="text-[11px] text-ouv">86% — 13/15 test senaryosu</div>
+        <div class="text-[12px] font-semibold text-onsv mt-1" data-i18n="stat.2l">Triaj Doğruluğu</div>
+        <div class="text-[11px] text-ouv" data-i18n="stat.2s">86% — 13/15 test senaryosu</div>
       </div>
       <div class="text-center reveal">
         <div class="text-[40px] font-head font-black grad-text-warm counter" data-target="3">0</div>
-        <div class="text-[12px] font-semibold text-onsv mt-1">Dil Desteği</div>
-        <div class="text-[11px] text-ouv">TR · EN · AR (Arapça canlı)</div>
+        <div class="text-[12px] font-semibold text-onsv mt-1" data-i18n="stat.3l">Dil Desteği</div>
+        <div class="text-[11px] text-ouv" data-i18n="stat.3s">TR · EN · AR (Arapça canlı)</div>
       </div>
       <div class="text-center reveal">
         <div class="text-[40px] font-head font-black grad-text-warm" style="font-variant-numeric:tabular-nums">5/5</div>
-        <div class="text-[12px] font-semibold text-onsv mt-1">MedGemma Testi</div>
-        <div class="text-[11px] text-ouv">%100 başarı (2026-05-11)</div>
+        <div class="text-[12px] font-semibold text-onsv mt-1" data-i18n="stat.4l">MedGemma Testi</div>
+        <div class="text-[11px] text-ouv" data-i18n="stat.4s">%100 başarı (2026-05-11)</div>
       </div>
     </div>
   </div>
@@ -525,12 +513,12 @@ tailwind.config = {
     <div class="text-center mb-14 reveal">
       <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secc/40 border border-sec/20 mb-4">
         <span class="material-symbols-outlined msym-fill text-sec text-[14px]">auto_awesome</span>
-        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Güçlü Özellikler</span>
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest" data-i18n="feat.chip">Güçlü Özellikler</span>
       </div>
       <h2 class="font-head font-black text-pri text-[36px] md:text-[44px] leading-tight mb-4">
-        Sağlık hizmeti sunumunu<br/><span class="grad-text-warm">yeniden tasarladık.</span>
+        <span data-i18n="feat.h2a">Sağlık hizmeti sunumunu</span><br/><span class="grad-text-warm" data-i18n="feat.h2b">yeniden tasarladık.</span>
       </h2>
-      <p class="text-onsv text-[15px] max-w-xl mx-auto leading-relaxed">
+      <p class="text-onsv text-[15px] max-w-xl mx-auto leading-relaxed" data-i18n="feat.sub">
         Hasta kabulünden klinik özete kadar tüm ön triaj sürecini yapay zeka ile otomatize eden tek platform.
       </p>
     </div>
@@ -543,11 +531,11 @@ tailwind.config = {
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sec to-pric flex items-center justify-center mb-5 shadow-sm">
           <span class="material-symbols-outlined msym-fill text-white text-[24px]">psychology</span>
         </div>
-        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Akıllı AI Mülakat</h3>
-        <p class="text-onsv text-[13px] leading-relaxed">Gemma 4 tabanlı dil modeliyle semptomlarınızı derinlemesine anlayan, bağlamsal ve klinik açıdan anlamlı sorular soran konuşma akışı.</p>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2" data-i18n="f1.t">Akıllı AI Mülakat</h3>
+        <p class="text-onsv text-[13px] leading-relaxed" data-i18n="f1.d">Gemma 4 tabanlı dil modeliyle semptomlarınızı derinlemesine anlayan, bağlamsal ve klinik açıdan anlamlı sorular soran konuşma akışı.</p>
         <div class="mt-4 flex flex-wrap gap-2">
           <span class="px-2.5 py-1 rounded-full bg-secc/30 text-sec text-[10px] font-bold">Gemma 4</span>
-          <span class="px-2.5 py-1 rounded-full bg-secc/30 text-sec text-[10px] font-bold">Adaptif Soru</span>
+          <span class="px-2.5 py-1 rounded-full bg-secc/30 text-sec text-[10px] font-bold" data-i18n="f1.tag">Adaptif Soru</span>
         </div>
       </div>
 
@@ -556,8 +544,8 @@ tailwind.config = {
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center mb-5 shadow-sm">
           <span class="material-symbols-outlined msym-fill text-white text-[24px]">biotech</span>
         </div>
-        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Tıbbi Görüntü Analizi</h3>
-        <p class="text-onsv text-[13px] leading-relaxed">MedGemma Vision ile yara, cilt döküntüsü, EKG şeridi veya röntgen görüntüleri anında analiz edilir ve klinik rapora eklenir.</p>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2" data-i18n="f2.t">Tıbbi Görüntü Analizi</h3>
+        <p class="text-onsv text-[13px] leading-relaxed" data-i18n="f2.d">MedGemma Vision ile yara, cilt döküntüsü, EKG şeridi veya röntgen görüntüleri anında analiz edilir ve klinik rapora eklenir.</p>
         <div class="mt-4 flex flex-wrap gap-2">
           <span class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold">MedGemma Vision</span>
           <span class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold">Multimodal</span>
@@ -569,10 +557,10 @@ tailwind.config = {
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-5 shadow-sm">
           <span class="material-symbols-outlined msym-fill text-white text-[24px]">assignment</span>
         </div>
-        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Klinik Triaj Raporu</h3>
-        <p class="text-onsv text-[13px] leading-relaxed">MTS (Manchester Triage System) protokolüne uygun öncelik skoru, olası tanı listesi ve vital bulgular içeren yapılandırılmış klinik özet.</p>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2" data-i18n="f3.t">Klinik Triaj Raporu</h3>
+        <p class="text-onsv text-[13px] leading-relaxed" data-i18n="f3.d">MTS (Manchester Triage System) protokolüne uygun öncelik skoru, olası tanı listesi ve vital bulgular içeren yapılandırılmış klinik özet.</p>
         <div class="mt-4 flex flex-wrap gap-2">
-          <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">MTS Protokolü</span>
+          <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold" data-i18n="f3.tag1">MTS Protokolü</span>
           <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">PDF Export</span>
         </div>
       </div>
@@ -582,8 +570,8 @@ tailwind.config = {
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-5 shadow-sm">
           <span class="material-symbols-outlined msym-fill text-white text-[24px]">mic</span>
         </div>
-        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Sesli Giriş & TTS</h3>
-        <p class="text-onsv text-[13px] leading-relaxed">Web Speech API ile Türkçe/İngilizce/Arapça sesli cevap girilebilir. Text-to-Speech ile AI soruları sesli dinlenebilir. Kiosk modunda ideal.</p>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2" data-i18n="f4.t">Sesli Giriş & TTS</h3>
+        <p class="text-onsv text-[13px] leading-relaxed" data-i18n="f4.d">Web Speech API ile Türkçe/İngilizce/Arapça sesli cevap girilebilir. Text-to-Speech ile AI soruları sesli dinlenebilir. Kiosk modunda ideal.</p>
         <div class="mt-4 flex flex-wrap gap-2">
           <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Speech API</span>
           <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">TTS</span>
@@ -595,10 +583,10 @@ tailwind.config = {
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-5 shadow-sm">
           <span class="material-symbols-outlined msym-fill text-white text-[24px]">dashboard</span>
         </div>
-        <h3 class="font-head font-bold text-pri text-[17px] mb-2">Doktor & Admin Paneli</h3>
-        <p class="text-onsv text-[13px] leading-relaxed">Tüm hasta oturumları, triaj skorları, geçmiş raporlar ve klinik inceleme arayüzünü içeren kapsamlı yönetim panosu.</p>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2" data-i18n="f5.t">Doktor & Admin Paneli</h3>
+        <p class="text-onsv text-[13px] leading-relaxed" data-i18n="f5.d">Tüm hasta oturumları, triaj skorları, geçmiş raporlar ve klinik inceleme arayüzünü içeren kapsamlı yönetim panosu.</p>
         <div class="mt-4 flex flex-wrap gap-2">
-          <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">Rol Tabanlı Erişim</span>
+          <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold" data-i18n="f5.tag1">Rol Tabanlı Erişim</span>
           <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">Analytics</span>
         </div>
       </div>
@@ -608,14 +596,13 @@ tailwind.config = {
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center mb-5 shadow-sm">
           <span class="material-symbols-outlined msym-fill text-white text-[24px]">install_mobile</span>
         </div>
-        <h3 class="font-head font-bold text-pri text-[17px] mb-2">PWA — Offline Destek</h3>
-        <p class="text-onsv text-[13px] leading-relaxed">Progressive Web App olarak telefona veya tablete kurulabilir. Kiosk modunda dokunmatik ekranlarda sorunsuz çalışır. İnternet bağlantısı gerekmez.</p>
+        <h3 class="font-head font-bold text-pri text-[17px] mb-2" data-i18n="f6.t">PWA — Offline Destek</h3>
+        <p class="text-onsv text-[13px] leading-relaxed" data-i18n="f6.d">Progressive Web App olarak telefona veya tablete kurulabilir. Kiosk modunda dokunmatik ekranlarda sorunsuz çalışır. İnternet bağlantısı gerekmez.</p>
         <div class="mt-4 flex flex-wrap gap-2">
           <span class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold">PWA</span>
-          <span class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold">Kiosk Modu</span>
+          <span class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold" data-i18n="f6.tag">Kiosk Modu</span>
         </div>
       </div>
-
     </div>
   </div>
 </section>
@@ -630,12 +617,10 @@ tailwind.config = {
     <div class="text-center mb-16 reveal">
       <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secc/40 border border-sec/20 mb-4">
         <span class="material-symbols-outlined msym text-sec text-[14px]">route</span>
-        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Adım Adım</span>
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest" data-i18n="how.chip">Adım Adım</span>
       </div>
-      <h2 class="font-head font-black text-pri text-[36px] md:text-[44px] leading-tight mb-4">
-        Nasıl çalışır?
-      </h2>
-      <p class="text-onsv text-[15px] max-w-lg mx-auto">Hasta kabulünden klinik rapora kadar tüm süreç ortalama <strong>5-8 dakikada</strong> tamamlanır.</p>
+      <h2 class="font-head font-black text-pri text-[36px] md:text-[44px] leading-tight mb-4" data-i18n="how.h2">Nasıl çalışır?</h2>
+      <p class="text-onsv text-[15px] max-w-lg mx-auto" data-i18n-html="how.sub">Hasta kabulünden klinik rapora kadar tüm süreç ortalama <strong>5-8 dakikada</strong> tamamlanır.</p>
     </div>
 
     <!-- Steps -->
@@ -650,8 +635,8 @@ tailwind.config = {
           <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pric text-white text-[11px] font-black flex items-center justify-center">1</div>
         </div>
         <div class="step-line hidden md:block"></div>
-        <h4 class="font-head font-bold text-pri text-[14px] mb-1">Hasta Kaydı</h4>
-        <p class="text-onsv text-[12px] leading-relaxed">İsim, yaş, cinsiyet ve isteğe bağlı vital bulgular girilir.</p>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1" data-i18n="step.1t">Hasta Kaydı</h4>
+        <p class="text-onsv text-[12px] leading-relaxed" data-i18n="step.1d">İsim, yaş, cinsiyet ve isteğe bağlı vital bulgular girilir.</p>
       </div>
 
       <!-- Step 2 -->
@@ -663,8 +648,8 @@ tailwind.config = {
           <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pric text-white text-[11px] font-black flex items-center justify-center">2</div>
         </div>
         <div class="step-line hidden md:block"></div>
-        <h4 class="font-head font-bold text-pri text-[14px] mb-1">AI Mülakatı</h4>
-        <p class="text-onsv text-[12px] leading-relaxed">Gemma 4, klinik açıdan önemli 5 soru sorar ve cevapları analiz eder.</p>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1" data-i18n="step.2t">AI Mülakatı</h4>
+        <p class="text-onsv text-[12px] leading-relaxed" data-i18n="step.2d">Gemma 4, klinik açıdan önemli 5 soru sorar ve cevapları analiz eder.</p>
       </div>
 
       <!-- Step 3 -->
@@ -676,8 +661,8 @@ tailwind.config = {
           <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pric text-white text-[11px] font-black flex items-center justify-center">3</div>
         </div>
         <div class="step-line hidden md:block"></div>
-        <h4 class="font-head font-bold text-pri text-[14px] mb-1">Görüntü Analizi</h4>
-        <p class="text-onsv text-[12px] leading-relaxed">İsteğe bağlı: MedGemma Vision ile tıbbi görüntü yüklenir ve analiz edilir.</p>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1" data-i18n="step.3t">Görüntü Analizi</h4>
+        <p class="text-onsv text-[12px] leading-relaxed" data-i18n="step.3d">İsteğe bağlı: MedGemma Vision ile tıbbi görüntü yüklenir ve analiz edilir.</p>
       </div>
 
       <!-- Step 4 -->
@@ -689,8 +674,8 @@ tailwind.config = {
           <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pric text-white text-[11px] font-black flex items-center justify-center">4</div>
         </div>
         <div class="step-line hidden md:block"></div>
-        <h4 class="font-head font-bold text-pri text-[14px] mb-1">Klinik Özet</h4>
-        <p class="text-onsv text-[12px] leading-relaxed">MTS triaj skoru, öncel tanılar ve öneriler içeren rapor oluşturulur.</p>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1" data-i18n="step.4t">Klinik Özet</h4>
+        <p class="text-onsv text-[12px] leading-relaxed" data-i18n="step.4d">MTS triaj skoru, öncel tanılar ve öneriler içeren rapor oluşturulur.</p>
       </div>
 
       <!-- Step 5 -->
@@ -701,10 +686,9 @@ tailwind.config = {
           </div>
           <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-sec text-white text-[11px] font-black flex items-center justify-center">5</div>
         </div>
-        <h4 class="font-head font-bold text-pri text-[14px] mb-1">Doktor Görüşmesi</h4>
-        <p class="text-onsv text-[12px] leading-relaxed">Doktor, hazır klinik özetle hastayı çok daha kısa sürede değerlendirir.</p>
+        <h4 class="font-head font-bold text-pri text-[14px] mb-1" data-i18n="step.5t">Doktor Görüşmesi</h4>
+        <p class="text-onsv text-[12px] leading-relaxed" data-i18n="step.5d">Doktor, hazır klinik özetle hastayı çok daha kısa sürede değerlendirir.</p>
       </div>
-
     </div>
 
     <!-- Result highlight -->
@@ -712,15 +696,15 @@ tailwind.config = {
       <div class="grid md:grid-cols-3 gap-6 text-center">
         <div>
           <div class="text-[32px] font-head font-black text-pric mb-1">%60</div>
-          <p class="text-[13px] font-semibold text-onsv">Daha kısa hasta kabul süresi</p>
+          <p class="text-[13px] font-semibold text-onsv" data-i18n="res.1">Daha kısa hasta kabul süresi</p>
         </div>
         <div class="border-y md:border-y-0 md:border-x border-sec/20 py-6 md:py-0">
           <div class="text-[32px] font-head font-black text-pric mb-1">%90</div>
-          <p class="text-[13px] font-semibold text-onsv">Artmış triaj doğruluğu</p>
+          <p class="text-[13px] font-semibold text-onsv" data-i18n="res.2">Artmış triaj doğruluğu</p>
         </div>
         <div>
           <div class="text-[32px] font-head font-black text-pric mb-1">24/7</div>
-          <p class="text-[13px] font-semibold text-onsv">Kesintisiz hizmet kapasitesi</p>
+          <p class="text-[13px] font-semibold text-onsv" data-i18n="res.3">Kesintisiz hizmet kapasitesi</p>
         </div>
       </div>
     </div>
@@ -740,12 +724,12 @@ tailwind.config = {
     <div class="text-center mb-14 reveal">
       <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 mb-4">
         <span class="material-symbols-outlined msym text-secc text-[14px]">memory</span>
-        <span class="text-[11px] font-bold text-secc uppercase tracking-widest">Altyapı & Teknoloji</span>
+        <span class="text-[11px] font-bold text-secc uppercase tracking-widest" data-i18n="tech.chip">Altyapı & Teknoloji</span>
       </div>
       <h2 class="font-head font-black text-white text-[36px] md:text-[44px] leading-tight mb-4">
-        En güncel AI modelleri<br/><span class="grad-text">güvenli altyapıda.</span>
+        <span data-i18n="tech.h2a">En güncel AI modelleri</span><br/><span class="grad-text" data-i18n="tech.h2b">güvenli altyapıda.</span>
       </h2>
-      <p class="text-white/60 text-[15px] max-w-lg mx-auto">Tüm AI işlemleri yerel olarak çalışır. Hasta verisi asla dışarı çıkmaz.</p>
+      <p class="text-white/60 text-[15px] max-w-lg mx-auto" data-i18n="tech.sub">Tüm AI işlemleri yerel olarak çalışır. Hasta verisi asla dışarı çıkmaz.</p>
     </div>
 
     <!-- Tech stack -->
@@ -759,14 +743,14 @@ tailwind.config = {
           </div>
           <div>
             <h3 class="font-head font-bold text-white text-[18px]">Gemma 4</h3>
-            <p class="text-secc text-[12px] font-medium">Google DeepMind · Dil Modeli</p>
+            <p class="text-secc text-[12px] font-medium" data-i18n="g4.sub">Google DeepMind · Dil Modeli</p>
           </div>
         </div>
-        <p class="text-white/60 text-[13px] leading-relaxed mb-4">Tıbbi sorgulamalar için optimize edilmiş, çok dilli destek sunan Google'ın en güncel açık kaynak dil modeli.</p>
+        <p class="text-white/60 text-[13px] leading-relaxed mb-4" data-i18n="g4.d">Tıbbi sorgulamalar için optimize edilmiş, çok dilli destek sunan Google'ın en güncel açık kaynak dil modeli.</p>
         <div class="flex flex-wrap gap-2">
-          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold">Türkçe</span>
-          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold">İngilizce</span>
-          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold">Arapça</span>
+          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold" data-i18n="g4.t1">Türkçe</span>
+          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold" data-i18n="g4.t2">İngilizce</span>
+          <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold" data-i18n="g4.t3">Arapça</span>
           <span class="tech-badge px-2.5 py-1 rounded-full text-secc text-[10px] font-bold">Ollama</span>
         </div>
       </div>
@@ -779,14 +763,14 @@ tailwind.config = {
           </div>
           <div>
             <h3 class="font-head font-bold text-white text-[18px]">MedGemma Vision</h3>
-            <p class="text-purple-300 text-[12px] font-medium">Google · Tıbbi Görüntü AI</p>
+            <p class="text-purple-300 text-[12px] font-medium" data-i18n="mg.sub">Google · Tıbbi Görüntü AI</p>
           </div>
         </div>
-        <p class="text-white/60 text-[13px] leading-relaxed mb-4">Tıbbi görüntüleme için özel eğitilmiş multimodal model. Röntgen, EKG, cilt görüntüsü ve yara analizi.</p>
+        <p class="text-white/60 text-[13px] leading-relaxed mb-4" data-i18n="mg.d">Tıbbi görüntüleme için özel eğitilmiş multimodal model. Röntgen, EKG, cilt görüntüsü ve yara analizi.</p>
         <div class="flex flex-wrap gap-2">
           <span class="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/20 text-purple-300 text-[10px] font-bold">Vision</span>
           <span class="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/20 text-purple-300 text-[10px] font-bold">Multimodal</span>
-          <span class="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/20 text-purple-300 text-[10px] font-bold">Tıbbi Görüntü</span>
+          <span class="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/20 text-purple-300 text-[10px] font-bold" data-i18n="mg.tag">Tıbbi Görüntü</span>
         </div>
       </div>
     </div>
@@ -795,25 +779,13 @@ tailwind.config = {
     <div class="stat-card rounded-3xl p-7 reveal">
       <h3 class="font-head font-bold text-white text-[16px] mb-5 flex items-center gap-2">
         <span class="material-symbols-outlined msym text-secc text-[20px]">dns</span>
-        Backend & Altyapı
+        <span data-i18n="be.title">Backend & Altyapı</span>
       </h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10">
-          <div class="text-secc font-bold text-[13px]">FastAPI</div>
-          <div class="text-white/40 text-[10px] mt-0.5">Python 3.11</div>
-        </div>
-        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10">
-          <div class="text-secc font-bold text-[13px]">ChromaDB</div>
-          <div class="text-white/40 text-[10px] mt-0.5">Vector RAG</div>
-        </div>
-        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10">
-          <div class="text-secc font-bold text-[13px]">Docker</div>
-          <div class="text-white/40 text-[10px] mt-0.5">Containerized</div>
-        </div>
-        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10">
-          <div class="text-secc font-bold text-[13px]">Kubernetes</div>
-          <div class="text-white/40 text-[10px] mt-0.5">K8s Ready</div>
-        </div>
+        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10"><div class="text-secc font-bold text-[13px]">FastAPI</div><div class="text-white/40 text-[10px] mt-0.5">Python 3.11</div></div>
+        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10"><div class="text-secc font-bold text-[13px]">ChromaDB</div><div class="text-white/40 text-[10px] mt-0.5">Vector RAG</div></div>
+        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10"><div class="text-secc font-bold text-[13px]">Docker</div><div class="text-white/40 text-[10px] mt-0.5">Containerized</div></div>
+        <div class="text-center p-3 rounded-2xl bg-white/5 border border-white/10"><div class="text-secc font-bold text-[13px]">Kubernetes</div><div class="text-white/40 text-[10px] mt-0.5">K8s Ready</div></div>
       </div>
     </div>
   </div>
@@ -829,10 +801,10 @@ tailwind.config = {
     <div class="text-center mb-14 reveal">
       <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secc/40 border border-sec/20 mb-4">
         <span class="material-symbols-outlined msym text-sec text-[14px]">groups</span>
-        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Kimler İçin</span>
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest" data-i18n="aud.chip">Kimler İçin</span>
       </div>
       <h2 class="font-head font-black text-pri text-[36px] md:text-[44px] leading-tight mb-4">
-        Her ölçekte sağlık kurumu<br/><span class="grad-text-warm">için tasarlandı.</span>
+        <span data-i18n="aud.h2a">Her ölçekte sağlık kurumu</span><br/><span class="grad-text-warm" data-i18n="aud.h2b">için tasarlandı.</span>
       </h2>
     </div>
 
@@ -842,17 +814,20 @@ tailwind.config = {
         <div class="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center mb-5 group-hover:bg-sec transition-colors">
           <span class="material-symbols-outlined msym-fill text-emerald-600 group-hover:text-white text-[28px] transition-colors">local_hospital</span>
         </div>
-        <h3 class="font-head font-bold text-pri text-[18px] mb-2">Devlet Hastaneleri</h3>
-        <p class="text-onsv text-[13px] leading-relaxed mb-4">Yoğun hasta trafiğini azaltın. Acil serviste triaj bekleme süresini kısaltın. Hemşire iş yükünü optimize edin.</p>
+        <h3 class="font-head font-bold text-pri text-[18px] mb-2" data-i18n="a1.t">Devlet Hastaneleri</h3>
+        <p class="text-onsv text-[13px] leading-relaxed mb-4" data-i18n="a1.d">Yoğun hasta trafiğini azaltın. Acil serviste triaj bekleme süresini kısaltın. Hemşire iş yükünü optimize edin.</p>
         <ul class="space-y-2">
           <li class="flex items-center gap-2 text-[12px] text-onsv">
-            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">check_circle</span>Kiosk entegrasyonu
+            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">check_circle</span>
+            <span data-i18n="a1.l1">Kiosk entegrasyonu</span>
           </li>
           <li class="flex items-center gap-2 text-[12px] text-onsv">
-            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">check_circle</span>Çok dilli destek
+            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">check_circle</span>
+            <span data-i18n="a1.l2">Çok dilli destek</span>
           </li>
           <li class="flex items-center gap-2 text-[12px] text-onsv">
-            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">check_circle</span>Yüksek hasta hacmi
+            <span class="material-symbols-outlined msym-fill text-sec text-[14px]">check_circle</span>
+            <span data-i18n="a1.l3">Yüksek hasta hacmi</span>
           </li>
         </ul>
       </div>
@@ -861,17 +836,20 @@ tailwind.config = {
         <div class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-5 group-hover:bg-pric transition-colors">
           <span class="material-symbols-outlined msym-fill text-blue-600 group-hover:text-white text-[28px] transition-colors">medical_services</span>
         </div>
-        <h3 class="font-head font-bold text-pri text-[18px] mb-2">Özel Klinikler</h3>
-        <p class="text-onsv text-[13px] leading-relaxed mb-4">Hasta deneyimini premium hale getirin. Doktor-hasta görüşme süresini verimli kullanın. Dijital dönüşümü hızlandırın.</p>
+        <h3 class="font-head font-bold text-pri text-[18px] mb-2" data-i18n="a2.t">Özel Klinikler</h3>
+        <p class="text-onsv text-[13px] leading-relaxed mb-4" data-i18n="a2.d">Hasta deneyimini premium hale getirin. Doktor-hasta görüşme süresini verimli kullanın. Dijital dönüşümü hızlandırın.</p>
         <ul class="space-y-2">
           <li class="flex items-center gap-2 text-[12px] text-onsv">
-            <span class="material-symbols-outlined msym-fill text-pric text-[14px]">check_circle</span>Özelleştirilebilir sorular
+            <span class="material-symbols-outlined msym-fill text-pric text-[14px]">check_circle</span>
+            <span data-i18n="a2.l1">Özelleştirilebilir sorular</span>
           </li>
           <li class="flex items-center gap-2 text-[12px] text-onsv">
-            <span class="material-symbols-outlined msym-fill text-pric text-[14px]">check_circle</span>Marka entegrasyonu
+            <span class="material-symbols-outlined msym-fill text-pric text-[14px]">check_circle</span>
+            <span data-i18n="a2.l2">Marka entegrasyonu</span>
           </li>
           <li class="flex items-center gap-2 text-[12px] text-onsv">
-            <span class="material-symbols-outlined msym-fill text-pric text-[14px]">check_circle</span>Analytics dashboard
+            <span class="material-symbols-outlined msym-fill text-pric text-[14px]">check_circle</span>
+            <span data-i18n="a2.l3">Analytics dashboard</span>
           </li>
         </ul>
       </div>
@@ -880,21 +858,23 @@ tailwind.config = {
         <div class="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center mb-5 group-hover:bg-warn transition-colors">
           <span class="material-symbols-outlined msym-fill text-orange-600 group-hover:text-white text-[28px] transition-colors">health_and_safety</span>
         </div>
-        <h3 class="font-head font-bold text-pri text-[18px] mb-2">Aile Hekimliği</h3>
-        <p class="text-onsv text-[13px] leading-relaxed mb-4">Randevu öncesi hastaları hazırlayın. Muayene verimliliğini artırın. Hasta memnuniyetini yükseltin.</p>
+        <h3 class="font-head font-bold text-pri text-[18px] mb-2" data-i18n="a3.t">Aile Hekimliği</h3>
+        <p class="text-onsv text-[13px] leading-relaxed mb-4" data-i18n="a3.d">Randevu öncesi hastaları hazırlayın. Muayene verimliliğini artırın. Hasta memnuniyetini yükseltin.</p>
         <ul class="space-y-2">
           <li class="flex items-center gap-2 text-[12px] text-onsv">
-            <span class="material-symbols-outlined msym-fill text-warn text-[14px]">check_circle</span>Düşük kurulum maliyeti
+            <span class="material-symbols-outlined msym-fill text-warn text-[14px]">check_circle</span>
+            <span data-i18n="a3.l1">Düşük kurulum maliyeti</span>
           </li>
           <li class="flex items-center gap-2 text-[12px] text-onsv">
-            <span class="material-symbols-outlined msym-fill text-warn text-[14px]">check_circle</span>PWA mobil uygulama
+            <span class="material-symbols-outlined msym-fill text-warn text-[14px]">check_circle</span>
+            <span data-i18n="a3.l2">PWA mobil uygulama</span>
           </li>
           <li class="flex items-center gap-2 text-[12px] text-onsv">
-            <span class="material-symbols-outlined msym-fill text-warn text-[14px]">check_circle</span>Basit kurulum
+            <span class="material-symbols-outlined msym-fill text-warn text-[14px]">check_circle</span>
+            <span data-i18n="a3.l3">Basit kurulum</span>
           </li>
         </ul>
       </div>
-
     </div>
   </div>
 </section>
@@ -908,9 +888,9 @@ tailwind.config = {
     <div class="text-center mb-14 reveal">
       <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secc/40 border border-sec/20 mb-4">
         <span class="material-symbols-outlined msym-fill text-sec text-[14px]">format_quote</span>
-        <span class="text-[11px] font-bold text-sec uppercase tracking-widest">Ne Diyorlar</span>
+        <span class="text-[11px] font-bold text-sec uppercase tracking-widest" data-i18n="test.chip">Ne Diyorlar</span>
       </div>
-      <h2 class="font-head font-black text-pri text-[36px] leading-tight">Sağlık profesyonellerinden</h2>
+      <h2 class="font-head font-black text-pri text-[36px] leading-tight" data-i18n="test.h2">Sağlık profesyonellerinden</h2>
     </div>
 
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -922,14 +902,14 @@ tailwind.config = {
           <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
           <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
         </div>
-        <p class="text-ons text-[13px] leading-relaxed italic mb-5">"كثير من مرضانا القادمين من خلفيات اللاجئين يواجهون حاجز اللغة عند دخول المستشفى. مع AnamnezAI، يتمكنون الآن من وصف أعراضهم بلغتهم الأم ويحصل الطبيب على ملخص طبي كامل باللغة التركية." <span class="not-italic text-onsv">(Mülteci geçmişine sahip pek çok hastamız hastanede dil bariyeriyle karşılaşıyordu. AnamnezAI ile kendi dillerinde semptomlarını aktarabiliyorlar, doktor Türkçe klinik özet alıyor.)</span></p>
+        <p class="text-ons text-[13px] leading-relaxed italic mb-5" data-i18n-html="q1.text">"كثير من مرضانا القادمين من خلفيات اللاجئين يواجهون حاجز اللغة عند دخول المستشفى. مع AnamnezAI، يتمكنون الآن من وصف أعراضهم بلغتهم الأم ويحصل الطبيب على ملخص طبي كامل باللغة التركية." <span class="not-italic text-onsv">(Mülteci geçmişine sahip pek çok hastamız hastanede dil bariyeriyle karşılaşıyordu. AnamnezAI ile kendi dillerinde semptomlarını aktarabiliyorlar, doktor Türkçe klinik özet alıyor.)</span></p>
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-full bg-amber-600 flex items-center justify-center flex-shrink-0">
             <span class="text-white font-bold text-[14px]">EA</span>
           </div>
           <div>
             <p class="font-bold text-pri text-[13px]">Dr. Emin Al-Rashid</p>
-            <p class="text-onsv text-[11px]">Acil Tıp Uzmanı — Gaziantep Devlet Hastanesi</p>
+            <p class="text-onsv text-[11px]" data-i18n="q1.role">Acil Tıp Uzmanı — Gaziantep Devlet Hastanesi</p>
           </div>
         </div>
       </div>
@@ -942,14 +922,14 @@ tailwind.config = {
           <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
           <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
         </div>
-        <p class="text-ons text-[13px] leading-relaxed italic mb-5">"Hastaların muayeneden önce AI ile ön görüşme yapması, bana çok daha hazır ve analiz edilmiş vaka sunuyor. Muayene sürem gerçekten kısaldı."</p>
+        <p class="text-ons text-[13px] leading-relaxed italic mb-5" data-i18n="q2.text">"Hastaların muayeneden önce AI ile ön görüşme yapması, bana çok daha hazır ve analiz edilmiş vaka sunuyor. Muayene sürem gerçekten kısaldı."</p>
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-full bg-pric flex items-center justify-center flex-shrink-0">
             <span class="text-white font-bold text-[14px]">MK</span>
           </div>
           <div>
             <p class="font-bold text-pri text-[13px]">Dr. Mehmet Kaya</p>
-            <p class="text-onsv text-[11px]">Acil Tıp Uzmanı</p>
+            <p class="text-onsv text-[11px]" data-i18n="q2.role">Acil Tıp Uzmanı</p>
           </div>
         </div>
       </div>
@@ -962,14 +942,14 @@ tailwind.config = {
           <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
           <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
         </div>
-        <p class="text-ons text-[13px] leading-relaxed italic mb-5">"Triaj hemşireleri olarak yoğun dönemlerde AnamnezAI inanılmaz yük alıyor. Özellikle çok dilli destek çok önemli kliniğimiz için."</p>
+        <p class="text-ons text-[13px] leading-relaxed italic mb-5" data-i18n="q3.text">"Triaj hemşireleri olarak yoğun dönemlerde AnamnezAI inanılmaz yük alıyor. Özellikle çok dilli destek çok önemli kliniğimiz için."</p>
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-full bg-sec flex items-center justify-center flex-shrink-0">
             <span class="text-white font-bold text-[14px]">SY</span>
           </div>
           <div>
             <p class="font-bold text-pri text-[13px]">Hemşire Selin Yıldız</p>
-            <p class="text-onsv text-[11px]">Triaj Baş Hemşiresi</p>
+            <p class="text-onsv text-[11px]" data-i18n="q3.role">Triaj Baş Hemşiresi</p>
           </div>
         </div>
       </div>
@@ -982,14 +962,14 @@ tailwind.config = {
           <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
           <span class="material-symbols-outlined msym-fill text-amber-400 text-[18px]">star</span>
         </div>
-        <p class="text-ons text-[13px] leading-relaxed italic mb-5">"Görüntü analizi özelliği özellikle dermatoloji ön değerlendirmelerinde çok faydalı. Cilt döküntüsü fotoğrafını yükleyip AI'dan ilk görüşü alabilmek harika."</p>
+        <p class="text-ons text-[13px] leading-relaxed italic mb-5" data-i18n="q4.text">"Görüntü analizi özelliği özellikle dermatoloji ön değerlendirmelerinde çok faydalı. Cilt döküntüsü fotoğrafını yükleyip AI'dan ilk görüşü alabilmek harika."</p>
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
             <span class="text-white font-bold text-[14px]">AÖ</span>
           </div>
           <div>
             <p class="font-bold text-pri text-[13px]">Dr. Ayşe Öztürk</p>
-            <p class="text-onsv text-[11px]">Dermatoloji Uzmanı</p>
+            <p class="text-onsv text-[11px]" data-i18n="q4.role">Dermatoloji Uzmanı</p>
           </div>
         </div>
       </div>
@@ -1007,29 +987,29 @@ tailwind.config = {
   <div class="max-w-3xl mx-auto px-5 text-center relative z-10 reveal">
     <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 mb-6">
       <span class="material-symbols-outlined msym-fill text-secc text-[14px]">rocket_launch</span>
-      <span class="text-[11px] font-bold text-secc uppercase tracking-widest">Hemen Başlayın</span>
+      <span class="text-[11px] font-bold text-secc uppercase tracking-widest" data-i18n="cta.chip">Hemen Başlayın</span>
     </div>
 
     <h2 class="font-head font-black text-white text-[40px] md:text-[52px] leading-tight mb-5">
-      Kliniğinizi geleceğe<br/><span class="grad-text">taşıyın.</span>
+      <span data-i18n="cta.h2a">Kliniğinizi geleceğe</span><br/><span class="grad-text" data-i18n="cta.h2b">taşıyın.</span>
     </h2>
-    <p class="text-white/60 text-[16px] leading-relaxed mb-10 max-w-xl mx-auto">
+    <p class="text-white/60 text-[16px] leading-relaxed mb-10 max-w-xl mx-auto" data-i18n="cta.sub">
       Kurulum ücreti yok. Kredi kartı gerekmez. Beş dakikada çalışmaya hazır.
     </p>
 
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
       <a href="register.html" class="pulse-btn flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-sec text-white font-bold text-[16px] hover:bg-secc hover:text-pri transition-all shadow-xl">
         <span class="material-symbols-outlined msym text-[22px]">person_add</span>
-        Ücretsiz Hesap Oluştur
+        <span data-i18n="cta.btn1">Ücretsiz Hesap Oluştur</span>
       </a>
       <a href="/index.html" class="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white/10 border border-white/20 text-white font-semibold text-[16px] hover:bg-white/20 transition-all">
         <span class="material-symbols-outlined msym text-[22px]">play_circle</span>
-        Demo Deneyin
+        <span data-i18n="cta.btn2">Demo Deneyin</span>
       </a>
     </div>
 
     <!-- Reassurance -->
-    <p class="text-white/30 text-[12px] mt-8">
+    <p class="text-white/30 text-[12px] mt-8" data-i18n="cta.reassure">
       🔒 GDPR Uyumlu &nbsp;·&nbsp; Veri dışarı çıkmaz &nbsp;·&nbsp; Açık kaynak altyapı
     </p>
   </div>
@@ -1050,29 +1030,29 @@ tailwind.config = {
           </div>
           <span class="font-head font-bold text-white text-[16px]">AnamnezAI</span>
         </div>
-        <p class="text-white/40 text-[13px] leading-relaxed max-w-xs">
+        <p class="text-white/40 text-[13px] leading-relaxed max-w-xs" data-i18n="ft.about">
           Gemma 4 ve MedGemma Vision ile güçlendirilmiş yapay zeka hasta ön triaj platformu. MediScreen projesi kapsamında geliştirilmiştir.
         </p>
       </div>
 
       <!-- Links -->
       <div>
-        <h4 class="font-head font-bold text-white text-[13px] mb-4 uppercase tracking-wider">Platform</h4>
+        <h4 class="font-head font-bold text-white text-[13px] mb-4 uppercase tracking-wider" data-i18n="ft.platform">Platform</h4>
         <ul class="space-y-2.5">
-          <li><a href="/index.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Hasta Girişi</a></li>
-          <li><a href="login.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Doktor Paneli</a></li>
-          <li><a href="register.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Kayıt Ol</a></li>
-          <li><a href="kiosk.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Kiosk Modu</a></li>
+          <li><a href="/index.html" class="text-white/40 text-[13px] hover:text-secc transition-colors" data-i18n="ft.l1">Hasta Girişi</a></li>
+          <li><a href="login.html" class="text-white/40 text-[13px] hover:text-secc transition-colors" data-i18n="ft.l2">Doktor Paneli</a></li>
+          <li><a href="register.html" class="text-white/40 text-[13px] hover:text-secc transition-colors" data-i18n="ft.l3">Kayıt Ol</a></li>
+          <li><a href="kiosk.html" class="text-white/40 text-[13px] hover:text-secc transition-colors" data-i18n="ft.l4">Kiosk Modu</a></li>
           <li><a href="analytics.html" class="text-white/40 text-[13px] hover:text-secc transition-colors">Analytics</a></li>
         </ul>
       </div>
 
       <!-- Docs -->
       <div>
-        <h4 class="font-head font-bold text-white text-[13px] mb-4 uppercase tracking-wider">Kaynaklar</h4>
+        <h4 class="font-head font-bold text-white text-[13px] mb-4 uppercase tracking-wider" data-i18n="ft.resources">Kaynaklar</h4>
         <ul class="space-y-2.5">
           <li><a href="../README.md" class="text-white/40 text-[13px] hover:text-secc transition-colors">README</a></li>
-          <li><a href="../PROJECT_PLAN.md" class="text-white/40 text-[13px] hover:text-secc transition-colors">Proje Planı</a></li>
+          <li><a href="../PROJECT_PLAN.md" class="text-white/40 text-[13px] hover:text-secc transition-colors" data-i18n="ft.plan">Proje Planı</a></li>
           <li><a href="../ROADMAP.md" class="text-white/40 text-[13px] hover:text-secc transition-colors">Roadmap</a></li>
         </ul>
       </div>
@@ -1080,11 +1060,11 @@ tailwind.config = {
 
     <!-- Bottom bar -->
     <div class="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <p class="text-white/30 text-[12px]">© 2026 AnamnezAI · MediScreen. Tüm hakları saklıdır.</p>
+      <p class="text-white/30 text-[12px]" data-i18n="ft.copy">© 2026 AnamnezAI · MediScreen. Tüm hakları saklıdır.</p>
       <div class="flex items-center gap-4">
         <span class="flex items-center gap-1.5 text-white/30 text-[11px]">
           <span class="material-symbols-outlined msym text-[13px]">favorite</span>
-          Sağlık için yapay zeka
+          <span data-i18n="ft.tagline">Sağlık için yapay zeka</span>
         </span>
       </div>
     </div>
@@ -1093,42 +1073,306 @@ tailwind.config = {
 
 
 <script>
-// ── Landing Page i18n ─────────────────────────────────────────────
+// ── Landing Page — Kapsamlı i18n ──────────────────────────────────
 const LP_I18N = {
   tr:{
-    badge:'Gemma 4 · MedGemma Vision ile Güçlendirildi',
-    heroH1:'Doktorunuz sizi görmeden önce', heroH1b:'AI sizi dinler.',
-    heroSub:'AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, tanı kalitesini artırın.',
-    cta1:'Hemen Deneyin — Ücretsiz', cta2:'Nasıl Çalışır',
-    trustGdpr:'GDPR Uyumlu', trustLocal:'Yerel AI — Veri Dışarı Çıkmaz',
-    trustLang:'TR · EN · AR — Mülteci yoğunluğu için Arapça desteği',
-    navFeatures:'Özellikler', navHow:'Nasıl Çalışır', navTech:'Teknoloji', navAudience:'Kimler İçin',
-    navLogin:'Giriş Yap', navRegister:'Ücretsiz Başla', navRegisterSm:'Başla',
-    navLoginMob:'Giriş Yap', navRegisterMob:'Kayıt Ol',
+    // nav
+    'nav.brand':'by MediScreen',
+    'nav.features':'Özellikler','nav.how':'Nasıl Çalışır','nav.tech':'Teknoloji','nav.audience':'Kimler İçin',
+    'lang.tr':'TR','lang.en':'EN','lang.ar':'AR',
+    'nav.login':'Giriş Yap','nav.register':'Ücretsiz Başla','nav.register.sm':'Başla',
+    // hero
+    'hero.badge':'Gemma 4 · MedGemma Vision ile Güçlendirildi',
+    'hero.h1':'Doktorunuz sizi görmeden önce','hero.h1b':'AI sizi dinler.',
+    'hero.sub':'AnamnezAI, akıllı sorularla semptomlarınızı analiz eder, triaj önceliği belirler ve doktorunuza klinik özet sunar. Bekleme sürelerini kısaltın, tanı kalitesini artırın.',
+    'hero.cta1':'Hemen Deneyin — Ücretsiz','hero.cta2':'Nasıl Çalışır',
+    'hero.trust.gdpr':'GDPR Uyumlu','hero.trust.local':'Yerel AI — Veri Dışarı Çıkmaz',
+    'hero.trust.lang':'TR · EN · AR — Mülteci yoğunluğu için Arapça desteği',
+    // chat demo
+    'chat.ai.1':'Merhaba Ayşe Hanım! 👋 Bugün sizi ne rahatsız ediyor? Şikayetinizi anlatır mısınız?',
+    'chat.user.1':'3 gündür başım ağrıyor, hafif ateşim var ve yorgun hissediyorum.',
+    'chat.ai.2':'Anlıyorum. Ateşiniz kaç derece? Boğaz ağrısı veya öksürük var mı?',
+    'chat.result.title':'Triaj Raporu Hazır','chat.result.sub':'Dr. Mehmet Yılmaz için oluşturuldu',
+    'chat.result.symptoms':'Baş ağrısı + ateş (37.8°C) + halsizlik, 3 gün',
+    'chat.result.diagnosis':'Öncel tanı: Üst solunum yolu enfeksiyonu',
+    // story
+    'story.chip':'Neden İnşa Ettik',
+    'story.h2a':'Kimse bu bekleme odasında','story.h2b':'olmak istemez.',
+    's1.loc':'Gaziantep Devlet Hastanesi — Salı sabahı, 09:15','s1.sub':'Gerçek bir senaryo',
+    's1.body':'Bekleme salonunda 47 kişi var. Tek bir triaj hemşiresi görevde. 66 yaşında bir adam içeri giriyor — göğüs ağrısı, terleme ve sol kola yayılan bir sızı. "Kas ağrısı olmalı" diye düşünerek sabahtan beri bekliyor. Sessizce numara çekiyor. Önünde öksürüklü bir bebek, burnu kırık bir genç ve baş ağrısı olan bir kadın var. Hemşire herkese aynı 6 soruyu aynı sırayla soruyor. <strong>22 dakika sonra</strong> sırası geldiğinde adam STEMI geçiriyor.',
+    's1.stat':'Türkiye\'de yılda 117 milyon acil servise erişim — triaj hatası önlenebilir bir ölüm sebebi',
+    's2.loc':'Türkiye Geneli — Dil Bariyeri Kalktı','s2.sub':'Muğla, Şanlıurfa, Gaziantep, Antalya, Hatay, Mardin...',
+    's2.body1':'Türkiye, son 10 yılda dünyada en fazla mülteci kabul eden ülkeler arasına girdi. Güneydoğu illeri — Gaziantep, Şanlıurfa, Hatay, Mersin — yalnızca sınır ötesi göç yollarının değil, Arapça konuşan milyonlarca insanın artık yaşam kurduğu şehirler hâline geldi. Bu hastalar kliniğe geldiğinde çifte engelle karşılaşıyorlar: hem hasta hem de semptomlarını Türkçe aktaramıyorlar. Boyun tutukluğu olan, 39,8°C ateşli küçük bir çocuk, iletişim bariyeri yüzünden <strong>YEŞİL</strong> olarak kodlanıyor. Öte yanda Muğla ve Bodrum\'da turizm sezonunda on binlerce İngilizce konuşan yabancı hasta acil servislere başvuruyor; hemşire "Ne zamandan beri?" sorusunu sorduğunda hiçbiri yanıt veremiyor.',
+    's2.body2':'AnamnezAI kiosku <strong>üç dilde konuşuyor</strong> — Türkçe, İngilizce ve Arapça. Gemma 4, salt çeviri değil gerçek anlamda doğal konuşma kuruyor. Hasta kendi dilinde cevap veriyor, doktor her zaman Türkçe klinik özet okuyor. Muğla\'da ya da Şanlıurfa\'da, turizmde ya da mülteci yoğunluğunda — dil farkı artık tanıyı etkilemiyor.',
+    's2.l1':'🇹🇷 Türkçe','s2.l2':'🇬🇧 English','s2.l3':'🇸🇦 العربية — Şu an aktif',
+    's3.title':'Kiosk modu — Kapıdan girersin, doktor seni zaten bekler',
+    's3.sub':'5 dakikada kapıdan muayene odasına hazır',
+    'ksk.1t':'Dokunmatik Ekran','ksk.1d':'Dil seç (TR/EN/AR), TC kimlik barkodunu okut ya da isim gir',
+    'ksk.2t':'AI Mülakat','ksk.2d':'Gemma 4 sesli soru sorar, hasta sesli ya da büyük tuşlarla cevaplar',
+    'ksk.3t':'Renkli Bilet','ksk.3d':'🔴 Acil pencereye git · 🟡 15 dk · 🟢 45 dk — QR kodlu bilet',
+    'ksk.4t':'Doktor Hazır','ksk.4d':'Klinik özet doktorun ekranına gerçek zamanlı akmaya başlar',
+    'ksk.smart':'<strong>Akıllı yükseltme:</strong> Hasta "göğüs ağrısı", "nefes alamıyorum" veya "ani şiddetli baş ağrısı" derse sistem sessizce 7 soruya geçer, OPQRST ağrı profili ve sepsis taramasına yönlendirir. Kiosk hiç uyarmadan daha derin bir görüşme yapar.',
+    // stats
+    'stat.1l':'Akıllı Soru','stat.1s':'Ortalama mülakat',
+    'stat.2l':'Triaj Doğruluğu','stat.2s':'86% — 13/15 test senaryosu',
+    'stat.3l':'Dil Desteği','stat.3s':'TR · EN · AR (Arapça canlı)',
+    'stat.4l':'MedGemma Testi','stat.4s':'%100 başarı (2026-05-11)',
+    // features
+    'feat.chip':'Güçlü Özellikler',
+    'feat.h2a':'Sağlık hizmeti sunumunu','feat.h2b':'yeniden tasarladık.',
+    'feat.sub':'Hasta kabulünden klinik özete kadar tüm ön triaj sürecini yapay zeka ile otomatize eden tek platform.',
+    'f1.t':'Akıllı AI Mülakat','f1.d':'Gemma 4 tabanlı dil modeliyle semptomlarınızı derinlemesine anlayan, bağlamsal ve klinik açıdan anlamlı sorular soran konuşma akışı.','f1.tag':'Adaptif Soru',
+    'f2.t':'Tıbbi Görüntü Analizi','f2.d':'MedGemma Vision ile yara, cilt döküntüsü, EKG şeridi veya röntgen görüntüleri anında analiz edilir ve klinik rapora eklenir.',
+    'f3.t':'Klinik Triaj Raporu','f3.d':'MTS (Manchester Triage System) protokolüne uygun öncelik skoru, olası tanı listesi ve vital bulgular içeren yapılandırılmış klinik özet.','f3.tag1':'MTS Protokolü',
+    'f4.t':'Sesli Giriş & TTS','f4.d':'Web Speech API ile Türkçe/İngilizce/Arapça sesli cevap girilebilir. Text-to-Speech ile AI soruları sesli dinlenebilir. Kiosk modunda ideal.',
+    'f5.t':'Doktor & Admin Paneli','f5.d':'Tüm hasta oturumları, triaj skorları, geçmiş raporlar ve klinik inceleme arayüzünü içeren kapsamlı yönetim panosu.','f5.tag1':'Rol Tabanlı Erişim',
+    'f6.t':'PWA — Offline Destek','f6.d':'Progressive Web App olarak telefona veya tablete kurulabilir. Kiosk modunda dokunmatik ekranlarda sorunsuz çalışır. İnternet bağlantısı gerekmez.','f6.tag':'Kiosk Modu',
+    // how it works
+    'how.chip':'Adım Adım','how.h2':'Nasıl çalışır?',
+    'how.sub':'Hasta kabulünden klinik rapora kadar tüm süreç ortalama <strong>5-8 dakikada</strong> tamamlanır.',
+    'step.1t':'Hasta Kaydı','step.1d':'İsim, yaş, cinsiyet ve isteğe bağlı vital bulgular girilir.',
+    'step.2t':'AI Mülakatı','step.2d':'Gemma 4, klinik açıdan önemli 5 soru sorar ve cevapları analiz eder.',
+    'step.3t':'Görüntü Analizi','step.3d':'İsteğe bağlı: MedGemma Vision ile tıbbi görüntü yüklenir ve analiz edilir.',
+    'step.4t':'Klinik Özet','step.4d':'MTS triaj skoru, öncel tanılar ve öneriler içeren rapor oluşturulur.',
+    'step.5t':'Doktor Görüşmesi','step.5d':'Doktor, hazır klinik özetle hastayı çok daha kısa sürede değerlendirir.',
+    'res.1':'Daha kısa hasta kabul süresi','res.2':'Artmış triaj doğruluğu','res.3':'Kesintisiz hizmet kapasitesi',
+    // technology
+    'tech.chip':'Altyapı & Teknoloji',
+    'tech.h2a':'En güncel AI modelleri','tech.h2b':'güvenli altyapıda.',
+    'tech.sub':'Tüm AI işlemleri yerel olarak çalışır. Hasta verisi asla dışarı çıkmaz.',
+    'g4.sub':'Google DeepMind · Dil Modeli',
+    'g4.d':'Tıbbi sorgulamalar için optimize edilmiş, çok dilli destek sunan Google\'ın en güncel açık kaynak dil modeli.',
+    'g4.t1':'Türkçe','g4.t2':'İngilizce','g4.t3':'Arapça',
+    'mg.sub':'Google · Tıbbi Görüntü AI',
+    'mg.d':'Tıbbi görüntüleme için özel eğitilmiş multimodal model. Röntgen, EKG, cilt görüntüsü ve yara analizi.',
+    'mg.tag':'Tıbbi Görüntü',
+    'be.title':'Backend & Altyapı',
+    // audience
+    'aud.chip':'Kimler İçin',
+    'aud.h2a':'Her ölçekte sağlık kurumu','aud.h2b':'için tasarlandı.',
+    'a1.t':'Devlet Hastaneleri','a1.d':'Yoğun hasta trafiğini azaltın. Acil serviste triaj bekleme süresini kısaltın. Hemşire iş yükünü optimize edin.',
+    'a1.l1':'Kiosk entegrasyonu','a1.l2':'Çok dilli destek','a1.l3':'Yüksek hasta hacmi',
+    'a2.t':'Özel Klinikler','a2.d':'Hasta deneyimini premium hale getirin. Doktor-hasta görüşme süresini verimli kullanın. Dijital dönüşümü hızlandırın.',
+    'a2.l1':'Özelleştirilebilir sorular','a2.l2':'Marka entegrasyonu','a2.l3':'Analytics dashboard',
+    'a3.t':'Aile Hekimliği','a3.d':'Randevu öncesi hastaları hazırlayın. Muayene verimliliğini artırın. Hasta memnuniyetini yükseltin.',
+    'a3.l1':'Düşük kurulum maliyeti','a3.l2':'PWA mobil uygulama','a3.l3':'Basit kurulum',
+    // testimonials
+    'test.chip':'Ne Diyorlar','test.h2':'Sağlık profesyonellerinden',
+    'q1.text':'"كثير من مرضانا القادمين من خلفيات اللاجئين يواجهون حاجز اللغة عند دخول المستشفى. مع AnamnezAI، يتمكنون الآن من وصف أعراضهم بلغتهم الأم ويحصل الطبيب على ملخص طبي كامل باللغة التركية." <span class="not-italic text-onsv">(Mülteci geçmişine sahip pek çok hastamız hastanede dil bariyeriyle karşılaşıyordu. AnamnezAI ile kendi dillerinde semptomlarını aktarabiliyorlar, doktor Türkçe klinik özet alıyor.)</span>',
+    'q1.role':'Acil Tıp Uzmanı — Gaziantep Devlet Hastanesi',
+    'q2.text':'"Hastaların muayeneden önce AI ile ön görüşme yapması, bana çok daha hazır ve analiz edilmiş vaka sunuyor. Muayene sürem gerçekten kısaldı."',
+    'q2.role':'Acil Tıp Uzmanı',
+    'q3.text':'"Triaj hemşireleri olarak yoğun dönemlerde AnamnezAI inanılmaz yük alıyor. Özellikle çok dilli destek çok önemli kliniğimiz için."',
+    'q3.role':'Triaj Baş Hemşiresi',
+    'q4.text':'"Görüntü analizi özelliği özellikle dermatoloji ön değerlendirmelerinde çok faydalı. Cilt döküntüsü fotoğrafını yükleyip AI\'dan ilk görüşü alabilmek harika."',
+    'q4.role':'Dermatoloji Uzmanı',
+    // cta
+    'cta.chip':'Hemen Başlayın',
+    'cta.h2a':'Kliniğinizi geleceğe','cta.h2b':'taşıyın.',
+    'cta.sub':'Kurulum ücreti yok. Kredi kartı gerekmez. Beş dakikada çalışmaya hazır.',
+    'cta.btn1':'Ücretsiz Hesap Oluştur','cta.btn2':'Demo Deneyin',
+    'cta.reassure':'🔒 GDPR Uyumlu \u00a0·\u00a0 Veri dışarı çıkmaz \u00a0·\u00a0 Açık kaynak altyapı',
+    // footer
+    'ft.about':'Gemma 4 ve MedGemma Vision ile güçlendirilmiş yapay zeka hasta ön triaj platformu. MediScreen projesi kapsamında geliştirilmiştir.',
+    'ft.platform':'Platform',
+    'ft.l1':'Hasta Girişi','ft.l2':'Doktor Paneli','ft.l3':'Kayıt Ol','ft.l4':'Kiosk Modu',
+    'ft.resources':'Kaynaklar','ft.plan':'Proje Planı',
+    'ft.copy':'© 2026 AnamnezAI · MediScreen. Tüm hakları saklıdır.',
+    'ft.tagline':'Sağlık için yapay zeka',
   },
+
   en:{
-    badge:'Powered by Gemma 4 · MedGemma Vision',
-    heroH1:'Before your doctor sees you,', heroH1b:'AI listens to you.',
-    heroSub:'AnamnezAI analyzes your symptoms with smart questions, determines triage priority, and delivers a clinical summary to your doctor. Reduce wait times, improve diagnostic quality.',
-    cta1:'Try It Now — Free', cta2:'How It Works',
-    trustGdpr:'GDPR Compliant', trustLocal:'Local AI — Data Never Leaves',
-    trustLang:'TR · EN · AR — Arabic support for refugee-dense regions',
-    navFeatures:'Features', navHow:'How It Works', navTech:'Technology', navAudience:'For Whom',
-    navLogin:'Log In', navRegister:'Get Started Free', navRegisterSm:'Start',
-    navLoginMob:'Log In', navRegisterMob:'Sign Up',
+    'nav.brand':'by MediScreen',
+    'nav.features':'Features','nav.how':'How It Works','nav.tech':'Technology','nav.audience':'For Whom',
+    'lang.tr':'TR','lang.en':'EN','lang.ar':'AR',
+    'nav.login':'Log In','nav.register':'Get Started Free','nav.register.sm':'Start',
+    'hero.badge':'Powered by Gemma 4 · MedGemma Vision',
+    'hero.h1':'Before your doctor sees you,','hero.h1b':'AI listens to you.',
+    'hero.sub':'AnamnezAI analyzes your symptoms with smart questions, determines triage priority, and delivers a clinical summary to your doctor. Reduce wait times, improve diagnostic quality.',
+    'hero.cta1':'Try It Now — Free','hero.cta2':'How It Works',
+    'hero.trust.gdpr':'GDPR Compliant','hero.trust.local':'Local AI — Data Never Leaves',
+    'hero.trust.lang':'TR · EN · AR — Arabic support for refugee-dense regions',
+    'chat.ai.1':'Hello! 👋 What brings you in today? Please describe your complaint.',
+    'chat.user.1':'I\'ve had a headache for 3 days, a slight fever, and I feel tired.',
+    'chat.ai.2':'I understand. What is your temperature? Do you have a sore throat or cough?',
+    'chat.result.title':'Triage Report Ready','chat.result.sub':'Generated for Dr. Mehmet Yılmaz',
+    'chat.result.symptoms':'Headache + fever (37.8°C) + fatigue, 3 days',
+    'chat.result.diagnosis':'Preliminary: Upper respiratory tract infection',
+    'story.chip':'Why We Built This',
+    'story.h2a':'Nobody wants to be','story.h2b':'in this waiting room.',
+    's1.loc':'Gaziantep State Hospital — Tuesday morning, 09:15','s1.sub':'A real scenario',
+    's1.body':'47 people in the waiting room. A single triage nurse on duty. A 66-year-old man enters — chest pain, sweating, and a radiating ache in his left arm. He has been waiting since morning, thinking it must be muscle pain. He quietly takes a number. In front of him: a baby with a cough, a young man with a broken nose, a woman with a headache. The nurse asks everyone the same 6 questions in the same order. <strong>22 minutes later</strong>, when it is finally his turn, the man has a STEMI.',
+    's1.stat':'117 million emergency room visits per year in Turkey — triage error is a preventable cause of death',
+    's2.loc':'All of Turkey — Language Barrier Removed','s2.sub':'Muğla, Şanlıurfa, Gaziantep, Antalya, Hatay, Mardin...',
+    's2.body1':'Turkey has become one of the world\'s largest refugee-hosting countries over the past decade. Southeastern provinces — Gaziantep, Şanlıurfa, Hatay, Mersin — are now home to millions of Arabic-speaking people who arrived as refugees. When these patients visit a clinic, they face a double barrier: they are sick and cannot communicate their symptoms in Turkish. A small child with neck stiffness and a 39.8°C fever gets coded <strong>GREEN</strong> due to a communication gap. Meanwhile, in Muğla and Bodrum, tens of thousands of English-speaking tourists visit emergency services every tourism season — when a nurse asks "How long has it been going on?" none of them can answer.',
+    's2.body2':'The AnamnezAI kiosk <strong>speaks three languages</strong> — Turkish, English and Arabic. Gemma 4 doesn\'t just translate; it builds real natural conversation. The patient answers in their own language; the doctor always reads a Turkish clinical summary. In Muğla or Şanlıurfa, for tourism or refugee density — language difference no longer affects diagnosis.',
+    's2.l1':'🇹🇷 Turkish','s2.l2':'🇬🇧 English','s2.l3':'🇸🇦 Arabic — Now Active',
+    's3.title':'Kiosk Mode — You walk in, your doctor is already ready',
+    's3.sub':'From door to exam room in 5 minutes',
+    'ksk.1t':'Touchscreen','ksk.1d':'Select language (TR/EN/AR), scan ID barcode or enter name',
+    'ksk.2t':'AI Interview','ksk.2d':'Gemma 4 asks voice questions, patient answers by voice or large buttons',
+    'ksk.3t':'Color Ticket','ksk.3d':'🔴 Go to urgent window · 🟡 15 min · 🟢 45 min — QR-coded ticket',
+    'ksk.4t':'Doctor Ready','ksk.4d':'Clinical summary streams to the doctor\'s screen in real time',
+    'ksk.smart':'<strong>Smart escalation:</strong> If the patient says "chest pain", "can\'t breathe" or "sudden severe headache", the system silently switches to 7 questions, guiding the OPQRST pain profile and sepsis screening. The kiosk conducts a deeper interview without any warning.',
+    'stat.1l':'Smart Questions','stat.1s':'Average interview',
+    'stat.2l':'Triage Accuracy','stat.2s':'86% — 13/15 test scenarios',
+    'stat.3l':'Language Support','stat.3s':'TR · EN · AR (Arabic live)',
+    'stat.4l':'MedGemma Test','stat.4s':'100% success (2026-05-11)',
+    'feat.chip':'Powerful Features',
+    'feat.h2a':'We reimagined','feat.h2b':'healthcare delivery.',
+    'feat.sub':'The only platform that automates the entire pre-triage workflow — from patient intake to clinical summary — using AI.',
+    'f1.t':'Smart AI Interview','f1.d':'A conversational flow powered by Gemma 4 that deeply understands your symptoms and asks contextually relevant, clinically meaningful questions.','f1.tag':'Adaptive Questions',
+    'f2.t':'Medical Image Analysis','f2.d':'Wounds, skin rashes, ECG strips or X-rays are instantly analyzed by MedGemma Vision and added to the clinical report.',
+    'f3.t':'Clinical Triage Report','f3.d':'Structured clinical summary with priority score per MTS (Manchester Triage System) protocol, differential diagnosis list, and vital signs.','f3.tag1':'MTS Protocol',
+    'f4.t':'Voice Input & TTS','f4.d':'Voice answers in Turkish/English/Arabic via Web Speech API. Text-to-Speech lets patients listen to AI questions. Ideal for kiosk mode.',
+    'f5.t':'Doctor & Admin Panel','f5.d':'Comprehensive management dashboard with all patient sessions, triage scores, historical reports, and clinical review interface.','f5.tag1':'Role-Based Access',
+    'f6.t':'PWA — Offline Support','f6.d':'Installable as a Progressive Web App on phones or tablets. Runs smoothly on touchscreens in kiosk mode. No internet connection required.','f6.tag':'Kiosk Mode',
+    'how.chip':'Step by Step','how.h2':'How does it work?',
+    'how.sub':'The entire process from patient intake to clinical report is completed in an average of <strong>5–8 minutes</strong>.',
+    'step.1t':'Patient Registration','step.1d':'Name, age, gender and optional vital signs are entered.',
+    'step.2t':'AI Interview','step.2d':'Gemma 4 asks 5 clinically important questions and analyzes the answers.',
+    'step.3t':'Image Analysis','step.3d':'Optional: upload a medical image for analysis by MedGemma Vision.',
+    'step.4t':'Clinical Summary','step.4d':'Report with MTS triage score, differential diagnoses and recommendations is generated.',
+    'step.5t':'Doctor Consultation','step.5d':'The doctor evaluates the patient much faster with the ready clinical summary.',
+    'res.1':'Shorter patient intake time','res.2':'Improved triage accuracy','res.3':'24/7 service capacity',
+    'tech.chip':'Infrastructure & Technology',
+    'tech.h2a':'The latest AI models,','tech.h2b':'in a secure infrastructure.',
+    'tech.sub':'All AI processing runs locally. Patient data never leaves.',
+    'g4.sub':'Google DeepMind · Language Model',
+    'g4.d':'Google\'s most advanced open-source language model, optimized for medical queries with multilingual support.',
+    'g4.t1':'Turkish','g4.t2':'English','g4.t3':'Arabic',
+    'mg.sub':'Google · Medical Imaging AI',
+    'mg.d':'Multimodal model specifically trained for medical imaging. X-ray, ECG, skin image and wound analysis.',
+    'mg.tag':'Medical Imaging',
+    'be.title':'Backend & Infrastructure',
+    'aud.chip':'For Whom',
+    'aud.h2a':'Designed for every scale','aud.h2b':'of healthcare facility.',
+    'a1.t':'State Hospitals','a1.d':'Reduce heavy patient traffic. Shorten triage wait time in the ER. Optimize nurse workload.',
+    'a1.l1':'Kiosk integration','a1.l2':'Multilingual support','a1.l3':'High patient volume',
+    'a2.t':'Private Clinics','a2.d':'Make the patient experience premium. Maximize doctor-patient consultation time. Accelerate digital transformation.',
+    'a2.l1':'Customizable questions','a2.l2':'Brand integration','a2.l3':'Analytics dashboard',
+    'a3.t':'Family Medicine','a3.d':'Prepare patients before appointments. Improve consultation efficiency. Increase patient satisfaction.',
+    'a3.l1':'Low setup cost','a3.l2':'PWA mobile app','a3.l3':'Easy installation',
+    'test.chip':'What They Say','test.h2':'From healthcare professionals',
+    'q1.text':'"Many of our patients with refugee backgrounds face language barriers when entering the hospital. With AnamnezAI, they can now describe their symptoms in their native language and the doctor receives a complete medical summary in Turkish."',
+    'q1.role':'Emergency Medicine Specialist — Gaziantep State Hospital',
+    'q2.text':'"Having patients do a pre-consultation with AI before the exam gives me a much more prepared and analyzed case. My consultation time has genuinely shortened."',
+    'q2.role':'Emergency Medicine Specialist',
+    'q3.text':'"As triage nurses, AnamnezAI takes an incredible load off us during busy periods. The multilingual support is especially important for our clinic."',
+    'q3.role':'Head Triage Nurse',
+    'q4.text':'"The image analysis feature is especially useful for dermatology pre-assessments. Being able to upload a skin rash photo and get an initial AI opinion is fantastic."',
+    'q4.role':'Dermatology Specialist',
+    'cta.chip':'Get Started Now',
+    'cta.h2a':'Bring your clinic','cta.h2b':'into the future.',
+    'cta.sub':'No setup fee. No credit card required. Ready to run in five minutes.',
+    'cta.btn1':'Create Free Account','cta.btn2':'Try Demo',
+    'cta.reassure':'🔒 GDPR Compliant \u00a0·\u00a0 Data never leaves \u00a0·\u00a0 Open source infrastructure',
+    'ft.about':'AI-powered patient pre-triage platform powered by Gemma 4 and MedGemma Vision. Developed as part of the MediScreen project.',
+    'ft.platform':'Platform',
+    'ft.l1':'Patient Entry','ft.l2':'Doctor Panel','ft.l3':'Sign Up','ft.l4':'Kiosk Mode',
+    'ft.resources':'Resources','ft.plan':'Project Plan',
+    'ft.copy':'© 2026 AnamnezAI · MediScreen. All rights reserved.',
+    'ft.tagline':'AI for healthcare',
   },
+
   ar:{
-    badge:'مدعوم بـ Gemma 4 · MedGemma Vision',
-    heroH1:'قبل أن يراك طبيبك،', heroH1b:'الذكاء الاصطناعي يستمع إليك.',
-    heroSub:'يحلّل AnamnezAI أعراضك بأسئلة ذكية، ويحدد أولوية الفرز، ويقدم ملخصاً سريرياً لطبيبك. قلّل أوقات الانتظار وحسّن جودة التشخيص.',
-    cta1:'جرّبه الآن — مجاناً', cta2:'كيف يعمل',
-    trustGdpr:'متوافق مع GDPR', trustLocal:'ذكاء اصطناعي محلي — البيانات لا تغادر',
-    trustLang:'TR · EN · AR — دعم اللغة العربية للمناطق كثيفة اللاجئين',
-    navFeatures:'المميزات', navHow:'كيف يعمل', navTech:'التكنولوجيا', navAudience:'لمن',
-    navLogin:'تسجيل الدخول', navRegister:'ابدأ مجاناً', navRegisterSm:'ابدأ',
-    navLoginMob:'تسجيل الدخول', navRegisterMob:'إنشاء حساب',
+    'nav.brand':'by MediScreen',
+    'nav.features':'المميزات','nav.how':'كيف يعمل','nav.tech':'التكنولوجيا','nav.audience':'لمن',
+    'lang.tr':'TR','lang.en':'EN','lang.ar':'AR',
+    'nav.login':'تسجيل الدخول','nav.register':'ابدأ مجاناً','nav.register.sm':'ابدأ',
+    'hero.badge':'مدعوم بـ Gemma 4 · MedGemma Vision',
+    'hero.h1':'قبل أن يراك طبيبك،','hero.h1b':'الذكاء الاصطناعي يستمع إليك.',
+    'hero.sub':'يحلّل AnamnezAI أعراضك بأسئلة ذكية، ويحدد أولوية الفرز الطبي، ويقدم ملخصاً سريرياً لطبيبك. قلّل أوقات الانتظار وحسّن جودة التشخيص.',
+    'hero.cta1':'جرّبه الآن — مجاناً','hero.cta2':'كيف يعمل',
+    'hero.trust.gdpr':'متوافق مع GDPR','hero.trust.local':'ذكاء اصطناعي محلي — البيانات لا تغادر',
+    'hero.trust.lang':'TR · EN · AR — دعم اللغة العربية للمناطق كثيفة اللاجئين',
+    'chat.ai.1':'مرحباً! 👋 ما الذي يُزعجك اليوم؟ أخبرني بشكواك.',
+    'chat.user.1':'أعاني من صداع منذ 3 أيام مع حمى خفيفة وتعب عام.',
+    'chat.ai.2':'أفهم. كم درجة حرارتك؟ هل تعاني من ألم في الحلق أو سعال؟',
+    'chat.result.title':'تقرير الفرز جاهز','chat.result.sub':'تم إنشاؤه للدكتور مهمت يلماز',
+    'chat.result.symptoms':'صداع + حمى (37.8°م) + إجهاد، منذ 3 أيام',
+    'chat.result.diagnosis':'التشخيص الأولي: التهاب الجهاز التنفسي العلوي',
+    'story.chip':'لماذا بنيناه',
+    'story.h2a':'لا أحد يريد أن يكون','story.h2b':'في غرفة الانتظار هذه.',
+    's1.loc':'مستشفى غازي عنتاب الحكومي — صباح الثلاثاء، 09:15','s1.sub':'سيناريو حقيقي',
+    's1.body':'47 شخصاً في غرفة الانتظار. ممرضة فرز واحدة فقط في الخدمة. رجل يبلغ 66 عاماً يدخل — ألم في الصدر، تعرق، وألم يمتد إلى ذراعه اليسرى. ينتظر منذ الصباح معتقداً أنه مجرد ألم عضلي. يأخذ رقماً بهدوء. أمامه: رضيع يسعل، شاب كسور أنفه، وامرأة تعاني من صداع. تسأل الممرضة الجميع نفس الأسئلة الستة بنفس الترتيب. <strong>بعد 22 دقيقة</strong>، حين حانت أخيراً نوبته، يصاب الرجل باحتشاء عضلة القلب.',
+    's1.stat':'117 مليون زيارة لقسم الطوارئ سنوياً في تركيا — خطأ الفرز سبب وفاة يمكن تفاديه',
+    's2.loc':'تركيا بأكملها — إزالة حاجز اللغة','s2.sub':'موغلا، شانلي أورفا، غازي عنتاب، أنطاليا، هاتاي، ماردين...',
+    's2.body1':'أصبحت تركيا خلال العقد الماضي من أكبر الدول استضافةً للاجئين في العالم. تحولت المحافظات الجنوبية الشرقية — غازي عنتاب، شانلي أورفا، هاتاي، مرسين — إلى مدن يقطنها الآن ملايين اللاجئين الناطقين بالعربية. حين يأتي هؤلاء المرضى إلى العيادة يواجهون عائقاً مزدوجاً: يعانون من المرض ولا يستطيعون توصيف أعراضهم بالتركية. طفل صغير يعاني من تيبس الرقبة وحمى 39.8°م يُصنَّف على أنه <strong>أخضر</strong> بسبب حاجز التواصل. وفي موغلا وبودروم، يتوافد عشرات الآلاف من السياح الناطقين بالإنجليزية على أقسام الطوارئ في موسم السياحة.',
+    's2.body2':'كشك AnamnezAI <strong>يتحدث ثلاث لغات</strong> — التركية والإنجليزية والعربية. لا يترجم Gemma 4 فحسب، بل يُجري محادثة طبيعية حقيقية. يجيب المريض بلغته، ويقرأ الطبيب دائماً ملخصاً سريرياً بالتركية. في موغلا أو شانلي أورفا، في السياحة أو في مناطق كثافة اللاجئين — لم تعد اللغة تؤثر على التشخيص.',
+    's2.l1':'🇹🇷 التركية','s2.l2':'🇬🇧 الإنجليزية','s2.l3':'🇸🇦 العربية — نشط الآن',
+    's3.title':'وضع الكشك — تدخل، وطبيبك في انتظارك','s3.sub':'من الباب إلى غرفة الفحص في 5 دقائق',
+    'ksk.1t':'شاشة اللمس','ksk.1d':'اختر اللغة (TR/EN/AR)، امسح الباركود أو أدخل الاسم',
+    'ksk.2t':'مقابلة الذكاء الاصطناعي','ksk.2d':'يطرح Gemma 4 أسئلة صوتية، يجيب المريض صوتياً أو بالأزرار الكبيرة',
+    'ksk.3t':'تذكرة ملونة','ksk.3d':'🔴 اذهب إلى نافذة الطوارئ · 🟡 15 دقيقة · 🟢 45 دقيقة — تذكرة بـ QR',
+    'ksk.4t':'الطبيب جاهز','ksk.4d':'يصل الملخص السريري إلى شاشة الطبيب في الوقت الفعلي',
+    'ksk.smart':'<strong>التصعيد الذكي:</strong> إذا قال المريض "ألم في الصدر" أو "لا أستطيع التنفس" أو "صداع شديد مفاجئ"، ينتقل النظام بهدوء إلى 7 أسئلة متخصصة وتقييم نمط OPQRST وفحص الإنتان. يُجري الكشك مقابلة أعمق دون أي تحذير.',
+    'stat.1l':'سؤال ذكي','stat.1s':'متوسط المقابلة',
+    'stat.2l':'دقة الفرز','stat.2s':'%86 — 13/15 سيناريو اختبار',
+    'stat.3l':'دعم اللغات','stat.3s':'TR · EN · AR (العربية مباشرة)',
+    'stat.4l':'اختبار MedGemma','stat.4s':'نجاح 100% (2026-05-11)',
+    'feat.chip':'مميزات قوية',
+    'feat.h2a':'أعدنا تصميم','feat.h2b':'تقديم الرعاية الصحية.',
+    'feat.sub':'المنصة الوحيدة التي تُؤتمت كامل سير عمل ما قبل الفرز — من استقبال المريض إلى الملخص السريري — باستخدام الذكاء الاصطناعي.',
+    'f1.t':'مقابلة ذكية بالذكاء الاصطناعي','f1.d':'تدفق محادثة مدعوم بـ Gemma 4 يفهم أعراضك بعمق ويطرح أسئلة ذات صلة سريرية.','f1.tag':'أسئلة تكيفية',
+    'f2.t':'تحليل الصور الطبية','f2.d':'الجروح وطفح الجلد وشرائط تخطيط القلب والأشعة السينية تُحلَّل فوراً بـ MedGemma Vision وتُضاف إلى التقرير السريري.',
+    'f3.t':'تقرير الفرز السريري','f3.d':'ملخص سريري منظم بدرجة الأولوية وفق بروتوكول MTS وقائمة التشخيصات التفاضلية والعلامات الحيوية.','f3.tag1':'بروتوكول MTS',
+    'f4.t':'الإدخال الصوتي وتحويل النص','f4.d':'إدخال إجابات صوتية بالعربية/الإنجليزية/التركية عبر Web Speech API. يمكن الاستماع لأسئلة الذكاء الاصطناعي. مثالي لوضع الكشك.',
+    'f5.t':'لوحة تحكم الطبيب والمدير','f5.d':'لوحة إدارة شاملة تضم جميع جلسات المرضى ودرجات الفرز والتقارير التاريخية وواجهة المراجعة السريرية.','f5.tag1':'وصول قائم على الأدوار',
+    'f6.t':'PWA — دعم بدون إنترنت','f6.d':'قابل للتثبيت كتطبيق ويب تدريجي على الهاتف أو الجهاز اللوحي. يعمل بسلاسة على شاشات اللمس في وضع الكشك.','f6.tag':'وضع الكشك',
+    'how.chip':'خطوة بخطوة','how.h2':'كيف يعمل؟',
+    'how.sub':'تكتمل العملية بأكملها من استقبال المريض إلى التقرير السريري في المتوسط <strong>خلال 5-8 دقائق</strong>.',
+    'step.1t':'تسجيل المريض','step.1d':'يُدخَل الاسم والعمر والجنس والعلامات الحيوية الاختيارية.',
+    'step.2t':'مقابلة الذكاء الاصطناعي','step.2d':'يطرح Gemma 4 خمسة أسئلة سريرية مهمة ويحلل الإجابات.',
+    'step.3t':'تحليل الصور','step.3d':'اختياري: رفع صورة طبية لتحليلها بـ MedGemma Vision.',
+    'step.4t':'الملخص السريري','step.4d':'يُنشأ تقرير بدرجة فرز MTS والتشخيصات الأولية والتوصيات.',
+    'step.5t':'استشارة الطبيب','step.5d':'يُقيّم الطبيب المريض بسرعة أكبر بكثير مع الملخص السريري الجاهز.',
+    'res.1':'وقت استقبال مريض أقصر','res.2':'دقة فرز محسّنة','res.3':'طاقة خدمة على مدار الساعة',
+    'tech.chip':'البنية التحتية والتكنولوجيا',
+    'tech.h2a':'أحدث نماذج الذكاء الاصطناعي','tech.h2b':'في بنية تحتية آمنة.',
+    'tech.sub':'تعمل جميع معالجات الذكاء الاصطناعي محلياً. لا تخرج بيانات المريض أبداً.',
+    'g4.sub':'Google DeepMind · نموذج اللغة',
+    'g4.d':'أحدث نموذج لغة مفتوح المصدر من Google، محسَّن للاستعلامات الطبية مع دعم متعدد اللغات.',
+    'g4.t1':'التركية','g4.t2':'الإنجليزية','g4.t3':'العربية',
+    'mg.sub':'Google · ذكاء اصطناعي للتصوير الطبي',
+    'mg.d':'نموذج متعدد الوسائط مدرَّب خصيصاً للتصوير الطبي. تحليل الأشعة السينية وتخطيط القلب وصور الجلد والجروح.',
+    'mg.tag':'التصوير الطبي',
+    'be.title':'الخلفية والبنية التحتية',
+    'aud.chip':'لمن',
+    'aud.h2a':'مصمم لكل منشأة رعاية صحية','aud.h2b':'بأي حجم.',
+    'a1.t':'المستشفيات الحكومية','a1.d':'قلّل كثافة المرضى. اختصر وقت انتظار الفرز في الطوارئ. حسّن عبء عمل الممرضين.',
+    'a1.l1':'تكامل الكشك','a1.l2':'دعم متعدد اللغات','a1.l3':'حجم مرضى مرتفع',
+    'a2.t':'العيادات الخاصة','a2.d':'اجعل تجربة المريض متميزة. استخدم وقت المشاورة الطبية بكفاءة. سرّع التحول الرقمي.',
+    'a2.l1':'أسئلة قابلة للتخصيص','a2.l2':'تكامل العلامة التجارية','a2.l3':'لوحة تحليلات',
+    'a3.t':'طب الأسرة','a3.d':'هيّئ المرضى قبل المواعيد. حسّن كفاءة الفحص. ارفع رضا المريض.',
+    'a3.l1':'تكلفة إعداد منخفضة','a3.l2':'تطبيق موبايل PWA','a3.l3':'تثبيت سهل',
+    'test.chip':'ماذا يقولون','test.h2':'من المهنيين الصحيين',
+    'q1.text':'"كثير من مرضانا القادمين من خلفيات اللاجئين يواجهون حاجز اللغة عند دخول المستشفى. مع AnamnezAI، يتمكنون الآن من وصف أعراضهم بلغتهم الأم ويحصل الطبيب على ملخص طبي كامل باللغة التركية."',
+    'q1.role':'أخصائي طب الطوارئ — مستشفى غازي عنتاب الحكومي',
+    'q2.text':'"إجراء المرضى لمقابلة أولية مع الذكاء الاصطناعي قبل الفحص يمنحني حالة أكثر استعداداً وتحليلاً. انخفض وقت فحصي فعلاً."',
+    'q2.role':'أخصائي طب الطوارئ',
+    'q3.text':'"بصفتنا ممرضات فرز، يأخذ AnamnezAI عبئاً هائلاً منا في أوقات الذروة. الدعم متعدد اللغات مهم بشكل خاص لعيادتنا."',
+    'q3.role':'رئيسة ممرضات الفرز',
+    'q4.text':'"ميزة تحليل الصور مفيدة جداً خاصةً في التقييمات الأولية للأمراض الجلدية. رفع صورة طفح جلدي والحصول على رأي أولي من الذكاء الاصطناعي أمر رائع."',
+    'q4.role':'أخصائية الأمراض الجلدية',
+    'cta.chip':'ابدأ الآن',
+    'cta.h2a':'انقل عيادتك','cta.h2b':'إلى المستقبل.',
+    'cta.sub':'لا رسوم إعداد. لا بطاقة ائتمان. جاهز للعمل في خمس دقائق.',
+    'cta.btn1':'إنشاء حساب مجاني','cta.btn2':'جرّب العرض التوضيحي',
+    'cta.reassure':'🔒 متوافق مع GDPR \u00a0·\u00a0 البيانات لا تغادر \u00a0·\u00a0 بنية تحتية مفتوحة المصدر',
+    'ft.about':'منصة الفرز الطبي المسبق المدعومة بـ Gemma 4 و MedGemma Vision. طوّرت في إطار مشروع MediScreen.',
+    'ft.platform':'المنصة',
+    'ft.l1':'دخول المريض','ft.l2':'لوحة الطبيب','ft.l3':'التسجيل','ft.l4':'وضع الكشك',
+    'ft.resources':'الموارد','ft.plan':'خطة المشروع',
+    'ft.copy':'© 2026 AnamnezAI · MediScreen. جميع الحقوق محفوظة.',
+    'ft.tagline':'الذكاء الاصطناعي للرعاية الصحية',
   }
 };
+
+// data-i18n-html için ayrı tutulan HTML anahtarları
+const LP_I18N_HTML_KEYS = new Set([
+  'chat.ai.1','chat.user.1','chat.ai.2','s1.body','s2.body1','s2.body2','ksk.smart','how.sub','q1.text'
+]);
 
 let lpLang = localStorage.getItem('ui_lang') || 'tr';
 
@@ -1138,18 +1382,18 @@ function setLandingLang(l) {
   document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
   document.documentElement.lang = l;
   const d = LP_I18N[l] || LP_I18N.tr;
-  const m = {
-    'txt-hero-badge': d.badge,
-    'txt-hero-h1': d.heroH1, 'txt-hero-h1b': d.heroH1b,
-    'txt-hero-sub': d.heroSub,
-    'txt-hero-cta1': d.cta1, 'txt-hero-cta2': d.cta2,
-    'txt-trust-gdpr': d.trustGdpr, 'txt-trust-local': d.trustLocal, 'txt-trust-lang': d.trustLang,
-    'nav-features': d.navFeatures, 'nav-how': d.navHow, 'nav-tech': d.navTech, 'nav-audience': d.navAudience,
-    'nav-login': d.navLogin, 'nav-register-txt': d.navRegister, 'nav-register-txt-sm': d.navRegisterSm,
-    'mob-nav-features': d.navFeatures, 'mob-nav-how': d.navHow, 'mob-nav-tech': d.navTech, 'mob-nav-audience': d.navAudience,
-    'mob-nav-login': d.navLoginMob, 'mob-nav-register': d.navRegisterMob,
-  };
-  Object.entries(m).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.textContent = val; });
+
+  // data-i18n → textContent
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (d[key] !== undefined) el.textContent = d[key];
+  });
+
+  // data-i18n-html → innerHTML
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (d[key] !== undefined) el.innerHTML = d[key];
+  });
 
   // Dil buton stilleri — desktop + mobile
   ['tr','en','ar'].forEach(lang => {
