@@ -34,7 +34,7 @@ The same scene — with different patients and different life-threatening condit
 
 ### The language wall nobody talks about
 
-Turkey's eastern provinces — Gaziantep, Şanlıurfa, Hatay, Mardin and others — are home to a large population of Arabic-speaking residents: Turkish citizens whose families have spoken Arabic for generations, Syrian refugees who have put down roots after years in the country, and seasonal migrant workers from across the region.
+Turkey has become one of the world's largest refugee-hosting countries over the past decade. Cities in the south and southeast — Gaziantep, Şanlıurfa, Hatay, Mersin, Mardin — are now home to millions of Arabic-speaking people who arrived as refugees and have built their lives here. On the western coast, tourist hotspots such as Muğla and Antalya receive tens of thousands of non-Turkish-speaking patients at emergency departments every season.
 
 When these patients arrive at a Turkish hospital, they face a double barrier: they are unwell *and* they cannot communicate their symptoms clearly in Turkish. The triage nurse, under time pressure with 30 people behind the patient, asks "Şikayetiniz nedir?" The patient understands perhaps half of it. The nurse writes down whatever she can interpret. A young child with a 39.8 °C fever who cannot localise her own pain ends up coded as GREEN because neither she nor her parents could explain the neck stiffness through the language gap.
 
@@ -90,7 +90,7 @@ What Gemma 4 makes possible here that no prior generation could:
 
 - **Triage nurses and emergency physicians** who need a consistent pre-interview before they see the patient
 - **Hospital administrators** deploying a touch-screen kiosk at the entrance — patients self-report and receive a queue ticket
-- **Patients in eastern Turkey** who speak Arabic as their primary language and currently face a communication barrier at every point of care
+- **Patients in cities with high refugee density** (Gaziantep, Şanlıurfa, Hatay) who speak Arabic and face a communication barrier at every point of care, as well as international patients (Muğla, Antalya) who cannot communicate in Turkish
 - **Healthcare IT teams** integrating structured triage data into existing HIS systems via FHIR R4
 - **Researchers and evaluators** who want a transparent, auditable AI triage baseline for clinical trials
 
