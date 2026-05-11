@@ -80,6 +80,29 @@ tailwind.config={theme:{extend:{colors:{
 </header>
 
 <main class="pt-16 pb-16 px-4 max-w-3xl mx-auto" id="main-content">
+
+  <!-- ── CLAIM BANNER — misafir kullanıcı için, giriş/kayıt teşvik ── -->
+  <div id="claim-banner" class="hidden mb-5 fade">
+    <div class="card p-4 flex items-start gap-3" style="border-left:4px solid #006a68;background:linear-gradient(135deg,#f0faf9,#fff)">
+      <span class="material-symbols-outlined msym-fill text-sec text-[28px] flex-shrink-0 mt-0.5">bookmark_add</span>
+      <div class="flex-1 min-w-0">
+        <p class="font-head font-bold text-pri text-[14px] mb-0.5">Bu mülakatı geçmişinize kaydedin</p>
+        <p class="text-[12px] text-onsv mb-3">Giriş yaparsanız bu mülakat otomatik olarak hesabınıza eklenecek ve geçmişinizden erişebileceksiniz.</p>
+        <div class="flex flex-wrap gap-2">
+          <a href="login.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pric text-white text-[12px] font-bold hover:opacity-90 transition-all">
+            <span class="material-symbols-outlined msym text-[15px]">login</span>Giriş Yap
+          </a>
+          <a href="register.html" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-[12px] font-bold hover:opacity-90 transition-all">
+            <span class="material-symbols-outlined msym text-[15px]">person_add</span>Kayıt Ol
+          </a>
+          <button onclick="document.getElementById('claim-banner').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-medium hover:bg-surfch transition-all">
+            Şimdi değil
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="loading-state" class="text-center py-24">
     <span class="material-symbols-outlined msym text-5xl text-sec block mb-4 spin">refresh</span>
     <p class="text-onsv text-sm" id="txt-loading">Rapor yükleniyor...</p>
@@ -494,9 +517,21 @@ function render(d){
     const db=document.getElementById('doctor-panel-btn'); if(db) db.classList.remove('hidden');
     const pb=document.getElementById('patient-panel-btn'); if(pb) pb.style.display='none';
   }
+  // Misafir kullanıcı → pending_session_id kaydet ve claim banner göster
+  if(!user && d.session_id && !d.session_id.startsWith('demo-')){
+    localStorage.setItem('pending_session_id', d.session_id);
+    showClaimBanner(d.session_id);
+  }
   // Show patient-friendly card for non-doctor users
   showPatientCard(d);
 }
+
+function showClaimBanner(sessionId){
+  const banner = document.getElementById('claim-banner');
+  if(!banner) return;
+  banner.classList.remove('hidden');
+}
+
 
 async function fetchRagInfo(sessionId) {
   // Sprint 16: RAG kaynak rozeti

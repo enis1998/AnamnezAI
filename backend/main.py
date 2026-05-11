@@ -373,6 +373,9 @@ class SessionResponse(BaseModel):
     step: int
     total_steps: int
 
+class ClaimSessionRequest(BaseModel):
+    session_id: str
+
 class ClinicalSummaryResponse(BaseModel):
     session_id: str
     patient_name: str
@@ -1220,6 +1223,40 @@ async def start_session(req: StartSessionRequest, current_user: Optional[dict] =
     await notify_queue_update()
 
     return SessionResponse(session_id=session_id, question=first_question, step=1, total_steps=initial_steps)
+
+
+@app.post("/api/session/claim")
+async def claim_session(req: ClaimSessionRequest, current_user: dict = Depends(require_auth)):
+    """Misafir olarak yapılan mülakatı giriş yapan kullanıcıya bağlar.
+    Kullanıcı kayıt/giriş yaptıktan sonra pending_session_id varsa çağrılır."""
+    session_id = req.session_id
+    session = sessions.get(session_id)
+
+    # Bellekte yoksa DB'den yükle
+    if not session:
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            row = conn.execute("SELECT data FROM sessions WHERE session_id=?", (session_id,)).fetchone()
+            conn.close()
+            if row:
+                session = json.loads(row[0])
+                sessions[session_id] = session
+        except Exception:
+            pass
+
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı veya süresi dolmuş.")
+
+    if session.get("patient_id"):
+        # Zaten bir kullanıcıya bağlı — aynı kullanıcıysa sorun yok
+        if str(session["patient_id"]) == str(current_user["user_id"]):
+            return {"status": "already_claimed", "session_id": session_id}
+        raise HTTPException(status_code=409, detail="Bu oturum zaten başka bir hesaba bağlı.")
+
+    session["patient_id"] = current_user["user_id"]
+    db_save_session(session_id, session)
+    print(f"[Claim] Session {session_id[:8]}... -> user {current_user['user_id']}")
+    return {"status": "claimed", "session_id": session_id}
 
 
 @app.post("/api/session/answer", response_model=SessionResponse)

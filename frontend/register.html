@@ -231,6 +231,21 @@ async function doRegister(e) {
     document.getElementById('success-msg').classList.remove('hidden');
     document.getElementById('reg-form').classList.add('hidden');
 
+    // Misafir mülakatı varsa yeni hesaba bağla
+    const pendingSession = localStorage.getItem('pending_session_id');
+    if (pendingSession && data.user.role === 'patient') {
+      try {
+        await fetch(`${API}/api/session/claim`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','Authorization':'Bearer '+data.access_token},
+          body: JSON.stringify({session_id: pendingSession})
+        });
+      } catch(e){}
+      localStorage.removeItem('pending_session_id');
+      setTimeout(() => { window.location.href = 'summary.html'; }, 1500);
+      return;
+    }
+
     setTimeout(() => {
       const role = data.user.role;
       window.location.href = ['doctor','admin','personnel'].includes(role) ? 'doctor.html' : 'patient_dashboard.html';

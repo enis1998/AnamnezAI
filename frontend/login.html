@@ -212,17 +212,32 @@ function hideErr() {
   document.getElementById('err-msg').classList.add('hidden');
 }
 
-function saveAndRedirect(data) {
+async function saveAndRedirect(data) {
   localStorage.setItem('anamnez_token', data.access_token);
   localStorage.setItem('anamnez_user', JSON.stringify(data.user));
+
+  // Misafir mülakatı varsa kullanıcıya bağla
+  const pendingSession = localStorage.getItem('pending_session_id');
+  if (pendingSession && data.user.role === 'patient') {
+    try {
+      await fetch(`${API}/api/session/claim`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+data.access_token},
+        body: JSON.stringify({session_id: pendingSession})
+      });
+    } catch(e){}
+    localStorage.removeItem('pending_session_id');
+    // Mülakat özetine geri dön
+    window.location.href = 'summary.html';
+    return;
+  }
+
   const role = data.user.role;
-  // next parametresi varsa ona git (örn: ?next=doctor)
   const next = new URLSearchParams(window.location.search).get('next');
   if (next) { window.location.href = next + '.html'; return; }
   if (['doctor','admin','personnel'].includes(role)) {
     window.location.href = 'doctor.html';
   } else {
-    // Hasta giriş yaptıktan sonra profiline yönlendir
     window.location.href = 'patient_dashboard.html';
   }
 }
