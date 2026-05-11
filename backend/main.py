@@ -315,7 +315,7 @@ async def _background_warmup():
                 json={"model": GEMMA_MODEL, "prompt": "Hi", "stream": False, "options": {"num_predict": 1}},
             )
         _model_ready = True
-        print(f"[AnamnezAI] ✓ Model hazır: {GEMMA_MODEL} — Artık tüm hastalar hızlı yanıt alır")
+        print(f"[AnamnezAI] Model hazir: {GEMMA_MODEL} -- Artik tum hastalar hizli yanit alir")
     except Exception as e:
         print(f"[AnamnezAI] Warmup başarısız (model manual tetiklenecek): {e}")
     finally:
