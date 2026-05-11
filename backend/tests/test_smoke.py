@@ -1,16 +1,27 @@
 """
 Smoke tests for AnamnezAI backend.
 These tests verify the app can be imported and basic structures are in place.
-No Ollama connection required.
+No Ollama or PostgreSQL connection required — DB calls are mocked.
 """
 import os
 import pytest
+from unittest.mock import patch, MagicMock
 
-# Set test env before importing app
-os.environ.setdefault("DB_PATH", ":memory:")
+# Test ortamı — PostgreSQL bağlantısı mock'lanır
 os.environ.setdefault("GEMMA_MODEL", "test-model")
 os.environ.setdefault("OLLAMA_BASE_URL", "http://localhost:11434")
 os.environ.setdefault("RAG_ENABLED", "false")
+os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-for-smoke-tests-only")
+
+# Postgres pool'unu import öncesi mock'la — test ortamında PG bağlantısı yok
+_mock_cursor = MagicMock()
+_mock_cursor.__enter__ = MagicMock(return_value=_mock_cursor)
+_mock_cursor.__exit__ = MagicMock(return_value=False)
+_mock_cursor.fetchall.return_value = []
+_mock_cursor.fetchone.return_value = None
+
+_pg_patch = patch("database.get_cursor", return_value=_mock_cursor)
+_pg_patch.start()
 
 
 def test_main_imports():

@@ -105,9 +105,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+_cors_origins_raw = os.getenv("ALLOWED_ORIGINS", "*")
+_cors_origins = (
+    ["*"] if _cors_origins_raw.strip() == "*"
+    else [o.strip() for o in _cors_origins_raw.split(",") if o.strip()]
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -118,6 +124,13 @@ if _rate_limit_available:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     print("[AnamnezAI] Rate limiting: active (slowapi)")
+else:
+    # Limiter stub — endpoint dekoratörleri hata vermez
+    class _LimiterStub:
+        def limit(self, *a, **kw):
+            def decorator(f): return f
+            return decorator
+    limiter = _LimiterStub()
 
 # Kiosk lock state (Sprint 5)
 _kiosk_locked = False
@@ -648,10 +661,12 @@ async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, Non
                                             yield f"data: {json.dumps({'token': pre})}\n\n"
                                         continue
                                     accumulated += token
-                                    # Sunucu tarafı tekrar algılama — 80 karın 3x tekrarı
-                                    if len(accumulated) > 300:
+                                    # Sunucu tarafı tekrar algılama — son 80 karı saymak yerine
+                                    # sadece son 320 karaktere bak: O(1) pencere kontrolü
+                                    if len(accumulated) > 400:
+                                        window = accumulated[-320:]
                                         tail = accumulated[-80:]
-                                        if accumulated[:-80].count(tail) >= 3:
+                                        if window.count(tail) >= 3:
                                             yield "data: [DONE]\n\n"
                                             return
                                     yield f"data: {json.dumps({'token': token})}\n\n"
@@ -1258,7 +1273,8 @@ async def health_check():
 
 
 @app.post("/api/session/start")
-async def start_session(req: StartSessionRequest, current_user: Optional[dict] = Depends(get_current_user)):
+@limiter.limit("20/minute")
+async def start_session(req: StartSessionRequest, request: Request, current_user: Optional[dict] = Depends(get_current_user)):
     """Yeni hasta mülakatı başlatır — ilk soru anında döner (model çağrısı yok), 2. sorudan itibaren Gemma 4 + RAG devreye girer."""
     session_id = str(uuid.uuid4())
     lang = req.language
@@ -1376,7 +1392,8 @@ async def claim_session(req: ClaimSessionRequest, current_user: dict = Depends(r
 
 
 @app.post("/api/session/answer", response_model=SessionResponse)
-async def submit_answer(req: AnswerRequest):
+@limiter.limit("60/minute")
+async def submit_answer(req: AnswerRequest, request: Request):
     """Cevabı kaydeder, Gemma 4 ile bağlamsal sonraki soruyu üretir."""
     session = sessions.get(req.session_id)
     if not session:

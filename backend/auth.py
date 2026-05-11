@@ -18,7 +18,18 @@ from database import get_cursor
 # ─────────────────────────────────────────────
 #  Config
 # ─────────────────────────────────────────────
-SECRET_KEY  = os.getenv("JWT_SECRET_KEY", "anamnezai-super-secret-key-change-in-production-2026")
+_jwt_secret = os.getenv("JWT_SECRET_KEY", "")
+if not _jwt_secret:
+    import warnings
+    _jwt_secret = "anamnezai-dev-only-secret-CHANGE-IN-PRODUCTION"
+    warnings.warn(
+        "[AUTH] JWT_SECRET_KEY env değişkeni ayarlanmamış! "
+        "Geliştirme ortamı varsayılanı kullanılıyor. "
+        "Production'da mutlaka güçlü bir değer belirleyin.",
+        RuntimeWarning,
+        stacklevel=2,
+    )
+SECRET_KEY = _jwt_secret
 ALGORITHM   = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 
