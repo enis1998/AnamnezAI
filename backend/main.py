@@ -1159,7 +1159,7 @@ async def health_check():
 
 @app.post("/api/session/start", response_model=SessionResponse)
 async def start_session(req: StartSessionRequest, current_user: Optional[dict] = Depends(get_current_user)):
-    """Yeni hasta mülakatı başlatır — ilk soruyu Gemma 4 + RAG ile üretir. Vital bulgular kaydedilir."""
+    """Yeni hasta mülakatı başlatır — ilk soru anında döner (model çağrısı yok), 2. sorudan itibaren Gemma 4 + RAG devreye girer."""
     session_id = str(uuid.uuid4())
     lang = req.language
 
@@ -1181,17 +1181,26 @@ async def start_session(req: StartSessionRequest, current_user: Optional[dict] =
         if parts:
             vitals_ctx = f"\nVital bulgular: {', '.join(parts)}" if lang == "tr" else f"\nVitals: {', '.join(parts)}"
 
-    opening_prompt = (
-        f"Hasta: {req.patient_name}, {req.age} yaşında, {req.gender}.{vitals_ctx}\n"
-        f"Bu ilk görüşme. Hastanın bugünkü ana şikayetini öğrenmek için samimi, empatik bir açılış sorusu sor. Soru 1/{initial_steps}."
-    ) if lang == "tr" else (
-        f"Patient: {req.patient_name}, {req.age}y, {req.gender}.{vitals_ctx}\n"
-        f"First visit. Ask a warm, empathetic opening question to learn their main complaint. Q1/{initial_steps}."
-    )
-
-    rag_query = "medical triage first question patient interview clinical assessment"
-    first_question = await ask_gemma_rag(opening_prompt, system=get_system_prompt(lang),
-                                          rag_query=rag_query)
+    # ── İlk soru: anında sabit yanıt — model çağrısı YOK ──────────────────
+    # İlk soru her zaman "Ana şikayetiniz nedir?" eşdeğeridir.
+    # AI gücü 2. sorudan itibaren hastanın cevabını analiz ederek devreye girer.
+    _name = req.patient_name.split()[0] if req.patient_name else ""
+    _vitals_note = f" (Vital bulgular kaydedildi.)" if vitals_dict and lang == "tr" else (" (Vitals recorded.)" if vitals_dict else "")
+    if lang == "tr":
+        first_question = (
+            f"Merhaba {_name}! 👋 Bugün sizi buraya getiren şikayetiniz nedir?"
+            f"{_vitals_note}"
+        )
+    elif lang == "ar":
+        first_question = (
+            f"مرحباً {_name}! 👋 ما هي الشكوى التي أحضرتك إلى هنا اليوم?"
+            f"{_vitals_note}"
+        )
+    else:
+        first_question = (
+            f"Hello {_name}! 👋 What brings you in today — what's your main concern?"
+            f"{_vitals_note}"
+        )
 
     sessions[session_id] = {
         "patient_name": req.patient_name,
