@@ -1,28 +1,25 @@
-{
- "nbformat": 4,
- "nbformat_minor": 5,
- "metadata": {
-  "kernelspec": {
-   "display_name": "Python 3",
-   "language": "python",
-   "name": "python3"
-  },
-  "language_info": {
-   "name": "python",
-   "version": "3.11.0"
-  },
-  "kaggle": {
-   "accelerator": "none",
-   "dataSources": [],
-   "isGpuEnabled": false,
-   "isInternetEnabled": true
-  }
- },
- "cells": [
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+"""
+Script to build a proper Jupyter notebook for AnamnezAI Kaggle submission.
+Run: python build_notebook.py
+"""
+import json, os
+
+cells = []
+
+def md(source):
+    cells.append({"cell_type": "markdown", "metadata": {}, "source": source if isinstance(source, list) else [source]})
+
+def code(source, outputs=None):
+    cells.append({
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": outputs or [],
+        "source": source if isinstance(source, list) else [source]
+    })
+
+# ──────────────────────────────────────────────
+md([
     "# 🏥 AnamnezAI — Local-First Clinical Pre-Triage with Gemma 4\n",
     "\n",
     "> **MediScreen Project** | Google AI Hackathon 2026  \n",
@@ -39,13 +36,10 @@
     "refugees who cannot communicate symptoms in Turkish.\n",
     "\n",
     "**AnamnezAI solves this** by conducting a structured AI interview *before* the doctor sees the patient,\n",
-    "producing a clinical triage summary with evidence, ICD-10 codes, and urgency flags.\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "producing a clinical triage summary with evidence, ICD-10 codes, and urgency flags.\n",
+])
+
+md([
     "## 🏗️ Architecture\n",
     "\n",
     "```\n",
@@ -79,22 +73,12 @@
     "- 🔒 All AI inference runs locally via Ollama — no cloud AI APIs\n",
     "- 🌍 Multilingual: TR / EN / AR (real Gemma 4 conversation, not just translation)\n",
     "- ⚡ RAG grounds every triage decision in clinical guidelines\n",
-    "- 🩺 Explicitly NOT diagnostic — produces physician-reviewed decision support\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## ⚙️ Setup & Dependencies\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "- 🩺 Explicitly NOT diagnostic — produces physician-reviewed decision support\n",
+])
+
+md(["## ⚙️ Setup & Dependencies\n"])
+
+code([
     "# Install required packages\n",
     "# (In production these are in requirements.txt)\n",
     "import subprocess, sys\n",
@@ -112,24 +96,15 @@
     "        print(f'  📦 Installing {pkg}...')\n",
     "        subprocess.check_call([sys.executable, '-m', 'pip', 'install', pkg, '-q'])\n",
     "\n",
-    "print('\\n✅ All dependencies ready.')\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## 🤖 Proof: Gemma 4 Local Inference via Ollama\n",
+    "print('\\n✅ All dependencies ready.')\n",
+])
+
+md(["## 🤖 Proof: Gemma 4 Local Inference via Ollama\n",
     "\n",
-    "All AI inference runs through Ollama on `localhost:11434`. No external AI API calls.\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "All AI inference runs through Ollama on `localhost:11434`. No external AI API calls.\n",
+])
+
+code([
     "import httpx, json, os\n",
     "\n",
     "OLLAMA_BASE = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')\n",
@@ -158,14 +133,10 @@
     "# Test\n",
     "result = ask_gemma('What are the 5 triage levels in Manchester Triage System? Answer briefly.')\n",
     "print('Gemma 4 response:')\n",
-    "print(result)\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## 📚 RAG Pipeline — Clinical Knowledge Retrieval\n",
+    "print(result)\n",
+])
+
+md(["## 📚 RAG Pipeline — Clinical Knowledge Retrieval\n",
     "\n",
     "AnamnezAI uses a local ChromaDB vector store with ~90 chunks from:\n",
     "- Manchester Triage System (MTS) protocol\n",
@@ -175,15 +146,10 @@
     "\n",
     "Embeddings: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`\n",
     "- Supports Turkish, English, Arabic queries without translation\n",
-    "- Top-6 chunks retrieved → injected into Gemma 4 system prompt\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "- Top-6 chunks retrieved → injected into Gemma 4 system prompt\n",
+])
+
+code([
     "import os, sys\n",
     "sys.path.insert(0, '../backend')\n",
     "\n",
@@ -211,14 +177,10 @@
     "        print('   In production: pip install chromadb sentence-transformers')\n",
     "except ImportError as e:\n",
     "    print(f'⚠️  Backend not in path: {e}')\n",
-    "    print('   Run from mediscreen/notebooks directory for live demo')\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## 🧪 Evaluation — 15 Clinical Scenarios\n",
+    "    print('   Run from mediscreen/notebooks directory for live demo')\n",
+])
+
+md(["## 🧪 Evaluation — 15 Clinical Scenarios\n",
     "\n",
     "We evaluated AnamnezAI against 15 realistic clinical scenarios covering:\n",
     "- 🔴 RED (immediate): AMI, stroke, anaphylaxis, sepsis, SAH\n",
@@ -228,15 +190,10 @@
     "Each scenario was evaluated for:\n",
     "1. Correct triage level (RED/YELLOW/GREEN)\n",
     "2. Presence of must-have clinical keywords in evidence\n",
-    "3. Appropriate urgency flags\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "3. Appropriate urgency flags\n",
+])
+
+code([
     "# Evaluation scenarios summary (from evaluation/triage_cases.jsonl)\n",
     "scenarios = [\n",
     "    {'id': 'ami_001',         'expected': 'RED',    'name': 'Acute MI (chest pain + radiation)'},\n",
@@ -265,15 +222,10 @@
     "print('-' * 65)\n",
     "for s in scenarios:\n",
     "    icon = '🔴' if s['expected']=='RED' else '🟡' if s['expected']=='YELLOW' else '🟢'\n",
-    "    print(f\"{s['id']:<30} | {icon} {s['expected']:<7} | {s['name']}\")\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "    print(f\"{s['id']:<30} | {icon} {s['expected']:<7} | {s['name']}\")\n",
+])
+
+code([
     "# Run live evaluation against Gemma 4 (requires backend running)\n",
     "# If offline, shows expected results from last run\n",
     "\n",
@@ -320,14 +272,10 @@
     "    print(f'\\n{\"✅ CORRECT\" if correct else \"❌ WRONG\"}: Got {level} (expected RED)')\n",
     "    print(f'Evidence: {result.get(\"evidence\", [])}')\n",
     "except json.JSONDecodeError:\n",
-    "    print('(Could not parse JSON — model may be offline in this environment)')\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## 📊 Evaluation Results Summary\n",
+    "    print('(Could not parse JSON — model may be offline in this environment)')\n",
+])
+
+md(["## 📊 Evaluation Results Summary\n",
     "\n",
     "Results from `evaluation/run_eval.py` (last run: 2026-05-11):\n",
     "\n",
@@ -346,15 +294,10 @@
     "**Limitations:**\n",
     "- AI confidence scores reflect *intake completeness*, not diagnostic certainty\n",
     "- All triage decisions require physician review — this is decision support, not diagnosis\n",
-    "- Edge cases with atypical presentations may be under-triaged without RAG context\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "- Edge cases with atypical presentations may be under-triaged without RAG context\n",
+])
+
+code([
     "# Visualize results\n",
     "try:\n",
     "    import matplotlib.pyplot as plt\n",
@@ -401,24 +344,15 @@
     "    plt.show()\n",
     "    print('📊 Chart saved as eval_results.png')\n",
     "except ImportError:\n",
-    "    print('matplotlib not available — install with: pip install matplotlib')\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## 🔌 Demo API Calls\n",
+    "    print('matplotlib not available — install with: pip install matplotlib')\n",
+])
+
+md(["## 🔌 Demo API Calls\n",
     "\n",
-    "Full API documentation available at `http://localhost:8000/docs` when backend is running.\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "Full API documentation available at `http://localhost:8000/docs` when backend is running.\n",
+])
+
+code([
     "import httpx, json\n",
     "\n",
     "BASE_URL = 'http://localhost:8000'\n",
@@ -459,14 +393,10 @@
     "    print(f'  {session}')\n",
     "    sid = None\n",
     "\n",
-    "print('\\n✅ API calls complete. For full demo, run: start.ps1 or python backend/main.py')\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## ⚠️ Safety & Limitations\n",
+    "print('\\n✅ API calls complete. For full demo, run: start.ps1 or python backend/main.py')\n",
+])
+
+md(["## ⚠️ Safety & Limitations\n",
     "\n",
     "### Explicit Disclaimers\n",
     "\n",
@@ -488,14 +418,10 @@
     "- All patient data stored locally in SQLite (`anamnezai.db`)\n",
     "- JWT authentication for all doctor/admin endpoints\n",
     "- No patient data transmitted to external services (AI inference is local)\n",
-    "- GDPR-compliant by design: data subject to local hospital privacy policy\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "## 🗺️ Roadmap\n",
+    "- GDPR-compliant by design: data subject to local hospital privacy policy\n",
+])
+
+md(["## 🗺️ Roadmap\n",
     "\n",
     "| Phase | Feature | Status |\n",
     "|-------|---------|--------|\n",
@@ -515,8 +441,35 @@
     "\n",
     "- GitHub: [AnamnezAI/mediscreen](https://github.com/)\n",
     "- Demo credentials: `doctor@anamnezai.tr` / `doctor123`\n",
-    "- Quick start: `cd backend && pip install -r requirements.txt && python main.py`\n"
-   ]
-  }
- ]
+    "- Quick start: `cd backend && pip install -r requirements.txt && python main.py`\n",
+])
+
+# Build notebook JSON
+notebook = {
+    "nbformat": 4,
+    "nbformat_minor": 5,
+    "metadata": {
+        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+        "language_info": {"name": "python", "version": "3.11.0"},
+        "kaggle": {
+            "accelerator": "none",
+            "dataSources": [],
+            "isGpuEnabled": False,
+            "isInternetEnabled": True,
+        }
+    },
+    "cells": cells
 }
+
+out_path = os.path.join(os.path.dirname(__file__), 'mediscreen_ai_kaggle.ipynb')
+with open(out_path, 'w', encoding='utf-8') as f:
+    json.dump(notebook, f, ensure_ascii=False, indent=1)
+
+nb = json.load(open(out_path, encoding='utf-8'))
+print(f"✅ Notebook built: {out_path}")
+print(f"   Cells: {len(nb['cells'])}")
+for i, c in enumerate(nb['cells']):
+    preview = c['source'][0][:70].replace('\n', ' ') if c['source'] else '(empty)'
+    print(f"   [{i}] {c['cell_type']:<10} {preview}")
+
+

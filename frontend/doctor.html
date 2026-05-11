@@ -188,7 +188,7 @@ tailwind.config={theme:{extend:{colors:{
             <p class="text-[11px] text-onsv" id="txt-queue-sub">Backend'den yükleniyor...</p>
           </div>
           <div class="flex items-center gap-2">
-            <!-- Hasta Ara -->
+          <!-- Hasta Ara -->
             <div class="relative">
               <span class="material-symbols-outlined msym text-[15px] text-ouv absolute left-2.5 top-1/2 -translate-y-1/2">search</span>
               <input id="inp-search" type="text" placeholder="Hasta ara..."
@@ -205,9 +205,16 @@ tailwind.config={theme:{extend:{colors:{
               <option value="GREEN">🟢 Rutin</option>
             </select>
             <span id="txt-queue-count" class="text-[12px] font-bold text-onsv bg-surfc px-3 py-1 rounded-full"></span>
+            <!-- Görünüm toggle -->
+            <button onclick="toggleQueueView()" id="btn-view-toggle"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium"
+              title="Tablo / Kanban görünümü">
+              <span class="material-symbols-outlined msym text-[15px]" id="icon-view-toggle">view_kanban</span>
+            </button>
           </div>
         </div>
         <div id="live-table"></div>
+        <div id="live-kanban" class="hidden p-4"></div>
       </div>
 
       <!-- Görüldü Arşivi -->
@@ -533,6 +540,8 @@ async function loadQueue(){
     data.patients.forEach(p=>{allPatients[p.session_id]=p;});
     updateStats(data.stats || calcStats(data.patients));
     renderTable(data.patients,'live-table',true);
+    // Kanban görünümü de güncelle
+    if (_queueView === 'kanban') renderKanban(data.patients.filter(p=>!p.is_seen),'live-kanban',true);
     document.getElementById('txt-queue-sub').textContent = `${data.total} tamamlanan mülakat`;
     document.getElementById('txt-queue-count').textContent = `${data.total} hasta`;
   } catch {
@@ -620,13 +629,83 @@ function renderTable(patients, containerId, live){
           <th class="px-5 py-3 text-left">Hasta</th>
           <th class="px-4 py-3 text-left">Triaj</th>
           <th class="px-4 py-3 text-left">Ana Şikayet</th>
-          <th class="px-4 py-3 text-left">AI Skoru</th>
+          <th class="px-4 py-3 text-left">Kanıt Gücü</th>
           <th class="px-4 py-3 text-left">Bekleme</th>
           <th class="px-4 py-3 text-right">İşlem</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// ── Görünüm toggle (Tablo ↔ Kanban) ──────────────────────────────────
+let _queueView = 'table'; // 'table' | 'kanban'
+
+function toggleQueueView() {
+  _queueView = _queueView === 'table' ? 'kanban' : 'table';
+  const icon = document.getElementById('icon-view-toggle');
+  if (icon) icon.textContent = _queueView === 'table' ? 'view_kanban' : 'table_rows';
+  const tbl = document.getElementById('live-table');
+  const knb = document.getElementById('live-kanban');
+  if (!tbl || !knb) return;
+  if (_queueView === 'kanban') {
+    tbl.classList.add('hidden');
+    knb.classList.remove('hidden');
+    renderKanban(Object.values(allPatients).filter(p => !p.is_seen), 'live-kanban', true);
+  } else {
+    knb.classList.add('hidden');
+    tbl.classList.remove('hidden');
+  }
+}
+
+function renderKanban(patients, containerId, live) {
+  const el = document.getElementById(containerId);
+  if (!patients || !patients.length) {
+    el.innerHTML = `<div class="text-center py-10 text-onsv text-[12px]">Henüz hasta yok.</div>`;
+    return;
+  }
+  const cols = {
+    RED:    { patients:[], label:'🔴 Derhal Müdahale', bg:'#fff5f5', border:'#ba1a1a', color:'#ba1a1a' },
+    YELLOW: { patients:[], label:'🟡 Kısa Sürede',     bg:'#fff8f0', border:'#e07b26', color:'#b05508' },
+    GREEN:  { patients:[], label:'🟢 Rutin Kuyruk',    bg:'#f0faf9', border:'#006a68', color:'#006a68' },
+    PENDING:{ patients:[], label:'⏳ Analiz Bekleniyor',bg:'#f4f7f9',border:'#bfc7ca', color:'#3f4749' },
+  };
+  patients.forEach(p => { (cols[p.triage_level] || cols.PENDING).patients.push(p); });
+
+  el.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    ${['RED','YELLOW','GREEN'].map(level => {
+      const col = cols[level];
+      const cards = col.patients.map(p => {
+        const wait = _waitBadge(p.created_at, p.triage_level);
+        const init = p.patient_name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
+        const strength = p.confidence_score ? `<span class="text-[10px] font-bold" style="color:${col.color}">${p.confidence_score}%</span>` : '';
+        return `<div class="bg-white rounded-xl border p-3 mb-2 cursor-pointer hover:shadow-md transition-shadow"
+          style="border-color:${col.border}20" onclick="showDetail('${p.session_id}')">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+              style="background:${col.color}">${init}</div>
+            <div class="flex-1 min-w-0">
+              <p class="text-[12px] font-bold text-ons truncate">${p.patient_name}</p>
+              <p class="text-[10px] text-onsv">${p.age} yaş · ${p.gender}</p>
+            </div>
+            ${strength}
+          </div>
+          <p class="text-[11px] text-onsv truncate mb-1.5">${p.chief_complaint || '—'}</p>
+          <div class="flex items-center justify-between">
+            ${wait}
+            ${p.urgency_flags&&p.urgency_flags.length?`<span class="text-[10px] font-bold text-err">⚠️ ${p.urgency_flags.length}</span>`:''}
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="rounded-2xl p-3 border-2" style="background:${col.bg};border-color:${col.border}">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-[12px] font-bold" style="color:${col.color}">${col.label}</h3>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style="background:${col.color}">${col.patients.length}</span>
+        </div>
+        ${cards || `<div class="text-center py-6 text-[11px] text-onsv">Hasta yok</div>`}
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 function showDetail(sid){

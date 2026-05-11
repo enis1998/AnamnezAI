@@ -57,16 +57,18 @@ CATEGORY_PRIORITY = {
 # ─────────────────────────────────────────────
 _TR_EN_MEDICAL = {
     # Kardiyak
-    "göğüs ağrısı": "chest pain cardiac",
-    "göğüs": "chest thoracic",
-    "kalp": "heart cardiac",
+    "göğüs ağrısı": "chest pain cardiac myocardial infarction acute coronary syndrome STEMI AMI radiation diaphoresis",
+    "göğüs": "chest thoracic cardiac",
+    "kalp": "heart cardiac myocardial",
     "çarpıntı": "palpitation tachycardia arrhythmia",
-    "kalp krizi": "myocardial infarction AMI heart attack",
-    "kalp yetmezliği": "heart failure",
+    "kalp krizi": "myocardial infarction AMI heart attack STEMI acute coronary syndrome",
+    "kalp yetmezliği": "heart failure cardiac decompensation",
     "hipertansiyon": "hypertension high blood pressure",
     "tansiyon": "blood pressure hypertension",
-    "nabız": "pulse heart rate",
+    "nabız": "pulse heart rate cardiac",
     "aort": "aortic aorta dissection",
+    "sol kola yayılım": "left arm radiation myocardial infarction acute coronary syndrome",
+    "sola yayılım": "left arm radiation myocardial infarction cardiac chest pain",
     # Nöroloji
     "felç": "stroke cerebrovascular",
     "inme": "stroke ischemic cerebral",
@@ -80,7 +82,7 @@ _TR_EN_MEDICAL = {
     "bilinç kaybı": "loss of consciousness unconscious GCS",
     "afazi": "aphasia speech difficulty",
     # Solunum
-    "nefes darlığı": "dyspnea breathlessness shortness of breath",
+    "nefes darlığı": "dyspnea breathlessness shortness of breath cardiac pulmonary embolism heart failure",
     "nefes": "breath respiratory breathing",
     "öksürük": "cough",
     "balgam": "sputum phlegm",
@@ -139,7 +141,7 @@ _TR_EN_MEDICAL = {
     "ateş": "fever febrile pyrexia temperature",
     "titreme": "chills shivering",
     "halsizlik": "fatigue weakness malaise",
-    "terleme": "diaphoresis sweating",
+    "terleme": "diaphoresis sweating myocardial infarction cardiac",
     "idrar": "urine urinary",
     "kan": "blood hemorrhage",
     "enfeksiyon": "infection",
@@ -488,6 +490,23 @@ def retrieve(query: str, n_results: int = TOP_K, category_filter: Optional[str] 
             "category": meta.get("category", ""),
             "relevance": round(1 - dist, 3),  # cosine similarity
         })
+
+    # ── Kardiyak sorgularda KBB/ENT kaynaklarına ceza ver ──
+    # Göğüs ağrısı + kardiyak anahtar kelimeler → ENT kaynakları alakasız
+    _CARDIAC_KEYWORDS = {
+        "chest pain", "cardiac", "göğüs ağrısı", "myocardial",
+        "AMI", "STEMI", "heart attack", "coronary", "kalp krizi",
+        "sol kola yayılım", "diaphoresis",
+    }
+    is_cardiac_query = any(kw.lower() in search_query.lower() for kw in _CARDIAC_KEYWORDS)
+    if is_cardiac_query:
+        _ENT_MARKERS = {"ENT", "KBB", "ear", "nose", "throat", "otitis", "rhinitis", "tonsil"}
+        for h in hits:
+            src_upper = h.get("source", "").upper()
+            if any(marker.upper() in src_upper for marker in _ENT_MARKERS):
+                h["relevance"] = max(0.0, round(h["relevance"] - 0.15, 3))
+                logger.debug(f"[RAG] ENT penalty applied to source='{h['source']}' for cardiac query")
+
     return hits
 
 

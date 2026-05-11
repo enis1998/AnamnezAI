@@ -327,11 +327,11 @@ tailwind.config = {
       class="w-full rounded-xl bg-surfc px-4 py-3 text-[14px] resize-none border border-transparent transition-all mb-3 min-h-[56px]"
       onkeydown="handleKey(event)"></textarea>
 
-    <!-- Image upload (Gemma 4 Multimodal) -->
+    <!-- Image upload (Gemma 4 Multimodal) — mülakat sırasında görüntü ekle -->
     <div id="img-preview-area" class="hidden mb-3 p-3 bg-secc/20 rounded-xl border border-sec/20">
       <div class="flex items-center justify-between mb-2">
         <span class="text-[11px] font-bold text-sec uppercase tracking-wider">📷 Gemma 4 Vision Analizi</span>
-        <button onclick="clearImage()" class="text-[10px] text-onsv hover:text-err transition-colors">✕ Kaldır</button>
+        <button onclick="clearChatImage()" class="text-[10px] text-onsv hover:text-err transition-colors">✕ Kaldır</button>
       </div>
       <div class="flex items-start gap-3">
         <img id="img-thumb" class="w-16 h-16 object-cover rounded-lg flex-shrink-0 border border-sec/20" src="" alt=""/>
@@ -353,10 +353,10 @@ tailwind.config = {
     </div>
 
     <div class="flex items-center gap-2">
-      <!-- Image upload button -->
+      <!-- Image upload button (mülakat sırasında) -->
       <label class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surfc text-onsv hover:bg-secc hover:text-sec transition-all text-[12px] font-medium flex-shrink-0 cursor-pointer" title="Görüntü Yükle (Gemma 4 Vision)">
         <span class="material-symbols-outlined msym text-[16px]">photo_camera</span>
-        <input id="inp-image" type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)"/>
+        <input id="inp-image-chat" type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)"/>
       </label>
       <button id="btn-voice" onclick="toggleVoice()"
         class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surfc text-onsv hover:bg-secc hover:text-sec transition-all text-[12px] font-medium flex-shrink-0">
@@ -1127,11 +1127,94 @@ function handleImageSelect(input){
 
 function clearImage(){
   selectedImageFile = null;
-  document.getElementById('inp-image').value = '';
-  document.getElementById('img-preview').src = '';
-  document.getElementById('img-drop-zone').classList.remove('hidden');
-  document.getElementById('img-preview-wrap').classList.add('hidden');
-  document.getElementById('img-model-badge').classList.add('hidden');
+  const inp = document.getElementById('inp-image');
+  if (inp) inp.value = '';
+  const preview = document.getElementById('img-preview');
+  if (preview) preview.src = '';
+  const dz = document.getElementById('img-drop-zone');
+  if (dz) dz.classList.remove('hidden');
+  const pw = document.getElementById('img-preview-wrap');
+  if (pw) pw.classList.add('hidden');
+  const mb = document.getElementById('img-model-badge');
+  if (mb) mb.classList.add('hidden');
+}
+
+// Mülakat sırası görüntü upload (interview alanındaki kamera butonu)
+function handleImageUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (file.size > 15 * 1024 * 1024) {
+    showToast('Görüntü max 15 MB olmalı', true);
+    return;
+  }
+  selectedImageFile = file;
+  const url = URL.createObjectURL(file);
+  const area = document.getElementById('img-preview-area');
+  const thumb = document.getElementById('img-thumb');
+  if (area) area.classList.remove('hidden');
+  if (thumb) thumb.src = url;
+  // Analiz sonucunu sıfırla
+  const result = document.getElementById('img-analysis-result');
+  if (result) { result.textContent = ''; result.classList.add('hidden'); }
+}
+
+// Mülakat sırası görüntü temizleme
+function clearChatImage() {
+  selectedImageFile = null;
+  const inp = document.getElementById('inp-image-chat');
+  if (inp) inp.value = '';
+  const area = document.getElementById('img-preview-area');
+  if (area) area.classList.add('hidden');
+  const thumb = document.getElementById('img-thumb');
+  if (thumb) thumb.src = '';
+  const result = document.getElementById('img-analysis-result');
+  if (result) { result.textContent = ''; result.classList.add('hidden'); }
+}
+
+// Mülakat sırasında seçili görüntüyü /api/analyze-image ile analiz et
+async function analyzeImage() {
+  if (!selectedImageFile) {
+    showToast('Önce görüntü seçin (📷 butonuna tıklayın).', true);
+    return;
+  }
+  if (!sessionId) {
+    showToast('Mülakat oturumu henüz başlatılmadı.', true);
+    return;
+  }
+  const btn = document.getElementById('btn-analyze-img');
+  const result = document.getElementById('img-analysis-result');
+  const original = btn?.innerHTML;
+
+  try {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-symbols-outlined msym text-[12px]" style="animation:spin .8s linear infinite">refresh</span> Analiz ediliyor...'; }
+
+    const form = new FormData();
+    form.append('file', selectedImageFile);
+    form.append('lang', lang);
+    form.append('session_id', sessionId);
+    const ctx = document.getElementById('img-context')?.value || 'tıbbi görüntü';
+    form.append('context', ctx);
+
+    const res = await fetch(`${API}/api/analyze-image`, {
+      method: 'POST',
+      body: form,
+      signal: AbortSignal.timeout(140000)
+    });
+
+    if (!res.ok) throw new Error(`Görüntü analizi başarısız (HTTP ${res.status}).`);
+
+    const data = await res.json();
+    const findings = data.findings || data.analysis || 'Analiz tamamlandı.';
+    if (result) {
+      result.classList.remove('hidden');
+      result.textContent = findings;
+    }
+    showToast('Görüntü analizi rapora eklendi. ✅');
+  } catch (e) {
+    showToast(e.message || 'Görüntü analizi yapılamadı.', true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = original; }
+  }
 }
 
 // ── Init ──

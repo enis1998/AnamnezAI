@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AnamnezAI — Klinik İnceleme</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="/vendor/jspdf.umd.min.js"></script>
+<script src="/vendor/html2canvas.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
 <script>
@@ -721,8 +723,59 @@ async function exportFHIR() {
   } catch(e) {}
 }
 
-function exportPDF() {
-  window.print();
+async function exportPDF() {
+  const btn = document.querySelector('button[onclick="exportPDF()"]');
+  const original = btn ? btn.innerHTML : '';
+  try {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-symbols-outlined msym text-[18px]" style="animation:spin .8s linear infinite;display:inline-block">refresh</span> <span class="hidden sm:inline">Hazırlanıyor...</span>'; }
+
+    // Yazdırma butonlarını gizle
+    const hideEls = document.querySelectorAll('.no-print, header');
+    hideEls.forEach(el => el.style.setProperty('display', 'none', 'important'));
+
+    const mainEl = document.querySelector('main') || document.body;
+    const origBg = document.body.style.background;
+    document.body.style.background = '#ffffff';
+
+    const canvas = await html2canvas(mainEl, {
+      scale: 2, useCORS: true, allowTaint: true,
+      backgroundColor: '#ffffff', logging: false, windowWidth: 1024
+    });
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const pageW = 210, pageH = 297, margin = 8, contentW = pageW - margin * 2;
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const imgH = (canvas.height * contentW) / canvas.width;
+
+    let posY = margin, remaining = imgH, srcY = 0;
+    while (remaining > 0) {
+      const sliceH = Math.min(remaining, pageH - margin * 2);
+      const sc = document.createElement('canvas');
+      sc.width = canvas.width;
+      sc.height = (sliceH / imgH) * canvas.height;
+      sc.getContext('2d').drawImage(canvas, 0, srcY * canvas.height / imgH, canvas.width, sc.height, 0, 0, canvas.width, sc.height);
+      pdf.addImage(sc.toDataURL('image/jpeg', 0.92), 'JPEG', margin, posY, contentW, sliceH);
+      remaining -= sliceH; srcY += sliceH;
+      if (remaining > 0) { pdf.addPage(); posY = margin; }
+    }
+
+    const totalPages = pdf.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      pdf.setPage(i); pdf.setFontSize(7); pdf.setTextColor(140, 148, 153);
+      pdf.text('AnamnezAI - Yapay zeka destekli ön triaj. Tıbbi tanı değildir.', 10, pageH - 5);
+      pdf.text(`${i}/${totalPages}`, pageW - 10, pageH - 5, { align: 'right' });
+    }
+
+    pdf.save(`AnamnezAI_KlinikInceleme_${(sessionId || 'rapor').slice(0, 8)}_${new Date().toISOString().slice(0,10)}.pdf`);
+  } catch (err) {
+    console.error('PDF hatası:', err);
+    alert('PDF oluşturulamadı: ' + err.message);
+  } finally {
+    document.querySelectorAll('.no-print, header').forEach(el => el.style.removeProperty('display'));
+    document.body.style.background = '';
+    if (btn) { btn.disabled = false; btn.innerHTML = original; }
+  }
 }
 
 function showError() {

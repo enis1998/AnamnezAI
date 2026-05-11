@@ -687,7 +687,8 @@ async function exportPDF(){
     const totalPages=pdf.internal.getNumberOfPages();
     for(let i=1;i<=totalPages;i++){
       pdf.setPage(i);pdf.setFontSize(7);pdf.setTextColor(140,148,153);
-      pdf.text('AnamnezAI - AI-powered pre-triage. Not a medical diagnosis.',10,pageH-5);
+      const _footerTxt=reportLang==='tr'?'AnamnezAI - Yapay zeka destekli ön triaj. Tıbbi tanı değildir.':reportLang==='ar'?'AnamnezAI - نظام ما قبل الفرز بالذكاء الاصطناعي. ليس تشخيصاً طبياً.':'AnamnezAI - AI-powered pre-triage. Not a medical diagnosis.';
+      pdf.text(_footerTxt,10,pageH-5);
       pdf.text(`${i}/${totalPages}`,pageW-10,pageH-5,{align:'right'});
     }
     // Dosya adı — Türkçe karakter olmadan

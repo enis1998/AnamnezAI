@@ -171,7 +171,7 @@ docker compose up --build -d
 
 ```powershell
 # Windows PowerShell
-cd mediscreen/backend
+cd backend
 pip install -r requirements.txt
 
 $env:OLLAMA_BASE_URL = "http://localhost:11434"
@@ -183,7 +183,7 @@ python main.py
 
 ```bash
 # Linux / macOS
-cd mediscreen/backend
+cd backend
 pip install -r requirements.txt
 OLLAMA_BASE_URL=http://localhost:11434 GEMMA_MODEL=gemma4:e4b \
 RAG_ENABLED=true SECRET_KEY=your-secret-key python main.py
@@ -274,7 +274,7 @@ curl -X POST http://localhost:8000/api/rag/ingest/builtin
 └─────────────────┘
 ⚡ All models run LOCALLY via Ollama — zero API cost, zero data egress
 ⚡ Patient data stays on the facility's hardware — KVKK / GDPR compliant
-⚡ PDF generation fully offline — vendor-bundled JS, zero CDN calls at runtime
+⚡ PDF generation fully offline — vendor-bundled JS (jsPDF & html2canvas), zero CDN calls for PDF export
 ```
 
 ---
@@ -504,7 +504,7 @@ mediscreen/
 │   ├── landing.html           ← Marketing landing page
 │   ├── login.html / register.html / profile.html
 │   ├── manifest.json + sw.js  ← Offline PWA
-│   └── vendor/                ← Locally bundled JS — zero CDN dependency at runtime
+│   └── vendor/                ← Locally bundled JS — zero CDN calls for PDF export
 │       ├── jspdf.umd.min.js       v2.5.1 · 364 KB
 │       └── html2canvas.min.js     v1.4.1 · 199 KB
 ├── evaluation/
