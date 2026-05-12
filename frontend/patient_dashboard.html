@@ -484,7 +484,8 @@ async function init(){
     const me=await fetch(`${API}/auth/me`,{headers:{Authorization:`Bearer ${token}`}});
     if(!me.ok){location.href='login.html';return;}
     const u=await me.json();
-    if(u.role==='doctor'||u.role==='admin'||u.role==='personnel'){location.href='doctor.html';return;}
+    if(u.role==='admin'){location.href='admin.html';return;}
+    if(u.role==='doctor'||u.role==='personnel'){location.href='doctor.html';return;}
     if(u.role!=='patient'){location.href='index.html';return;}
     const n=u.name||u.email;
     document.getElementById('userName').textContent=n;

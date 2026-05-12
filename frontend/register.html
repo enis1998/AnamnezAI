@@ -262,8 +262,17 @@ async function doRegister(e) {
 })();
 
 function showAlreadyLoggedIn(user) {
-  const isDoctor = ['doctor','admin','personnel'].includes(user.role);
-  const panelHref = isDoctor ? 'doctor.html' : 'patient_dashboard.html';
+  let panelHref, roleLabel;
+  if (user.role === 'admin') {
+    panelHref = 'admin.html';
+    roleLabel = 'Yönetici';
+  } else if (['doctor','personnel'].includes(user.role)) {
+    panelHref = 'doctor.html';
+    roleLabel = 'Doktor/Personel';
+  } else {
+    panelHref = 'patient_dashboard.html';
+    roleLabel = 'Hasta';
+  }
   const banner = document.createElement('div');
   banner.className = 'mb-5 p-4 rounded-2xl border border-sec/30 bg-secc/10';
   banner.innerHTML = `
@@ -271,7 +280,7 @@ function showAlreadyLoggedIn(user) {
       <span class="material-symbols-outlined msym-fill text-sec text-[22px]">check_circle</span>
       <div>
         <p class="font-semibold text-pri text-sm">${user.name || user.email || 'Kullanıcı'}</p>
-        <p class="text-xs text-onsv">${isDoctor ? 'Doktor' : 'Hasta'} olarak giriş yaptınız</p>
+        <p class="text-xs text-onsv">${roleLabel} olarak giriş yaptınız</p>
       </div>
     </div>
     <div class="flex gap-2">

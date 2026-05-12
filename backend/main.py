@@ -2811,6 +2811,16 @@ async def root():
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/index.html")
 
+@app.get("/admin", response_class=HTMLResponse, include_in_schema=False)
+async def admin_route():
+    """Serve admin_login.html at /admin — dedicated admin entry point."""
+    from fastapi.responses import RedirectResponse
+    admin_login_path = os.path.join(FRONTEND_DIR, "admin_login.html")
+    if os.path.exists(admin_login_path):
+        with open(admin_login_path, encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return RedirectResponse(url="/admin_login.html")
+
 if os.path.exists(FRONTEND_DIR):
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 

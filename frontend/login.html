@@ -381,9 +381,17 @@ if (GOOGLE_CLIENT_ID) loadGoogleScript();
   if (!token || !user) return;
 
   function showBanner(u) {
-    const isDoctor = ['doctor','admin','personnel'].includes(u.role);
-    const panelHref = isDoctor ? 'doctor.html' : 'patient_dashboard.html';
-    const roleLabel = isDoctor ? 'Doktor olarak giriş yaptınız' : 'Hasta olarak giriş yaptınız';
+    let panelHref, roleLabel;
+    if (u.role === 'admin') {
+      panelHref = 'admin.html';
+      roleLabel = 'Yönetici olarak giriş yaptınız';
+    } else if (['doctor','personnel'].includes(u.role)) {
+      panelHref = 'doctor.html';
+      roleLabel = 'Doktor/Personel olarak giriş yaptınız';
+    } else {
+      panelHref = 'patient_dashboard.html';
+      roleLabel = 'Hasta olarak giriş yaptınız';
+    }
     document.getElementById('banner-name').textContent = u.name || u.email || 'Kullanıcı';
     document.getElementById('banner-role').textContent = roleLabel;
     document.getElementById('banner-panel-link').href = panelHref;

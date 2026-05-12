@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnamnezAI — Yönetici Girişi</title>
+<script src="vendor/tailwind.min.js"></script>
+<link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
+<link href="vendor/fonts/material_symbols_local.css" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      pri:"#002f40", pric:"#00475e", sec:"#006a68", secc:"#a0f1ed",
+      surf:"#f4f7f9", surfc:"#e8ecee", ons:"#191c1d", onsv:"#3f4749",
+      ouv:"#bfc7ca", err:"#ba1a1a", errc:"#ffdad6", warn:"#e07b26"
+    },
+    fontFamily:{head:["Manrope","sans-serif"],body:["Inter","sans-serif"]}
+  }}
+}
+</script>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:linear-gradient(145deg,#001a25 0%,#002f40 50%,#003d54 100%);min-height:100vh;color:#191c1d}
+  h1,h2,h3{font-family:'Manrope',sans-serif}
+  .msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  .card{background:#fff;border-radius:24px;box-shadow:0 2px 8px rgba(0,0,0,0.18),0 16px 48px rgba(0,0,0,0.22)}
+  .fade{animation:fadeUp .4s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .spin{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  input:focus{outline:none;box-shadow:0 0 0 2px #002f40}
+</style>
+</head>
+<body>
+
+<!-- Üst Bar -->
+<header class="fixed top-0 w-full z-50 border-b border-white/10 px-5 py-3 flex justify-between items-center h-14"
+  style="background:rgba(0,47,64,0.85);backdrop-filter:blur(20px)">
+  <a href="landing.html" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+      <span class="material-symbols-outlined msym-fill text-white text-[18px]">monitor_heart</span>
+    </div>
+    <span class="font-head font-bold text-white text-[15px]">AnamnezAI</span>
+  </a>
+  <a href="login.html" class="flex items-center gap-1.5 text-white/70 hover:text-white text-[13px] transition-colors">
+    <span class="material-symbols-outlined msym text-[16px]">arrow_back</span>
+    Normal Giriş
+  </a>
+</header>
+
+<main class="pt-14 min-h-screen flex items-center justify-center px-4">
+<div class="w-full max-w-[400px] fade">
+
+  <!-- Başlık bölümü -->
+  <div class="text-center mb-8">
+    <div class="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mx-auto mb-4">
+      <span class="material-symbols-outlined msym-fill text-white text-[32px]">admin_panel_settings</span>
+    </div>
+    <h1 class="text-white font-head font-bold text-[24px] mb-1">Yönetici Girişi</h1>
+    <p class="text-white/60 text-[13px]">Bu alan yalnızca sistem yöneticilerine aittir</p>
+  </div>
+
+  <!-- Kart -->
+  <div class="card p-7">
+
+    <!-- Uyarı bandı -->
+    <div class="flex items-start gap-3 p-4 rounded-2xl bg-[#fff8f0] border border-warn/30 mb-6">
+      <span class="material-symbols-outlined msym-fill text-warn text-[20px] flex-shrink-0 mt-0.5">security</span>
+      <div>
+        <p class="text-sm font-semibold text-pri">Kısıtlı Erişim Alanı</p>
+        <p class="text-xs text-onsv mt-0.5">Yalnızca <strong>admin</strong> rolündeki hesaplar bu panele erişebilir. Doktor veya hasta hesaplarıyla giriş yapılamaz.</p>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form onsubmit="doAdminLogin(event)">
+      <!-- E-posta -->
+      <div class="mb-4">
+        <label class="block text-[12px] font-bold text-onsv uppercase tracking-wide mb-1.5">Yönetici E-posta</label>
+        <div class="relative">
+          <span class="material-symbols-outlined msym absolute left-3.5 top-1/2 -translate-y-1/2 text-ouv text-[18px]">person</span>
+          <input id="inp-email" type="email" required autocomplete="username"
+            placeholder="admin@anamnezai.tr"
+            class="w-full pl-10 pr-4 py-3 rounded-xl border border-surfc bg-surf text-[14px] transition-all"
+          />
+        </div>
+      </div>
+
+      <!-- Şifre -->
+      <div class="mb-6">
+        <label class="block text-[12px] font-bold text-onsv uppercase tracking-wide mb-1.5">Şifre</label>
+        <div class="relative">
+          <span class="material-symbols-outlined msym absolute left-3.5 top-1/2 -translate-y-1/2 text-ouv text-[18px]">lock</span>
+          <input id="inp-pass" type="password" required autocomplete="current-password"
+            placeholder="••••••••"
+            class="w-full pl-10 pr-12 py-3 rounded-xl border border-surfc bg-surf text-[14px] transition-all"
+          />
+          <button type="button" onclick="togglePass()"
+            class="absolute right-3.5 top-1/2 -translate-y-1/2 text-ouv hover:text-onsv transition-colors">
+            <span class="material-symbols-outlined msym text-[18px]" id="eye-icon">visibility</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Hata mesajı -->
+      <div id="err-msg" class="hidden flex items-start gap-2.5 p-3.5 rounded-xl bg-errc border border-err/30 mb-4">
+        <span class="material-symbols-outlined msym-fill text-err text-[18px] flex-shrink-0 mt-0.5">error</span>
+        <p id="err-text" class="text-err text-[13px] font-medium"></p>
+      </div>
+
+      <!-- Giriş butonu -->
+      <button id="btn-login" type="submit"
+        class="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-pri text-white font-bold text-[14px] hover:bg-pric transition-all active:scale-[0.98]">
+        <span class="material-symbols-outlined msym text-[18px]" id="btn-icon">shield_person</span>
+        <span id="btn-text">Yönetim Paneline Gir</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Alt bilgi -->
+  <p class="text-center text-white/40 text-[12px] mt-6">
+    <span class="material-symbols-outlined msym text-[14px] align-middle">shield</span>
+    Sistem Yöneticisi · Erişim Kaydedilir · KVKK
+  </p>
+
+</div>
+</main>
+
+<script>
+const API = '';
+
+function togglePass() {
+  const inp = document.getElementById('inp-pass');
+  const icon = document.getElementById('eye-icon');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  icon.textContent = inp.type === 'password' ? 'visibility' : 'visibility_off';
+}
+
+function showErr(msg) {
+  document.getElementById('err-text').textContent = msg;
+  document.getElementById('err-msg').classList.remove('hidden');
+}
+function hideErr() {
+  document.getElementById('err-msg').classList.add('hidden');
+}
+
+async function doAdminLogin(e) {
+  e.preventDefault();
+  hideErr();
+  const email = document.getElementById('inp-email').value.trim();
+  const password = document.getElementById('inp-pass').value;
+  const btn = document.getElementById('btn-login');
+  const btnText = document.getElementById('btn-text');
+  const btnIcon = document.getElementById('btn-icon');
+
+  btn.disabled = true;
+  btnText.textContent = 'Doğrulanıyor...';
+  btnIcon.textContent = 'refresh';
+  btnIcon.style.animation = 'spin .8s linear infinite';
+
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showErr(data.detail || 'Giriş başarısız. E-posta veya şifre hatalı.');
+      return;
+    }
+
+    // Roll kontrolü — sadece admin
+    if (data.user.role !== 'admin') {
+      showErr(
+        data.user.role === 'doctor' || data.user.role === 'personnel'
+          ? 'Bu hesap doktor/personel hesabıdır. Lütfen doktor girişini kullanın: login.html'
+          : 'Bu hesabın yönetici yetkisi yok. Lütfen admin hesabıyla giriş yapın.'
+      );
+      return;
+    }
+
+    // Token koy ve yönlendir
+    localStorage.setItem('anamnez_token', data.access_token);
+    localStorage.setItem('anamnez_user', JSON.stringify(data.user));
+    window.location.href = 'admin.html';
+
+  } catch (err) {
+    showErr('Sunucuya bağlanılamadı. Backend çalışıyor mu?');
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = 'Yönetim Paneline Gir';
+    btnIcon.textContent = 'shield_person';
+    btnIcon.style.animation = '';
+  }
+}
+
+// Zaten giriş yapmış admin varsa direkt yönlendir
+(function checkAlreadyAdmin() {
+  const token = localStorage.getItem('anamnez_token');
+  const user = JSON.parse(localStorage.getItem('anamnez_user') || 'null');
+  if (!token || !user) return;
+  if (user.role === 'admin') {
+    // Tokeni doğrula
+    fetch(`${API}/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      signal: AbortSignal.timeout(3000)
+    })
+    .then(r => {
+      if (r.ok) window.location.href = 'admin.html';
+      else {
+        localStorage.removeItem('anamnez_token');
+        localStorage.removeItem('anamnez_user');
+      }
+    })
+    .catch(() => {
+      // Offline — panel linki ile yönlendir
+      window.location.href = 'admin.html';
+    });
+  }
+})();
+</script>
+</body>
+</html>
+

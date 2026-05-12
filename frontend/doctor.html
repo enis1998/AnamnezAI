@@ -67,7 +67,7 @@ tailwind.config={theme:{extend:{colors:{
 
       <!-- Sprint 13: Kiosk Yönetim -->
       <div class="pt-3 pb-1 px-3">
-        <p class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Kiosk Yönetim</p>
+        <p id="txt-nav-kiosk-mgmt" class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Kiosk Yönetim</p>
       </div>
       <button onclick="kioskLock(true)"
         class="w-full flex items-center gap-2.5 text-onsv hover:bg-errc hover:text-err rounded-xl px-3 py-2.5 text-[13px] transition-colors">
@@ -80,11 +80,11 @@ tailwind.config={theme:{extend:{colors:{
 
       <!-- Sistem -->
       <div class="pt-3 pb-1 px-3">
-        <p class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Sistem</p>
+        <p id="txt-nav-sistem" class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Sistem</p>
       </div>
       <button onclick="toggleAnalytics()"
         class="w-full flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors" id="sidebar-analytics-btn">
-        <span class="material-symbols-outlined msym text-[17px]">bar_chart</span>Analitik
+        <span class="material-symbols-outlined msym text-[17px]">bar_chart</span><span id="txt-nav-analytics">Analitik</span>
       </button>
       <a href="evaluation.html"
         class="w-full flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors">
@@ -108,7 +108,7 @@ tailwind.config={theme:{extend:{colors:{
         </div>
       </div>
       <button onclick="doLogout()" class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-onsv hover:bg-errc hover:text-err transition-all text-[12px] font-medium mt-1">
-        <span class="material-symbols-outlined msym text-[16px]">logout</span>Çıkış Yap
+        <span class="material-symbols-outlined msym text-[16px]">logout</span><span id="txt-nav-logout">Çıkış Yap</span>
       </button>
     </div>
   </aside>
@@ -138,7 +138,7 @@ tailwind.config={theme:{extend:{colors:{
         </div>
         <div id="live-indicator" class="hidden items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
           <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 dot-pulse"></div>
-          <span>Canlı</span>
+          <span id="txt-live-lbl">Canlı</span>
         </div>
         <button onclick="loadQueue()"
           class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
@@ -163,24 +163,24 @@ tailwind.config={theme:{extend:{colors:{
       <!-- Stats Row -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <div class="card p-4">
-          <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1">Toplam</p>
+          <p id="txt-stat-total-lbl" class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1">Toplam</p>
           <p class="text-[28px] font-head font-bold text-pri" id="stat-total">—</p>
-          <p class="text-[11px] text-onsv">aktif hasta</p>
+          <p id="txt-stat-total-sub" class="text-[11px] text-onsv">aktif hasta</p>
         </div>
         <div class="card p-4" style="background:#fff5f5">
-          <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#ba1a1a">🔴 Acil</p>
+          <p id="txt-stat-red-lbl" class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#ba1a1a">🔴 Acil</p>
           <p class="text-[28px] font-head font-bold" style="color:#ba1a1a" id="stat-red">—</p>
-          <p class="text-[11px] text-onsv">derhal müdahale</p>
+          <p id="txt-stat-red-sub" class="text-[11px] text-onsv">derhal müdahale</p>
         </div>
         <div class="card p-4" style="background:#fff8f0">
-          <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#b05508">🟡 Acil/Bekleyebilir</p>
+          <p id="txt-stat-yellow-lbl" class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#b05508">🟡 Acil/Bekleyebilir</p>
           <p class="text-[28px] font-head font-bold" style="color:#b05508" id="stat-yellow">—</p>
-          <p class="text-[11px] text-onsv">kısa süre içinde</p>
+          <p id="txt-stat-yellow-sub" class="text-[11px] text-onsv">kısa süre içinde</p>
         </div>
         <div class="card p-4" style="background:#f0faf9">
-          <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#006a68">🟢 Rutin</p>
+          <p id="txt-stat-green-lbl" class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#006a68">🟢 Rutin</p>
           <p class="text-[28px] font-head font-bold" style="color:#006a68" id="stat-green">—</p>
-          <p class="text-[11px] text-onsv">standart kuyruk</p>
+          <p id="txt-stat-green-sub" class="text-[11px] text-onsv">standart kuyruk</p>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ tailwind.config={theme:{extend:{colors:{
       <div class="card mb-5 overflow-hidden">
         <div class="px-5 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b border-surfc">
           <div>
-            <h2 class="font-head font-bold text-pri text-[15px]">Aktif Triaj Kuyruğu</h2>
+            <h2 id="txt-queue-title" class="font-head font-bold text-pri text-[15px]">Aktif Triaj Kuyruğu</h2>
             <p class="text-[11px] text-onsv" id="txt-queue-sub">Backend'den yükleniyor...</p>
           </div>
           <div class="flex items-center gap-2">
@@ -203,10 +203,10 @@ tailwind.config={theme:{extend:{colors:{
             <!-- Triaj filtresi -->
             <select id="sel-filter" onchange="filterQueue(document.getElementById('inp-search').value)"
               class="rounded-xl bg-surfc border border-transparent px-2.5 py-1.5 text-[12px] text-onsv" style="outline:none">
-              <option value="">Tümü</option>
-              <option value="RED">🔴 Acil</option>
-              <option value="YELLOW">🟡 İkincil</option>
-              <option value="GREEN">🟢 Rutin</option>
+              <option id="txt-filter-all" value="">Tümü</option>
+              <option id="txt-filter-red" value="RED">🔴 Acil</option>
+              <option id="txt-filter-yellow" value="YELLOW">🟡 İkincil</option>
+              <option id="txt-filter-green" value="GREEN">🟢 Rutin</option>
             </select>
             <span id="txt-queue-count" class="text-[12px] font-bold text-onsv bg-surfc px-3 py-1 rounded-full"></span>
             <!-- Görünüm toggle -->
@@ -227,7 +227,7 @@ tailwind.config={theme:{extend:{colors:{
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined msym text-green-600 text-[17px]">inventory_2</span>
             <div>
-              <h2 class="font-head font-bold text-pri text-[15px]">Görüldü Arşivi</h2>
+              <h2 id="txt-seen-title" class="font-head font-bold text-pri text-[15px]">Görüldü Arşivi</h2>
               <p class="text-[11px] text-onsv" id="txt-seen-sub">Görüldü işaretlenen hastalar</p>
             </div>
           </div>
@@ -235,7 +235,7 @@ tailwind.config={theme:{extend:{colors:{
             <span id="txt-seen-count" class="text-[12px] font-bold text-onsv bg-surfc px-3 py-1 rounded-full hidden"></span>
             <button onclick="toggleSeenArchive()" id="btn-seen-toggle"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
-              <span class="material-symbols-outlined msym text-[14px]">expand_more</span>Göster
+              <span class="material-symbols-outlined msym text-[14px]">expand_more</span><span id="txt-seen-toggle-btn">Göster</span>
             </button>
           </div>
         </div>
@@ -246,7 +246,7 @@ tailwind.config={theme:{extend:{colors:{
       <div id="analytics-panel" class="hidden card mb-5 overflow-hidden">
         <div class="px-5 py-4 flex items-center gap-2 border-b border-surfc">
           <span class="material-symbols-outlined msym text-sec text-[17px]">bar_chart</span>
-          <h2 class="font-head font-bold text-pri text-[15px]">Triaj Analitik</h2>
+          <h2 id="txt-analytics-title" class="font-head font-bold text-pri text-[15px]">Triaj Analitik</h2>
           <button onclick="hideAnalytics()" class="ml-auto w-7 h-7 rounded-lg bg-surfc hover:bg-ouv/30 flex items-center justify-center">
             <span class="material-symbols-outlined msym text-onsv text-[15px]">close</span>
           </button>
@@ -260,9 +260,9 @@ tailwind.config={theme:{extend:{colors:{
       <div class="card overflow-hidden">
         <div class="px-5 py-4 border-b border-surfc flex items-center gap-2">
           <span class="material-symbols-outlined msym text-sec text-[16px]">science</span>
-          <h2 class="font-head font-bold text-pri text-[14px]">Demo Hastalar</h2>
-          <span class="text-[10px] text-onsv bg-secc/40 text-sec px-2 py-0.5 rounded-full font-bold ml-1">Gemma 4 Örnek Çıktısı</span>
-          <span class="ml-auto text-[10px] text-onsv">5 vaka · 2 RED · 2 YELLOW · 1 GREEN</span>
+          <h2 id="txt-demo-title" class="font-head font-bold text-pri text-[14px]">Demo Hastalar</h2>
+          <span id="txt-demo-badge" class="text-[10px] text-onsv bg-secc/40 text-sec px-2 py-0.5 rounded-full font-bold ml-1">Gemma 4 Örnek Çıktısı</span>
+          <span id="txt-demo-stats" class="ml-auto text-[10px] text-onsv">5 vaka · 2 RED · 2 YELLOW · 1 GREEN</span>
         </div>
 
         <!-- STEMI Timeline Karşılaştırma Banner -->
@@ -273,23 +273,23 @@ tailwind.config={theme:{extend:{colors:{
                 <span class="material-symbols-outlined msym-fill text-red-500 text-[20px]">favorite</span>
               </div>
               <div>
-                <p class="text-[12px] font-bold text-red-700">Gaziantep STEMI Senaryosu</p>
-                <p class="text-[10px] text-onsv">Mehmet Yılmaz · 66 yaş · Vaka 1</p>
+                <p id="txt-stemi-title" class="text-[12px] font-bold text-red-700">Gaziantep STEMI Senaryosu</p>
+                <p id="txt-stemi-sub" class="text-[10px] text-onsv">Mehmet Yılmaz · 66 yaş · Vaka 1</p>
               </div>
             </div>
-            <div class="flex-1 text-[12px] text-ons leading-relaxed hidden sm:block">
+            <div id="txt-stemi-body" class="flex-1 text-[12px] text-ons leading-relaxed hidden sm:block">
               Aynı hasta, aynı semptomlar. Manuel triajda 22 dakika bekledi ve STEMI geçirdi.
               AI bu vakayı <strong>14 saniyede RED</strong> olarak sınıflandırdı.
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
               <div class="text-center px-3 py-2 rounded-xl bg-red-100 border border-red-200">
-                <div class="text-[20px] font-head font-black text-red-600">22<span class="text-[11px]">dk</span></div>
-                <div class="text-[9px] font-bold text-red-500 uppercase">Manuel</div>
+                <div class="text-[20px] font-head font-black text-red-600">22<span id="txt-unit-min" class="text-[11px]">dk</span></div>
+                <div id="txt-label-manual" class="text-[9px] font-bold text-red-500 uppercase">Manuel</div>
               </div>
               <span class="text-red-300 font-bold">→</span>
               <div class="text-center px-3 py-2 rounded-xl bg-white border border-red-200">
-                <div class="text-[20px] font-head font-black text-sec">14<span class="text-[11px]">sn</span></div>
-                <div class="text-[9px] font-bold text-sec uppercase">AI Triaj</div>
+                <div class="text-[20px] font-head font-black text-sec">14<span id="txt-unit-sec" class="text-[11px]">sn</span></div>
+                <div id="txt-label-ai" class="text-[9px] font-bold text-sec uppercase">AI Triaj</div>
               </div>
             </div>
           </div>
@@ -304,7 +304,7 @@ tailwind.config={theme:{extend:{colors:{
   <!-- ── DETAIL PANEL ── -->
   <div id="detail-panel" class="hidden w-[380px] flex-shrink-0 bg-white border-l border-surfc flex flex-col slide-in">
     <div class="px-5 py-4 border-b border-surfc flex justify-between items-center flex-shrink-0">
-      <h3 class="font-head font-bold text-pri text-[14px]">Hasta Detayı</h3>
+      <h3 id="txt-detail-header" class="font-head font-bold text-pri text-[14px]">Hasta Detayı</h3>
       <button onclick="closePanel()" class="w-7 h-7 rounded-lg bg-surfc flex items-center justify-center hover:bg-ouv/30 transition-all">
         <span class="material-symbols-outlined msym text-onsv text-[16px]">close</span>
       </button>
@@ -322,7 +322,7 @@ tailwind.config={theme:{extend:{colors:{
       <span class="font-head font-bold text-pri text-[15px]" id="report-modal-title">Hasta Raporu</span>
       <div class="ml-auto flex items-center gap-2">
         <button onclick="openReportNewTab()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 text-[12px] font-medium transition-all">
-          <span class="material-symbols-outlined msym text-[14px]">open_in_new</span>Yeni Sekmede Aç
+          <span class="material-symbols-outlined msym text-[14px]">open_in_new</span><span id="txt-report-new-tab">Yeni Sekmede Aç</span>
         </button>
         <button onclick="closeReportModal()" class="w-8 h-8 rounded-xl bg-surfc hover:bg-errc hover:text-err flex items-center justify-center transition-all">
           <span class="material-symbols-outlined msym text-[16px]">close</span>
@@ -374,7 +374,7 @@ async function kioskLock(lock) {
     const d = await res.json();
     // Kısa toast bildirimi
     const toast = document.createElement('div');
-    toast.textContent = lock ? '🔒 Kiosk kilitlendi' : '🔓 Kiosk açıldı';
+    toast.textContent = lock ? t('kioskLocked') : t('kioskUnlocked');
     toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;animation:fadein .2s';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2500);
@@ -388,8 +388,7 @@ function _waitBadge(createdAt, level) {
   if (!createdAt) return '<span class="text-[11px] text-ouv">—</span>';
   const mins = Math.floor((Date.now() - new Date(createdAt)) / 60000);
   if (isNaN(mins) || mins < 0) return '<span class="text-[11px] text-ouv">—</span>';
-  const txt = mins < 60 ? `${mins} dk` : `${Math.floor(mins/60)}s ${mins%60}dk`;
-  // Kırmızı triage > 5 dk → alarm rengi
+  const txt = mins < 60 ? `${mins} ${t('unitMin')}` : `${Math.floor(mins/60)}${t('unitHour')} ${mins%60}${t('unitMin')}`;
   const alarm = (level === 'RED' && mins >= 5) || (level === 'YELLOW' && mins >= 20);
   return `<span class="text-[11px] font-bold ${alarm ? 'text-err' : 'text-onsv'}">${txt}${alarm ? ' ⚠️' : ''}</span>`;
 }
@@ -481,7 +480,13 @@ function _updateModelBar(barId, available, label) {
     window.location.href = 'login.html?next=doctor';
     return;
   }
-  if (!['doctor','admin','personnel'].includes(user.role)) {
+  // Admin → kendi paneline
+  if (user.role === 'admin') {
+    window.location.href = 'admin.html';
+    return;
+  }
+  // Hasta → kendi panosuna
+  if (!['doctor','personnel'].includes(user.role)) {
     window.location.href = 'index.html';
     return;
   }
@@ -489,7 +494,7 @@ function _updateModelBar(barId, available, label) {
   const nameEl = document.getElementById('doctor-name-sidebar');
   const specEl = document.getElementById('doctor-spec-sidebar');
   if (nameEl) nameEl.textContent = user.name || 'Dr. Kullanıcı';
-  if (specEl) specEl.textContent = user.specialty || (user.role === 'admin' ? 'Admin' : 'Sağlık Personeli');
+  if (specEl) specEl.textContent = user.specialty || 'Sağlık Personeli';
 })();
 
 // Demo data — Gemma 4 örnek çıktıs�� (5 zengin vaka — jüri demo için)
@@ -698,24 +703,24 @@ async function checkStatus(){
     const ss = document.getElementById('sidebar-status');
     const li = document.getElementById('live-indicator');
     if(ok && modelReady){
-      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div><span class="text-emerald-700 font-bold">Gemma 4 Hazır ✓</span>`;
+      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div><span class="text-emerald-700 font-bold">${t('statusReady')}</span>`;
       ss.className='flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-[11px]';
       li.classList.remove('hidden'); li.style.display='flex';
     } else if(ok && modelWarming){
-      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-amber-400 dot-pulse"></div><span class="text-amber-700 font-bold">Model Isınıyor...</span>`;
+      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-amber-400 dot-pulse"></div><span class="text-amber-700 font-bold">${t('statusWarming')}</span>`;
       ss.className='flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-[11px]';
       li.classList.remove('hidden'); li.style.display='flex';
     } else if(ok){
-      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div><span class="text-emerald-700 font-bold">Gemma 4 Aktif</span>`;
+      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div><span class="text-emerald-700 font-bold">${t('statusActive')}</span>`;
       ss.className='flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-[11px]';
       li.classList.remove('hidden'); li.style.display='flex';
     } else {
-      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-amber-400 dot-pulse"></div><span class="text-amber-700 font-bold">Ollama Bekleniyor</span>`;
+      ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-amber-400 dot-pulse"></div><span class="text-amber-700 font-bold">${t('statusWaiting')}</span>`;
       ss.className='flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-[11px]';
     }
   } catch {
     const ss=document.getElementById('sidebar-status');
-    ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-red-400"></div><span class="text-red-600 font-bold">Bağlantı Yok</span>`;
+    ss.innerHTML=`<div class="w-1.5 h-1.5 rounded-full bg-red-400"></div><span class="text-red-600 font-bold">${t('statusOffline')}</span>`;
     ss.className='flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 text-[11px]';
   }
 }
@@ -724,7 +729,7 @@ async function loadQueue(){
   document.getElementById('live-table').innerHTML=`
     <div class="text-center py-10 text-onsv">
       <span class="material-symbols-outlined msym spin text-3xl text-sec block mb-2">refresh</span>
-      <p class="text-[12px]">Hasta kuyruğu yükleniyor...</p>
+      <p class="text-[12px]">${t('queueLoading')}</p>
     </div>`;
   try {
     const r = await fetch(`${API}/api/patients/queue`, {headers: authHeaders()});
@@ -733,19 +738,17 @@ async function loadQueue(){
     data.patients.forEach(p=>{allPatients[p.session_id]=p;});
     updateStats(data.stats || calcStats(data.patients));
     renderTable(data.patients,'live-table',true);
-    // Kanban görünümü de güncelle
     if (_queueView === 'kanban') renderKanban(data.patients.filter(p=>!p.is_seen),'live-kanban',true);
-    document.getElementById('txt-queue-sub').textContent = `${data.total} tamamlanan mülakat`;
-    document.getElementById('txt-queue-count').textContent = `${data.total} hasta`;
+    document.getElementById('txt-queue-sub').textContent = t('queueCompletedFn', data.total);
+    document.getElementById('txt-queue-count').textContent = t('queueCountFn', data.total);
   } catch {
     document.getElementById('live-table').innerHTML=`
       <div class="text-center py-10 text-onsv">
         <span class="material-symbols-outlined msym text-3xl text-ouv block mb-2">cloud_off</span>
-        <p class="text-[12px]">Backend bağlantısı yok — demo veriler aşağıda</p>
+        <p class="text-[12px]">${t('queueBackendOff')}</p>
       </div>`;
-    document.getElementById('txt-queue-sub').textContent='Backend çevrimdışı';
+    document.getElementById('txt-queue-sub').textContent=t('queueBackendOffline');
   }
-  // Always load demo
   DEMO.forEach(p=>{allPatients[p.session_id]=p;});
   renderTable(DEMO,'demo-table',false);
   updateStats(calcStats([...Object.values(allPatients)]));
@@ -770,7 +773,7 @@ function updateStats(s){
 function renderTable(patients, containerId, live){
   const el = document.getElementById(containerId);
   if(!patients||!patients.length){
-    el.innerHTML=`<div class="text-center py-10 text-onsv text-[12px]">Henüz ${live?'gerçek ':' '}hasta yok.</div>`;
+    el.innerHTML=`<div class="text-center py-10 text-onsv text-[12px]">${live ? t('queueEmpty') : t('queueEmptyDemo')}</div>`;
     return;
   }
   const ord={RED:0,YELLOW:1,GREEN:2,PENDING:3};
@@ -783,8 +786,7 @@ function renderTable(patients, containerId, live){
     const flags = p.urgency_flags&&p.urgency_flags.length
       ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-err ml-2"><span class="material-symbols-outlined msym text-[12px]">warning</span>${p.urgency_flags.length}</span>`:'';
     const allergyBadge = p.allergy_flags&&p.allergy_flags.length
-      ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 ml-1" title="Alerji: ${p.allergy_flags.join(', ')}"><span class="material-symbols-outlined msym text-[12px]">vaccines</span>Alerji</span>`:'';
-    // ── Bekleme süresi ──
+      ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 ml-1" title="${t('allergyLabel')}: ${p.allergy_flags.join(', ')}"><span class="material-symbols-outlined msym text-[12px]">vaccines</span>${t('allergyLabel')}</span>`:'';
     const waitHtml = _waitBadge(p.created_at, p.triage_level);
     return `
     <tr class="row-hover border-b border-surfc" onclick="showDetail('${p.session_id}')">
@@ -794,7 +796,7 @@ function renderTable(patients, containerId, live){
                style="background:${cfg.color}">${init}</div>
           <div>
             <p class="text-[13px] font-bold text-ons">${p.patient_name}${flags}${allergyBadge}</p>
-            <p class="text-[11px] text-onsv">${p.age} yaş · ${p.gender}</p>
+            <p class="text-[11px] text-onsv">${t('ageFn', p.age)} · ${p.gender}</p>
           </div>
         </div>
       </td>
@@ -809,7 +811,7 @@ function renderTable(patients, containerId, live){
       <td class="px-4 py-3.5 text-right">
         <button class="px-3 py-1.5 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all"
           style="${cfg.badge}" onclick="event.stopPropagation();showDetail('${p.session_id}')">
-          Rapor
+          ${t('btnReport')}
         </button>
       </td>
     </tr>`;
@@ -819,12 +821,12 @@ function renderTable(patients, containerId, live){
     <table class="w-full">
       <thead>
         <tr class="bg-surfc text-[10px] font-bold text-onsv uppercase tracking-widest">
-          <th class="px-5 py-3 text-left">Hasta</th>
-          <th class="px-4 py-3 text-left">Triaj</th>
-          <th class="px-4 py-3 text-left">Ana Şikayet</th>
-          <th class="px-4 py-3 text-left">Kanıt Gücü</th>
-          <th class="px-4 py-3 text-left">Bekleme</th>
-          <th class="px-4 py-3 text-right">İşlem</th>
+          <th class="px-5 py-3 text-left">${t('tbPatient')}</th>
+          <th class="px-4 py-3 text-left">${t('tbTriage')}</th>
+          <th class="px-4 py-3 text-left">${t('tbComplaint')}</th>
+          <th class="px-4 py-3 text-left">${t('tbConfidence')}</th>
+          <th class="px-4 py-3 text-left">${t('tbWaiting')}</th>
+          <th class="px-4 py-3 text-right">${t('tbAction')}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -854,14 +856,14 @@ function toggleQueueView() {
 function renderKanban(patients, containerId, live) {
   const el = document.getElementById(containerId);
   if (!patients || !patients.length) {
-    el.innerHTML = `<div class="text-center py-10 text-onsv text-[12px]">Henüz hasta yok.</div>`;
+    el.innerHTML = `<div class="text-center py-10 text-onsv text-[12px]">${t('queueEmptyDemo')}</div>`;
     return;
   }
   const cols = {
-    RED:    { patients:[], label:'🔴 Derhal Müdahale', bg:'#fff5f5', border:'#ba1a1a', color:'#ba1a1a' },
-    YELLOW: { patients:[], label:'🟡 Kısa Sürede',     bg:'#fff8f0', border:'#e07b26', color:'#b05508' },
-    GREEN:  { patients:[], label:'🟢 Rutin Kuyruk',    bg:'#f0faf9', border:'#006a68', color:'#006a68' },
-    PENDING:{ patients:[], label:'⏳ Analiz Bekleniyor',bg:'#f4f7f9',border:'#bfc7ca', color:'#3f4749' },
+    RED:    { patients:[], label: t('kanbanRed'),     bg:'#fff5f5', border:'#ba1a1a', color:'#ba1a1a' },
+    YELLOW: { patients:[], label: t('kanbanYellow'),  bg:'#fff8f0', border:'#e07b26', color:'#b05508' },
+    GREEN:  { patients:[], label: t('kanbanGreen'),   bg:'#f0faf9', border:'#006a68', color:'#006a68' },
+    PENDING:{ patients:[], label: t('kanbanPending'), bg:'#f4f7f9', border:'#bfc7ca', color:'#3f4749' },
   };
   patients.forEach(p => { (cols[p.triage_level] || cols.PENDING).patients.push(p); });
 
@@ -879,7 +881,7 @@ function renderKanban(patients, containerId, live) {
               style="background:${col.color}">${init}</div>
             <div class="flex-1 min-w-0">
               <p class="text-[12px] font-bold text-ons truncate">${p.patient_name}</p>
-              <p class="text-[10px] text-onsv">${p.age} yaş · ${p.gender}</p>
+              <p class="text-[10px] text-onsv">${t('ageFn', p.age)} · ${p.gender}</p>
             </div>
             ${strength}
           </div>
@@ -895,7 +897,7 @@ function renderKanban(patients, containerId, live) {
           <h3 class="text-[12px] font-bold" style="color:${col.color}">${col.label}</h3>
           <span class="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style="background:${col.color}">${col.patients.length}</span>
         </div>
-        ${cards || `<div class="text-center py-6 text-[11px] text-onsv">Hasta yok</div>`}
+        ${cards || `<div class="text-center py-6 text-[11px] text-onsv">${t('kanbanNoPatients')}</div>`}
       </div>`;
     }).join('')}
   </div>`;
@@ -909,7 +911,7 @@ function showDetail(sid){
   const init = p.patient_name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
   const flagsHtml = p.urgency_flags&&p.urgency_flags.length?`
     <div class="rounded-xl p-3.5" style="background:#fff5f5">
-      <p class="text-[10px] font-bold uppercase tracking-widest mb-2" style="color:#ba1a1a">⚠️ Acil Uyarılar</p>
+      <p class="text-[10px] font-bold uppercase tracking-widest mb-2" style="color:#ba1a1a">${t('detailUrgentTitle')}</p>
       ${p.urgency_flags.map(f=>`<p class="text-[12px] font-semibold text-red-700 mb-1">· ${f}</p>`).join('')}
     </div>`:'';
   const condHtml = p.possible_conditions&&p.possible_conditions.length?
@@ -922,8 +924,8 @@ function showDetail(sid){
       <p class="text-[10px] text-ouv mt-1">${n.doctor_name} · ${new Date(n.timestamp).toLocaleString('tr-TR')}</p>
     </div>`
   ).join('');
-  const seenBadge = p.is_seen ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">✓ Görüldü</span>` : '';
-  const overrideBadge = p.triage_override ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">✎ Override</span>` : '';
+  const seenBadge = p.is_seen ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">${t('seenBadge')}</span>` : '';
+  const overrideBadge = p.triage_override ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">${t('overrideBadge')}</span>` : '';
 
   document.getElementById('detail-content').innerHTML=`
     <!-- Patient Header -->
@@ -941,62 +943,62 @@ function showDetail(sid){
     </div>
     <!-- Confidence -->
     <div class="flex items-center justify-between text-[12px]">
-      <span class="text-onsv font-medium">AI Güven Skoru</span>
+      <span class="text-onsv font-medium">${t('detailConfLabel')}</span>
       <span class="font-bold text-[15px]" style="color:${cfg.color}">${p.confidence_score||'—'}%</span>
     </div>
     ${flagsHtml}
     ${p.vitals && Object.keys(p.vitals||{}).length ? `
     <div class="rounded-xl p-3.5 bg-surfc">
-      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Vital Bulgular</p>
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">${t('detailVitalsTitle')}</p>
       <div class="grid grid-cols-2 gap-1.5">
-        ${p.vitals.blood_pressure?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">KB</p><p class="text-[12px] font-bold text-pri">${p.vitals.blood_pressure}</p></div>`:''}
-        ${p.vitals.pulse?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">NABIZ</p><p class="text-[12px] font-bold text-pri">${p.vitals.pulse} bpm</p></div>`:''}
-        ${p.vitals.temperature?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">ATEŞ</p><p class="text-[12px] font-bold ${p.vitals.temperature>=38.5?'text-err':'text-pri'}">${p.vitals.temperature}°C</p></div>`:''}
+        ${p.vitals.blood_pressure?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">${t('vitalBP')}</p><p class="text-[12px] font-bold text-pri">${p.vitals.blood_pressure}</p></div>`:''}
+        ${p.vitals.pulse?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">${t('vitalPulse')}</p><p class="text-[12px] font-bold text-pri">${p.vitals.pulse} bpm</p></div>`:''}
+        ${p.vitals.temperature?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">${t('vitalTemp')}</p><p class="text-[12px] font-bold ${p.vitals.temperature>=38.5?'text-err':'text-pri'}">${p.vitals.temperature}°C</p></div>`:''}
         ${p.vitals.spo2?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">SpO2</p><p class="text-[12px] font-bold ${p.vitals.spo2<95?'text-err':'text-pri'}">${p.vitals.spo2}%</p></div>`:''}
       </div>
     </div>` : ''}
     <!-- Chief Complaint -->
     <div class="rounded-xl p-3.5 bg-surfc">
-      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">Ana Şikayet</p>
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">${t('detailComplaintTitle')}</p>
       <p class="text-[13px] font-semibold text-pri">${p.chief_complaint||'—'}</p>
     </div>
     <!-- Symptoms -->
     <div class="rounded-xl p-3.5 bg-surfc">
-      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">Semptom Özeti</p>
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">${t('detailSymptomsTitle')}</p>
       <p class="text-[12px] text-ons leading-relaxed">${p.symptoms_summary||'—'}</p>
     </div>
     <!-- Conditions -->
     <div class="rounded-xl p-3.5 bg-surfc">
-      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Olası Tanılar</p>
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">${t('detailDxTitle')}</p>
       <div class="flex flex-wrap gap-1.5">${condHtml}</div>
     </div>
     ${p.image_findings ? `
     <div class="rounded-xl p-3.5" style="background:#f0faf9;border-left:3px solid #006a68">
-      <p class="text-[10px] font-bold uppercase tracking-widest mb-1.5" style="color:#006a68">Vision Bulguları</p>
+      <p class="text-[10px] font-bold uppercase tracking-widest mb-1.5" style="color:#006a68">${t('detailVisionTitle')}</p>
       <p class="text-[11px] text-ons leading-relaxed">${p.image_findings}</p>
     </div>` : ''}
     <!-- Clinical Notes (AI) -->
     <div class="rounded-xl p-3.5 bg-surfc">
-      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">Klinik Notlar (AI)</p>
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">${t('detailClinicalTitle')}</p>
       <p class="text-[12px] text-ons leading-relaxed">${p.clinical_notes||'—'}</p>
     </div>
-    <!-- ICD-10 Öneri -->
+    <!-- ICD-10 -->
     <div class="rounded-xl p-3.5 bg-surfc">
       <div class="flex items-center justify-between mb-2">
-        <p class="text-[10px] font-bold text-onsv uppercase tracking-widest">ICD-10 Kod Önerisi</p>
+        <p class="text-[10px] font-bold text-onsv uppercase tracking-widest">${t('detailICD10Title')}</p>
         <button onclick="suggestICD10('${sid}')" id="btn-icd10-${sid}"
           class="flex items-center gap-1 px-2.5 py-1 bg-pric text-white rounded-lg text-[10px] font-bold hover:bg-pri transition-all">
-          <span class="material-symbols-outlined msym text-[12px]">psychology</span>Gemma 4 ile Öner
+          <span class="material-symbols-outlined msym text-[12px]">psychology</span>${t('detailICD10Btn')}
         </button>
       </div>
-      <div id="icd10-result-${sid}" class="text-[11px] text-onsv">Henüz öneride bulunulmadı.</div>
+      <div id="icd10-result-${sid}" class="text-[11px] text-onsv">${t('detailICD10None')}</div>
     </div>
-    <!-- Doktor Notları -->
+    <!-- Doctor Notes -->
     <div class="rounded-xl p-3.5 bg-blue-50 border border-blue-100">
-      <p class="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-2">Doktor Notları</p>
-      <div id="notes-container-${sid}">${existingNotes || '<p class="text-[11px] text-ouv">Not yok.</p>'}</div>
+      <p class="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-2">${t('detailDoctorNotesTitle')}</p>
+      <div id="notes-container-${sid}">${existingNotes || `<p class="text-[11px] text-ouv">${t('detailNotesNone')}</p>`}</div>
       <div class="flex gap-2 mt-2">
-        <textarea id="inp-note-${sid}" rows="2" placeholder="Doktor notu ekle..."
+        <textarea id="inp-note-${sid}" rows="2" placeholder="${t('detailAddNotePlaceholder')}"
           class="flex-1 px-3 py-2 border border-blue-200 rounded-xl text-[12px] bg-white focus:border-blue-400 transition-all resize-none"
           style="outline:none"></textarea>
         <button onclick="addNote('${sid}')"
@@ -1005,37 +1007,37 @@ function showDetail(sid){
         </button>
       </div>
     </div>
-    <!-- Triaj Override -->
+    <!-- Triage Override -->
     <div class="rounded-xl p-3.5 bg-surfc">
-      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">Triaj Seviyesini Değiştir</p>
+      <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">${t('detailOverrideTitle')}</p>
       <div class="flex gap-2 mb-2">
-        <button onclick="overrideTriage('${sid}','RED')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#ba1a1a">🔴 ACİL</button>
-        <button onclick="overrideTriage('${sid}','YELLOW')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#e07b26">🟡 İKİNCİL</button>
-        <button onclick="overrideTriage('${sid}','GREEN')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#006a68">🟢 RUTİN</button>
+        <button onclick="overrideTriage('${sid}','RED')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#ba1a1a">${t('detailOverrideRed')}</button>
+        <button onclick="overrideTriage('${sid}','YELLOW')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#e07b26">${t('detailOverrideYellow')}</button>
+        <button onclick="overrideTriage('${sid}','GREEN')" class="flex-1 py-2 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all" style="background:#006a68">${t('detailOverrideGreen')}</button>
       </div>
-      <input id="inp-override-reason-${sid}" type="text" placeholder="Override gerekçesi (opsiyonel)..."
+      <input id="inp-override-reason-${sid}" type="text" placeholder="${t('detailOverridePlaceholder')}"
         class="w-full px-3 py-1.5 border border-surfc rounded-xl text-[11px] bg-white focus:border-pric transition-all" style="outline:none"/>
       ${p.triage_override ? `
       <div class="mt-2 p-2 bg-blue-50 rounded-lg text-[10px] text-blue-700">
-        <strong>Human Override Kaydedildi:</strong> ${p.triage_override.ai_triage||'—'} → ${p.triage_override.level}
-        ${p.triage_override.override_reason ? `<br>Gerekçe: ${p.triage_override.override_reason}` : ''}
-        <br>${p.triage_override.doctor_name} · ${new Date(p.triage_override.timestamp).toLocaleString('tr-TR')}
+        <strong>${t('detailOverrideSavedLabel')}</strong> ${p.triage_override.ai_triage||'—'} → ${p.triage_override.level}
+        ${p.triage_override.override_reason ? `<br>${t('detailOverrideReasonLabel')} ${p.triage_override.override_reason}` : ''}
+        <br>${p.triage_override.doctor_name} · ${new Date(p.triage_override.timestamp).toLocaleString(uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR')}
       </div>` : ''}
     </div>
-    <!-- AI Gerekçe (Trust Layer) -->
+    <!-- AI Reasoning -->
     ${(p.evidence&&p.evidence.length)||(p.guideline_sources&&p.guideline_sources.length) ? `
     <div class="rounded-xl p-3.5" style="background:#f0f4f7;border-left:3px solid #00475e">
-      <p class="text-[10px] font-bold uppercase tracking-widest mb-2" style="color:#00475e">🧠 AI neden bu triajı önerdi?</p>
+      <p class="text-[10px] font-bold uppercase tracking-widest mb-2" style="color:#00475e">${t('detailAIReasonTitle')}</p>
       ${p.evidence&&p.evidence.length ? `<ul class="space-y-1 mb-2">${p.evidence.map(e=>`<li class="text-[11px] text-ons flex items-start gap-1.5"><span class="text-pric font-bold text-[10px] mt-0.5">✓</span>${e}</li>`).join('')}</ul>` : ''}
       ${p.guideline_sources&&p.guideline_sources.length ? `<div class="flex flex-wrap gap-1 mt-1">${p.guideline_sources.map(g=>`<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-pric/10 text-pric border border-pric/20">${g}</span>`).join('')}</div>` : ''}
     </div>` : ''}
-    <!-- Medikolegal Disclaimer -->
+    <!-- Disclaimer -->
     <div class="rounded-xl p-3 text-[10px] text-onsv bg-amber-50 border border-amber-200">
       ⚕️ <strong>AI output is advisory.</strong> Final clinical responsibility belongs to the clinician. Override triage if clinical assessment differs.
     </div>
-    <!-- Recommendation -->
+    <!-- Recommended Action -->
     <div class="rounded-xl p-3.5 text-white" style="background:${cfg.color}">
-      <p class="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-1.5">Önerilen Eylem</p>
+      <p class="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-1.5">${t('detailRecommendTitle')}</p>
       <p class="text-[12px] font-semibold leading-relaxed">${p.recommended_action||'—'}</p>
     </div>
     <!-- Actions -->
@@ -1043,11 +1045,11 @@ function showDetail(sid){
       <button onclick="markSeen('${sid}')" ${p.is_seen?'disabled':''} id="btn-seen-${sid}"
         class="flex-1 py-2.5 rounded-xl text-[12px] font-bold transition-all border-2 flex items-center justify-center gap-1.5 ${p.is_seen?'bg-green-50 text-green-600 border-green-200 cursor-not-allowed':'border-sec text-sec hover:bg-sec hover:text-white'}">
         <span class="material-symbols-outlined msym text-[14px]">done_all</span>
-        ${p.is_seen ? 'Görüldü ✓' : 'Görüldü İşaretle'}
+        ${p.is_seen ? t('btnMarkedSeen') : t('btnMarkSeen')}
       </button>
       <button onclick="openFullReport('${sid}')"
         class="flex-1 py-2.5 rounded-xl text-white text-[12px] font-bold hover:opacity-90 transition-all" style="background:${cfg.color}">
-        Tam Raporu Aç
+        ${t('btnFullReport')}
       </button>
     </div>
     <div class="flex gap-2">
@@ -1059,360 +1061,9 @@ function showDetail(sid){
       <button onclick="openClinicalReview('${sid}')"
         class="flex-1 py-2.5 rounded-xl border-2 border-sec text-sec text-[12px] font-bold hover:bg-sec hover:text-white transition-all flex items-center justify-center gap-1.5">
         <span class="material-symbols-outlined msym text-[14px]">folder_shared</span>
-        Klinik İnceleme
+        ${t('btnClinicalReview')}
       </button>
     </div>`;
-
-  document.getElementById('detail-panel').classList.remove('hidden');
-  document.getElementById('detail-panel').style.display='flex';
-  document.getElementById('detail-panel').style.flexDirection='column';
-}
-
-async function addNote(sid) {
-  const inp = document.getElementById(`inp-note-${sid}`);
-  const note = inp.value.trim();
-  if (!note) return;
-  try {
-    const res = await fetch(`${API}/api/session/${sid}/note`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({note})
-    });
-    if(!res.ok) throw new Error();
-    const data = await res.json();
-    inp.value = '';
-    // Not konteynırını güncelle
-    const container = document.getElementById(`notes-container-${sid}`);
-    const notes = data.note ? allPatients[sid]?.doctor_notes || [] : [];
-    if (data.note) {
-      const noteHtml = `<div class="bg-blue-50 rounded-lg p-2.5 mb-2">
-        <p class="text-[11px] text-ons">${data.note.text}</p>
-        <p class="text-[10px] text-ouv mt-1">${data.note.doctor_name} · ${new Date(data.note.timestamp).toLocaleString('tr-TR')}</p>
-      </div>`;
-      if (container.querySelector('p')) container.innerHTML = '';
-      container.insertAdjacentHTML('beforeend', noteHtml);
-      if (!allPatients[sid].doctor_notes) allPatients[sid].doctor_notes = [];
-      allPatients[sid].doctor_notes.push(data.note);
-    }
-  } catch(e) {
-    alert('Not eklenemedi.');
-  }
-}
-
-async function overrideTriage(sid, newLevel) {
-  if (!confirm(`Triaj seviyesini ${newLevel} olarak değiştirmek istediğinize emin misiniz?`)) return;
-  const reasonInput = document.getElementById(`inp-override-reason-${sid}`);
-  const overrideReason = reasonInput ? reasonInput.value.trim() : '';
-  try {
-    const res = await fetch(`${API}/api/session/${sid}/triage`, {
-      method: 'PUT',
-      headers: authHeaders(),
-      body: JSON.stringify({triage_level: newLevel, override_reason: overrideReason})
-    });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    if (allPatients[sid]) {
-      allPatients[sid].triage_level = newLevel;
-      allPatients[sid].triage_color = {RED:'#ba1a1a',YELLOW:'#e07b26',GREEN:'#006a68'}[newLevel];
-      allPatients[sid].triage_override = data.override || {level: newLevel, override_reason: overrideReason};
-      allPatients[sid].doctor_final_triage = newLevel;
-    }
-    showDetail(sid);
-  } catch(e) {
-    alert('Triaj değiştirilemedi.');
-  }
-}
-
-async function markSeen(sid) {
-  try {
-    const res = await fetch(`${API}/api/session/${sid}/seen`, {
-      method: 'PUT', headers: authHeaders()
-    });
-    if (!res.ok) throw new Error();
-    if (allPatients[sid]) allPatients[sid].is_seen = true;
-    const btn = document.getElementById(`btn-seen-${sid}`);
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = '<span class="material-symbols-outlined msym text-[14px]">done_all</span> Görüldü ✓';
-      btn.className = 'flex-1 py-2.5 rounded-xl text-[12px] font-bold border-2 flex items-center justify-center gap-1.5 bg-green-50 text-green-600 border-green-200 cursor-not-allowed';
-    }
-    // Kartı göster ve yeniden erişim butonu ekle
-    const detailEl = document.getElementById(`detail-${sid}`);
-    if (detailEl) {
-      const existing = detailEl.querySelector('.unmark-btn');
-      if (!existing) {
-        const unmarkDiv = document.createElement('div');
-        unmarkDiv.className = 'unmark-btn mt-2';
-        unmarkDiv.innerHTML = `<button onclick="unmarkSeen('${sid}')" class="w-full py-2 rounded-xl text-[12px] font-bold border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all flex items-center justify-center gap-1.5"><span class="material-symbols-outlined msym text-[13px]">undo</span>Kuyruğa Geri Al</button>`;
-        detailEl.appendChild(unmarkDiv);
-      }
-    }
-    // Arşivi yenile (açıksa)
-    if (!document.getElementById('seen-archive').classList.contains('hidden')) {
-      loadSeenPatients();
-    }
-  } catch(e) {
-    alert('İşlem başarısız.');
-  }
-}
-
-async function unmarkSeen(sid) {
-  try {
-    const res = await fetch(`${API}/api/session/${sid}/seen`, {
-      method: 'DELETE', headers: authHeaders()
-    });
-    if (!res.ok) throw new Error();
-    if (allPatients[sid]) allPatients[sid].is_seen = false;
-    const btn = document.getElementById(`btn-seen-${sid}`);
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined msym text-[14px]">visibility</span>Görüldü İşaretle';
-      btn.className = 'flex-1 py-2.5 rounded-xl text-[12px] font-bold transition-all border-2 flex items-center justify-center gap-1.5 border-sec text-sec hover:bg-sec hover:text-white';
-    }
-    loadQueue();
-    if (!document.getElementById('seen-archive').classList.contains('hidden')) {
-      loadSeenPatients();
-    }
-  } catch(e) {
-    alert('Geri alma başarısız.');
-  }
-}
-
-let seenArchiveLoaded = false;
-function toggleSeenArchive() {
-  const archiveEl = document.getElementById('seen-archive');
-  const toggleBtn = document.getElementById('btn-seen-toggle');
-  const isHidden = archiveEl.classList.contains('hidden');
-  if (isHidden) {
-    archiveEl.classList.remove('hidden');
-    toggleBtn.innerHTML = '<span class="material-symbols-outlined msym text-[14px]">expand_less</span>Gizle';
-    loadSeenPatients();
-  } else {
-    archiveEl.classList.add('hidden');
-    toggleBtn.innerHTML = '<span class="material-symbols-outlined msym text-[14px]">expand_more</span>Göster';
-  }
-}
-
-async function loadSeenPatients() {
-  const tableEl = document.getElementById('seen-table');
-  const countEl = document.getElementById('txt-seen-count');
-  tableEl.innerHTML = '<div class="text-center py-8"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>';
-  try {
-    const r = await fetch(`${API}/api/patients/seen`, { headers: authHeaders() });
-    if (!r.ok) { tableEl.innerHTML = '<div class="p-5 text-err text-[13px]">Yetki hatası veya bağlantı sorunu.</div>'; return; }
-    const data = await r.json();
-    const patients = data.patients || [];
-    countEl.textContent = `${patients.length} hasta`;
-    countEl.classList.remove('hidden');
-    document.getElementById('txt-seen-sub').textContent = `${patients.length} hasta görüldü olarak işaretlendi`;
-    if (patients.length === 0) {
-      tableEl.innerHTML = '<div class="p-8 text-center text-onsv text-[13px]"><span class="material-symbols-outlined msym text-3xl block mb-2 text-ouv">inventory_2</span>Henüz görüldü işaretlenen hasta yok.</div>';
-      return;
-    }
-    const TRIAGE_COLORS = {RED:'#ba1a1a', YELLOW:'#e07b26', GREEN:'#006a68', PENDING:'#8c9499'};
-    const TRIAGE_LABELS = {RED:'Acil', YELLOW:'Acil/Bekleyebilir', GREEN:'Rutin', PENDING:'—'};
-    tableEl.innerHTML = `<div class="divide-y divide-surfc">` + patients.map(p => {
-      const color = TRIAGE_COLORS[p.triage_level] || '#8c9499';
-      const label = TRIAGE_LABELS[p.triage_level] || '—';
-      const seenAt = p.seen_at ? new Date(p.seen_at).toLocaleString('tr-TR') : '—';
-      const sid = p.session_id;
-      return `<div class="p-4 hover:bg-surf transition-colors">
-        <div class="flex items-start gap-3">
-          <div class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style="background:${color}"></div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-pri text-[14px]">${p.patient_name}</span>
-              <span class="text-[12px] text-onsv">${p.age}y · ${p.gender}</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style="background:${color}">${label}</span>
-              <span class="ml-auto text-[10px] text-onsv">Görüldü: ${seenAt}</span>
-              ${p.seen_by_name ? `<span class="text-[10px] text-sec font-semibold">Dr. ${p.seen_by_name}</span>` : ''}
-            </div>
-            <p class="text-[12px] text-onsv mt-0.5 truncate">${p.chief_complaint}</p>
-          </div>
-        </div>
-        <div class="flex gap-2 mt-3 ml-5">
-          <button onclick="viewSeenSummary('${sid}')"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-sec text-sec bg-secc/20 hover:bg-sec hover:text-white transition-all">
-            <span class="material-symbols-outlined msym text-[13px]">summarize</span>Raporu Görüntüle
-          </button>
-          <button onclick="unmarkSeen('${sid}')"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all">
-            <span class="material-symbols-outlined msym text-[13px]">undo</span>Kuyruğa Geri Al
-          </button>
-        </div>
-      </div>`;
-    }).join('') + `</div>`;
-  } catch(e) {
-    tableEl.innerHTML = '<div class="p-5 text-err text-[13px]">Arşiv yüklenemedi.</div>';
-  }
-}
-
-async function viewSeenSummary(sid) {
-  try {
-    const r = await fetch(`${API}/api/session/${sid}/detail`, { headers: authHeaders() });
-    if (!r.ok) throw new Error('Veri alınamadı');
-    const detail = await r.json();
-    const summary = detail.summary;
-    if (summary) {
-      allPatients[sid] = {...(allPatients[sid]||{}), ...summary};
-      openReportModal(sid, summary.patient_name || sid);
-    } else {
-      alert('Bu hasta için henüz özet rapor oluşturulmamış.');
-    }
-  } catch(e) {
-    alert('Rapor açılamadı: ' + e.message);
-  }
-}
-
-async function suggestICD10(sid) {
-  const btn = document.getElementById(`btn-icd10-${sid}`);
-  const resultEl = document.getElementById(`icd10-result-${sid}`);
-  if (!btn || !resultEl) return;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-outlined msym spin text-[12px]">refresh</span> Analiz...';
-  resultEl.innerHTML = '<span class="text-ouv">Gemma 4 ICD-10 kodları hesaplıyor...</span>';
-  try {
-    const res = await fetch(`${API}/api/session/${sid}/icd10`, { headers: authHeaders() });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    const codes = data.icd10_suggestions || [];
-    const confColor = {yüksek:'text-green-600', orta:'text-amber-600', düşük:'text-ouv'};
-    resultEl.innerHTML = codes.map(c =>
-      `<div class="flex items-start gap-2 mb-1.5">
-        <span class="font-mono font-bold text-[12px] text-pric bg-surf px-2 py-0.5 rounded-lg flex-shrink-0">${c.code}</span>
-        <span class="text-[11px] text-ons">${c.description}</span>
-        <span class="text-[10px] ${confColor[c.confidence]||'text-ouv'} font-semibold ml-auto flex-shrink-0">${c.confidence}</span>
-      </div>`
-    ).join('') || '<span class="text-ouv">Öneride bulunulamadı.</span>';
-  } catch(e) {
-    resultEl.innerHTML = '<span class="text-err text-[11px]">ICD-10 önerisi başarısız.</span>';
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<span class="material-symbols-outlined msym text-[12px]">psychology</span>Yeniden Öner';
-  }
-}
-
-async function showAnalytics() {
-  const panel = document.getElementById('analytics-panel');
-  panel.classList.remove('hidden');
-  panel.scrollIntoView({behavior:'smooth', block:'start'});
-  const content = document.getElementById('analytics-content');
-  content.innerHTML = '<div class="text-center py-6"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>';
-  try {
-    const res = await fetch(`${API}/api/analytics`, { headers: authHeaders() });
-    if (!res.ok) throw new Error();
-    const d = await res.json();
-    const s = d.summary;
-    const dist = d.distributions || {};
-    const ageDist = dist.age_groups || {};
-    const flagsHtml = (d.top_urgency_flags||[]).map(f=>
-      `<div class="flex items-center justify-between text-[12px] py-1 border-b border-surfc">
-        <span class="text-ons truncate flex-1">${f.flag}</span>
-        <span class="font-bold text-err ml-2 flex-shrink-0">${f.count}x</span>
-      </div>`
-    ).join('') || '<p class="text-[12px] text-ouv">Henüz veri yok.</p>';
-    content.innerHTML = `
-      <div class="grid grid-cols-3 gap-3 mb-4">
-        <div class="rounded-xl p-3 bg-surfc text-center"><p class="text-[22px] font-head font-bold text-pri">${s.total_completed}</p><p class="text-[10px] text-onsv">Toplam</p></div>
-        <div class="rounded-xl p-3 text-center" style="background:#fff5f5"><p class="text-[22px] font-head font-bold" style="color:#ba1a1a">${s.red}</p><p class="text-[10px]" style="color:#ba1a1a">Acil</p></div>
-        <div class="rounded-xl p-3 text-center" style="background:#f0faf9"><p class="text-[22px] font-head font-bold text-sec">${s.green}</p><p class="text-[10px] text-sec">Rutin</p></div>
-      </div>
-      <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="rounded-xl p-3 bg-surfc">
-          <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-2">Yaş Grupları</p>
-          ${Object.entries(ageDist).map(([k,v])=>`
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-[11px] text-onsv w-12 flex-shrink-0">${k}</span>
-              <div class="flex-1 bg-surfc rounded-full h-2 overflow-hidden">
-                <div class="h-2 rounded-full bg-sec" style="width:${s.total_completed?Math.round(v/s.total_completed*100):0}%"></div>
-              </div>
-              <span class="text-[11px] font-bold text-pri w-6 text-right flex-shrink-0">${v}</span>
-            </div>`).join('')}
-        </div>
-        <div class="rounded-xl p-3 bg-surfc">
-          <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-2">Ortalama Güven</p>
-          <p class="text-[36px] font-head font-bold text-sec text-center mt-2">${s.avg_confidence}<span class="text-[18px]">%</span></p>
-          <p class="text-[10px] text-ouv text-center">AI Triage Accuracy</p>
-          <div class="mt-3 flex items-center justify-between text-[11px]">
-            <span class="text-onsv">Görüldü</span>
-            <span class="font-bold text-sec">${s.seen}/${s.total_completed}</span>
-          </div>
-        </div>
-      </div>
-      <div class="rounded-xl p-3 bg-surfc">
-        <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-2">En Sık Acil Bulgular</p>
-        ${flagsHtml}
-      </div>`;
-  } catch(e) {
-    content.innerHTML = '<p class="text-[12px] text-err text-center py-4">Analitik yüklenemedi.</p>';
-  }
-}
-
-function hideAnalytics() {
-  document.getElementById('analytics-panel').classList.add('hidden');
-  const btn = document.getElementById('sidebar-analytics-btn');
-  if (btn) btn.classList.remove('bg-surfc','text-pric','font-semibold');
-}
-
-function toggleAnalytics() {
-  const panel = document.getElementById('analytics-panel');
-  const btn = document.getElementById('sidebar-analytics-btn');
-  if (panel.classList.contains('hidden')) {
-    showAnalytics();
-    if (btn) { btn.classList.add('bg-surfc','text-pric','font-semibold'); }
-  } else {
-    hideAnalytics();
-  }
-}
-
-async function exportFHIR(sid) {
-  try {
-    let fhirData;
-    const isDemo = sid.startsWith('demo-') || !API;
-    if (!isDemo) {
-      const res = await fetch(`${API}/api/session/${sid}/fhir`, { headers: authHeaders() });
-      if (res.ok) {
-        fhirData = await res.json();
-      } else {
-        // API hatası → local veriden oluştur
-        const p = allPatients[sid];
-        if (!p) throw new Error(`FHIR export başarısız (HTTP ${res.status})`);
-        fhirData = buildFHIRBundle(p, sid);
-      }
-    } else {
-      const p = allPatients[sid];
-      if (!p) throw new Error('Hasta verisi bulunamadı.');
-      fhirData = buildFHIRBundle(p, sid);
-    }
-    const blob = new Blob([JSON.stringify(fhirData, null, 2)], {type: 'application/fhir+json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `FHIR_R4_AnamnezAI_${(allPatients[sid]?.patient_name||'Hasta').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
-    a.click(); URL.revokeObjectURL(url);
-  } catch(e) { alert(e.message || 'FHIR export başarısız.'); }
-}
-
-function buildFHIRBundle(p, sid) {
-  const now = new Date().toISOString();
-  const uid = sid.replace(/[^a-zA-Z0-9]/g,'-');
-  const vitalsObs = Object.entries(p.vitals||{}).map(([k,v])=>{
-    const loinc = {blood_pressure:['85354-9','Blood pressure','mmHg'],pulse:['8867-4','Heart rate','/min'],temperature:['8310-5','Body temperature','Cel'],spo2:['59408-5','Oxygen saturation','%'],respiratory_rate:['9279-1','Respiratory rate','/min']};
-    const [code,disp,unit] = loinc[k]||[k,k,''];
-    return {fullUrl:`urn:uuid:obs-${k}-${uid}`,resource:{resourceType:'Observation',id:`obs-${k}-${uid}`,status:'final',code:{coding:[{system:'http://loinc.org',code,display:disp}],text:disp},subject:{reference:`urn:uuid:pat-${uid}`},effectiveDateTime:p.generated_at||now,valueQuantity:{value:parseFloat(v)||v,unit,system:'http://unitsofmeasure.org',code:unit}}};
-  });
-  return {
-    resourceType:'Bundle',id:`anamnezai-${uid.slice(0,16)}`,
-    meta:{lastUpdated:now,profile:['http://hl7.org/fhir/R4/Bundle']},
-    type:'document',timestamp:now,
-    entry:[
-      {fullUrl:`urn:uuid:comp-${uid}`,resource:{resourceType:'Composition',id:`comp-${uid}`,status:'final',type:{coding:[{system:'http://loinc.org',code:'34133-9',display:'Summary of episode note'}]},date:now,title:'AnamnezAI Clinical Pre-Triage Report',author:[{display:'AnamnezAI · Gemma 4'}],subject:{reference:`urn:uuid:pat-${uid}`},section:[{title:'Chief Complaint',text:{status:'generated',div:`<div xmlns="http://www.w3.org/1999/xhtml">${p.symptoms_summary||'—'}</div>`}},{title:'Triage Assessment',text:{status:'generated',div:`<div xmlns="http://www.w3.org/1999/xhtml">MTS ${p.triage_level} — Confidence: ${p.confidence_score||0}%</div>`}},{title:'Clinical Impression',text:{status:'generated',div:`<div xmlns="http://www.w3.org/1999/xhtml">${p.clinical_notes||'—'}</div>`}},{title:'Recommended Action',text:{status:'generated',div:`<div xmlns="http://www.w3.org/1999/xhtml">${p.recommended_action||'—'}</div>`}}]}},
-      {fullUrl:`urn:uuid:pat-${uid}`,resource:{resourceType:'Patient',id:`pat-${uid}`,name:[{use:'official',text:p.patient_name||'—'}],gender:['Erkek','Male'].includes(p.gender)?'male':['Kadın','Female'].includes(p.gender)?'female':'unknown',birthDate:p.age?String(new Date().getFullYear()-p.age)+'-01-01':undefined}},
-      {fullUrl:`urn:uuid:enc-${uid}`,resource:{resourceType:'Encounter',id:`enc-${uid}`,status:'finished',class:{system:'http://terminology.hl7.org/CodeSystem/v3-ActCode',code:'AMB'},type:[{text:'AI Pre-Triage Assessment'}],subject:{reference:`urn:uuid:pat-${uid}`},period:{start:p.generated_at||now,end:now},priority:{coding:[{system:'http://terminology.hl7.org/CodeSystem/v3-ActPriority',code:p.triage_level==='RED'?'EM':p.triage_level==='YELLOW'?'UR':'R',display:p.triage_level==='RED'?'emergency':p.triage_level==='YELLOW'?'urgent':'routine'}]}}},
-      {fullUrl:`urn:uuid:imp-${uid}`,resource:{resourceType:'ClinicalImpression',id:`imp-${uid}`,status:'completed',description:p.clinical_notes||p.symptoms_summary||'—',subject:{reference:`urn:uuid:pat-${uid}`},encounter:{reference:`urn:uuid:enc-${uid}`},date:p.generated_at||now,finding:(p.possible_conditions||[]).map(c=>({itemCodeableConcept:{text:c}})),note:[{text:p.recommended_action||'—'}],extension:[{url:'http://anamnezai.tr/fhir/ext/triage-level',valueString:p.triage_level||'UNKNOWN'},{url:'http://anamnezai.tr/fhir/ext/confidence-score',valueDecimal:p.confidence_score||0},{url:'http://anamnezai.tr/fhir/ext/ai-model',valueString:'gemma4:e4b · AnamnezAI'},{url:'http://anamnezai.tr/fhir/ext/urgency-flags',valueString:(p.urgency_flags||[]).join('; ')||'none'}]}},
-      ...vitalsObs
-    ]
-  };
 }
 
 let _reportModalSid = null;
@@ -1462,7 +1113,280 @@ function closePanel(){
   panel.style.display='none';
 }
 
-// Init
+async function addNote(sid) {
+  const inp = document.getElementById(`inp-note-${sid}`);
+  const note = inp.value.trim();
+  if (!note) return;
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/note`, {
+      method: 'POST', headers: authHeaders(), body: JSON.stringify({note})
+    });
+    if(!res.ok) throw new Error();
+    const data = await res.json();
+    inp.value = '';
+    const container = document.getElementById(`notes-container-${sid}`);
+    if (data.note) {
+      const locale = uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR';
+      const noteHtml = `<div class="bg-blue-50 rounded-lg p-2.5 mb-2">
+        <p class="text-[11px] text-ons">${data.note.text}</p>
+        <p class="text-[10px] text-ouv mt-1">${data.note.doctor_name} · ${new Date(data.note.timestamp).toLocaleString(locale)}</p>
+      </div>`;
+      if (container.querySelector('p')) container.innerHTML = '';
+      container.insertAdjacentHTML('beforeend', noteHtml);
+      if (!allPatients[sid].doctor_notes) allPatients[sid].doctor_notes = [];
+      allPatients[sid].doctor_notes.push(data.note);
+    }
+  } catch(e) { alert(t('alertNoteFail')); }
+}
+
+async function overrideTriage(sid, newLevel) {
+  if (!confirm(t('confirmOverrideFn', newLevel))) return;
+  const reasonInput = document.getElementById(`inp-override-reason-${sid}`);
+  const overrideReason = reasonInput ? reasonInput.value.trim() : '';
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/triage`, {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({triage_level: newLevel, override_reason: overrideReason})
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    if (allPatients[sid]) {
+      allPatients[sid].triage_level = newLevel;
+      allPatients[sid].triage_color = {RED:'#ba1a1a',YELLOW:'#e07b26',GREEN:'#006a68'}[newLevel];
+      allPatients[sid].triage_override = data.override || {level: newLevel, override_reason: overrideReason};
+      allPatients[sid].doctor_final_triage = newLevel;
+    }
+    showDetail(sid);
+  } catch(e) { alert(t('alertOverrideFail')); }
+}
+
+async function markSeen(sid) {
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/seen`, { method: 'PUT', headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    if (allPatients[sid]) allPatients[sid].is_seen = true;
+    const btn = document.getElementById(`btn-seen-${sid}`);
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="material-symbols-outlined msym text-[14px]">done_all</span> ${t('btnMarkedSeen')}`;
+      btn.className = 'flex-1 py-2.5 rounded-xl text-[12px] font-bold border-2 flex items-center justify-center gap-1.5 bg-green-50 text-green-600 border-green-200 cursor-not-allowed';
+    }
+    if (!document.getElementById('seen-archive').classList.contains('hidden')) loadSeenPatients();
+  } catch(e) { alert(t('alertSeenFail')); }
+}
+
+async function unmarkSeen(sid) {
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/seen`, { method: 'DELETE', headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    if (allPatients[sid]) allPatients[sid].is_seen = false;
+    const btn = document.getElementById(`btn-seen-${sid}`);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined msym text-[14px]">visibility</span>${t('btnMarkSeen')}`;
+      btn.className = 'flex-1 py-2.5 rounded-xl text-[12px] font-bold transition-all border-2 flex items-center justify-center gap-1.5 border-sec text-sec hover:bg-sec hover:text-white';
+    }
+    loadQueue();
+    if (!document.getElementById('seen-archive').classList.contains('hidden')) loadSeenPatients();
+  } catch(e) { alert(t('alertUnseenFail')); }
+}
+
+let seenArchiveLoaded = false;
+function toggleSeenArchive() {
+  const archiveEl = document.getElementById('seen-archive');
+  const toggleBtn = document.getElementById('btn-seen-toggle');
+  const isHidden = archiveEl.classList.contains('hidden');
+  if (isHidden) {
+    archiveEl.classList.remove('hidden');
+    toggleBtn.innerHTML = `<span class="material-symbols-outlined msym text-[14px]">expand_less</span><span id="txt-seen-toggle-btn">${t('seenHideBtn')}</span>`;
+    loadSeenPatients();
+  } else {
+    archiveEl.classList.add('hidden');
+    toggleBtn.innerHTML = `<span class="material-symbols-outlined msym text-[14px]">expand_more</span><span id="txt-seen-toggle-btn">${t('seenShowBtn')}</span>`;
+  }
+}
+
+async function loadSeenPatients() {
+  const tableEl = document.getElementById('seen-table');
+  const countEl = document.getElementById('txt-seen-count');
+  tableEl.innerHTML = '<div class="text-center py-8"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>';
+  try {
+    const r = await fetch(`${API}/api/patients/seen`, { headers: authHeaders() });
+    if (!r.ok) { tableEl.innerHTML = `<div class="p-5 text-err text-[13px]">${t('seenAuthError')}</div>`; return; }
+    const data = await r.json();
+    const patients = data.patients || [];
+    countEl.textContent = t('seenCountFn', patients.length);
+    countEl.classList.remove('hidden');
+    document.getElementById('txt-seen-sub').textContent = t('seenPatientsFn', patients.length);
+    if (patients.length === 0) {
+      tableEl.innerHTML = `<div class="p-8 text-center text-onsv text-[13px]"><span class="material-symbols-outlined msym text-3xl block mb-2 text-ouv">inventory_2</span>${t('seenEmpty')}</div>`;
+      return;
+    }
+    const TRIAGE_COLORS = {RED:'#ba1a1a', YELLOW:'#e07b26', GREEN:'#006a68', PENDING:'#8c9499'};
+    const locale = uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR';
+    tableEl.innerHTML = `<div class="divide-y divide-surfc">` + patients.map(p => {
+      const color = TRIAGE_COLORS[p.triage_level] || '#8c9499';
+      const label = {RED:t('triageLabelRed'),YELLOW:t('triageLabelYellow'),GREEN:t('triageLabelGreen')}[p.triage_level] || '—';
+      const seenAt = p.seen_at ? new Date(p.seen_at).toLocaleString(locale) : '—';
+      const sid = p.session_id;
+      return `<div class="p-4 hover:bg-surf transition-colors">
+        <div class="flex items-start gap-3">
+          <div class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style="background:${color}"></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-pri text-[14px]">${p.patient_name}</span>
+              <span class="text-[12px] text-onsv">${t('ageFn',p.age)} · ${p.gender}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style="background:${color}">${label}</span>
+              <span class="ml-auto text-[10px] text-onsv">${t('seenAt')} ${seenAt}</span>
+              ${p.seen_by_name ? `<span class="text-[10px] text-sec font-semibold">Dr. ${p.seen_by_name}</span>` : ''}
+            </div>
+            <p class="text-[12px] text-onsv mt-0.5 truncate">${p.chief_complaint}</p>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-3 ml-5">
+          <button onclick="viewSeenSummary('${sid}')"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-sec text-sec bg-secc/20 hover:bg-sec hover:text-white transition-all">
+            <span class="material-symbols-outlined msym text-[13px]">summarize</span>${t('seenViewReport')}
+          </button>
+          <button onclick="unmarkSeen('${sid}')"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all">
+            <span class="material-symbols-outlined msym text-[13px]">undo</span>${t('seenReturnQueue')}
+          </button>
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+  } catch(e) {
+    tableEl.innerHTML = `<div class="p-5 text-err text-[13px]">${t('seenLoadError')}</div>`;
+  }
+}
+
+async function viewSeenSummary(sid) {
+  try {
+    const r = await fetch(`${API}/api/session/${sid}/detail`, { headers: authHeaders() });
+    if (!r.ok) throw new Error('Veri alınamadı');
+    const detail = await r.json();
+    const summary = detail.summary;
+    if (summary) {
+      allPatients[sid] = {...(allPatients[sid]||{}), ...summary};
+      openReportModal(sid, summary.patient_name || sid);
+    } else {
+      alert(t('detailICD10None'));
+    }
+  } catch(e) { alert(t('alertReportFail') + e.message); }
+}
+
+async function suggestICD10(sid) {
+  const btn = document.getElementById(`btn-icd10-${sid}`);
+  const resultEl = document.getElementById(`icd10-result-${sid}`);
+  if (!btn || !resultEl) return;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="material-symbols-outlined msym spin text-[12px]">refresh</span> ${t('detailICD10Analyzing')}`;
+  resultEl.innerHTML = `<span class="text-ouv">${t('detailICD10Computing')}</span>`;
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/icd10`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const codes = data.icd10_suggestions || [];
+    resultEl.innerHTML = codes.map(c =>
+      `<div class="flex items-start gap-2 mb-1.5">
+        <span class="font-mono font-bold text-[12px] text-pric bg-surf px-2 py-0.5 rounded-lg flex-shrink-0">${c.code}</span>
+        <span class="text-[11px] text-ons">${c.description}</span>
+        <span class="text-[10px] text-ouv font-semibold ml-auto flex-shrink-0">${c.confidence}</span>
+      </div>`
+    ).join('') || `<span class="text-ouv">${t('detailICD10NoSugg')}</span>`;
+  } catch(e) {
+    resultEl.innerHTML = `<span class="text-err text-[11px]">${t('detailICD10Fail')}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span class="material-symbols-outlined msym text-[12px]">psychology</span>${t('detailICD10Retry')}`;
+  }
+}
+
+async function showAnalytics() {
+  const panel = document.getElementById('analytics-panel');
+  panel.classList.remove('hidden');
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+  const content = document.getElementById('analytics-content');
+  content.innerHTML = '<div class="text-center py-6"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>';
+  try {
+    const res = await fetch(`${API}/api/analytics`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+    const s = d.summary;
+    const dist = d.distributions || {};
+    const ageDist = dist.age_groups || {};
+    const flagsHtml = (d.top_urgency_flags||[]).map(f=>
+      `<div class="flex items-center justify-between text-[12px] py-1 border-b border-surfc">
+        <span class="text-ons truncate flex-1">${f.flag}</span>
+        <span class="font-bold text-err ml-2 flex-shrink-0">${f.count}x</span>
+      </div>`
+    ).join('') || `<p class="text-[12px] text-ouv">${t('analyticsNoData')}</p>`;
+    content.innerHTML = `
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="rounded-xl p-3 bg-surfc text-center"><p class="text-[22px] font-head font-bold text-pri">${s.total_completed}</p><p class="text-[10px] text-onsv">${t('analyticsTotal')}</p></div>
+        <div class="rounded-xl p-3 text-center" style="background:#fff5f5"><p class="text-[22px] font-head font-bold" style="color:#ba1a1a">${s.red}</p><p class="text-[10px]" style="color:#ba1a1a">${t('analyticsRed')}</p></div>
+        <div class="rounded-xl p-3 text-center" style="background:#f0faf9"><p class="text-[22px] font-head font-bold text-sec">${s.green}</p><p class="text-[10px] text-sec">${t('analyticsGreen')}</p></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="rounded-xl p-3 bg-surfc">
+          <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-2">${t('analyticsAgeGroups')}</p>
+          ${Object.entries(ageDist).map(([k,v])=>`
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[11px] text-onsv w-12 flex-shrink-0">${k}</span>
+              <div class="flex-1 bg-surfc rounded-full h-2 overflow-hidden">
+                <div class="h-2 rounded-full bg-sec" style="width:${s.total_completed?Math.round(v/s.total_completed*100):0}%"></div>
+              </div>
+              <span class="text-[11px] font-bold text-pri w-6 text-right flex-shrink-0">${v}</span>
+            </div>`).join('')}
+        </div>
+        <div class="rounded-xl p-3 bg-surfc">
+          <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-2">${t('analyticsAvgConf')}</p>
+          <p class="text-[36px] font-head font-bold text-sec text-center mt-2">${s.avg_confidence}<span class="text-[18px]">%</span></p>
+          <p class="text-[10px] text-ouv text-center">AI Triage Accuracy</p>
+          <div class="mt-3 flex items-center justify-between text-[11px]">
+            <span class="text-onsv">${t('analyticsSeen')}</span>
+            <span class="font-bold text-sec">${s.seen}/${s.total_completed}</span>
+          </div>
+        </div>
+      </div>
+      <div class="rounded-xl p-3 bg-surfc">
+        <p class="text-[10px] font-bold text-onsv uppercase tracking-wide mb-2">${t('analyticsTopFlags')}</p>
+        ${flagsHtml}
+      </div>`;
+  } catch(e) {
+    document.getElementById('analytics-content').innerHTML = `<p class="text-err text-[13px] p-4">${t('seenLoadError')}</p>`;
+  }
+}
+
+function toggleAnalytics() {
+  const panel = document.getElementById('analytics-panel');
+  if (panel.classList.contains('hidden')) { showAnalytics(); } else { hideAnalytics(); }
+}
+
+function hideAnalytics() {
+  document.getElementById('analytics-panel').classList.add('hidden');
+}
+
+async function exportFHIR(sid) {
+  const p = allPatients[sid];
+  if (!p) return;
+  try {
+    const res = await fetch(`${API}/api/session/${sid}/fhir`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    const fhir = await res.json();
+    const blob = new Blob([JSON.stringify(fhir, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `fhir_${sid}.json`; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    const fhir = { resourceType:'Bundle', id:sid, type:'collection',
+      entry:[{resource:{resourceType:'Patient',id:sid,name:[{text:p.patient_name}],birthDate:String(new Date().getFullYear()-p.age)}}]};
+    const blob = new Blob([JSON.stringify(fhir, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `fhir_${sid}.json`; a.click();
+    URL.revokeObjectURL(url);
+  }
+}
 checkStatus();
 loadQueue();  // İlk yükleme
 
@@ -1488,8 +1412,8 @@ function connectSSE(){
         qData.patients.forEach(p=>{ allPatients[p.session_id]=p; });
         updateStats(qData.stats || calcStats(qData.patients));
         renderTable(qData.patients,'live-table',true);
-        document.getElementById('txt-queue-sub').textContent = `${qData.total} tamamlanan mülakat`;
-        document.getElementById('txt-queue-count').textContent = `${qData.total} hasta`;
+        document.getElementById('txt-queue-sub').textContent = t('queueCompletedFn', qData.total);
+        document.getElementById('txt-queue-count').textContent = t('queueCountFn', qData.total);
         if(msg.type === 'update'){
           // Yeni hasta bildirimi
           const liveInd = document.getElementById('live-indicator');
@@ -1530,21 +1454,249 @@ let uiLang = localStorage.getItem('ui_lang') || 'tr';
 
 const DL = {
   tr:{
+    // Nav
     navTriage:'Triaj Paneli', navRefresh:'Listeyi Yenile', navLock:"Kiosk'u Kilitle", navUnlock:"Kiosk'u Aç",
-    panelTitle:'Klinik Triaj Paneli', refreshBtn:'Yenile', kioskBtn:'Kiosk Ekranı',
+    navAnalytics:'Analitik', navLogout:'Çıkış Yap', navKioskMgmt:'Kiosk Yönetim', navSistem:'Sistem',
+    // Header
+    panelTitle:'Klinik Triaj Paneli', refreshBtn:'Yenile', kioskBtn:'Kiosk Ekranı', liveLbl:'Canlı',
+    modelChecking:'Model Kontrol Ediliyor',
+    // Stats
+    statTotalLbl:'Toplam', statTotalSub:'aktif hasta',
+    statRedLbl:'🔴 Acil', statRedSub:'derhal müdahale',
+    statYellowLbl:'🟡 Acil/Bekleyebilir', statYellowSub:'kısa süre içinde',
+    statGreenLbl:'🟢 Rutin', statGreenSub:'standart kuyruk',
+    // Queue
+    queueTitle:'Aktif Triaj Kuyruğu', queueLoading:'Hasta kuyruğu yükleniyor...',
+    queueBackendOff:'Backend bağlantısı yok — demo veriler aşağıda', queueBackendOffline:'Backend çevrimdışı',
+    queueCompletedFn:(n)=>`${n} tamamlanan mülakat`, queueCountFn:(n)=>`${n} hasta`,
+    queueEmpty:'Henüz gerçek hasta yok.', queueEmptyDemo:'Henüz hasta yok.',
+    searchPlaceholder:'Hasta ara...',
+    filterAll:'Tümü', filterRed:'🔴 Acil', filterYellow:'🟡 İkincil', filterGreen:'🟢 Rutin',
+    // Table
+    tbPatient:'Hasta', tbTriage:'Triaj', tbComplaint:'Ana Şikayet',
+    tbConfidence:'Kanıt Gücü', tbWaiting:'Bekleme', tbAction:'İşlem',
+    btnReport:'Rapor', allergyLabel:'Alerji',
+    // Wait badge units
+    unitMin:'dk', unitSec:'sn', unitHour:'s',
+    // Seen archive
+    seenTitle:'Görüldü Arşivi', seenSub:'Görüldü işaretlenen hastalar',
+    seenShowBtn:'Göster', seenHideBtn:'Gizle',
+    seenAuthError:'Yetki hatası veya bağlantı sorunu.', seenLoadError:'Arşiv yüklenemedi.',
+    seenEmpty:'Henüz görüldü işaretlenen hasta yok.',
+    seenAt:'Görüldü:', seenViewReport:'Raporu Görüntüle', seenReturnQueue:'Kuyruğa Geri Al',
+    seenPatientsFn:(n)=>`${n} hasta görüldü olarak işaretlendi`,
+    seenCountFn:(n)=>`${n} hasta`,
+    // Analytics
+    analyticsTitle:'Triaj Analitik',
+    analyticsTotal:'Toplam', analyticsRed:'Acil', analyticsGreen:'Rutin',
+    analyticsAgeGroups:'Yaş Grupları', analyticsAvgConf:'Ortalama Güven',
+    analyticsSeen:'Görüldü', analyticsTopFlags:'En Sık Acil Bulgular', analyticsNoData:'Henüz veri yok.',
+    // Demo
+    demoTitle:'Demo Hastalar', demoBadge:'Gemma 4 Örnek Çıktısı',
+    demoStats:'5 vaka · 2 RED · 2 YELLOW · 1 GREEN',
+    stemiTitle:'Gaziantep STEMI Senaryosu', stemiSub:'Mehmet Yılmaz · 66 yaş · Vaka 1',
+    stemiBody:'Aynı hasta, aynı semptomlar. Manuel triajda 22 dakika bekledi ve STEMI geçirdi. AI bu vakayı <strong>14 saniyede RED</strong> olarak sınıflandırdı.',
+    labelManual:'Manuel', labelAI:'AI Triaj',
+    // Detail panel
+    detailHeader:'Hasta Detayı',
+    detailConfLabel:'AI Güven Skoru', detailUrgentTitle:'⚠️ Acil Uyarılar',
+    detailVitalsTitle:'Vital Bulgular', vitalBP:'KB', vitalPulse:'NABIZ', vitalTemp:'ATEŞ',
+    detailComplaintTitle:'Ana Şikayet', detailSymptomsTitle:'Semptom Özeti',
+    detailDxTitle:'Olası Tanılar', detailVisionTitle:'Vision Bulguları',
+    detailClinicalTitle:'Klinik Notlar (AI)',
+    detailICD10Title:'ICD-10 Kod Önerisi', detailICD10Btn:'Gemma 4 ile Öner',
+    detailICD10None:'Henüz öneride bulunulmadı.', detailICD10Fail:'ICD-10 önerisi başarısız.',
+    detailICD10NoSugg:'Öneride bulunulamadı.', detailICD10Analyzing:'Analiz...',
+    detailICD10Computing:'Gemma 4 ICD-10 kodları hesaplıyor...', detailICD10Retry:'Yeniden Öner',
+    detailDoctorNotesTitle:'Doktor Notları', detailNotesNone:'Not yok.',
+    detailAddNotePlaceholder:'Doktor notu ekle...',
+    detailOverrideTitle:'Triaj Seviyesini Değiştir',
+    detailOverrideRed:'🔴 ACİL', detailOverrideYellow:'🟡 İKİNCİL', detailOverrideGreen:'🟢 RUTİN',
+    detailOverridePlaceholder:'Override gerekçesi (opsiyonel)...',
+    detailOverrideSavedLabel:'Human Override Kaydedildi:', detailOverrideReasonLabel:'Gerekçe:',
+    detailAIReasonTitle:'🧠 AI neden bu triajı önerdi?',
+    detailRecommendTitle:'Önerilen Eylem',
+    btnMarkSeen:'Görüldü İşaretle', btnMarkedSeen:'Görüldü ✓',
+    btnFullReport:'Tam Raporu Aç', btnClinicalReview:'Klinik İnceleme', btnFHIR:'FHIR R4 İndir',
+    // Kanban
+    kanbanRed:'🔴 Derhal Müdahale', kanbanYellow:'🟡 Kısa Sürede',
+    kanbanGreen:'🟢 Rutin Kuyruk', kanbanPending:'⏳ Analiz Bekleniyor',
+    kanbanNoPatients:'Hasta yok',
+    // Triage labels
+    triageLabelRed:'Acil', triageLabelYellow:'Acil/Bekleyebilir', triageLabelGreen:'Rutin',
+    // Status
+    statusConnecting:'Bağlanıyor...', statusReady:'Gemma 4 Hazır ✓', statusWarming:'Model Isınıyor...',
+    statusActive:'Gemma 4 Aktif', statusWaiting:'Ollama Bekleniyor', statusOffline:'Bağlantı Yok',
+    modelOffline:'Model Çevrimdışı', backendOffline:'Backend Bağlanamıyor',
+    // Kiosk toast
+    kioskLocked:'🔒 Kiosk kilitlendi', kioskUnlocked:'🔓 Kiosk açıldı',
+    // Alerts
+    confirmOverrideFn:(l)=>`Triaj seviyesini ${l} olarak değiştirmek istediğinize emin misiniz?`,
+    alertOverrideFail:'Triaj değiştirilemedi.', alertSeenFail:'İşlem başarısız.',
+    alertUnseenFail:'Geri alma başarısız.', alertNoteFail:'Not eklenemedi.',
+    alertReportFail:'Rapor açılamadı: ',
+    // Report modal
+    reportNewTab:'Yeni Sekmede Aç',
+    // Age/gender
+    ageFn:(age)=>`${age} yaş`,
+    seenBadge:'✓ Görüldü', overrideBadge:'✎ Override',
     logout:'Çıkış Yap',
   },
   en:{
     navTriage:'Triage Panel', navRefresh:'Refresh List', navLock:'Lock Kiosk', navUnlock:'Unlock Kiosk',
-    panelTitle:'Clinical Triage Panel', refreshBtn:'Refresh', kioskBtn:'Kiosk Screen',
+    navAnalytics:'Analytics', navLogout:'Log Out', navKioskMgmt:'Kiosk Management', navSistem:'System',
+    panelTitle:'Clinical Triage Panel', refreshBtn:'Refresh', kioskBtn:'Kiosk Screen', liveLbl:'Live',
+    modelChecking:'Checking Model',
+    statTotalLbl:'Total', statTotalSub:'active patients',
+    statRedLbl:'🔴 Emergency', statRedSub:'immediate intervention',
+    statYellowLbl:'🟡 Urgent/Can Wait', statYellowSub:'attend shortly',
+    statGreenLbl:'🟢 Routine', statGreenSub:'standard queue',
+    queueTitle:'Active Triage Queue', queueLoading:'Loading patient queue...',
+    queueBackendOff:'No backend connection — demo data below', queueBackendOffline:'Backend offline',
+    queueCompletedFn:(n)=>`${n} completed interviews`, queueCountFn:(n)=>`${n} patients`,
+    queueEmpty:'No real patients yet.', queueEmptyDemo:'No patients yet.',
+    searchPlaceholder:'Search patient...',
+    filterAll:'All', filterRed:'🔴 Emergency', filterYellow:'🟡 Urgent', filterGreen:'🟢 Routine',
+    tbPatient:'Patient', tbTriage:'Triage', tbComplaint:'Chief Complaint',
+    tbConfidence:'Evidence Score', tbWaiting:'Waiting', tbAction:'Action',
+    btnReport:'Report', allergyLabel:'Allergy',
+    unitMin:'min', unitSec:'sec', unitHour:'h',
+    seenTitle:'Seen Archive', seenSub:'Patients marked as seen',
+    seenShowBtn:'Show', seenHideBtn:'Hide',
+    seenAuthError:'Authorization error or connection issue.', seenLoadError:'Could not load archive.',
+    seenEmpty:'No patients marked as seen yet.',
+    seenAt:'Seen:', seenViewReport:'View Report', seenReturnQueue:'Return to Queue',
+    seenPatientsFn:(n)=>`${n} patient(s) marked as seen`,
+    seenCountFn:(n)=>`${n} patients`,
+    analyticsTitle:'Triage Analytics',
+    analyticsTotal:'Total', analyticsRed:'Emergency', analyticsGreen:'Routine',
+    analyticsAgeGroups:'Age Groups', analyticsAvgConf:'Avg. Confidence',
+    analyticsSeen:'Seen', analyticsTopFlags:'Top Urgency Flags', analyticsNoData:'No data yet.',
+    demoTitle:'Demo Patients', demoBadge:'Gemma 4 Sample Output',
+    demoStats:'5 cases · 2 RED · 2 YELLOW · 1 GREEN',
+    stemiTitle:'Gaziantep STEMI Scenario', stemiSub:'Mehmet Yılmaz · Age 66 · Case 1',
+    stemiBody:'Same patient, same symptoms. With manual triage, patient waited 22 minutes and had STEMI. AI classified this case as RED in <strong>14 seconds</strong>.',
+    labelManual:'Manual', labelAI:'AI Triage',
+    detailHeader:'Patient Detail',
+    detailConfLabel:'AI Confidence Score', detailUrgentTitle:'⚠️ Urgent Warnings',
+    detailVitalsTitle:'Vital Signs', vitalBP:'BP', vitalPulse:'PULSE', vitalTemp:'TEMP',
+    detailComplaintTitle:'Chief Complaint', detailSymptomsTitle:'Symptom Summary',
+    detailDxTitle:'Possible Diagnoses', detailVisionTitle:'Vision Findings',
+    detailClinicalTitle:'Clinical Notes (AI)',
+    detailICD10Title:'ICD-10 Code Suggestion', detailICD10Btn:'Suggest with Gemma 4',
+    detailICD10None:'No suggestion yet.', detailICD10Fail:'ICD-10 suggestion failed.',
+    detailICD10NoSugg:'Could not suggest.', detailICD10Analyzing:'Analyzing...',
+    detailICD10Computing:'Gemma 4 computing ICD-10 codes...', detailICD10Retry:'Suggest Again',
+    detailDoctorNotesTitle:'Doctor Notes', detailNotesNone:'No notes.',
+    detailAddNotePlaceholder:'Add doctor note...',
+    detailOverrideTitle:'Change Triage Level',
+    detailOverrideRed:'🔴 EMERGENCY', detailOverrideYellow:'🟡 URGENT', detailOverrideGreen:'🟢 ROUTINE',
+    detailOverridePlaceholder:'Override reason (optional)...',
+    detailOverrideSavedLabel:'Human Override Saved:', detailOverrideReasonLabel:'Reason:',
+    detailAIReasonTitle:'🧠 Why did AI suggest this triage?',
+    detailRecommendTitle:'Recommended Action',
+    btnMarkSeen:'Mark as Seen', btnMarkedSeen:'Seen ✓',
+    btnFullReport:'Open Full Report', btnClinicalReview:'Clinical Review', btnFHIR:'Download FHIR R4',
+    kanbanRed:'🔴 Immediate', kanbanYellow:'🟡 Shortly',
+    kanbanGreen:'🟢 Routine Queue', kanbanPending:'⏳ Awaiting Analysis',
+    kanbanNoPatients:'No patients',
+    triageLabelRed:'Emergency', triageLabelYellow:'Urgent/Can Wait', triageLabelGreen:'Routine',
+    statusConnecting:'Connecting...', statusReady:'Gemma 4 Ready ✓', statusWarming:'Model Warming...',
+    statusActive:'Gemma 4 Active', statusWaiting:'Waiting for Ollama', statusOffline:'No Connection',
+    modelOffline:'Model Offline', backendOffline:'Backend Unreachable',
+    kioskLocked:'🔒 Kiosk locked', kioskUnlocked:'🔓 Kiosk unlocked',
+    confirmOverrideFn:(l)=>`Are you sure you want to change triage level to ${l}?`,
+    alertOverrideFail:'Could not change triage.', alertSeenFail:'Operation failed.',
+    alertUnseenFail:'Could not undo.', alertNoteFail:'Could not add note.',
+    alertReportFail:'Could not open report: ',
+    reportNewTab:'Open in New Tab',
+    ageFn:(age)=>`${age}y`,
+    seenBadge:'✓ Seen', overrideBadge:'✎ Override',
     logout:'Log Out',
   },
   ar:{
     navTriage:'لوحة الفرز', navRefresh:'تحديث القائمة', navLock:'قفل الكشك', navUnlock:'فتح الكشك',
-    panelTitle:'لوحة الفرز السريري', refreshBtn:'تحديث', kioskBtn:'شاشة الكشك',
+    navAnalytics:'التحليلات', navLogout:'تسجيل الخروج', navKioskMgmt:'إدارة الكشك', navSistem:'النظام',
+    panelTitle:'لوحة الفرز السريري', refreshBtn:'تحديث', kioskBtn:'شاشة الكشك', liveLbl:'مباشر',
+    modelChecking:'جارٍ التحقق من النموذج',
+    statTotalLbl:'الإجمالي', statTotalSub:'مريض نشط',
+    statRedLbl:'🔴 طوارئ', statRedSub:'تدخل فوري',
+    statYellowLbl:'🟡 عاجل / يمكن الانتظار', statYellowSub:'خلال وقت قصير',
+    statGreenLbl:'🟢 روتيني', statGreenSub:'قائمة انتظار عادية',
+    queueTitle:'قائمة انتظار الفرز النشطة', queueLoading:'جارٍ تحميل قائمة المرضى...',
+    queueBackendOff:'لا يوجد اتصال بالخادم — البيانات التجريبية أدناه', queueBackendOffline:'الخادم غير متصل',
+    queueCompletedFn:(n)=>`${n} مقابلة مكتملة`, queueCountFn:(n)=>`${n} مريض`,
+    queueEmpty:'لا يوجد مرضى حقيقيون بعد.', queueEmptyDemo:'لا يوجد مرضى بعد.',
+    searchPlaceholder:'ابحث عن مريض...',
+    filterAll:'الكل', filterRed:'🔴 طوارئ', filterYellow:'🟡 عاجل', filterGreen:'🟢 روتيني',
+    tbPatient:'المريض', tbTriage:'الفرز', tbComplaint:'الشكوى الرئيسية',
+    tbConfidence:'درجة الثقة', tbWaiting:'وقت الانتظار', tbAction:'إجراء',
+    btnReport:'تقرير', allergyLabel:'حساسية',
+    unitMin:'د', unitSec:'ث', unitHour:'س',
+    seenTitle:'أرشيف المُعاينين', seenSub:'المرضى الذين تمت مراجعتهم',
+    seenShowBtn:'عرض', seenHideBtn:'إخفاء',
+    seenAuthError:'خطأ في الصلاحية أو مشكلة في الاتصال.', seenLoadError:'تعذر تحميل الأرشيف.',
+    seenEmpty:'لا يوجد مرضى مُعاينون بعد.',
+    seenAt:'تمت المراجعة:', seenViewReport:'عرض التقرير', seenReturnQueue:'إعادة إلى القائمة',
+    seenPatientsFn:(n)=>`تم تعيين ${n} مريض كمُعاين`,
+    seenCountFn:(n)=>`${n} مريض`,
+    analyticsTitle:'تحليلات الفرز',
+    analyticsTotal:'الإجمالي', analyticsRed:'طوارئ', analyticsGreen:'روتيني',
+    analyticsAgeGroups:'الفئات العمرية', analyticsAvgConf:'متوسط الثقة',
+    analyticsSeen:'مُعاين', analyticsTopFlags:'أبرز علامات الخطر', analyticsNoData:'لا توجد بيانات بعد.',
+    demoTitle:'مرضى تجريبيون', demoBadge:'نموذج Gemma 4 التجريبي',
+    demoStats:'5 حالات · 2 RED · 2 YELLOW · 1 GREEN',
+    stemiTitle:'سيناريو STEMI غازي عنتاب', stemiSub:'محمت يلماظ · 66 عامًا · الحالة 1',
+    stemiBody:'نفس المريض، نفس الأعراض. في الفرز اليدوي انتظر 22 دقيقة وأُصيب بـ STEMI. صنّف الذكاء الاصطناعي هذه الحالة باللون الأحمر في <strong>14 ثانية</strong>.',
+    labelManual:'يدوي', labelAI:'فرز الذكاء الاصطناعي',
+    detailHeader:'تفاصيل المريض',
+    detailConfLabel:'درجة ثقة الذكاء الاصطناعي', detailUrgentTitle:'⚠️ تحذيرات عاجلة',
+    detailVitalsTitle:'العلامات الحيوية', vitalBP:'ض.د', vitalPulse:'نبض', vitalTemp:'حرارة',
+    detailComplaintTitle:'الشكوى الرئيسية', detailSymptomsTitle:'ملخص الأعراض',
+    detailDxTitle:'التشخيصات المحتملة', detailVisionTitle:'نتائج التصوير',
+    detailClinicalTitle:'ملاحظات سريرية (ذكاء اصطناعي)',
+    detailICD10Title:'اقتراح رمز ICD-10', detailICD10Btn:'اقتراح بـ Gemma 4',
+    detailICD10None:'لا يوجد اقتراح بعد.', detailICD10Fail:'فشل اقتراح ICD-10.',
+    detailICD10NoSugg:'تعذر الاقتراح.', detailICD10Analyzing:'جارٍ التحليل...',
+    detailICD10Computing:'Gemma 4 يحسب رموز ICD-10...', detailICD10Retry:'اقتراح مجدداً',
+    detailDoctorNotesTitle:'ملاحظات الطبيب', detailNotesNone:'لا توجد ملاحظات.',
+    detailAddNotePlaceholder:'أضف ملاحظة طبية...',
+    detailOverrideTitle:'تغيير مستوى الفرز',
+    detailOverrideRed:'🔴 طوارئ', detailOverrideYellow:'🟡 عاجل', detailOverrideGreen:'🟢 روتيني',
+    detailOverridePlaceholder:'سبب التعديل (اختياري)...',
+    detailOverrideSavedLabel:'تم حفظ تعديل الطبيب:', detailOverrideReasonLabel:'السبب:',
+    detailAIReasonTitle:'🧠 لماذا اقترح الذكاء الاصطناعي هذا الفرز؟',
+    detailRecommendTitle:'الإجراء الموصى به',
+    btnMarkSeen:'علّم كمُعاين', btnMarkedSeen:'مُعاين ✓',
+    btnFullReport:'فتح التقرير الكامل', btnClinicalReview:'مراجعة سريرية', btnFHIR:'تنزيل FHIR R4',
+    kanbanRed:'🔴 فوري', kanbanYellow:'🟡 قريبًا',
+    kanbanGreen:'🟢 قائمة روتينية', kanbanPending:'⏳ في انتظار التحليل',
+    kanbanNoPatients:'لا يوجد مرضى',
+    triageLabelRed:'طوارئ', triageLabelYellow:'عاجل/يمكن الانتظار', triageLabelGreen:'روتيني',
+    statusConnecting:'جارٍ الاتصال...', statusReady:'Gemma 4 جاهز ✓', statusWarming:'النموذج يسخن...',
+    statusActive:'Gemma 4 نشط', statusWaiting:'في انتظار Ollama', statusOffline:'لا يوجد اتصال',
+    modelOffline:'النموذج غير متصل', backendOffline:'الخادم غير متاح',
+    kioskLocked:'🔒 تم قفل الكشك', kioskUnlocked:'🔓 تم فتح الكشك',
+    confirmOverrideFn:(l)=>`هل أنت متأكد من تغيير مستوى الفرز إلى ${l}؟`,
+    alertOverrideFail:'تعذر تغيير الفرز.', alertSeenFail:'فشلت العملية.',
+    alertUnseenFail:'تعذر التراجع.', alertNoteFail:'تعذر إضافة الملاحظة.',
+    alertReportFail:'تعذر فتح التقرير: ',
+    reportNewTab:'فتح في تبويب جديد',
+    ageFn:(age)=>`${age} سنة`,
+    seenBadge:'✓ مُعاين', overrideBadge:'✎ تعديل',
     logout:'تسجيل الخروج',
   }
 };
+
+// ── ترجمه yardımcısı ──────────────────────────────────────────────
+function t(key, ...args) {
+  try {
+    const d = DL[uiLang] || DL.tr;
+    const val = d[key] !== undefined ? d[key] : (DL.tr[key] || key);
+    if (typeof val === 'function') return val(...args);
+    return val;
+  } catch(e) { return key; }
+}
 
 function setLang(l){
   uiLang = l;
@@ -1552,13 +1704,58 @@ function setLang(l){
   document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
   document.documentElement.lang = l;
   const d = DL[l] || DL.tr;
+
+  // Static element map
   const m = {
     'txt-nav-triage': d.navTriage, 'txt-nav-refresh': d.navRefresh,
     'txt-nav-lock': d.navLock, 'txt-nav-unlock': d.navUnlock,
+    'txt-nav-analytics': d.navAnalytics, 'txt-nav-logout': d.navLogout,
+    'txt-nav-kiosk-mgmt': d.navKioskMgmt, 'txt-nav-sistem': d.navSistem,
     'txt-panel-title': d.panelTitle, 'txt-refresh-btn': d.refreshBtn,
-    'txt-kiosk-btn': d.kioskBtn,
+    'txt-kiosk-btn': d.kioskBtn, 'txt-live-lbl': d.liveLbl,
+    'model-status-txt': d.modelChecking,
+    'txt-stat-total-lbl': d.statTotalLbl, 'txt-stat-total-sub': d.statTotalSub,
+    'txt-stat-red-lbl': d.statRedLbl, 'txt-stat-red-sub': d.statRedSub,
+    'txt-stat-yellow-lbl': d.statYellowLbl, 'txt-stat-yellow-sub': d.statYellowSub,
+    'txt-stat-green-lbl': d.statGreenLbl, 'txt-stat-green-sub': d.statGreenSub,
+    'txt-queue-title': d.queueTitle,
+    'txt-seen-title': d.seenTitle, 'txt-seen-sub': d.seenSub,
+    'txt-analytics-title': d.analyticsTitle,
+    'txt-demo-title': d.demoTitle, 'txt-demo-badge': d.demoBadge,
+    'txt-demo-stats': d.demoStats,
+    'txt-stemi-title': d.stemiTitle, 'txt-stemi-sub': d.stemiSub,
+    'txt-unit-min': d.unitMin, 'txt-unit-sec': d.unitSec,
+    'txt-label-manual': d.labelManual, 'txt-label-ai': d.labelAI,
+    'txt-detail-header': d.detailHeader,
+    'txt-report-new-tab': d.reportNewTab,
   };
-  Object.entries(m).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.textContent = val; });
+  Object.entries(m).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+
+  // STEMI body uses innerHTML (has <strong>)
+  const stemiBody = document.getElementById('txt-stemi-body');
+  if (stemiBody) stemiBody.innerHTML = d.stemiBody;
+
+  // Search placeholder
+  const searchInp = document.getElementById('inp-search');
+  if (searchInp) searchInp.placeholder = d.searchPlaceholder;
+
+  // Filter select options
+  const fAll = document.getElementById('txt-filter-all'); if(fAll) fAll.textContent = d.filterAll;
+  const fRed = document.getElementById('txt-filter-red'); if(fRed) fRed.textContent = d.filterRed;
+  const fYel = document.getElementById('txt-filter-yellow'); if(fYel) fYel.textContent = d.filterYellow;
+  const fGrn = document.getElementById('txt-filter-green'); if(fGrn) fGrn.textContent = d.filterGreen;
+
+  // Seen toggle button (might be Göster or Gizle)
+  const seenToggle = document.getElementById('txt-seen-toggle-btn');
+  if (seenToggle) {
+    const isOpen = !document.getElementById('seen-archive')?.classList.contains('hidden');
+    seenToggle.textContent = isOpen ? d.seenHideBtn : d.seenShowBtn;
+  }
+
+  // Lang button active styles
   ['dlbtn-tr','dlbtn-en','dlbtn-ar'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1566,6 +1763,18 @@ function setLang(l){
       ? 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white'
       : 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
   });
+
+  // Re-render dynamic content with new language
+  if (Object.keys(allPatients).length > 0) {
+    const livePatients = Object.values(allPatients).filter(p => !p.is_seen && !p.session_id?.startsWith('demo-'));
+    if (livePatients.length > 0) renderTable(livePatients, 'live-table', true);
+    renderTable(DEMO, 'demo-table', false);
+    if (_queueView === 'kanban') {
+      renderKanban(Object.values(allPatients).filter(p => !p.is_seen), 'live-kanban', true);
+    }
+  }
+  // Re-render detail if open
+  if (currentDetailSid) showDetail(currentDetailSid);
 }
 
 // Sayfa yüklenince kayıtlı dili uygula
