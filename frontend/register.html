@@ -244,13 +244,44 @@ async function doRegister(e) {
   }
 }
 
-(function() {
+(function checkAlreadyLoggedIn() {
   const token = localStorage.getItem('anamnez_token');
   const user = JSON.parse(localStorage.getItem('anamnez_user') || 'null');
-  if (token && user) {
-    window.location.href = ['doctor','admin','personnel'].includes(user.role) ? 'doctor.html' : 'patient_dashboard.html';
-  }
+  if (!token || !user) return;
+  // Token geçerli mi? Backend'e sor, offline ise sadece banner göster
+  fetch(`${API}/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } })
+    .then(r => {
+      if (r.status === 401 || r.status === 403) {
+        localStorage.removeItem('anamnez_token');
+        localStorage.removeItem('anamnez_user');
+        return;
+      }
+      showAlreadyLoggedIn(user);
+    })
+    .catch(() => showAlreadyLoggedIn(user)); // Offline: sadece banner
 })();
+
+function showAlreadyLoggedIn(user) {
+  const isDoctor = ['doctor','admin','personnel'].includes(user.role);
+  const panelHref = isDoctor ? 'doctor.html' : 'patient_dashboard.html';
+  const banner = document.createElement('div');
+  banner.className = 'mb-5 p-4 rounded-2xl border border-sec/30 bg-secc/10';
+  banner.innerHTML = `
+    <div class="flex items-center gap-3 mb-3">
+      <span class="material-symbols-outlined msym-fill text-sec text-[22px]">check_circle</span>
+      <div>
+        <p class="font-semibold text-pri text-sm">${user.name || user.email || 'Kullanıcı'}</p>
+        <p class="text-xs text-onsv">${isDoctor ? 'Doktor' : 'Hasta'} olarak giriş yaptınız</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <a href="${panelHref}" class="flex-1 py-2 text-center rounded-xl bg-pri text-white text-sm font-semibold hover:bg-pric transition-all">Panele Git</a>
+      <button onclick="this.closest('div.mb-5').remove();localStorage.removeItem('anamnez_token');localStorage.removeItem('anamnez_user');"
+        class="flex-1 py-2 rounded-xl bg-surfc text-onsv text-sm font-semibold hover:bg-ouv/30 transition-all">Farklı Hesap</button>
+    </div>`;
+  const form = document.getElementById('reg-form') || document.querySelector('form');
+  if (form && form.parentNode) form.parentNode.insertBefore(banner, form);
+}
 </script>
 </body>
 </html>

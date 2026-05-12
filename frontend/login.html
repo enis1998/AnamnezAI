@@ -63,23 +63,24 @@ tailwind.config = {
 <div class="w-full max-w-md fade">
 
   <!-- Zaten giriş yapılmışsa banner (JS ile gösterilir) -->
-  <div id="already-logged-in-banner" class="hidden mb-5 p-4 rounded-2xl border border-sec/30 bg-secc/10">
+  <div id="already-logged-in-banner" class="hidden mb-5 p-4 rounded-2xl border border-warn/40 bg-warn/5">
     <div class="flex items-center gap-3 mb-3">
-      <span class="material-symbols-outlined msym-fill text-sec text-[22px]">check_circle</span>
+      <span class="material-symbols-outlined msym-fill text-warn text-[22px]">info</span>
       <div>
         <p class="font-semibold text-pri text-sm" id="banner-name">Dr. Kullanıcı</p>
-        <p class="text-xs text-onsv" id="banner-role">olarak giriş yaptınız</p>
+        <p class="text-xs text-onsv" id="banner-role">olarak aktif oturum var</p>
       </div>
     </div>
+    <p class="text-xs text-onsv mb-3">Farklı bir hesapla giriş yapmak istiyorsanız önce çıkış yapın.</p>
     <div class="flex gap-2">
-      <a id="banner-panel-link" href="doctor.html"
-        class="flex-1 py-2 text-center rounded-xl bg-pri text-white text-sm font-semibold hover:bg-pric transition-all">
-        Panele Git
-      </a>
       <button onclick="doLogoutAndStay()"
-        class="flex-1 py-2 rounded-xl bg-surfc text-onsv text-sm font-semibold hover:bg-ouv/30 transition-all">
-        Farklı Hesap
+        class="flex-1 py-2 rounded-xl bg-pri text-white text-sm font-semibold hover:bg-pric transition-all">
+        Çıkış Yap / Farklı Hesap
       </button>
+      <a id="banner-panel-link" href="doctor.html"
+        class="flex-1 py-2 text-center rounded-xl border border-surfc bg-surf text-onsv text-sm font-semibold hover:bg-surfc transition-all">
+        Panele Dön
+      </a>
     </div>
   </div>
 
@@ -373,20 +374,37 @@ async function handleGoogleResponse(response) {
 // Google GIS scripti: GOOGLE_CLIENT_ID varsa zaten yükle
 if (GOOGLE_CLIENT_ID) loadGoogleScript();
 
-// Zaten giriş yapılmışsa → otomatik yönlendirme YOK, kullanıcıya seçenek sun
+// Zaten giriş yapılmışsa → token geçerliliğini kontrol et, geçersizse temizle
 (function checkAlreadyLoggedIn() {
   const token = localStorage.getItem('anamnez_token');
   const user = JSON.parse(localStorage.getItem('anamnez_user') || 'null');
-  if (token && user) {
-    const isDoctor = ['doctor','admin','personnel'].includes(user.role);
+  if (!token || !user) return;
+
+  function showBanner(u) {
+    const isDoctor = ['doctor','admin','personnel'].includes(u.role);
     const panelHref = isDoctor ? 'doctor.html' : 'patient_dashboard.html';
     const roleLabel = isDoctor ? 'Doktor olarak giriş yaptınız' : 'Hasta olarak giriş yaptınız';
-
-    document.getElementById('banner-name').textContent = user.name || user.email || 'Kullanıcı';
+    document.getElementById('banner-name').textContent = u.name || u.email || 'Kullanıcı';
     document.getElementById('banner-role').textContent = roleLabel;
     document.getElementById('banner-panel-link').href = panelHref;
     document.getElementById('already-logged-in-banner').classList.remove('hidden');
   }
+
+  // Token geçerli mi? Backend'e sor
+  fetch(`${API}/auth/me`, { headers: { 'Authorization': `Bearer ${token}` }, signal: AbortSignal.timeout(3000) })
+    .then(r => {
+      if (r.status === 401 || r.status === 403) {
+        // Token süresi dolmuş → sil, sadece formu göster
+        localStorage.removeItem('anamnez_token');
+        localStorage.removeItem('anamnez_user');
+        return;
+      }
+      showBanner(user);
+    })
+    .catch(() => {
+      // Backend offline → token silinmez, sadece banner göster (kullanıcı karar versin)
+      showBanner(user);
+    });
 })();
 
 function doLogoutAndStay() {
