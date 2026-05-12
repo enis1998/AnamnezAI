@@ -690,8 +690,23 @@ const TCFG = {
   GREEN:  {bg:'#f0faf9',color:'#006a68',badge:'background:#006a68',dot:'background:#006a68',lbl:'🟢 RUTİN'},
   PENDING:{bg:'#f4f7f9',color:'#8c9499',badge:'background:#8c9499',dot:'background:#aaa',lbl:'⏳ BEKL'},
 };
+// TCFG badge etiketlerini mevcut dile güncelle
+function updateTCFGLabels() {
+  if (typeof t !== 'function') return;  // t() henüz tanımlanmadıysa atla
+  TCFG.RED.lbl     = t('triageBadgeRed');
+  TCFG.YELLOW.lbl  = t('triageBadgeYellow');
+  TCFG.GREEN.lbl   = t('triageBadgeGreen');
+  TCFG.PENDING.lbl = t('triageBadgePending');
+}
 
-document.getElementById('txt-date').textContent = new Date().toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+function updateDateBar() {
+  const locale = typeof uiLang !== 'undefined' && uiLang === 'ar' ? 'ar-SA'
+               : typeof uiLang !== 'undefined' && uiLang === 'en' ? 'en-GB' : 'tr-TR';
+  const el = document.getElementById('txt-date');
+  if (el) el.textContent = new Date().toLocaleDateString(locale, {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+// İlk render — dil henüz yüklenmeden varsayılan TR formatı
+updateDateBar();
 
 async function checkStatus(){
   try {
@@ -921,7 +936,7 @@ function showDetail(sid){
   const existingNotes = (p.doctor_notes||[]).map(n=>
     `<div class="bg-blue-50 rounded-lg p-2.5 mb-2">
       <p class="text-[11px] text-ons">${n.text}</p>
-      <p class="text-[10px] text-ouv mt-1">${n.doctor_name} · ${new Date(n.timestamp).toLocaleString('tr-TR')}</p>
+      <p class="text-[10px] text-ouv mt-1">${n.doctor_name} · ${new Date(n.timestamp).toLocaleString(uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR')}</p>
     </div>`
   ).join('');
   const seenBadge = p.is_seen ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">${t('seenBadge')}</span>` : '';
@@ -937,7 +952,7 @@ function showDetail(sid){
           <p class="font-head font-bold text-pri text-[15px]">${p.patient_name}</p>
           ${seenBadge}${overrideBadge}
         </div>
-        <p class="text-[11px] text-onsv">${p.age} yaş · ${p.gender}</p>
+        <p class="text-[11px] text-onsv">${t('ageFn', p.age)} · ${p.gender}</p>
       </div>
       <span class="px-2.5 py-1 rounded-full text-[10px] font-bold text-white" style="${cfg.badge}">${cfg.lbl}</span>
     </div>
@@ -1430,6 +1445,7 @@ function connectSSE(){
     document.getElementById('live-indicator').classList.remove('hidden');
     document.getElementById('live-indicator').style.display='flex';
     DEMO.forEach(p=>{ allPatients[p.session_id]=p; });
+    updateTCFGLabels();
     renderTable(DEMO,'demo-table',false);
   };
 
@@ -1522,6 +1538,8 @@ const DL = {
     kanbanRed:'🔴 Derhal Müdahale', kanbanYellow:'🟡 Kısa Sürede',
     kanbanGreen:'🟢 Rutin Kuyruk', kanbanPending:'⏳ Analiz Bekleniyor',
     kanbanNoPatients:'Hasta yok',
+    // Triage badge labels (short, for table badges)
+    triageBadgeRed:'🔴 ACİL', triageBadgeYellow:'🟡 ACİL/BEK', triageBadgeGreen:'🟢 RUTİN', triageBadgePending:'⏳ BEKL',
     // Triage labels
     triageLabelRed:'Acil', triageLabelYellow:'Acil/Bekleyebilir', triageLabelGreen:'Rutin',
     // Status
@@ -1601,6 +1619,7 @@ const DL = {
     kanbanGreen:'🟢 Routine Queue', kanbanPending:'⏳ Awaiting Analysis',
     kanbanNoPatients:'No patients',
     triageLabelRed:'Emergency', triageLabelYellow:'Urgent/Can Wait', triageLabelGreen:'Routine',
+    triageBadgeRed:'🔴 EMERG', triageBadgeYellow:'🟡 URGENT', triageBadgeGreen:'🟢 ROUTINE', triageBadgePending:'⏳ PENDING',
     statusConnecting:'Connecting...', statusReady:'Gemma 4 Ready ✓', statusWarming:'Model Warming...',
     statusActive:'Gemma 4 Active', statusWaiting:'Waiting for Ollama', statusOffline:'No Connection',
     modelOffline:'Model Offline', backendOffline:'Backend Unreachable',
@@ -1673,6 +1692,7 @@ const DL = {
     kanbanGreen:'🟢 قائمة روتينية', kanbanPending:'⏳ في انتظار التحليل',
     kanbanNoPatients:'لا يوجد مرضى',
     triageLabelRed:'طوارئ', triageLabelYellow:'عاجل/يمكن الانتظار', triageLabelGreen:'روتيني',
+    triageBadgeRed:'🔴 طوارئ', triageBadgeYellow:'🟡 عاجل', triageBadgeGreen:'🟢 روتيني', triageBadgePending:'⏳ انتظار',
     statusConnecting:'جارٍ الاتصال...', statusReady:'Gemma 4 جاهز ✓', statusWarming:'النموذج يسخن...',
     statusActive:'Gemma 4 نشط', statusWaiting:'في انتظار Ollama', statusOffline:'لا يوجد اتصال',
     modelOffline:'النموذج غير متصل', backendOffline:'الخادم غير متاح',
@@ -1764,14 +1784,27 @@ function setLang(l){
       : 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
   });
 
+  // TCFG badge etiketlerini güncelle (triage rozetleri)
+  updateTCFGLabels();
+
+  // Tarih göstergesini güncelle
+  updateDateBar();
+
   // Re-render dynamic content with new language
-  if (Object.keys(allPatients).length > 0) {
-    const livePatients = Object.values(allPatients).filter(p => !p.is_seen && !p.session_id?.startsWith('demo-'));
-    if (livePatients.length > 0) renderTable(livePatients, 'live-table', true);
-    renderTable(DEMO, 'demo-table', false);
-    if (_queueView === 'kanban') {
-      renderKanban(Object.values(allPatients).filter(p => !p.is_seen), 'live-kanban', true);
+  // DEMO her zaman render edilir (allPatients'ten bağımsız)
+  renderTable(DEMO, 'demo-table', false);
+  // Gerçek hastalar varsa onları da render et
+  const livePatients = Object.values(allPatients).filter(p => !p.is_seen && !p.session_id?.startsWith('demo-'));
+  if (livePatients.length > 0) renderTable(livePatients, 'live-table', true);
+  else {
+    // Live table placeholder'ı da dile çevir
+    const liveEl = document.getElementById('live-table');
+    if (liveEl && liveEl.querySelector('.text-center')) {
+      liveEl.innerHTML = `<div class="text-center py-10 text-onsv text-[12px]">${t('queueEmpty')}</div>`;
     }
+  }
+  if (_queueView === 'kanban') {
+    renderKanban(Object.values(allPatients).filter(p => !p.is_seen), 'live-kanban', true);
   }
   // Re-render detail if open
   if (currentDetailSid) showDetail(currentDetailSid);
