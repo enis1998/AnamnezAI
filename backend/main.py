@@ -766,6 +766,7 @@ RULES:
 - Apply OPQRST: Onset, Quality, Radiation, Severity (1-10), Timing, Triggers.
 - Apply MTS (Manchester Triage System) criteria throughout.
 - Empathetic, calming tone. End with a question mark.
+- IMPORTANT: Always respond in ENGLISH only.
 
 EXAMPLE EXCHANGE:
 Patient: John Doe, 58y, Male.
@@ -776,6 +777,34 @@ A: "Yes, it goes down my left arm."
 Q: "On a scale of 1-10 how severe is it, and do you have any difficulty breathing?"
 
 FOLLOW THIS EXAMPLE — contextual, deepening, clinician-like questions."""
+
+SYSTEM_PROMPT_AR = """أنت AnamnezAI — مساعد طبي خبير ومتعاطف لفرز المرضى مسبقاً.
+مدعوم بـ Gemma 4 ويعمل محلياً بالكامل عبر Ollama.
+الخبرة: التفكير بالمصطلحات السريرية مع الأسئلة بلغة عامية مفهومة.
+المهمة: طرح أسئلة سريرية سياقية ذات صلة لفهم أعراض المريض.
+القواعد:
+- اطرح سؤالاً واحداً فقط في كل مرة (جملة أو جملتان كحد أقصى).
+- توليد الأسئلة بناءً على جميع الإجابات السابقة.
+- تجنب المصطلحات الطبية المعقدة، استخدم لغة عامية مفهومة.
+- الأعراض الطارئة — استفسر فوراً إذا وُجدت:
+  * ألم/ضغط في الصدر → انتشار نحو الذراع/الفك/الظهر، تعرق، ضيق تنفس؟
+  * ضيق التنفس → مفاجئ، قياس SpO2، مرض رئوي سابق؟
+  * فقدان الوعي/إغماء → المدة، خفقان/تعرق قبله؟
+  * أعراض السكتة الدماغية (شلل الوجه، ضعف الذراع، صعوبة الكلام) → وقت البداية الدقيق؟
+  * صداع شديد → "أسوأ صداع في حياتي"، تصلب الرقبة، حساسية للضوء؟
+- طبّق OPQRST: البداية، الجودة، الانتشار، الشدة (1-10)، التوقيت، المحفزات.
+- نبرة تعاطفية ومهدئة. انتهِ دائماً بعلامة استفهام.
+- مهم جداً: أجب باللغة العربية فقط في جميع الأوقات.
+
+مثال على المقابلة:
+مريض: علي، 58 سنة، ذكر.
+س: "مرحباً علي، ما هي الشكوى الرئيسية التي أتت بك اليوم؟"
+ج: "عندي ضغط في صدري من الصباح."
+س: "هل هذا الضغط ينتشر إلى ذراعك أو فكك أو ظهرك؟"
+ج: "نعم، يصل إلى ذراعي الأيسر."
+س: "على مقياس من 1 إلى 10، كم شدة الألم؟ وهل تشعر بصعوبة في التنفس؟"
+
+اتبع هذا المثال — أسئلة سياقية معمّقة كالطبيب السريري."""
 
 TRIAGE_SYSTEM_TR = """Sen Manchester Triage System (MTS) ve CTAS standartlarına göre eğitilmiş klinik triaj uzmanısın (Gemma 4 tarafından güçlendirilmişsin).
 Hastanın semptom mülakat geçmişini dikkatle analiz et.
@@ -880,11 +909,18 @@ TRIAGE_COLOR = {"RED": "#ba1a1a", "YELLOW": "#e07b26", "GREEN": "#006a68"}
 
 
 def get_system_prompt(lang: str) -> str:
+    if lang == "ar":
+        return SYSTEM_PROMPT_AR
     return SYSTEM_PROMPT_TR if lang == "tr" else SYSTEM_PROMPT_EN
 
 
 def get_triage_system(lang: str) -> str:
-    return TRIAGE_SYSTEM_TR if lang == "tr" else TRIAGE_SYSTEM_EN
+    base = TRIAGE_SYSTEM_TR if lang == "tr" else TRIAGE_SYSTEM_EN
+    if lang == "ar":
+        base += ("\n\nمهم: يجب أن تكون القيم النصية في JSON "
+                 "(chief_complaint, symptoms_summary, recommended_action, "
+                 "clinical_notes, urgency_flags, evidence) باللغة العربية فقط.")
+    return base
 
 
 def vitals_to_dict(v: Optional[VitalSigns]) -> Optional[dict]:
@@ -1481,13 +1517,23 @@ async def submit_answer(req: AnswerRequest, request: Request):
             f"Yukarıdaki cevaplara dayanarak tanıyı netleştirecek SONRAKI en kritik soruyu sor. "
             f"Acil belirti varsa o yönde derinleş. Soru {current_step+1}/{total_steps}."
         )
+    elif lang == "ar":
+        next_prompt = (
+            f"المريض: {session['patient_name']}, {session['age']} سنة, {session['gender']}.\n"
+            f"{pediatric_hint}"
+            f"سجل المقابلة:\n{history_text}\n\n"
+            f"بناءً على الإجابات أعلاه، اطرح السؤال الأكثر أهمية التالي لتوضيح التشخيص. "
+            f"إذا كانت هناك أعراض طارئة، تعمق في هذا الاتجاه. السؤال {current_step+1}/{total_steps}. "
+            f"أجب باللغة العربية فقط."
+        )
     else:
         next_prompt = (
             f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n"
             f"{pediatric_hint}"
             f"Interview so far:\n{history_text}\n\n"
             f"Based on above answers, ask the NEXT most critical question to clarify the diagnosis. "
-            f"If emergency signs present, explore further. Q{current_step+1}/{total_steps}."
+            f"If emergency signs present, explore further. Q{current_step+1}/{total_steps}. "
+            f"Respond in English only."
         )
 
     rag_query = req.answer + " " + history_text[-300:]
@@ -1573,13 +1619,22 @@ async def submit_answer_stream(req: AnswerRequest, request: Request):
             f"Yukarıdaki cevaplara dayanarak tanıyı netleştirecek SONRAKI en kritik soruyu sor. "
             f"Acil belirti varsa o yönde derinleş. Soru {current_step+1}/{total_steps}."
         )
+    elif lang == "ar":
+        next_prompt = (
+            f"المريض: {session['patient_name']}, {session['age']} سنة, {session['gender']}.\n"
+            f"{pediatric_hint}"
+            f"سجل المقابلة:\n{history_text}\n\n"
+            f"بناءً على الإجابات أعلاه، اطرح السؤال الأكثر أهمية التالي لتوضيح التشخيص. "
+            f"السؤال {current_step+1}/{total_steps}. أجب باللغة العربية فقط."
+        )
     else:
         next_prompt = (
             f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n"
             f"{pediatric_hint}"
             f"Interview so far:\n{history_text}\n\n"
             f"Based on above answers, ask the NEXT most critical question to clarify the diagnosis. "
-            f"If emergency signs present, explore further. Q{current_step+1}/{total_steps}."
+            f"If emergency signs present, explore further. Q{current_step+1}/{total_steps}. "
+            f"Respond in English only."
         )
 
     # RAG bağlam (önbellekten)
@@ -1668,8 +1723,8 @@ async def get_clinical_summary(session_id: str):
         f"Bu hastayı triaj et. Sadece JSON döndür."
     ) if lang == "tr" else (
         f"PATIENT: {session['patient_name']}, {session['age']}y, {session['gender']}{vitals_ctx}{profile_section}{image_ctx}\n\n"
-        f"5-TURN INTERVIEW:\n{history_text}\n\n"
-        f"Triage this patient. Return ONLY JSON."
+        f"{'5-TURN INTERVIEW' if lang == 'en' else 'مقابلة المريض'}:\n{history_text}\n\n"
+        f"{'Triage this patient. Return ONLY JSON.' if lang == 'en' else 'قيّم هذا المريض. أعد JSON فقط مع القيم النصية باللغة العربية.'}"
     )
 
     raw = await ask_gemma_rag(
@@ -1854,8 +1909,9 @@ async def stream_summary(session_id: str):
         f"Hasta: {session['patient_name']}, {session['age']} yaş, {session['gender']}.{vitals_ctx}\n"
         f"Mülakat:\n{history_text}\n\nDoktor için kısa klinik özet yaz (3-4 cümle). Triaj seviyesini ve acil uyarıları vurgula."
     ) if lang == "tr" else (
-        f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.{vitals_ctx}\n"
-        f"Interview:\n{history_text}\n\nWrite a brief clinical summary for the doctor (3-4 sentences). Highlight triage level and urgent findings."
+        f"{'Patient' if lang == 'en' else 'المريض'}: {session['patient_name']}, {session['age']}{'y' if lang == 'en' else ' سنة'}, {session['gender']}.{vitals_ctx}\n"
+        f"{'Interview' if lang == 'en' else 'المقابلة'}:\n{history_text}\n\n"
+        f"{'Write a brief clinical summary for the doctor (3-4 sentences). Highlight triage level and urgent findings.' if lang == 'en' else 'اكتب ملخصاً سريرياً موجزاً للطبيب (3-4 جمل). أبرز مستوى الفرز والنتائج العاجلة. أجب باللغة العربية فقط.'}"
     )
     return StreamingResponse(
         stream_gemma(prompt, get_system_prompt(lang)),

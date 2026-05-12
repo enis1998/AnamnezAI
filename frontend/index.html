@@ -965,58 +965,123 @@ async function submitAnswer(){
 
   addUserMessage(ans);
   document.getElementById('inp-answer').value='';
-  showTyping(true);
 
-  // Sprint 14: Gemma 4 Düşünüyor animasyonu
-  const typingTxt = document.getElementById('txt-typing');
-  let thinkInterval = null;
-  const thinkPhrases = lang==='tr'
-    ? ['Gemma 4 düşünüyor...','Klinik bağlam analiz ediliyor...','MTS kriterleri değerlendiriliyor...','Sonraki soru hazırlanıyor...']
-    : ['Gemma 4 is thinking...','Analyzing clinical context...','Evaluating MTS criteria...','Preparing next question...'];
-  let thinkIdx = 0;
-  if (typingTxt) {
-    thinkInterval = setInterval(() => {
-      thinkIdx = (thinkIdx + 1) % thinkPhrases.length;
-      typingTxt.textContent = thinkPhrases[thinkIdx];
-    }, 2500);
-  }
+  // Streaming mesaj balonu — kullanıcı ilk tokeni hemen görür
+  const chatArea = document.getElementById('chat-area');
+  const streamRow = document.createElement('div');
+  streamRow.className = 'flex items-start gap-3 slide';
+  const streamBubble = document.createElement('div');
+  streamBubble.className = 'flex-1 bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm border border-surfc text-[15px] leading-relaxed text-ons';
+  const aiLabel = document.createElement('p');
+  aiLabel.className = 'text-[11px] font-bold text-sec mb-2 uppercase tracking-wide';
+  aiLabel.textContent = 'ANAMNEZAI · GEMMA 4';
+  const streamText = document.createElement('span');
+  streamText.innerHTML = `<span style="opacity:0.3;animation:db .6s ease infinite alternate">▋</span>`;
+  streamBubble.appendChild(aiLabel);
+  streamBubble.appendChild(streamText);
+  streamRow.innerHTML = `<div class="w-9 h-9 rounded-full bg-secc flex items-center justify-center flex-shrink-0 mt-1"><span class="material-symbols-outlined msym-fill text-sec text-[18px]">psychology</span></div>`;
+  streamRow.appendChild(streamBubble);
+  chatArea.appendChild(streamRow);
+  chatArea.scrollTop = chatArea.scrollHeight;
+
+  let fullText = '';
+  let completed = false;
 
   try {
-    const res = await fetch(`${API}/api/session/answer`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
+    const res = await fetch(`${API}/api/session/answer/stream`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({session_id:sessionId,answer:ans}),
       signal: AbortSignal.timeout(190000)
     });
-    if(!res.ok){
-      const err = await res.json().catch(()=>({detail:'Sunucu hatası'}));
-      throw new Error(err.detail || `HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    showTyping(false);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    if(data.question==='__COMPLETED__'){
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let lineBuf   = '';
+
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      lineBuf += decoder.decode(value, {stream:true});
+      const lines = lineBuf.split('\n');
+      lineBuf = lines.pop() || '';
+
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if(raw === '[DONE]') break;
+        try{
+          const chunk = JSON.parse(raw);
+          if(chunk.token){
+            if(!fullText) streamText.textContent = ''; // imleci kaldır
+            fullText += chunk.token;
+            streamText.textContent = fullText;
+            chatArea.scrollTop = chatArea.scrollHeight;
+          } else if(chunk.metadata){
+            updateProgress(chunk.metadata.step, chunk.metadata.total_steps);
+            if(chunk.metadata.completed) completed = true;
+          } else if(chunk.error){
+            throw new Error(chunk.error);
+          }
+        } catch(_){}
+      }
+    }
+
+    // TTS — tam cümle geldikten sonra seslendir
+    if(fullText) speakText(fullText);
+
+    if(completed){
+      streamRow.remove(); // streaming balonu kaldır
       showView('view-analyzing');
       await fetchSummary();
-    } else {
-      // Boş yanıt gelirse varsayılan mesaj göster
-      const q = data.question && data.question.trim()
-        ? data.question
-        : (lang==='tr' ? 'Anlıyorum, devam edin lütfen.' : 'I see, please continue.');
-      addAIMessage(q);
-      updateProgress(data.step, data.total_steps);
+    } else if(!fullText){
+      throw new Error('empty_stream');
     }
-  } catch(e) {
-    showTyping(false);
-    const msg = e.name==='TimeoutError'
-      ? (lang==='tr' ? '⚠️ Gemma 4 yanıt vermedi. Lütfen tekrar deneyin.' : '⚠️ Gemma 4 timed out. Please try again.')
-      : (e.message || t('errConn'));
-    // Sprint 14: Toast + lastAnswer kaydet + Retry butonu
-    showToastWithRetry(msg, ans);
+
+  } catch(e){
+    // Fallback — eski non-streaming endpoint
+    streamRow.remove();
+    showTyping(true);
+    const typingTxt = document.getElementById('txt-typing');
+    let thinkInterval = null;
+    const thinkPhrases = lang==='tr'
+      ? ['Gemma 4 düşünüyor...','Klinik bağlam analiz ediliyor...','Sonraki soru hazırlanıyor...']
+      : lang==='ar'
+      ? ['Gemma 4 يفكر...','جارٍ تحليل السياق السريري...','جارٍ تحضير السؤال التالي...']
+      : ['Gemma 4 is thinking...','Analyzing clinical context...','Preparing next question...'];
+    let thinkIdx=0;
+    if(typingTxt){
+      thinkInterval = setInterval(()=>{ thinkIdx=(thinkIdx+1)%thinkPhrases.length; typingTxt.textContent=thinkPhrases[thinkIdx]; },2500);
+    }
+    try{
+      const res2 = await fetch(`${API}/api/session/answer`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({session_id:sessionId,answer:ans}),
+        signal: AbortSignal.timeout(190000)
+      });
+      if(!res2.ok){ const err=await res2.json().catch(()=>({})); throw new Error(err.detail||`HTTP ${res2.status}`); }
+      const data=await res2.json();
+      showTyping(false);
+      if(data.question==='__COMPLETED__'){ showView('view-analyzing'); await fetchSummary(); completed=true;
+      } else {
+        const q = data.question?.trim() || (lang==='tr'?'Anlıyorum, devam edin lütfen.':(lang==='ar'?'حسناً، تفضل/ي.'                :'I see, please continue.'));
+        addAIMessage(q);
+        updateProgress(data.step, data.total_steps);
+      }
+    } catch(e2){
+      showTyping(false);
+      const msg = e2.name==='TimeoutError'
+        ? (lang==='tr'?'⚠️ Gemma 4 yanıt vermedi. Lütfen tekrar deneyin.':(lang==='ar'?'⚠️ لم يستجب Gemma 4. يرجى المحاولة مرة أخرى.':'⚠️ Gemma 4 timed out. Please try again.'))
+        : (e2.message||t('errConn'));
+      showToastWithRetry(msg, ans);
+    } finally {
+      if(thinkInterval) clearInterval(thinkInterval);
+      if(typingTxt) typingTxt.textContent=t('typing');
+    }
   } finally {
-    if (thinkInterval) clearInterval(thinkInterval);
-    if (typingTxt) typingTxt.textContent = t('typing');
     btn.disabled=false;
-    btn.innerHTML=`<span id="txt-btn-next">${t('sendBtn')}</span><span class="material-symbols-outlined msym text-[16px]">send</span>`;
+    btn.innerHTML=`<span id="txt-btn-next">${t(completed?'finishBtn':'sendBtn')}</span><span class="material-symbols-outlined msym text-[16px]">send</span>`;
+    if(!completed) document.getElementById('inp-answer')?.focus();
   }
 }
 
