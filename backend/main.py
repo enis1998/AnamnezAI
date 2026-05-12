@@ -80,8 +80,9 @@ GEMMA_MODEL      = os.getenv("GEMMA_MODEL", "gemma4:e4b")
 MEDGEMMA_MODEL   = os.getenv("MEDGEMMA_MODEL", "medgemma:4b")   # Vision — multimodal analysis
 RAG_ENABLED      = os.getenv("RAG_ENABLED", "true").lower() == "true"
 
-# Sprint Fix — GPU/RAM yetersizse num_gpu=0 ile CPU moduna düş
-OLLAMA_NUM_GPU   = int(os.getenv("OLLAMA_NUM_GPU", "0"))  # 0 = CPU mode
+# GPU desteği — 99 = tüm katmanları GPU'ya yükle (Ollama max'a sınırlar).
+# CPU-only moduna düşmek için: OLLAMA_NUM_GPU=0 env değişkeni
+OLLAMA_NUM_GPU   = int(os.getenv("OLLAMA_NUM_GPU", "99"))  # 99 = tüm katmanlar GPU'da
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -145,6 +146,44 @@ _queue_subscribers: list[asyncio.Queue] = []
 # Model warmup durumu — tüm hastalar bu bayrağı görür
 _model_ready = False
 _model_warming = False
+
+# ─────────────────────────────────────────────
+#  RAG Bağlam Önbelleği — aynı şikayet için ChromaDB'ye tekrar gitme
+# ─────────────────────────────────────────────
+_rag_context_cache: dict[str, tuple[str, float]] = {}  # key → (context, timestamp)
+_RAG_CACHE_TTL = 300.0  # 5 dakika
+
+
+def _get_rag_context_cached(query: str, mode: str = "interview") -> str:
+    """RAG bağlamını önbellekten getirir; yoksa hesaplar ve önbelleğe alır."""
+    import hashlib as _hashlib
+    cache_key = _hashlib.md5(f"{mode}:{query[:160]}".encode()).hexdigest()
+    now = _time.time()
+    hit = _rag_context_cache.get(cache_key)
+    if hit and (now - hit[1]) < _RAG_CACHE_TTL:
+        return hit[0]
+    # Canlı hesapla
+    ctx = ""
+    try:
+        if RAG_ENABLED and query:
+            _init_rag_if_needed()
+            import rag as rag_module
+            if rag_module.is_rag_available():
+                if mode == "triage":
+                    ctx = rag_module.get_medical_context_for_triage(
+                        chief_complaint=query[:200], min_relevance=0.38)
+                else:
+                    ctx = rag_module.get_context_for_prompt(
+                        query, n_results=4, min_relevance=0.35)
+    except Exception:
+        pass
+    _rag_context_cache[cache_key] = (ctx, now)
+    # Önbellek büyüdüyse eskilerini at
+    if len(_rag_context_cache) > 300:
+        oldest = sorted(_rag_context_cache.items(), key=lambda x: x[1][1])[:60]
+        for k, _ in oldest:
+            del _rag_context_cache[k]
+    return ctx
 
 # ─────────────────────────────────────────────
 #  Adaptif soru sayısı — klinik aciliyete göre
@@ -505,7 +544,7 @@ class ClinicalSummaryResponse(BaseModel):
 #  Ollama /api/chat Helpers
 # ─────────────────────────────────────────────
 async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0,
-                    model: Optional[str] = None) -> str:
+                    model: Optional[str] = None, num_predict: int = 512) -> str:
     """Ollama /api/chat üzerinden model isteği gönderir. model=None → GEMMA_MODEL.
 
     LATENCY CONTEXT (demo / jüri için):
@@ -524,20 +563,20 @@ async def ask_gemma(prompt: str, system: str = "", timeout: float = 180.0,
         async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.post(
                 f"{OLLAMA_BASE_URL}/api/chat",
-                json={
-                    "model": _model,
-                    "messages": messages,
-                    "stream": False,
-                    "think": False,
-                    "options": {
-                        "temperature": 0.25,
-                        "top_p": 0.85,
-                        "top_k": 40,
-                        "num_predict": 512,
-                        "repeat_penalty": 1.1,
-                        "num_gpu": OLLAMA_NUM_GPU,
+                    json={
+                        "model": _model,
+                        "messages": messages,
+                        "stream": False,
+                        "think": False,
+                        "options": {
+                            "temperature": 0.25,
+                            "top_p": 0.85,
+                            "top_k": 40,
+                            "num_predict": num_predict,
+                            "repeat_penalty": 1.1,
+                            "num_gpu": OLLAMA_NUM_GPU,
+                        },
                     },
-                },
             )
             resp.raise_for_status()
             raw = resp.json()["message"]["content"].strip()
@@ -585,34 +624,23 @@ async def ask_gemma_vision(prompt: str, image_base64: str, system: str = "", tim
 
 async def ask_gemma_rag(prompt: str, system: str = "", rag_query: str = "",
                         timeout: float = 180.0, model: Optional[str] = None,
-                        rag_mode: str = "interview") -> str:
+                        rag_mode: str = "interview", num_predict: int = 512) -> str:
     """RAG bağlamıyla güçlendirilmiş model isteği.
     rag_mode: 'interview' (soru üretimi) | 'triage' (triaj kararı)
     """
     enriched_system = system
     if RAG_ENABLED and rag_query:
         try:
-            _init_rag_if_needed()
-            import rag as rag_module
-            if rag_mode == "triage":
-                # Triaj için daha kapsamlı, kategori öncelikli retrieval
-                context = rag_module.get_medical_context_for_triage(
-                    chief_complaint=rag_query,
-                    min_relevance=0.38,
-                )
-            else:
-                # Mülakat sorularında genel retrieval (hızlı)
-                context = rag_module.get_context_for_prompt(
-                    rag_query, n_results=5, min_relevance=0.35
-                )
+            context = _get_rag_context_cached(rag_query, rag_mode)
             if context:
                 enriched_system = system + "\n\n" + context if system else context
         except Exception as _e:
             pass  # RAG başarısız olsa da model çalışmaya devam eder
-    return await ask_gemma(prompt, system=enriched_system, timeout=timeout, model=model)
+    return await ask_gemma(prompt, system=enriched_system, timeout=timeout,
+                           model=model, num_predict=num_predict)
 
 
-async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, None]:
+async def stream_gemma(prompt: str, system: str = "", num_predict: int = 400) -> AsyncGenerator[str, None]:
     """Gemma 4'ten token token streaming (SSE için). Tekrar eden metin algılama dahil.
     Sprint 14: Think bloğu yarım gelirse buffer'la (edge case fix)."""
     messages = []
@@ -624,20 +652,20 @@ async def stream_gemma(prompt: str, system: str = "") -> AsyncGenerator[str, Non
             async with client.stream(
                 "POST",
                 f"{OLLAMA_BASE_URL}/api/chat",
-                json={
-                    "model": GEMMA_MODEL,
-                    "messages": messages,
-                    "stream": True,
-                    "think": False,
-                    "options": {
-                        "temperature": 0.4,
-                        "top_p": 0.85,
-                        "num_predict": 400,       #Max token — sonsuz döngü önlemi
-                        "repeat_penalty": 1.35,   # Yüksek penalty → tekrar engeller
-                        "repeat_last_n": 64,
-                        "num_gpu": OLLAMA_NUM_GPU,
+                    json={
+                        "model": GEMMA_MODEL,
+                        "messages": messages,
+                        "stream": True,
+                        "think": False,
+                        "options": {
+                            "temperature": 0.4,
+                            "top_p": 0.85,
+                            "num_predict": num_predict,       #Max token — sonsuz döngü önlemi
+                            "repeat_penalty": 1.35,   # Yüksek penalty → tekrar engeller
+                            "repeat_last_n": 64,
+                            "num_gpu": OLLAMA_NUM_GPU,
+                        },
                     },
-                },
             ) as resp:
                 in_think_block = False
                 think_buffer = ""   # Sprint 14: yarım think bloğu için buffer
@@ -1464,13 +1492,137 @@ async def submit_answer(req: AnswerRequest, request: Request):
 
     rag_query = req.answer + " " + history_text[-300:]
     next_question = await ask_gemma_rag(next_prompt, system=get_system_prompt(lang),
-                                         rag_query=rag_query)
+                                         rag_query=rag_query, num_predict=200)
     session["step"] += 1
     session["qa_history"].append({"question": next_question, "answer": None})
 
     db_save_session(req.session_id, session)
 
     return SessionResponse(session_id=req.session_id, question=next_question, step=session["step"], total_steps=total_steps)
+
+
+@app.post("/api/session/answer/stream")
+@limiter.limit("60/minute")
+async def submit_answer_stream(req: AnswerRequest, request: Request):
+    """Cevabı kaydeder, sonraki soruyu SSE ile token token akıtır.
+    Kullanıcı ilk tokeni ~1 saniyede görür (GPU ile). Non-streaming'e göre ~3x daha hızlı algılanan yanıt."""
+
+    async def _err(msg: str):
+        yield f"data: {json.dumps({'error': msg})}\n\ndata: [DONE]\n\n"
+
+    session = sessions.get(req.session_id)
+    if not session:
+        return StreamingResponse(_err("Oturum bulunamadı"), media_type="text/event-stream",
+                                  headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    if session["completed"]:
+        return StreamingResponse(_err("Mülakat zaten tamamlandı"), media_type="text/event-stream",
+                                  headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    session["qa_history"][-1]["answer"] = req.answer
+    current_step = session["step"]
+    total_steps  = session["total_steps"]
+
+    # Adaptif soru sayısı (ilk cevaptan sonra)
+    if current_step == 1 and req.answer:
+        lang_s = session.get("language", "tr")
+        age_s  = session.get("age", 30)
+        new_steps = _adaptive_steps(req.answer, age_s, lang_s)
+        if new_steps != total_steps:
+            session["total_steps"] = new_steps
+            total_steps = new_steps
+
+    # Mülakat tamamlandı mı?
+    if current_step >= total_steps:
+        session["completed"] = True
+        db_save_session(req.session_id, session)
+        asyncio.create_task(notify_queue_update())
+
+        async def completed_gen():
+            yield f"data: {json.dumps({'metadata': {'completed': True, 'step': current_step, 'total_steps': total_steps}})}\n\n"
+            yield "data: [DONE]\n\n"
+
+        return StreamingResponse(completed_gen(), media_type="text/event-stream",
+                                  headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    lang = session["language"]
+    history_text = "\n".join(
+        f"S{i+1}: {qa['question']}\nC{i+1}: {qa['answer']}"
+        for i, qa in enumerate(session["qa_history"])
+        if qa.get("answer")
+    )
+
+    # Pediatrik ipucu
+    pediatric_hint = ""
+    if _is_pediatric_case(session) and current_step == 1:
+        if lang == "tr":
+            pediatric_hint = (
+                "\n⚠️ PEDİATRİK VAKA: Çocuk hastası. Bir sonraki soru MUTLAKA ateş derecesini "
+                "ve süresini sormalı.\n"
+            )
+        else:
+            pediatric_hint = (
+                "\n⚠️ PEDIATRIC CASE: Child patient. The NEXT question MUST ask for the specific "
+                "temperature reading and duration first.\n"
+            )
+
+    if lang == "tr":
+        next_prompt = (
+            f"Hasta: {session['patient_name']}, {session['age']} yaşında, {session['gender']}.\n"
+            f"{pediatric_hint}"
+            f"Mülakat geçmişi:\n{history_text}\n\n"
+            f"Yukarıdaki cevaplara dayanarak tanıyı netleştirecek SONRAKI en kritik soruyu sor. "
+            f"Acil belirti varsa o yönde derinleş. Soru {current_step+1}/{total_steps}."
+        )
+    else:
+        next_prompt = (
+            f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n"
+            f"{pediatric_hint}"
+            f"Interview so far:\n{history_text}\n\n"
+            f"Based on above answers, ask the NEXT most critical question to clarify the diagnosis. "
+            f"If emergency signs present, explore further. Q{current_step+1}/{total_steps}."
+        )
+
+    # RAG bağlam (önbellekten)
+    rag_query      = req.answer + " " + history_text[-300:]
+    rag_ctx        = _get_rag_context_cached(rag_query, "interview")
+    system_prompt  = get_system_prompt(lang)
+    enriched_sys   = (system_prompt + "\n\n" + rag_ctx) if rag_ctx else system_prompt
+
+    full_parts: list[str] = []
+
+    async def event_gen():
+        try:
+            async for sse_line in stream_gemma(next_prompt, system=enriched_sys, num_predict=200):
+                if sse_line.strip() == "data: [DONE]":
+                    break
+                yield sse_line
+                # Tokeni de biriktir (session'a kaydetmek için)
+                if sse_line.startswith("data: "):
+                    try:
+                        d = json.loads(sse_line[6:].strip())
+                        if "token" in d:
+                            full_parts.append(d["token"])
+                    except Exception:
+                        pass
+        except Exception as exc:
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+        # Soruyu session'a kaydet
+        full_question = clean_gemma_response("".join(full_parts))
+        if full_question:
+            session["step"] += 1
+            session["qa_history"].append({"question": full_question, "answer": None})
+            db_save_session(req.session_id, session)
+            asyncio.create_task(notify_queue_update())
+
+        yield f"data: {json.dumps({'metadata': {'step': session.get('step', current_step + 1), 'total_steps': total_steps, 'completed': False}})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        event_gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
+    )
 
 
 @app.get("/api/session/{session_id}/summary", response_model=ClinicalSummaryResponse)

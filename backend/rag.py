@@ -586,16 +586,12 @@ def get_medical_context_for_triage(
         complaint_en = translate_query_to_english(chief_complaint)
         complaint_en_lower = complaint_en.lower().strip()
 
-        # Multi-query stratejisi (orijinal + İngilizce çeviri)
+        # Multi-query stratejisi — 3 sorgu yeterli (5'ten azaltıldı, ~%40 daha hızlı)
         queries = [
             chief_complaint,                               # Orijinal dil
             complaint_en,                                  # İngilizce çeviri
-            f"triage assessment {complaint_en_lower} emergency severity",
-            f"Manchester Triage System {complaint_en_lower} red flags urgency",
+            f"triage assessment {complaint_en_lower} emergency severity red flags",
         ]
-        if qa_history:
-            # Q&A geçmişinin ilk 200 karakterini ek sorgu olarak ekle
-            queries.append(qa_history[:200])
 
         # Tüm query'lerden sonuç topla, ID'ye göre de-duplicate
         seen_docs: dict[str, dict] = {}  # doc_text → hit

@@ -36,7 +36,7 @@ services:
       - MEDGEMMA_MODEL=${MEDGEMMA_MODEL:-medgemma:4b}
       - FRONTEND_DIR=/app/frontend
       - RAG_ENABLED=${RAG_ENABLED:-true}
-      - OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU:-0}
+      - OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU:-99}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_me_in_production}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}

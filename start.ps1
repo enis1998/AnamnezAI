@@ -103,7 +103,8 @@ Start-Process "http://localhost:8000"
 
 # Backend çalıştır
 Set-Location $backendPath
-$env:PYTHONUTF8 = "1"
-$env:GEMMA_MODEL = $GEMMA_MODEL
+$env:PYTHONUTF8    = "1"
+$env:GEMMA_MODEL   = $GEMMA_MODEL
+$env:OLLAMA_NUM_GPU = "99"   # Tüm katmanları GPU'ya yükle (CPU-only için 0 yap)
 python main.py
 

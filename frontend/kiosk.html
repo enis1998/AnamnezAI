@@ -745,39 +745,102 @@ async function sendKioskAnswer() {
   addMessage(answer, false);
   inp.value = '';
 
-  // Typing indicator
-  const typingId = 'typing-' + Date.now();
+  // Streaming balonu oluştur — kullanıcı ilk tokeni ~1 saniyede görür
   const el = document.getElementById('chat-messages');
-  el.insertAdjacentHTML('beforeend', `<div id="${typingId}" class="flex justify-start" role="status" aria-live="polite"><div style="background:rgba(255,255,255,0.1);border-radius:20px;padding:16px 20px;font-size:18px;color:rgba(255,255,255,0.5)">${t('thinking')}</div></div>`);
+  const streamDiv = document.createElement('div');
+  streamDiv.className = 'flex justify-start';
+  streamDiv.setAttribute('role', 'status');
+  streamDiv.setAttribute('aria-live', 'polite');
+  const bubble = document.createElement('div');
+  bubble.style.cssText = 'background:rgba(255,255,255,0.1);border-radius:20px;padding:16px 20px;max-width:75%;font-size:18px;line-height:1.5;min-width:64px';
+  bubble.innerHTML = `<span style="opacity:0.4;animation:pulse 1s ease infinite">▋</span>`;
+  streamDiv.appendChild(bubble);
+  el.appendChild(streamDiv);
   el.scrollTop = el.scrollHeight;
 
+  let completed = false;
+  let fullText  = '';
+
   try {
-    const res = await fetch(`${API}/api/session/answer`, {
+    const res = await fetch(`${API}/api/session/answer/stream`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({session_id: kioskSessionId, answer})
     });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    document.getElementById(typingId)?.remove();
+    if (!res.ok) throw new Error('HTTP ' + res.status);
 
-    kioskStep = data.step;
-    updateSteps(kioskStep);
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let lineBuf   = '';
 
-    if (data.question === '__COMPLETED__') {
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      lineBuf += decoder.decode(value, {stream: true});
+      const lines = lineBuf.split('\n');
+      lineBuf = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') break;
+        try {
+          const chunk = JSON.parse(raw);
+          if (chunk.token) {
+            if (!fullText) bubble.textContent = ''; // imleci kaldır
+            fullText += chunk.token;
+            bubble.textContent = fullText;
+            el.scrollTop = el.scrollHeight;
+          } else if (chunk.metadata) {
+            kioskStep = chunk.metadata.step;
+            updateSteps(kioskStep);
+            if (chunk.metadata.completed) completed = true;
+          } else if (chunk.error) {
+            throw new Error(chunk.error);
+          }
+        } catch(_) {}
+      }
+    }
+
+    // TTS — tam cümle geldikten sonra seslendir
+    if (fullText) speak(fullText);
+
+    if (completed) {
+      streamDiv.remove();
       addMessage(t('completed'), true);
       await fetchKioskSummary();
-    } else {
-      addMessage(data.question, true);
-      inp.focus();
+    } else if (!fullText) {
+      // Hiç token gelmedi — non-streaming fallback
+      throw new Error('empty stream');
     }
   } catch(e) {
-    document.getElementById(typingId)?.remove();
-    addMessage(t('errRetry'), true);
+    streamDiv.remove();
+    // Streaming desteklenmiyorsa eski endpoint'e düş
+    try {
+      const res2 = await fetch(`${API}/api/session/answer`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({session_id: kioskSessionId, answer})
+      });
+      if (!res2.ok) throw new Error();
+      const data = await res2.json();
+      kioskStep = data.step;
+      updateSteps(kioskStep);
+      if (data.question === '__COMPLETED__') {
+        addMessage(t('completed'), true);
+        await fetchKioskSummary();
+        completed = true;
+      } else {
+        addMessage(data.question, true);
+      }
+    } catch(_) {
+      addMessage(t('errRetry'), true);
+    }
   } finally {
     btn.disabled = false;
     inp.disabled = false;
     inp.removeAttribute('aria-busy');
+    if (!completed) inp.focus();
   }
 }
 
