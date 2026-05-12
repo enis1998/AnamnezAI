@@ -922,6 +922,10 @@ function showDetail(sid){
   const p = allPatients[sid];
   if(!p) return;
   currentDetailSid = sid;
+  // Paneli görünür yap
+  const _panel = document.getElementById('detail-panel');
+  _panel.classList.remove('hidden');
+  _panel.style.display = 'flex';
   const cfg = TCFG[p.triage_level]||TCFG.PENDING;
   const init = p.patient_name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
   const flagsHtml = p.urgency_flags&&p.urgency_flags.length?`
