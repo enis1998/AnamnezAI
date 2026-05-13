@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>AnamnezAI — Randevu Öncesi Görüşme</title>
+<script src="vendor/tailwind.min.js"></script>
+<link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
+<link href="vendor/fonts/material_symbols_local.css" rel="stylesheet"/>
+<script>
+tailwind.config={theme:{extend:{colors:{
+  pri:"#002f40",pric:"#00475e",sec:"#006a68",secc:"#a0f1ed",
+  surf:"#f4f7f9",surfc:"#e8ecee",ons:"#191c1d",onsv:"#3f4749",
+  ouv:"#bfc7cd",warn:"#e07b26",warnc:"#fff3e0",
+}}}}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',sans-serif;background:#f4f7f9;color:#191c1d}
+h1,h2,h3{font-family:'Manrope',sans-serif}
+.msym{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.msym-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+
+/* Chat container */
+#chat-wrap{display:flex;flex-direction:column;height:100dvh;max-width:600px;margin:0 auto;background:#fff;box-shadow:0 0 40px rgba(0,47,64,0.08)}
+
+/* Header */
+#chat-header{background:#002f40;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.avatar-doc{width:40px;height:40px;border-radius:50%;background:#00475e;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Progress bar */
+#progress-bar{height:3px;background:#e8ecee;flex-shrink:0}
+#progress-fill{height:100%;background:#006a68;transition:width .5s ease;width:0%}
+
+/* Appointment info banner */
+#appt-banner{background:#e8f5f3;border-bottom:1px solid #c8e6e3;padding:10px 18px;font-size:12px;color:#004d4b;display:flex;align-items:center;gap:8px;flex-shrink:0}
+
+/* Messages area */
+#messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+
+/* Message bubbles */
+.msg-ai{display:flex;align-items:flex-end;gap:8px}
+.msg-ai .bubble{background:#f0faf9;border:1px solid #c8e6e3;color:#1a3c3a;padding:11px 14px;border-radius:18px 18px 18px 4px;max-width:82%;font-size:14px;line-height:1.5}
+.msg-user{display:flex;justify-content:flex-end}
+.msg-user .bubble{background:#006a68;color:#fff;padding:11px 14px;border-radius:18px 18px 4px 18px;max-width:82%;font-size:14px;line-height:1.5}
+
+/* Typing indicator */
+.typing-dot{display:inline-flex;gap:3px;align-items:center}
+.typing-dot span{width:6px;height:6px;border-radius:50%;background:#006a68;animation:tdot 1.2s ease infinite}
+.typing-dot span:nth-child(2){animation-delay:.2s}
+.typing-dot span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(.6);opacity:.5}40%{transform:scale(1);opacity:1}}
+
+/* Input area */
+#input-area{padding:12px 14px;background:#fff;border-top:1px solid #e8ecee;display:flex;align-items:flex-end;gap:8px;flex-shrink:0}
+#msg-input{flex:1;padding:10px 14px;border-radius:22px;border:1.5px solid #e8ecee;font-size:14px;resize:none;max-height:120px;min-height:44px;outline:none;transition:border-color .2s;font-family:'Inter',sans-serif;line-height:1.4;background:#f8fafb}
+#msg-input:focus{border-color:#006a68;background:#fff}
+#send-btn{width:44px;height:44px;border-radius:50%;background:#006a68;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s;font-size:20px}
+#send-btn:hover:not(:disabled){background:#004d4b}
+#send-btn:disabled{background:#bfc7cd;cursor:not-allowed}
+
+/* Completed state */
+#completed-card{display:none;margin:18px;padding:20px;border-radius:20px;background:#f0faf9;border:1px solid #a0f1ed}
+#warn-card{display:none;margin:0 18px 18px;padding:16px;border-radius:16px;background:#fff3e0;border:1px solid #ffe0b2}
+
+/* Step indicator */
+#step-badge{font-size:11px;font-weight:700;color:#a0f1ed;opacity:.85}
+
+/* Initial / Loading state */
+#loading-screen{position:fixed;inset:0;background:#002f40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:99}
+#loading-screen.hidden{display:none !important}
+.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Red flag badge */
+.red-flag-badge{display:inline-flex;align-items:center;gap:4px;background:#fdecea;color:#c62828;font-size:11px;font-weight:700;padding:3px 8px;border-radius:30px}
+
+@media(max-width:480px){
+  .msg-ai .bubble,.msg-user .bubble{max-width:90%;font-size:13px}
+  #chat-header{padding:11px 14px}
+}
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loading-screen">
+  <div class="w-16 h-16 rounded-2xl bg-pric/40 flex items-center justify-center">
+    <span class="material-symbols-outlined msym-fill text-white text-[36px] spin">refresh</span>
+  </div>
+  <div class="text-center">
+    <p class="text-white font-head font-bold text-[16px]">AnamnezAI</p>
+    <p class="text-secc/70 text-[13px] mt-1" id="loading-text">Randevu bilgileri yükleniyor...</p>
+  </div>
+</div>
+
+<div id="chat-wrap">
+  <!-- Header -->
+  <div id="chat-header">
+    <div class="avatar-doc">
+      <span class="material-symbols-outlined msym-fill text-secc text-[20px]">stethoscope</span>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <p class="font-head font-bold text-[14px] truncate" id="hdr-doctor">AnamnezAI</p>
+        <span id="step-badge" class="hidden"></span>
+      </div>
+      <p class="text-[11px] text-secc/80 truncate" id="hdr-subtitle">Randevu öncesi görüşme</p>
+    </div>
+    <!-- Lang switcher -->
+    <div class="flex bg-pric/60 rounded-full p-0.5 gap-0.5 flex-shrink-0">
+      <button onclick="setLang('tr')" id="langbtn-tr" class="px-2 py-0.5 rounded-full text-[10px] font-bold transition-all bg-secc text-pri">TR</button>
+      <button onclick="setLang('en')" id="langbtn-en" class="px-2 py-0.5 rounded-full text-[10px] font-bold transition-all text-secc">EN</button>
+      <button onclick="setLang('ar')" id="langbtn-ar" class="px-2 py-0.5 rounded-full text-[10px] font-bold transition-all text-secc">AR</button>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+
+  <!-- Appointment banner -->
+  <div id="appt-banner" class="hidden">
+    <span class="material-symbols-outlined msym text-[15px]" style="color:#006a68">calendar_today</span>
+    <span id="appt-banner-text">Randevu bilgisi yükleniyor...</span>
+  </div>
+
+  <!-- Messages -->
+  <div id="messages">
+    <!-- Messages injected here -->
+  </div>
+
+  <!-- Completed card -->
+  <div id="completed-card">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-10 h-10 rounded-full bg-secc/50 flex items-center justify-center">
+        <span class="material-symbols-outlined msym-fill text-sec text-[20px]">task_alt</span>
+      </div>
+      <div>
+        <p class="font-head font-bold text-[14px] text-sec">Görüşme Tamamlandı</p>
+        <p class="text-[11px] text-onsv" id="completed-sub">Bilgileriniz doktorunuza iletildi.</p>
+      </div>
+    </div>
+    <p class="text-[12px] text-onsv leading-relaxed" id="completed-detail"></p>
+  </div>
+
+  <!-- Wait warning card -->
+  <div id="warn-card">
+    <div class="flex items-center gap-2 mb-2">
+      <span class="material-symbols-outlined msym-fill text-warn text-[20px]">warning</span>
+      <p class="font-bold text-[13px] text-warn" id="warn-title">Acil Başvuru Önerisi</p>
+    </div>
+    <p class="text-[12px] text-onsv" id="warn-body"></p>
+  </div>
+
+  <!-- Input area -->
+  <div id="input-area">
+    <textarea id="msg-input"
+      placeholder="Mesajınızı yazın..."
+      rows="1"
+      onkeydown="handleKey(event)"
+      oninput="autoResize(this)"></textarea>
+    <button id="send-btn" onclick="sendMessage()" disabled>
+      <span class="material-symbols-outlined msym text-[22px]">send</span>
+    </button>
+  </div>
+</div>
+
+<script>
+const API = '';
+let appointmentId = null;
+let sessionId = null;
+let currentStep = 0;
+let totalSteps = 5;
+let lang = 'tr';
+let isWaiting = false;
+let isCompleted = false;
+
+const T = {
+  tr: {
+    loading: 'Randevu bilgileri yükleniyor...',
+    starting: 'Görüşme başlatılıyor...',
+    subtitle: 'Randevu öncesi anamnez görüşmesi',
+    placeholder: 'Mesajınızı yazın...',
+    completed_sub: 'Bilgileriniz doktorunuza iletildi.',
+    appt_banner: (doc, time) => `${doc} ile randevunuz: ${fmtTime(time)}`,
+    error_no_appt: 'Randevu ID\'si bulunamadı. Lütfen doğru linki kullanın.',
+    error_not_found: 'Randevu bulunamadı. Demo randevuları oluşturmak için önce /api/appointments/demo çağrısı yapın.',
+    error_generic: 'Bir hata oluştu. Lütfen tekrar deneyin.',
+    warn_title: '⚠️ Randevunuzu Beklemeyin',
+    send_placeholder: 'Mesajınızı yazın...',
+    step_label: (s,t) => `${s}/${t}`,
+  },
+  en: {
+    loading: 'Loading appointment...',
+    starting: 'Starting session...',
+    subtitle: 'Pre-visit intake interview',
+    placeholder: 'Type your message...',
+    completed_sub: 'Your information has been sent to your doctor.',
+    appt_banner: (doc, time) => `Appointment with ${doc}: ${fmtTime(time)}`,
+    error_no_appt: 'No appointment ID found. Please use the correct link.',
+    error_not_found: 'Appointment not found. Please create demo appointments first: POST /api/appointments/demo',
+    error_generic: 'An error occurred. Please try again.',
+    warn_title: '⚠️ Do Not Wait For Your Appointment',
+    send_placeholder: 'Type your message...',
+    step_label: (s,t) => `${s}/${t}`,
+  },
+  ar: {
+    loading: 'جارٍ تحميل معلومات الموعد...',
+    starting: 'بدء الجلسة...',
+    subtitle: 'مقابلة ما قبل الزيارة',
+    placeholder: 'اكتب رسالتك...',
+    completed_sub: 'تم إرسال معلوماتك إلى طبيبك.',
+    appt_banner: (doc, time) => `موعدك مع ${doc}: ${fmtTime(time)}`,
+    error_no_appt: 'لم يتم العثور على معرّف الموعد. يرجى استخدام الرابط الصحيح.',
+    error_not_found: 'لم يتم العثور على الموعد.',
+    error_generic: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
+    warn_title: '⚠️ لا تنتظر موعدك',
+    send_placeholder: 'اكتب رسالتك...',
+    step_label: (s,t) => `${s}/${t}`,
+  }
+};
+
+function t(key, ...args) {
+  const fn = T[lang]?.[key];
+  if (!fn) return T.tr[key] || key;
+  return typeof fn === 'function' ? fn(...args) : fn;
+}
+
+function fmtTime(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d)) return isoStr;
+    if (lang === 'ar') return d.toLocaleString('ar-EG', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    if (lang === 'en') return d.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return d.toLocaleString('tr-TR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  } catch { return isoStr; }
+}
+
+function setLang(l) {
+  lang = l;
+  document.documentElement.lang = l;
+  document.getElementById('msg-input').placeholder = t('placeholder');
+  ['tr','en','ar'].forEach(x => {
+    const btn = document.getElementById('langbtn-' + x);
+    if (x === l) { btn.classList.add('bg-secc','text-pri'); btn.classList.remove('text-secc'); }
+    else { btn.classList.remove('bg-secc','text-pri'); btn.classList.add('text-secc'); }
+  });
+  if (lang === 'ar') document.body.setAttribute('dir','rtl');
+  else document.body.removeAttribute('dir');
+}
+
+function showBubble(text, type = 'ai') {
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = type === 'user' ? 'msg-user' : 'msg-ai';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+  return wrap;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-ai';
+  wrap.id = 'typing-indicator';
+  wrap.innerHTML = '<div class="bubble" style="padding:10px 16px"><div class="typing-dot"><span></span><span></span><span></span></div></div>';
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  document.getElementById('typing-indicator')?.remove();
+}
+
+function updateProgress() {
+  const pct = totalSteps > 0 ? Math.round((currentStep / totalSteps) * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  const badge = document.getElementById('step-badge');
+  if (currentStep > 0 && !isCompleted) {
+    badge.textContent = t('step_label', currentStep, totalSteps);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function setInputEnabled(enabled) {
+  const inp = document.getElementById('msg-input');
+  const btn = document.getElementById('send-btn');
+  inp.disabled = !enabled;
+  btn.disabled = !enabled;
+  isWaiting = !enabled;
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!isWaiting && !isCompleted) sendMessage();
+  }
+}
+
+async function startPrevisit() {
+  if (!appointmentId) {
+    showError(t('error_no_appt'));
+    return;
+  }
+
+  document.getElementById('loading-text').textContent = t('starting');
+
+  try {
+    const res = await fetch(`${API}/api/appointments/${appointmentId}/previsit/start`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    });
+
+    if (res.status === 404) {
+      showError(t('error_not_found'));
+      return;
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    const data = await res.json();
+    sessionId = data.session_id;
+    currentStep = data.step || 1;
+    totalSteps = data.total_steps || 5;
+
+    // Update header
+    const docName = data.doctor_name || 'Doktorunuz';
+    const apptTime = data.appointment_time || '';
+    document.getElementById('hdr-doctor').textContent = docName;
+
+    const banner = document.getElementById('appt-banner');
+    banner.classList.remove('hidden');
+    document.getElementById('appt-banner-text').textContent = t('appt_banner', docName, apptTime);
+
+    // Hide loading
+    document.getElementById('loading-screen').classList.add('hidden');
+
+    updateProgress();
+    setInputEnabled(true);
+
+    // Show first question
+    const firstQ = data.question;
+    if (firstQ) {
+      setTimeout(() => {
+        showBubble(firstQ, 'ai');
+        document.getElementById('messages').scrollTop = 999999;
+      }, 300);
+    }
+
+  } catch (err) {
+    console.error(err);
+    showError(t('error_generic') + ' (' + err.message + ')');
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const msg = input.value.trim();
+  if (!msg || isWaiting || isCompleted) return;
+
+  // Show user bubble
+  showBubble(msg, 'user');
+  input.value = '';
+  input.style.height = 'auto';
+
+  setInputEnabled(false);
+  showTyping();
+
+  try {
+    const res = await fetch(`${API}/api/appointments/${appointmentId}/previsit/message`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message: msg, language: lang })
+    });
+
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    removeTyping();
+
+    currentStep = data.step || currentStep;
+    totalSteps = data.total_steps || totalSteps;
+    updateProgress();
+
+    if (data.completed) {
+      isCompleted = true;
+      setInputEnabled(false);
+
+      // Show AI's final message
+      if (data.reply) showBubble(data.reply, 'ai');
+
+      // Hide input, show completed card
+      document.getElementById('input-area').style.display = 'none';
+      const card = document.getElementById('completed-card');
+      card.style.display = 'block';
+      document.getElementById('completed-sub').textContent = t('completed_sub');
+      document.getElementById('progress-fill').style.width = '100%';
+      document.getElementById('step-badge').classList.add('hidden');
+
+      // Wait warning
+      if (data.wait_warning) {
+        const warnCard = document.getElementById('warn-card');
+        warnCard.style.display = 'block';
+        document.getElementById('warn-title').textContent = t('warn_title');
+        document.getElementById('warn-body').textContent = data.wait_warning_reason || '';
+      }
+    } else {
+      // Show AI question
+      if (data.reply) showBubble(data.reply, 'ai');
+      setInputEnabled(true);
+      setTimeout(() => document.getElementById('msg-input').focus(), 100);
+    }
+
+  } catch (err) {
+    removeTyping();
+    console.error(err);
+    showBubble('⚠️ ' + t('error_generic'), 'ai');
+    setInputEnabled(true);
+  }
+}
+
+function showError(msg) {
+  document.getElementById('loading-screen').classList.add('hidden');
+  document.getElementById('input-area').style.display = 'none';
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-ai';
+  wrap.innerHTML = `<div class="bubble" style="background:#fdecea;border-color:#ef9a9a;color:#c62828">⚠️ ${msg}</div>`;
+  msgs.appendChild(wrap);
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  appointmentId = params.get('appt') || params.get('appointment_id');
+
+  const langParam = params.get('lang') || 'tr';
+  setLang(langParam);
+
+  document.getElementById('hdr-subtitle').textContent = t('subtitle');
+  document.getElementById('msg-input').placeholder = t('placeholder');
+
+  if (!appointmentId) {
+    document.getElementById('loading-screen').classList.add('hidden');
+    showError(t('error_no_appt'));
+    return;
+  }
+
+  startPrevisit();
+});
+</script>
+</body>
+</html>
+

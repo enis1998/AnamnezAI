@@ -84,6 +84,10 @@ RAG_ENABLED      = os.getenv("RAG_ENABLED", "true").lower() == "true"
 # CPU-only moduna düşmek için: OLLAMA_NUM_GPU=0 env değişkeni
 OLLAMA_NUM_GPU   = int(os.getenv("OLLAMA_NUM_GPU", "99"))  # 99 = tüm katmanlar GPU'da
 
+# Cloud çeviri — varsayılan KAPALI (local-first garantisi).
+# Sadece ALLOW_CLOUD_TRANSLATION=true ile açılır.
+ALLOW_CLOUD_TRANSLATION = os.getenv("ALLOW_CLOUD_TRANSLATION", "false").lower() == "true"
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Uygulama başladığında DB'yi başlat, geçmiş verileri yükle ve modeli önceden ısıt."""
@@ -494,6 +498,14 @@ class SessionResponse(BaseModel):
 
 class ClaimSessionRequest(BaseModel):
     claim_code: str   # 6 haneli kısa kod (örn: K7M2P9)
+
+class ChannelIntakeRequest(BaseModel):
+    """Dış kanal (WhatsApp-style, Telegram, mobil app) intake mesajı."""
+    channel: str = "custom"          # whatsapp_demo | telegram_demo | mobile_app | call_center | custom
+    external_user_id: str            # dış kanaldaki kullanıcı ID'si
+    message: str                     # hastanın yazdığı mesaj
+    language: str = "tr"             # tr | en | ar
+    session_id: Optional[str] = None # devam eden oturum; None ise yeni başlatılır
 
 # ── Kısa talep kodu üretici ──────────────────
 def _generate_claim_code() -> str:
@@ -2794,6 +2806,12 @@ async def offline_proof():
         ollama_running = False
     return {
         "runtime": "ollama",
+        "local_inference": True,
+        "external_ai_api": False,
+        "remote_embeddings": False,
+        "cloud_translation_enabled": ALLOW_CLOUD_TRANSLATION,
+        "mcp_ready": True,
+        "channel_adapters_optional": True,
         "cloud_api_keys_required": False,
         "internet_required_after_setup": False,
         "patient_data_external_transfer": False,
@@ -2812,6 +2830,869 @@ async def offline_proof():
             "patient history, flags urgency, and prepares a physician-reviewable summary. "
             "All clinical decisions require physician review."
         ),
+    }
+
+
+
+# ─────────────────────────────────────────────
+#  MCP Channel Adapter — dış kanal intake
+#  WhatsApp-style / Telegram / Mobile / Call Center
+# ─────────────────────────────────────────────
+
+# Dış kullanıcı → session_id eşlemesi (bellek içi, prod'da cache/DB kullanın)
+_channel_sessions: dict[str, str] = {}   # external_user_id → session_id
+
+@app.post("/api/channel/intake/message")
+@limiter.limit("30/minute")
+async def channel_intake_message(req: ChannelIntakeRequest, request: Request):
+    """
+    Dış kanal (WhatsApp-style, Telegram, mobil app, çağrı merkezi) üzerinden
+    hasta intake mesajı alır.
+
+    Tek endpoint üzerinden şu işlemleri gerçekleştirir:
+    1. İlk mesajda: yeni oturum başlatır (session/start)
+    2. Devam eden mesajlarda: cevabı kaydeder, sonraki soruyu döndürür
+    3. Mülakat tamamlandığında: özeti üretir ve doktor kuyruğuna bildirir
+
+    Gizlilik notu:
+    - Tüm AI inferansı yerel Gemma 4 üzerinde yapılır.
+    - Kanal adaptör sadece mesajı yönlendirir; hasta verisi dış AI API'ye gitmez.
+    - Mesajın iletildiği platform (WhatsApp, Telegram) kendi veri politikalarına tabidir.
+    """
+    msg  = req.message.strip()
+    lang = req.language or "tr"
+    ext_id = req.external_user_id
+
+    if not msg:
+        raise HTTPException(status_code=400, detail="Mesaj boş olamaz.")
+
+    # ── Oturum yönetimi ───────────────────────────────────────────────────────
+    # Öncelik: istekte gelen session_id → dış kullanıcı eşlemesi → yeni oturum
+    sid = req.session_id or _channel_sessions.get(ext_id)
+
+    # Oturum geçerli mi kontrol et
+    if sid and sid not in sessions:
+        sid = None  # eskimiş oturum — yeni başlat
+
+    # Tamamlanmış oturum tekrar başlatılmasın
+    if sid and sessions.get(sid, {}).get("completed"):
+        sid = None
+
+    # ── Yeni oturum başlat ───────────────────────────────────────────────────
+    if not sid:
+        # İsimden yola çıkararak anonim hasta oluştur
+        _name_tr = "Anon Hasta"
+        _name_en = "Anon Patient"
+        _name_ar = "مريض مجهول"
+        _pname   = _name_ar if lang == "ar" else (_name_en if lang == "en" else _name_tr)
+
+        new_session = {
+            "patient_name": _pname,
+            "age": 30,             # kanal hatalar için varsayılan; hasta mesajından güncellenemez
+            "gender": "Belirtilmedi" if lang == "tr" else "Not specified",
+            "language": lang,
+            "step": 1,
+            "total_steps": 5,
+            "qa_history": [],
+            "completed": False,
+            "vitals": None,
+            "image_analyses": [],
+            "patient_id": None,
+            "claim_code": None,
+            "created_at": datetime.utcnow().isoformat(),
+            "channel": req.channel,
+            "external_user_id": ext_id,
+            "channel_source": f"{req.channel} — Channel Adapter Demo",
+        }
+        sid = str(uuid.uuid4())
+        sessions[sid] = new_session
+        db_save_session(sid, new_session)
+        _channel_sessions[ext_id] = sid
+
+        # İlk soru oluştur (session/start ile aynı mantık)
+        if lang == "tr":
+            first_q = "Merhaba! 👋 Şikayetinizi anlatın, size yardımcı olacağım."
+        elif lang == "ar":
+            first_q = "مرحباً! 👋 أخبرني عن شكواك وسأساعدك."
+        else:
+            first_q = "Hello! 👋 Please describe your complaint and I'll help you."
+
+        new_session["qa_history"] = [{"question": first_q, "answer": None}]
+        db_save_session(sid, new_session)
+        await notify_queue_update()
+
+        # İlk mesajı cevap olarak işle (soruyu sormak yerine direkt devam et)
+        # Aynı request içinde cevabı da kaydedelim
+        new_session["qa_history"][-1]["answer"] = msg
+        new_session["step"] = 1
+
+        # Adaptif adım sayısı
+        new_steps = _adaptive_steps(msg, new_session["age"], lang)
+        new_session["total_steps"] = new_steps
+        db_save_session(sid, new_session)
+
+    session = sessions[sid]
+
+    # ── Mülakat tamamlandı mı kontrolü ───────────────────────────────────────
+    if session.get("completed"):
+        # Özet mevcut mu?
+        summ = summaries.get(sid, {})
+        triage = summ.get("triage_level") if summ else None
+        reply_completed = {
+            "tr": "Mülakatınız daha önce tamamlandı. Bilgileriniz doktora iletildi.",
+            "en": "Your intake was already completed. Information sent to the doctor.",
+            "ar": "تم الانتهاء من المقابلة مسبقاً. تم إرسال المعلومات للطبيب."
+        }.get(lang, "Mülakat tamamlandı.")
+        return {
+            "session_id": sid,
+            "reply": reply_completed,
+            "triage_preview": triage,
+            "doctor_queue_created": bool(summ),
+            "next_action": "completed",
+            "channel": req.channel,
+        }
+
+    # ── Aktif mülakatta cevabı kaydet ve sonraki soruyu al ───────────────────
+    # Mevcut soru listesinde bekleyen cevap yok ise bu mesajı ekle
+    qa = session.get("qa_history", [])
+    if qa and qa[-1].get("answer") is None:
+        # Zaten açık soru var — bu mesajı o soruya cevap olarak kaydet
+        qa[-1]["answer"] = msg
+    else:
+        # Tüm sorular cevaplanmış — bu mesajı serbest cevap olarak ekle
+        if qa:
+            qa[-1]["answer"] = msg
+        else:
+            session["qa_history"] = [{"question": "Şikayetiniz?", "answer": msg}]
+            qa = session["qa_history"]
+
+    current_step = session.get("step", 1)
+    total_steps  = session.get("total_steps", 5)
+
+    # ── Tüm adımlar tamamlandı mı? ───────────────────────────────────────────
+    if current_step >= total_steps:
+        session["completed"] = True
+        db_save_session(sid, session)
+        asyncio.create_task(notify_queue_update())
+
+        # Arka planda özet üret (hemen bir triaj ön bakışı döndürelim)
+        async def _gen_summary_bg():
+            try:
+                # get_clinical_summary mantığını çağır
+                await get_clinical_summary(sid)
+            except Exception as _e:
+                print(f"[Channel] Arka plan özet hatası: {_e}")
+
+        asyncio.create_task(_gen_summary_bg())
+
+        # Tamamlanma mesajı
+        completed_reply = {
+            "tr": (
+                "✅ Bilgileriniz kaydedildi. Klinik özetiniz hazırlanıyor ve doktor kuyruğuna iletiliyor. "
+                "Acil bir durum söz konusu olabilir — lütfen sağlık personeline haber verin."
+            ),
+            "en": (
+                "✅ Your information has been recorded. Your clinical summary is being prepared "
+                "and sent to the doctor queue. This may be urgent — please notify healthcare staff."
+            ),
+            "ar": (
+                "✅ تم تسجيل معلوماتك. جاري إعداد ملخصك السريري وإرساله لقائمة انتظار الطبيب. "
+                "قد تكون هذه حالة طارئة — يرجى إخطار الطاقم الصحي."
+            ),
+        }.get(lang, "Mülakat tamamlandı. Bilgileriniz doktora iletildi.")
+
+        return {
+            "session_id": sid,
+            "reply": completed_reply,
+            "triage_preview": None,   # arka planda üretiliyor
+            "doctor_queue_created": True,
+            "next_action": "completed",
+            "step": current_step,
+            "total_steps": total_steps,
+            "channel": req.channel,
+        }
+
+    # ── Sonraki soruyu üret ───────────────────────────────────────────────────
+    lang_s = session.get("language", "tr")
+    history_text = "\n".join(
+        f"S{i+1}: {qai['question']}\nC{i+1}: {qai['answer']}"
+        for i, qai in enumerate(qa)
+        if qai.get("answer")
+    )
+
+    pediatric_hint = ""
+    if _is_pediatric_case(session) and current_step == 1:
+        pediatric_hint = (
+            "\n⚠️ PEDİATRİK VAKA: Bir sonraki soru ateş derecesini sormalı.\n"
+            if lang_s == "tr" else
+            "\n⚠️ PEDIATRIC CASE: Next question MUST ask for temperature.\n"
+        )
+
+    if lang_s == "tr":
+        next_prompt = (
+            f"Hasta: {session['patient_name']}, {session['age']} yaşında, {session['gender']}.\n"
+            f"{pediatric_hint}Mülakat geçmişi:\n{history_text}\n\n"
+            f"Yukarıdaki cevaplara dayanarak SONRAKI en kritik soruyu sor. "
+            f"Soru {current_step+1}/{total_steps}."
+        )
+    elif lang_s == "ar":
+        next_prompt = (
+            f"المريض: {session['patient_name']}, {session['age']} سنة.\n"
+            f"{pediatric_hint}سجل المقابلة:\n{history_text}\n\n"
+            f"بناءً على الإجابات أعلاه، اطرح السؤال التالي الأكثر أهمية. "
+            f"السؤال {current_step+1}/{total_steps}. أجب باللغة العربية فقط."
+        )
+    else:
+        next_prompt = (
+            f"Patient: {session['patient_name']}, {session['age']}y.\n"
+            f"{pediatric_hint}Interview so far:\n{history_text}\n\n"
+            f"Ask the NEXT most critical question. Q{current_step+1}/{total_steps}. Respond in English only."
+        )
+
+    rag_query = msg + " " + history_text[-200:]
+    next_q = await ask_gemma_rag(
+        next_prompt,
+        system=get_system_prompt(lang_s),
+        rag_query=rag_query,
+        num_predict=200,
+    )
+
+    session["step"] = current_step + 1
+    session["qa_history"].append({"question": next_q, "answer": None})
+    db_save_session(sid, session)
+    asyncio.create_task(notify_queue_update())
+
+    return {
+        "session_id": sid,
+        "reply": next_q,
+        "triage_preview": None,
+        "doctor_queue_created": False,
+        "next_action": "ask_follow_up",
+        "step": session["step"],
+        "total_steps": total_steps,
+        "channel": req.channel,
+    }
+
+
+# ─────────────────────────────────────────────
+#  Pre-Visit Intake Mode
+#  Randevu öncesi hasta anamnez görüşmesi — doktor brief'i üretir
+# ─────────────────────────────────────────────
+
+# Bellek içi randevu deposu (prod → PostgreSQL / Redis)
+_appointments: dict[str, dict] = {}  # appointment_id → appointment data
+_appt_sessions: dict[str, str]  = {}  # appointment_id → session_id
+
+class PreVisitMessageRequest(BaseModel):
+    """Randevu öncesi anamnez mesajı."""
+    message: str
+    language: str = "tr"
+
+
+def _previsit_system_prompt(lang: str, doctor_name: str, appointment_time: str) -> str:
+    """Pre-visit intake için özel sistem prompt'u — acil triaj DEĞİL, randevu briefi."""
+    if lang == "tr":
+        return (
+            f"Sen AnamnezAI'ın randevu öncesi anamnez asistanısın. "
+            f"Hasta, {appointment_time} tarihinde {doctor_name} ile randevusundan önce bu görüşmeyi yapıyor.\n\n"
+            "AMAÇ: Doktor için yapılandırılmış bir brifing hazırlamak.\n"
+            "- Kısa, nazik ve odaklanmış sorular sor.\n"
+            "- Bu acil servis triajı değil — randevu öncesi bilgi toplama.\n"
+            "- Hastanın ana şikayetini, süresini, şiddetini ve etkilediği alanları öğren.\n"
+            "- Kronik hastalık, ilaç ve alerji bilgilerini sor.\n"
+            "- Yalnızca Türkçe yanıt ver.\n"
+            "- Maksimum 1-2 cümle ile sor, kısa tut."
+        )
+    elif lang == "ar":
+        return (
+            f"أنت مساعد التقييم قبل الزيارة في AnamnezAI. "
+            f"المريض يجري هذه المقابلة قبل موعده مع {doctor_name} في {appointment_time}.\n\n"
+            "الهدف: إعداد ملخص منظّم للطبيب.\n"
+            "- اطرح أسئلة قصيرة ومركّزة.\n"
+            "- هذا ليس فرزًا للطوارئ — إنه جمع معلومات قبل الموعد.\n"
+            "- أجب باللغة العربية فقط."
+        )
+    else:
+        return (
+            f"You are AnamnezAI's pre-visit intake assistant. "
+            f"The patient is having this conversation before their appointment with {doctor_name} at {appointment_time}.\n\n"
+            "PURPOSE: Prepare a structured briefing document for the doctor.\n"
+            "- Ask short, focused, friendly questions.\n"
+            "- This is NOT emergency triage — it's pre-appointment information gathering.\n"
+            "- Learn the main complaint, duration, severity, and affected areas.\n"
+            "- Ask about chronic conditions, medications, and allergies.\n"
+            "- Respond in English only.\n"
+            "- Keep questions concise — max 1-2 sentences."
+        )
+
+
+async def _generate_previsit_brief(appointment_id: str) -> dict:
+    """
+    Tamamlanan pre-visit anamnezinden doktor brief'i üretir.
+    Bu, klinik özetten farklı — triaj yerine 'doktor için hazırlık' odaklı.
+    """
+    appt = _appointments.get(appointment_id)
+    if not appt:
+        return {}
+
+    sid = appt.get("session_id")
+    if not sid:
+        return {}
+
+    session = sessions.get(sid, {})
+    summary_data = summaries.get(sid, {})
+
+    lang = appt.get("language", "tr")
+    doctor_name = appt.get("doctor_name", "Dr.")
+    patient_name = appt.get("patient_name", session.get("patient_name", "Hasta"))
+    appointment_time = appt.get("appointment_time", "")
+
+    qa_history = session.get("qa_history", [])
+    history_text = "\n".join(
+        f"S{i+1}: {qa['question']}\nC{i+1}: {qa.get('answer', '—')}"
+        for i, qa in enumerate(qa_history)
+        if qa.get("answer")
+    )
+
+    if not history_text.strip():
+        return {
+            "appointment_id": appointment_id,
+            "status": "no_data",
+            "brief": None,
+        }
+
+    # AI ile brief üret
+    if lang == "tr":
+        brief_prompt = (
+            f"Hasta: {patient_name}, {session.get('age', '?')} yaş, {session.get('gender', '?')}.\n"
+            f"Doktor: {doctor_name}\n"
+            f"Randevu: {appointment_time}\n\n"
+            f"Randevu öncesi hasta anamnezi:\n{history_text}\n\n"
+            "Aşağıdaki JSON formatında doktor için bir brifing oluştur:\n"
+            "{\n"
+            '  "chief_complaint": "Ana şikayet (1-2 cümle)",\n'
+            '  "complaint_duration": "Şikayetin süresi",\n'
+            '  "severity": "Hafif/Orta/Şiddetli",\n'
+            '  "associated_symptoms": ["eşlik eden semptomlar listesi"],\n'
+            '  "chronic_conditions": ["kronik hastalıklar"],\n'
+            '  "current_medications": ["kullanılan ilaçlar"],\n'
+            '  "allergies": ["alerjiler"],\n'
+            '  "missing_information": ["doktorun sorması gereken eksik bilgiler"],\n'
+            '  "suggested_questions": ["doktor için önerilen sorular"],\n'
+            '  "red_flags": ["varsa acil uyarı işaretleri"],\n'
+            '  "wait_warning": true/false,\n'
+            '  "wait_warning_reason": "neden beklememeli (varsa)",\n'
+            '  "clinical_note": "genel klinik özet"\n'
+            "}\n"
+            "Sadece JSON döndür. Randevu öncesi bilgi toplama — triaj değil."
+        )
+    else:
+        brief_prompt = (
+            f"Patient: {patient_name}, {session.get('age', '?')}y, {session.get('gender', '?')}.\n"
+            f"Doctor: {doctor_name}\n"
+            f"Appointment: {appointment_time}\n\n"
+            f"Pre-visit intake history:\n{history_text}\n\n"
+            "Generate a doctor briefing in the following JSON format:\n"
+            "{\n"
+            '  "chief_complaint": "Main complaint (1-2 sentences)",\n'
+            '  "complaint_duration": "Duration of complaint",\n'
+            '  "severity": "Mild/Moderate/Severe",\n'
+            '  "associated_symptoms": ["list of associated symptoms"],\n'
+            '  "chronic_conditions": ["chronic conditions"],\n'
+            '  "current_medications": ["current medications"],\n'
+            '  "allergies": ["allergies"],\n'
+            '  "missing_information": ["information the doctor should ask about"],\n'
+            '  "suggested_questions": ["suggested questions for the doctor"],\n'
+            '  "red_flags": ["urgent warning signs if any"],\n'
+            '  "wait_warning": true/false,\n'
+            '  "wait_warning_reason": "why patient should not wait (if applicable)",\n'
+            '  "clinical_note": "overall clinical summary"\n'
+            "}\n"
+            "Return ONLY JSON. This is pre-appointment info gathering — not emergency triage."
+        )
+
+    raw = await ask_gemma(brief_prompt, system=_previsit_system_prompt(lang, doctor_name, appointment_time), timeout=180.0, num_predict=600)
+
+    # JSON parse
+    cleaned = raw.strip()
+    if "```" in cleaned:
+        parts = cleaned.split("```")
+        for part in parts:
+            if part.startswith("json"):
+                cleaned = part[4:].strip(); break
+            elif "{" in part:
+                cleaned = part.strip(); break
+    try:
+        start = cleaned.find("{")
+        end   = cleaned.rfind("}") + 1
+        brief_data = json.loads(cleaned[start:end])
+    except Exception:
+        brief_data = {
+            "chief_complaint": history_text[:200] if history_text else "Bilgi yok",
+            "complaint_duration": "Bilinmiyor",
+            "severity": "Bilinmiyor",
+            "associated_symptoms": [],
+            "chronic_conditions": [],
+            "current_medications": [],
+            "allergies": [],
+            "missing_information": ["Tam bilgi alınamadı — doktor direkt sorabilir"],
+            "suggested_questions": [],
+            "red_flags": [],
+            "wait_warning": False,
+            "wait_warning_reason": "",
+            "clinical_note": raw[:400] if raw else "Brief üretilemedi",
+        }
+
+    # Red flag varsa safety guardrail uygula
+    red_flags = brief_data.get("red_flags", [])
+    if red_flags:
+        brief_data["wait_warning"] = True
+        if not brief_data.get("wait_warning_reason"):
+            brief_data["wait_warning_reason"] = "; ".join(red_flags[:2])
+
+    return brief_data
+
+
+@app.post("/api/appointments/demo")
+async def create_demo_appointments(current_user: Optional[dict] = Depends(get_current_user)):
+    """
+    Demo randevu verileri oluşturur (5 hasta, bugünün tarihi).
+    Gerçek randevu sistemi gerektirir — demo modunda statik veri.
+    """
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    demo_appts = [
+        {
+            "appointment_id": f"appt-demo-{i+1:03d}",
+            "patient_name": n,
+            "patient_age": a,
+            "patient_gender": g,
+            "doctor_name": d,
+            "specialty": s,
+            "appointment_time": f"{today}T{t}:00",
+            "appointment_type": at,
+            "language": "tr",
+            "status": "scheduled",
+            "previsit_status": "pending",
+            "session_id": None,
+            "brief": None,
+            "created_at": datetime.utcnow().isoformat(),
+        }
+        for i, (n, a, g, d, s, t, at) in enumerate([
+            ("Ayşe Kaya",      45, "Kadın",   "Dr. Fatma Şahin",    "Kardiyoloji",     "09:00", "kontrol"),
+            ("Mehmet Demir",   62, "Erkek",   "Dr. Ali Yıldız",     "İç Hastalıkları", "10:30", "yeni_hasta"),
+            ("Zeynep Arslan",  28, "Kadın",   "Dr. Fatma Şahin",    "Kardiyoloji",     "11:00", "kontrol"),
+            ("Hasan Çelik",    71, "Erkek",   "Dr. Elif Koca",      "Nöroloji",        "14:00", "takip"),
+            ("Elif Yılmaz",     8, "Kız",     "Dr. Osman Güneş",    "Pediatri",        "15:30", "kontrol"),
+        ])
+    ]
+    for appt in demo_appts:
+        _appointments[appt["appointment_id"]] = appt
+
+    return {
+        "created": len(demo_appts),
+        "appointments": demo_appts,
+        "note": "Demo veri — gerçek randevu takip sistemi entegrasyonu için /api/appointments/demo kullanın.",
+    }
+
+
+@app.post("/api/appointments/{appointment_id}/previsit/start")
+@limiter.limit("20/minute")
+async def start_previsit(appointment_id: str, request: Request, current_user: Optional[dict] = Depends(get_current_user)):
+    """
+    Randevu öncesi anamnez görüşmesini başlatır.
+    Hasta randevu linkine tıkladığında bu endpoint çağrılır.
+    """
+    appt = _appointments.get(appointment_id)
+    if not appt:
+        # Demo randevu oluştur (doğrudan link ile gelen hastalar için)
+        raise HTTPException(status_code=404, detail="Randevu bulunamadı. Lütfen demo randevuları oluşturun: POST /api/appointments/demo")
+
+    # Zaten başlamışsa mevcut durumu döndür
+    existing_sid = appt.get("session_id")
+    if existing_sid and existing_sid in sessions:
+        existing_session = sessions[existing_sid]
+        lang = appt.get("language", "tr")
+        qa = existing_session.get("qa_history", [])
+        last_q = qa[-1]["question"] if qa else ""
+        return {
+            "appointment_id": appointment_id,
+            "session_id": existing_sid,
+            "status": "already_started",
+            "question": last_q,
+            "step": existing_session.get("step", 1),
+            "total_steps": existing_session.get("total_steps", 5),
+            "patient_name": appt.get("patient_name", ""),
+            "doctor_name": appt.get("doctor_name", ""),
+            "appointment_time": appt.get("appointment_time", ""),
+        }
+
+    lang = appt.get("language", "tr")
+    doctor_name = appt.get("doctor_name", "Dr.")
+    appt_time_raw = appt.get("appointment_time", "")
+    # Format appointment time nicely
+    try:
+        appt_dt = datetime.fromisoformat(appt_time_raw)
+        appt_time_nice = appt_dt.strftime("%d.%m.%Y %H:%M") if lang == "tr" else appt_dt.strftime("%m/%d/%Y %H:%M")
+    except Exception:
+        appt_time_nice = appt_time_raw
+
+    # İlk soru — randevu bağlamı ile kişiselleştirilmiş
+    patient_name_first = appt.get("patient_name", "").split()[0]
+    if lang == "tr":
+        first_q = (
+            f"Merhaba {patient_name_first}! 👋 {appt_time_nice} tarihinde {doctor_name} ile randevunuz var. "
+            f"Randevunuzdan önce size birkaç soru sormak istiyorum. "
+            f"Bugün doktorunuza gitmek istemenizin ana sebebi nedir?"
+        )
+    elif lang == "ar":
+        first_q = (
+            f"مرحباً {patient_name_first}! 👋 لديك موعد مع {doctor_name} في {appt_time_nice}. "
+            f"قبل موعدك، أودّ طرح بعض الأسئلة عليك. "
+            f"ما السبب الرئيسي لزيارة طبيبك اليوم؟"
+        )
+    else:
+        first_q = (
+            f"Hello {patient_name_first}! 👋 You have an appointment with {doctor_name} on {appt_time_nice}. "
+            f"Before your appointment, I'd like to ask you a few questions. "
+            f"What is the main reason you'd like to see your doctor today?"
+        )
+
+    sid = str(uuid.uuid4())
+    session_data = {
+        "patient_name": appt.get("patient_name", "Hasta"),
+        "age": appt.get("patient_age", 30),
+        "gender": appt.get("patient_gender", "Belirtilmedi"),
+        "language": lang,
+        "step": 1,
+        "total_steps": 5,  # Pre-visit: 5 soru (kısa, odaklı)
+        "qa_history": [{"question": first_q, "answer": None}],
+        "completed": False,
+        "vitals": None,
+        "image_analyses": [],
+        "patient_id": current_user["user_id"] if current_user else None,
+        "claim_code": None,
+        "intake_type": "pre_visit",
+        "appointment_id": appointment_id,
+        "doctor_name": appt.get("doctor_name", ""),
+        "appointment_time": appt_time_raw,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+
+    sessions[sid] = session_data
+    db_save_session(sid, session_data)
+
+    # Randevuya bağla
+    appt["session_id"] = sid
+    appt["previsit_status"] = "in_progress"
+    _appt_sessions[appointment_id] = sid
+
+    return {
+        "appointment_id": appointment_id,
+        "session_id": sid,
+        "status": "started",
+        "question": first_q,
+        "step": 1,
+        "total_steps": 5,
+        "patient_name": appt.get("patient_name", ""),
+        "doctor_name": appt.get("doctor_name", ""),
+        "appointment_time": appt_time_raw,
+        "appointment_type": appt.get("appointment_type", ""),
+        "specialty": appt.get("specialty", ""),
+    }
+
+
+@app.post("/api/appointments/{appointment_id}/previsit/message")
+@limiter.limit("30/minute")
+async def previsit_message(appointment_id: str, req: PreVisitMessageRequest, request: Request):
+    """
+    Randevu öncesi anamnez konuşması — hasta mesajını alır, sonraki soruyu döner.
+    Mülakat tamamlandığında doktor brief'i arka planda üretilir.
+    """
+    appt = _appointments.get(appointment_id)
+    if not appt:
+        raise HTTPException(status_code=404, detail="Randevu bulunamadı.")
+
+    sid = appt.get("session_id")
+    if not sid or sid not in sessions:
+        raise HTTPException(status_code=400, detail="Önce randevu görüşmesini başlatın: POST /api/appointments/{id}/previsit/start")
+
+    session = sessions[sid]
+    lang = req.language or appt.get("language", "tr")
+    msg  = req.message.strip()
+
+    if not msg:
+        raise HTTPException(status_code=400, detail="Mesaj boş olamaz.")
+
+    # Tamamlanmış mülakat
+    if session.get("completed"):
+        brief = appt.get("brief")
+        wait_warning = brief.get("wait_warning", False) if brief else False
+        if lang == "tr":
+            reply = "✅ Bilgileriniz doktorunuza iletildi. Randevunuzu beklemenizi öneririz." if not wait_warning else \
+                    "⚠️ Belirttiğiniz şikayetler nedeniyle randevunuzu beklemenizi önermiyoruz. Lütfen sağlık personeline hemen başvurun."
+        elif lang == "ar":
+            reply = "✅ تم إرسال معلوماتك إلى طبيبك. يُنصح بانتظار موعدك." if not wait_warning else \
+                    "⚠️ بناءً على شكاواك، لا نوصي بانتظار الموعد. يرجى مراجعة الطاقم الصحي فوراً."
+        else:
+            reply = "✅ Your information has been sent to your doctor. Please wait for your appointment." if not wait_warning else \
+                    "⚠️ Based on your complaints, we advise you NOT to wait for your appointment. Please see healthcare staff immediately."
+        return {
+            "appointment_id": appointment_id,
+            "session_id": sid,
+            "reply": reply,
+            "completed": True,
+            "wait_warning": wait_warning,
+            "step": session.get("step", 5),
+            "total_steps": session.get("total_steps", 5),
+            "next_action": "completed",
+        }
+
+    # Mevcut soruya cevap kaydet
+    qa = session.get("qa_history", [])
+    if qa and qa[-1].get("answer") is None:
+        qa[-1]["answer"] = msg
+    elif qa:
+        qa[-1]["answer"] = msg
+
+    current_step = session.get("step", 1)
+    total_steps  = session.get("total_steps", 5)
+
+    # İlk cevap → adaptif adım güncelle (pre-visit: max 6, min 4)
+    if current_step == 1 and msg:
+        adapted = _adaptive_steps(msg, session.get("age", 30), lang)
+        total_steps = max(4, min(adapted, 6))
+        session["total_steps"] = total_steps
+
+    # Mülakat tamamlandı mı?
+    if current_step >= total_steps:
+        session["completed"] = True
+        appt["previsit_status"] = "completed"
+        db_save_session(sid, session)
+        asyncio.create_task(notify_queue_update())
+
+        # Arka planda brief üret
+        async def _gen_brief_bg():
+            try:
+                brief_data = await _generate_previsit_brief(appointment_id)
+                appt["brief"] = brief_data
+                appt["previsit_status"] = "brief_ready"
+                # Özet de kaydet
+                summary_entry = {
+                    "session_id": sid,
+                    "patient_name": session.get("patient_name", ""),
+                    "age": session.get("age", 0),
+                    "gender": session.get("gender", ""),
+                    "triage_level": "PENDING",
+                    "triage_color": "#9e9e9e",
+                    "confidence_score": 0,
+                    "chief_complaint": brief_data.get("chief_complaint", ""),
+                    "symptoms_summary": brief_data.get("clinical_note", ""),
+                    "possible_conditions": [],
+                    "urgency_flags": brief_data.get("red_flags", []),
+                    "recommended_action": "Randevu öncesi brief hazır — doktor incelemesi gerekiyor",
+                    "clinical_notes": brief_data.get("clinical_note", ""),
+                    "generated_at": datetime.utcnow().isoformat(),
+                    "intake_type": "pre_visit",
+                    "previsit_brief": brief_data,
+                    "doctor_review_required": True,
+                    "unsafe_to_self_manage": brief_data.get("wait_warning", False),
+                }
+                summaries[sid] = summary_entry
+                db_save_summary(sid, summary_entry)
+            except Exception as e:
+                print(f"[PreVisit] Brief oluşturma hatası: {e}")
+
+        asyncio.create_task(_gen_brief_bg())
+
+        doctor_name = appt.get("doctor_name", "doktorunuz")
+        wait_w = False  # Brief henüz hazır değil
+        if lang == "tr":
+            reply = (
+                f"✅ Teşekkürler! Verdiğiniz bilgiler {doctor_name}'ına iletiliyor. "
+                f"Brief hazırlanıyor, birkaç dakika içinde doktorunuz bilgilerinizi görebilecek. "
+                f"Randevunuz için hazır olun."
+            )
+        elif lang == "ar":
+            reply = (
+                f"✅ شكراً! يتم إرسال المعلومات التي قدمتها إلى {doctor_name}. "
+                f"جاري إعداد الملخص، سيتمكن طبيبك من الاطلاع على معلوماتك خلال دقائق."
+            )
+        else:
+            reply = (
+                f"✅ Thank you! Your information is being sent to {doctor_name}. "
+                f"The brief is being prepared — your doctor will be able to see your information in a few minutes. "
+                f"Please get ready for your appointment."
+            )
+
+        return {
+            "appointment_id": appointment_id,
+            "session_id": sid,
+            "reply": reply,
+            "completed": True,
+            "wait_warning": False,  # Brief henüz hazır değil, kötümser olmayalım
+            "step": current_step,
+            "total_steps": total_steps,
+            "next_action": "completed",
+        }
+
+    # Sonraki soruyu AI ile üret
+    doctor_name = appt.get("doctor_name", "")
+    appt_time_raw = appt.get("appointment_time", "")
+
+    history_text = "\n".join(
+        f"S{i+1}: {qa_i['question']}\nC{i+1}: {qa_i['answer']}"
+        for i, qa_i in enumerate(qa)
+        if qa_i.get("answer")
+    )
+
+    if lang == "tr":
+        next_prompt = (
+            f"Hasta: {session['patient_name']}, {session['age']} yaşında, {session['gender']}.\n"
+            f"Doktor: {doctor_name} | Randevu: {appt_time_raw}\n"
+            f"Görüşme geçmişi:\n{history_text}\n\n"
+            f"Randevu için doktor briefi hazırlıyoruz. "
+            f"Eksik olan en önemli klinik bilgiyi sormak için SONRAKI en kritik soruyu sor. "
+            f"Pre-visit görüşme soru {current_step+1}/{total_steps}. "
+            f"Kısa ve nazik ol."
+        )
+    elif lang == "ar":
+        next_prompt = (
+            f"المريض: {session['patient_name']}, {session['age']} سنة.\n"
+            f"سجل المقابلة:\n{history_text}\n\n"
+            f"اطرح السؤال التالي الأكثر أهمية لإعداد ملخص الطبيب. "
+            f"السؤال {current_step+1}/{total_steps}. أجب باللغة العربية."
+        )
+    else:
+        next_prompt = (
+            f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n"
+            f"Doctor: {doctor_name} | Appointment: {appt_time_raw}\n"
+            f"History:\n{history_text}\n\n"
+            f"We are preparing a pre-visit brief for the doctor. "
+            f"Ask the NEXT most important question to gather missing clinical information. "
+            f"Pre-visit Q{current_step+1}/{total_steps}. Be concise and friendly."
+        )
+
+    rag_query = msg + " " + history_text[-200:]
+    next_q = await ask_gemma_rag(
+        next_prompt,
+        system=_previsit_system_prompt(lang, doctor_name, appt_time_raw),
+        rag_query=rag_query,
+        num_predict=200,
+    )
+
+    session["step"] = current_step + 1
+    session["qa_history"].append({"question": next_q, "answer": None})
+    db_save_session(sid, session)
+
+    return {
+        "appointment_id": appointment_id,
+        "session_id": sid,
+        "reply": next_q,
+        "completed": False,
+        "wait_warning": False,
+        "step": session["step"],
+        "total_steps": total_steps,
+        "next_action": "ask_follow_up",
+    }
+
+
+@app.get("/api/appointments/{appointment_id}/brief")
+async def get_previsit_brief_endpoint(appointment_id: str, current_user: dict = Depends(require_doctor)):
+    """
+    Doktor için randevu öncesi hasta brief'ini döndürür.
+    Pre-visit mülakat tamamlandıktan sonra erişilebilir.
+    """
+    appt = _appointments.get(appointment_id)
+    if not appt:
+        raise HTTPException(status_code=404, detail="Randevu bulunamadı.")
+
+    sid = appt.get("session_id")
+    session = sessions.get(sid, {}) if sid else {}
+    brief = appt.get("brief")
+    status = appt.get("previsit_status", "pending")
+
+    if status == "pending" or not sid:
+        return {
+            "appointment_id": appointment_id,
+            "status": "pending",
+            "patient_name": appt.get("patient_name"),
+            "doctor_name": appt.get("doctor_name"),
+            "appointment_time": appt.get("appointment_time"),
+            "brief": None,
+            "message": "Hasta henüz pre-visit görüşmesini başlatmadı.",
+        }
+    elif status == "in_progress":
+        return {
+            "appointment_id": appointment_id,
+            "status": "in_progress",
+            "patient_name": appt.get("patient_name"),
+            "doctor_name": appt.get("doctor_name"),
+            "appointment_time": appt.get("appointment_time"),
+            "step": session.get("step", 0),
+            "total_steps": session.get("total_steps", 5),
+            "brief": None,
+            "message": f"Görüşme devam ediyor ({session.get('step', 0)}/{session.get('total_steps', 5)} soru).",
+        }
+    elif status == "completed" and not brief:
+        return {
+            "appointment_id": appointment_id,
+            "status": "generating",
+            "patient_name": appt.get("patient_name"),
+            "doctor_name": appt.get("doctor_name"),
+            "appointment_time": appt.get("appointment_time"),
+            "brief": None,
+            "message": "Görüşme tamamlandı, brief hazırlanıyor...",
+        }
+    else:
+        return {
+            "appointment_id": appointment_id,
+            "status": "brief_ready",
+            "patient_name": appt.get("patient_name"),
+            "patient_age": appt.get("patient_age"),
+            "patient_gender": appt.get("patient_gender"),
+            "doctor_name": appt.get("doctor_name"),
+            "specialty": appt.get("specialty"),
+            "appointment_time": appt.get("appointment_time"),
+            "appointment_type": appt.get("appointment_type"),
+            "session_id": sid,
+            "brief": brief,
+            "qa_history": session.get("qa_history", []),
+        }
+
+
+@app.get("/api/appointments/today")
+async def get_today_appointments(current_user: dict = Depends(require_doctor)):
+    """
+    Bugünün randevularını listeler (doktor paneli için).
+    Pre-visit brief durumları dahil.
+    """
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    result = []
+    for appt_id, appt in _appointments.items():
+        appt_time = appt.get("appointment_time", "")
+        if today in appt_time:
+            sid = appt.get("session_id")
+            session = sessions.get(sid, {}) if sid else {}
+            result.append({
+                "appointment_id": appt_id,
+                "patient_name": appt.get("patient_name"),
+                "patient_age": appt.get("patient_age"),
+                "doctor_name": appt.get("doctor_name"),
+                "specialty": appt.get("specialty"),
+                "appointment_time": appt_time,
+                "appointment_type": appt.get("appointment_type"),
+                "previsit_status": appt.get("previsit_status", "pending"),
+                "has_red_flags": bool(appt.get("brief", {}) and appt.get("brief", {}).get("red_flags")),
+                "wait_warning": appt.get("brief", {}).get("wait_warning", False) if appt.get("brief") else False,
+                "session_id": sid,
+                "previsit_link": f"/previsit.html?appt={appt_id}",
+            })
+    # Randevu saatine göre sırala
+    result.sort(key=lambda x: x.get("appointment_time", ""))
+    return {
+        "date": today,
+        "total": len(result),
+        "appointments": result,
     }
 
 

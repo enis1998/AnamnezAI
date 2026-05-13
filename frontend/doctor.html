@@ -65,6 +65,15 @@ tailwind.config={theme:{extend:{colors:{
         <span class="material-symbols-outlined msym text-[17px]">refresh</span><span id="txt-nav-refresh">Listeyi Yenile</span>
       </div>
 
+      <!-- Pre-Visit Mode -->
+      <div class="pt-3 pb-1 px-3">
+        <p class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Randevular</p>
+      </div>
+      <button onclick="showPrevisitSection()"
+        class="w-full flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors">
+        <span class="material-symbols-outlined msym text-[17px]">event_available</span><span>Pre-Visit Briefs</span>
+      </button>
+
       <!-- Sprint 13: Kiosk Yönetim -->
       <div class="pt-3 pb-1 px-3">
         <p id="txt-nav-kiosk-mgmt" class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Kiosk Yönetim</p>
@@ -253,6 +262,41 @@ tailwind.config={theme:{extend:{colors:{
         </div>
         <div id="analytics-content" class="p-5">
           <div class="text-center py-6"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>
+        </div>
+      </div>
+
+      <!-- Pre-Visit Briefs -->
+      <div class="card mb-5 overflow-hidden" id="previsit-section">
+        <div class="px-5 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b border-surfc">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined msym text-sec text-[17px]">event_available</span>
+            <div>
+              <h2 id="txt-previsit-title" class="font-head font-bold text-pri text-[15px]">Bugünün Randevuları & Pre-Visit Briefs</h2>
+              <p class="text-[11px] text-onsv" id="txt-previsit-sub">Randevu öncesi hasta anamnez görüşmeleri</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="txt-previsit-count" class="text-[12px] font-bold text-onsv bg-surfc px-3 py-1 rounded-full hidden"></span>
+            <button onclick="loadPrevisitAppointments()" id="btn-previsit-refresh"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
+              <span class="material-symbols-outlined msym text-[14px]">refresh</span><span id="txt-previsit-refresh">Yenile</span>
+            </button>
+            <button onclick="createDemoAppointments()" id="btn-demo-appts"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sec text-white hover:bg-pric transition-all text-[12px] font-bold">
+              <span class="material-symbols-outlined msym text-[14px]">add</span><span id="txt-demo-appts-btn">Demo Randevu</span>
+            </button>
+            <button onclick="togglePrevisitSection()" id="btn-previsit-toggle"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
+              <span class="material-symbols-outlined msym text-[14px]" id="icon-previsit-toggle">expand_more</span>
+              <span id="txt-previsit-toggle">Göster</span>
+            </button>
+          </div>
+        </div>
+        <div id="previsit-content" class="hidden">
+          <div id="previsit-table"><div class="text-center py-10 text-onsv text-[13px]">
+            <span class="material-symbols-outlined msym text-ouv text-[32px] block mb-2">calendar_today</span>
+            <p id="txt-previsit-empty">Demo randevu oluşturmak için "Demo Randevu" butonuna tıklayın.</p>
+          </div></div>
         </div>
       </div>
 
@@ -1816,6 +1860,351 @@ function setLang(l){
 
 // Sayfa yüklenince kayıtlı dili uygula
 (function(){ setLang(uiLang); })();
+
+// ─────────────────────────────────────────────
+//  Pre-Visit Appointments Module
+// ─────────────────────────────────────────────
+let _previsitOpen = false;
+
+function togglePrevisitSection() {
+  _previsitOpen = !_previsitOpen;
+  const content = document.getElementById('previsit-content');
+  const icon = document.getElementById('icon-previsit-toggle');
+  const btn = document.getElementById('txt-previsit-toggle');
+  if (_previsitOpen) {
+    content.classList.remove('hidden');
+    icon.textContent = 'expand_less';
+    btn.textContent = 'Gizle';
+    loadPrevisitAppointments();
+  } else {
+    content.classList.add('hidden');
+    icon.textContent = 'expand_more';
+    btn.textContent = 'Göster';
+  }
+}
+
+function showPrevisitSection() {
+  if (!_previsitOpen) togglePrevisitSection();
+  document.getElementById('previsit-section')?.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+async function createDemoAppointments() {
+  const btn = document.getElementById('btn-demo-appts');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined msym spin text-[14px]">refresh</span><span>Oluşturuluyor...</span>';
+  try {
+    const res = await fetch(`${API}/api/appointments/demo`, {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Hata: ' + (err.detail || 'Bilinmeyen hata'));
+      return;
+    }
+    const data = await res.json();
+    if (!_previsitOpen) togglePrevisitSection();
+    else loadPrevisitAppointments();
+  } catch(e) {
+    alert('Bağlantı hatası: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined msym text-[14px]">add</span><span id="txt-demo-appts-btn">Demo Randevu</span>';
+  }
+}
+
+async function loadPrevisitAppointments() {
+  const container = document.getElementById('previsit-table');
+  container.innerHTML = '<div class="text-center py-8"><span class="material-symbols-outlined msym spin text-sec text-[28px]">refresh</span></div>';
+  try {
+    const res = await fetch(`${API}/api/appointments/today`, { headers: authHeaders() });
+    if (res.status === 401 || res.status === 403) {
+      container.innerHTML = '<div class="text-center py-8 text-[12px] text-onsv">Doktor yetkisi gerekli.</div>';
+      return;
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    renderPrevisitTable(data.appointments || [], data.date);
+
+    const countEl = document.getElementById('txt-previsit-count');
+    const total = (data.appointments || []).length;
+    if (total > 0) {
+      countEl.textContent = total + ' randevu';
+      countEl.classList.remove('hidden');
+    } else {
+      countEl.classList.add('hidden');
+    }
+  } catch(e) {
+    container.innerHTML = `<div class="text-center py-8 text-[12px] text-onsv">Yükleme hatası: ${e.message}</div>`;
+  }
+}
+
+function previsitStatusBadge(status) {
+  const map = {
+    'pending':     { bg:'#f4f7f9', color:'#3f4749', icon:'hourglass_empty', label:'Bekliyor' },
+    'in_progress': { bg:'#fff8e1', color:'#b05508', icon:'chat',            label:'Devam Ediyor' },
+    'completed':   { bg:'#e8f5e9', color:'#2e7d32', icon:'task_alt',        label:'Tamamlandı' },
+    'brief_ready': { bg:'#e8f5f3', color:'#006a68', icon:'description',     label:'Brief Hazır' },
+  };
+  const s = map[status] || map['pending'];
+  return `<span style="display:inline-flex;align-items:center;gap:4px;background:${s.bg};color:${s.color};font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px">
+    <span class="material-symbols-outlined msym" style="font-size:12px">${s.icon}</span>${s.label}
+  </span>`;
+}
+
+function renderPrevisitTable(appointments, dateStr) {
+  const container = document.getElementById('previsit-table');
+  if (!appointments.length) {
+    container.innerHTML = `<div class="text-center py-10 text-onsv text-[13px]">
+      <span class="material-symbols-outlined msym text-ouv text-[32px] block mb-2">calendar_today</span>
+      <p>Bugün (${dateStr || ''}) için randevu bulunamadı. Demo oluşturmak için "Demo Randevu" butonuna tıklayın.</p>
+    </div>`;
+    return;
+  }
+
+  let html = '<div class="overflow-x-auto">';
+  html += `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:#f4f7f9;color:#3f4749">
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">Hasta</th>
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">Doktor / Bölüm</th>
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">Saat</th>
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">Pre-Visit Durum</th>
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">İşlemler</th>
+    </tr></thead><tbody>`;
+
+  appointments.forEach((appt, idx) => {
+    const isEven = idx % 2 === 0;
+    const rowBg = isEven ? '#fff' : '#fafbfc';
+    const apptTime = appt.appointment_time ? new Date(appt.appointment_time).toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'}) : '—';
+    const hasWarn = appt.wait_warning;
+    const rowBorder = hasWarn ? 'border-left: 3px solid #e07b26;' : '';
+
+    let actionsHtml = '';
+    // Patient link
+    actionsHtml += `<a href="/previsit.html?appt=${appt.appointment_id}" target="_blank"
+      style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:#e8f5f3;color:#006a68;font-weight:700;font-size:11px;text-decoration:none;margin-right:4px">
+      <span class="material-symbols-outlined msym" style="font-size:13px">open_in_new</span>Hasta Linki
+    </a>`;
+
+    // Brief button (only if ready)
+    if (appt.previsit_status === 'brief_ready' || appt.previsit_status === 'completed') {
+      actionsHtml += `<button onclick="openPrevisitBrief('${appt.appointment_id}')"
+        style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:#002f40;color:#fff;font-weight:700;font-size:11px;border:none;cursor:pointer">
+        <span class="material-symbols-outlined msym text-white" style="font-size:13px">description</span>Brief
+      </button>`;
+    }
+
+    html += `<tr style="background:${rowBg};${rowBorder}" class="row-hover" onclick="openPrevisitBrief('${appt.appointment_id}')">
+      <td style="padding:12px 16px">
+        <div style="font-weight:700;color:#191c1d">${appt.patient_name || '—'}</div>
+        <div style="color:#3f4749;font-size:11px">${appt.patient_age ? appt.patient_age + ' yaş' : ''}</div>
+        ${hasWarn ? '<span style="display:inline-flex;align-items:center;gap:3px;background:#fff3e0;color:#e07b26;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-top:2px"><span class="material-symbols-outlined msym" style="font-size:11px">warning</span>Red Flag</span>' : ''}
+      </td>
+      <td style="padding:12px 16px">
+        <div style="font-weight:600;color:#191c1d">${appt.doctor_name || '—'}</div>
+        <div style="color:#3f4749;font-size:11px">${appt.specialty || ''}</div>
+      </td>
+      <td style="padding:12px 16px;color:#191c1d;white-space:nowrap">${apptTime}</td>
+      <td style="padding:12px 16px">${previsitStatusBadge(appt.previsit_status)}</td>
+      <td style="padding:12px 16px" onclick="event.stopPropagation()">${actionsHtml}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+// Brief Modal
+async function openPrevisitBrief(apptId) {
+  // Create or reuse brief modal
+  let modal = document.getElementById('previsit-brief-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'previsit-brief-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px)';
+    modal.onclick = function(e){ if(e.target===this) this.remove(); };
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `<div style="background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,47,64,0.2);width:92vw;max-width:700px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid #e8ecee;display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <span class="material-symbols-outlined msym" style="color:#006a68;font-size:20px">description</span>
+      <span style="font-family:Manrope,sans-serif;font-weight:700;font-size:15px;color:#002f40">Pre-Visit Brief</span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <span id="pv-brief-status" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#f4f7f9;color:#3f4749"></span>
+        <button onclick="document.getElementById('previsit-brief-modal').remove()" style="width:30px;height:30px;border-radius:8px;background:#f4f7f9;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
+          <span class="material-symbols-outlined msym" style="font-size:16px">close</span>
+        </button>
+      </div>
+    </div>
+    <div id="pv-brief-body" style="flex:1;overflow-y:auto;padding:20px">
+      <div style="text-align:center;padding:40px 0"><span class="material-symbols-outlined msym spin" style="color:#006a68;font-size:32px">refresh</span></div>
+    </div>
+  </div>`;
+
+  modal.style.display = 'flex';
+
+  try {
+    const res = await fetch(`${API}/api/appointments/${apptId}/brief`, { headers: authHeaders() });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    const statusMap = {
+      pending: { label:'Bekliyor', bg:'#f4f7f9', color:'#3f4749' },
+      in_progress: { label:'Devam Ediyor', bg:'#fff8e1', color:'#b05508' },
+      generating: { label:'Oluşturuluyor...', bg:'#e3f2fd', color:'#1565c0' },
+      completed: { label:'Tamamlandı', bg:'#e8f5e9', color:'#2e7d32' },
+      brief_ready: { label:'Brief Hazır', bg:'#e8f5f3', color:'#006a68' },
+    };
+    const st = statusMap[data.status] || statusMap['pending'];
+    document.getElementById('pv-brief-status').textContent = st.label;
+    document.getElementById('pv-brief-status').style.background = st.bg;
+    document.getElementById('pv-brief-status').style.color = st.color;
+
+    document.getElementById('pv-brief-body').innerHTML = renderBriefContent(data);
+  } catch(e) {
+    document.getElementById('pv-brief-body').innerHTML = `<div style="color:#c62828;padding:20px">Hata: ${e.message}</div>`;
+  }
+}
+
+function renderBriefContent(data) {
+  const brief = data.brief;
+  const apptTime = data.appointment_time ? new Date(data.appointment_time).toLocaleString('tr-TR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+
+  if (!brief) {
+    const msgMap = {
+      'pending': 'Hasta henüz pre-visit görüşmesini başlatmamış.',
+      'in_progress': `Görüşme devam ediyor (${data.step || 0}/${data.total_steps || 5} soru). Tamamlandığında brief otomatik oluşacak.`,
+      'generating': 'Görüşme tamamlandı. Brief birkaç saniye içinde hazır olacak. Sayfayı yenileyin.',
+    };
+    return `<div style="text-align:center;padding:40px 20px">
+      <div style="width:60px;height:60px;border-radius:50%;background:#f4f7f9;margin:0 auto 16px;display:flex;align-items:center;justify-content:center">
+        <span class="material-symbols-outlined msym" style="color:#bfc7cd;font-size:28px">schedule</span>
+      </div>
+      <p style="font-size:13px;color:#3f4749">${msgMap[data.status] || data.message || 'Brief henüz hazır değil.'}</p>
+      <p style="font-size:11px;color:#bfc7cd;margin-top:8px">
+        Hasta pre-visit linkini kullanmalı: <code style="background:#f4f7f9;padding:2px 6px;border-radius:4px">/previsit.html?appt=${data.appointment_id}</code>
+      </p>
+    </div>`;
+  }
+
+  const chip = (text, bg, col) => `<span style="display:inline-block;background:${bg};color:${col};font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;margin:2px">${text}</span>`;
+
+  let html = '';
+
+  // Patient + appointment header
+  html += `<div style="background:#f4f7f9;border-radius:14px;padding:16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:16px">
+    <div style="flex:1;min-width:180px">
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Hasta</p>
+      <p style="font-size:15px;font-weight:700;color:#002f40">${data.patient_name || '—'}</p>
+      <p style="font-size:12px;color:#3f4749">${data.patient_age ? data.patient_age + ' yaş · ' : ''}${data.patient_gender || ''}</p>
+    </div>
+    <div style="flex:1;min-width:180px">
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Doktor · Randevu</p>
+      <p style="font-size:13px;font-weight:700;color:#002f40">${data.doctor_name || '—'}</p>
+      <p style="font-size:12px;color:#3f4749">${data.specialty || ''} · ${apptTime}</p>
+    </div>
+  </div>`;
+
+  // Wait warning
+  if (brief.wait_warning) {
+    html += `<div style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;gap:10px">
+      <span class="material-symbols-outlined msym-fill" style="color:#e07b26;font-size:22px;flex-shrink:0">warning</span>
+      <div>
+        <p style="font-size:13px;font-weight:700;color:#e07b26">⚠️ Randevuyu Beklememe Uyarısı</p>
+        <p style="font-size:12px;color:#3f4749;margin-top:4px">${brief.wait_warning_reason || 'Red flag tespit edildi — doktor değerlendirmesi için acil başvuru önerilir.'}</p>
+      </div>
+    </div>`;
+  }
+
+  // Chief complaint
+  html += `<div style="margin-bottom:14px">
+    <p style="font-size:10px;font-weight:700;color:#006a68;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Ana Şikayet</p>
+    <p style="font-size:14px;color:#191c1d;line-height:1.5;background:#f0faf9;padding:12px;border-radius:10px">${brief.chief_complaint || '—'}</p>
+    <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+      ${brief.complaint_duration ? `<span style="font-size:12px;color:#3f4749"><b>Süre:</b> ${brief.complaint_duration}</span>` : ''}
+      ${brief.severity ? `<span style="font-size:12px;color:#3f4749"><b>Şiddet:</b> ${brief.severity}</span>` : ''}
+    </div>
+  </div>`;
+
+  // Associated symptoms
+  if (brief.associated_symptoms?.length) {
+    html += `<div style="margin-bottom:14px">
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Eşlik Eden Semptomlar</p>
+      <div>${brief.associated_symptoms.map(s => chip(s, '#f0faf9', '#006a68')).join('')}</div>
+    </div>`;
+  }
+
+  // Chronic + medications + allergies
+  const hasMedHist = brief.chronic_conditions?.length || brief.current_medications?.length || brief.allergies?.length;
+  if (hasMedHist) {
+    html += `<div style="background:#f8fafb;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:14px">`;
+    if (brief.chronic_conditions?.length) html += `<div style="flex:1;min-width:140px">
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;margin-bottom:4px">Kronik Hastalıklar</p>
+      ${brief.chronic_conditions.map(s => `<p style="font-size:12px;color:#191c1d">• ${s}</p>`).join('')}
+    </div>`;
+    if (brief.current_medications?.length) html += `<div style="flex:1;min-width:140px">
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;margin-bottom:4px">Mevcut İlaçlar</p>
+      ${brief.current_medications.map(s => `<p style="font-size:12px;color:#191c1d">• ${s}</p>`).join('')}
+    </div>`;
+    if (brief.allergies?.length) html += `<div style="flex:1;min-width:140px">
+      <p style="font-size:10px;font-weight:700;color:#c62828;text-transform:uppercase;margin-bottom:4px">Alerjiler ⚠️</p>
+      ${brief.allergies.map(s => `<p style="font-size:12px;color:#c62828">• ${s}</p>`).join('')}
+    </div>`;
+    html += '</div>';
+  }
+
+  // Missing info + suggested questions
+  if (brief.missing_information?.length || brief.suggested_questions?.length) {
+    html += `<div style="background:#fffde7;border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid #fff9c4;display:flex;flex-wrap:wrap;gap:16px">`;
+    if (brief.missing_information?.length) html += `<div style="flex:1;min-width:200px">
+      <p style="font-size:10px;font-weight:700;color:#b05508;text-transform:uppercase;margin-bottom:6px">Eksik Bilgiler</p>
+      ${brief.missing_information.map(s => `<p style="font-size:12px;color:#3f4749;margin-bottom:3px">❓ ${s}</p>`).join('')}
+    </div>`;
+    if (brief.suggested_questions?.length) html += `<div style="flex:1;min-width:200px">
+      <p style="font-size:10px;font-weight:700;color:#006a68;text-transform:uppercase;margin-bottom:6px">Doktor İçin Önerilen Sorular</p>
+      ${brief.suggested_questions.map(s => `<p style="font-size:12px;color:#3f4749;margin-bottom:3px">💬 ${s}</p>`).join('')}
+    </div>`;
+    html += '</div>';
+  }
+
+  // Red flags
+  if (brief.red_flags?.length) {
+    html += `<div style="background:#fdecea;border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid #ef9a9a">
+      <p style="font-size:10px;font-weight:700;color:#c62828;text-transform:uppercase;margin-bottom:6px">🚩 Red Flags</p>
+      ${brief.red_flags.map(f => `<p style="font-size:12px;color:#c62828;margin-bottom:3px">• ${f}</p>`).join('')}
+    </div>`;
+  }
+
+  // Clinical note
+  if (brief.clinical_note) {
+    html += `<div style="margin-bottom:14px">
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Klinik Özet Notu</p>
+      <p style="font-size:12px;color:#191c1d;line-height:1.6;background:#f4f7f9;padding:12px;border-radius:10px">${brief.clinical_note}</p>
+    </div>`;
+  }
+
+  // Q&A history
+  const qa = data.qa_history;
+  if (qa?.length) {
+    html += `<details style="margin-bottom:14px">
+      <summary style="font-size:11px;font-weight:700;color:#3f4749;text-transform:uppercase;cursor:pointer;padding:8px 0">Görüşme Transkripti (${qa.length} soru)</summary>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        ${qa.map((item, i) => `
+          <div style="font-size:12px">
+            <p style="color:#006a68;font-weight:600">S${i+1}: ${item.question}</p>
+            <p style="color:#191c1d;margin-top:2px;padding-left:12px">↳ ${item.answer || '<em style="color:#bfc7cd">Yanıt yok</em>'}</p>
+          </div>`).join('')}
+      </div>
+    </details>`;
+  }
+
+  html += `<p style="font-size:10px;color:#bfc7cd;margin-top:4px">
+    Bu brief AI tarafından üretilmiştir. Klinik karar tamamen hekime aittir. • AnamnezAI Pre-Visit Mode
+  </p>`;
+
+  return html;
+}
 </script>
 </body>
 </html>

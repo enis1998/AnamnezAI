@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Channel Adapter Demo — AnamnezAI</title>
+  <style>
+    :root {
+      --bg-page:    #111b21;
+      --bg-sidebar: #202c33;
+      --bg-chat:    #0b141a;
+      --bg-bubble-in:  #202c33;
+      --bg-bubble-out: #005c4b;
+      --bg-input:   #2a3942;
+      --text-main:  #e9edef;
+      --text-sub:   #8696a0;
+      --accent:     #00a884;
+      --accent-dim: #00a88422;
+      --red:        #ef5350;
+      --yellow:     #fbc02d;
+      --green:      #4caf50;
+      --border:     #2a3942;
+      --font: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg-page); color: var(--text-main); font-family: var(--font); height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Header ── */
+    .header {
+      background: var(--bg-sidebar);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .header-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--accent); display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .header-info { flex: 1 }
+    .header-info .name { font-weight: 600; font-size: 15px; }
+    .header-info .status { font-size: 12px; color: var(--text-sub); }
+    .header-badge {
+      background: #1e3a2f;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .header-links {
+      display: flex; gap: 8px;
+    }
+    .header-links a {
+      font-size: 11px;
+      color: var(--text-sub);
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .header-links a:hover { color: var(--text-main); border-color: var(--accent); }
+
+    /* ── Notice Banner ── */
+    .notice {
+      background: #2a1f0a;
+      border-bottom: 1px solid #5a3e0a;
+      padding: 8px 20px;
+      font-size: 12px;
+      color: #ffc107;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Lang Bar ── */
+    .lang-bar {
+      background: var(--bg-sidebar);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .lang-bar span { color: var(--text-sub); }
+    .lang-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--text-sub); padding: 4px 12px; border-radius: 20px;
+      cursor: pointer; font-size: 12px; transition: all 0.2s;
+    }
+    .lang-btn.active, .lang-btn:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* ── Chat Area ── */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: var(--bg-chat);
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Date Separator ── */
+    .date-sep {
+      text-align: center;
+      margin: 16px 0;
+    }
+    .date-sep span {
+      background: #1f2c34;
+      color: var(--text-sub);
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+
+    /* ── Messages ── */
+    .msg-row {
+      display: flex;
+      margin-bottom: 4px;
+      animation: pop 0.18s ease;
+    }
+    @keyframes pop { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+    .msg-row.out { justify-content: flex-end; }
+    .msg-row.in  { justify-content: flex-start; }
+
+    .bubble {
+      max-width: 72%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      position: relative;
+    }
+    .msg-row.out .bubble {
+      background: var(--bg-bubble-out);
+      border-bottom-right-radius: 2px;
+    }
+    .msg-row.in .bubble {
+      background: var(--bg-bubble-in);
+      border-bottom-left-radius: 2px;
+    }
+    .bubble-meta {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-align: right;
+      margin-top: 3px;
+    }
+    .bubble-typing { opacity: 0.7; }
+    .typing-dots span {
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: var(--text-sub);
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+    /* ── System messages ── */
+    .sys-msg {
+      text-align: center;
+      margin: 8px 0;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+    .sys-msg span {
+      background: #1f2c34;
+      padding: 3px 12px;
+      border-radius: 6px;
+    }
+
+    /* ── Triage Card ── */
+    .triage-card {
+      background: var(--bg-sidebar);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin: 12px 0;
+      border-left: 4px solid var(--accent);
+      font-size: 13px;
+    }
+    .triage-card.red    { border-color: var(--red); }
+    .triage-card.yellow { border-color: var(--yellow); }
+    .triage-card.green  { border-color: var(--green); }
+    .triage-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .triage-card.red    .triage-badge { background: #ef535020; color: var(--red); }
+    .triage-card.yellow .triage-badge { background: #fbc02d20; color: var(--yellow); }
+    .triage-card.green  .triage-badge { background: #4caf5020; color: var(--green); }
+    .triage-card .label { color: var(--text-sub); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
+    .triage-card .value { color: var(--text-main); }
+
+    /* ── Input Area ── */
+    .input-area {
+      background: var(--bg-sidebar);
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .input-wrap {
+      flex: 1;
+      background: var(--bg-input);
+      border-radius: 24px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    #msgInput {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 15px;
+      resize: none;
+      max-height: 120px;
+      font-family: var(--font);
+      line-height: 1.4;
+    }
+    #msgInput::placeholder { color: var(--text-sub); }
+    .send-btn {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .send-btn:hover  { opacity: 0.9; }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .send-btn svg { fill: white; width: 22px; height: 22px; }
+
+    /* ── Info Panel ── */
+    .info-panel {
+      background: var(--bg-sidebar);
+      border-top: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-sub);
+      flex-shrink: 0;
+    }
+    .info-panel .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .info-panel a { color: var(--accent); text-decoration: none; }
+    .info-panel a:hover { text-decoration: underline; }
+    .step-indicator {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-sub);
+      background: var(--bg-input);
+      padding: 3px 10px;
+      border-radius: 10px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .header-links { display: none; }
+      .bubble { max-width: 86%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────── -->
+<div class="header">
+  <div class="header-avatar">🏥</div>
+  <div class="header-info">
+    <div class="name">AnamnezAI</div>
+    <div class="status" id="statusText">Bağlanıyor...</div>
+  </div>
+  <div class="header-badge">Channel Adapter Demo</div>
+  <div class="header-links">
+    <a href="/index.html">Hasta Formu</a>
+    <a href="/kiosk.html">Kiosk</a>
+    <a href="/doctor.html">Doktor</a>
+    <a href="/docs" target="_blank">API Docs</a>
+  </div>
+</div>
+
+<!-- ── NOTICE ─────────────────────────────────────────────────────── -->
+<div class="notice">
+  ⚠️ Bu sayfa bir <strong>WhatsApp-style kanal adapter demosu</strong>dur.
+  Gerçek WhatsApp/Meta entegrasyonu değildir.
+  AI inferansı tamamen yerel (Gemma 4 via Ollama). Hasta verisi dış API'ye gitmez.
+</div>
+
+<!-- ── LANG BAR ───────────────────────────────────────────────────── -->
+<div class="lang-bar">
+  <span>Dil / Language:</span>
+  <button class="lang-btn active" onclick="setLang('tr')" id="lang-tr">🇹🇷 Türkçe</button>
+  <button class="lang-btn" onclick="setLang('en')" id="lang-en">🇬🇧 English</button>
+  <button class="lang-btn" onclick="setLang('ar')" id="lang-ar">🇸🇦 العربية</button>
+  <button class="lang-btn" onclick="resetChat()" style="margin-left:auto; border-color:#ef5350; color:#ef5350;">
+    🔄 Yeni Sohbet
+  </button>
+</div>
+
+<!-- ── CHAT ───────────────────────────────────────────────────────── -->
+<div class="chat-area" id="chatArea">
+  <div class="date-sep"><span id="dateSep"></span></div>
+  <div class="sys-msg"><span>AnamnezAI Kanal Adapter Demo — Demo amaçlıdır</span></div>
+</div>
+
+<!-- ── INPUT ──────────────────────────────────────────────────────── -->
+<div class="input-area">
+  <div class="input-wrap">
+    <textarea id="msgInput" rows="1" placeholder="Şikayetinizi yazın..." maxlength="1000"></textarea>
+  </div>
+  <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+  </button>
+</div>
+
+<!-- ── INFO PANEL ─────────────────────────────────────────────────── -->
+<div class="info-panel">
+  <div class="dot" id="statusDot"></div>
+  <span id="infoText">Backend bekleniyor...</span>
+  <span class="step-indicator" id="stepIndicator" style="display:none"></span>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+//  State
+// ─────────────────────────────────────────────────────────────────────────────
+const BASE_URL    = '';  // same origin
+const CHANNEL_EP  = '/api/channel/intake/message';
+const USER_ID     = 'demo-channel-user-' + Math.random().toString(36).slice(2, 8);
+
+let sessionId    = null;
+let language     = 'tr';
+let isCompleted  = false;
+let isBusy       = false;
+let stepCurrent  = 0;
+let stepTotal    = 5;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Greet messages per language
+// ─────────────────────────────────────────────────────────────────────────────
+const GREET = {
+  tr: '👋 Merhaba! Ben AnamnezAI. Şikayetinizi yazın, size yardımcı olacağım.',
+  en: '👋 Hello! I\'m AnamnezAI. Describe your complaint and I\'ll help you.',
+  ar: '👋 مرحباً! أنا AnamnezAI. اكتب شكواك وسأساعدك.'
+};
+const COMPLETED_MSG = {
+  tr: '✅ Bilgileriniz doktora iletildi. Lütfen sağlık görevlisine haber verin.',
+  en: '✅ Your information has been sent to the doctor. Please notify the healthcare staff.',
+  ar: '✅ تم إرسال معلوماتك إلى الطبيب. يرجى إخطار الطاقم الطبي.'
+};
+const PLACEHOLDER = {
+  tr: 'Şikayetinizi yazın...',
+  en: 'Describe your complaint...',
+  ar: 'اكتب شكواك...'
+};
+const SOURCE_LABEL = {
+  tr: '· Kaynak: Channel Demo (WhatsApp-style)',
+  en: '· Source: Channel Demo (WhatsApp-style)',
+  ar: '· المصدر: Channel Demo'
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Init
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('dateSep').textContent = new Date().toLocaleDateString('tr-TR', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  checkBackend();
+
+  const inp = document.getElementById('msgInput');
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  inp.addEventListener('input', () => {
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Backend health check
+// ─────────────────────────────────────────────────────────────────────────────
+async function checkBackend() {
+  try {
+    const r = await fetch('/healthz');
+    if (r.ok) {
+      setStatus('online');
+      showGreet();
+    } else {
+      setStatus('error');
+    }
+  } catch {
+    setStatus('error');
+  }
+}
+
+function setStatus(s) {
+  const dot  = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  const info = document.getElementById('infoText');
+  if (s === 'online') {
+    dot.style.background = 'var(--accent)';
+    text.textContent = 'çevrimiçi';
+    info.innerHTML = '<span style="color:var(--accent)">✅ Backend bağlı</span> — Gemma 4 yerel | Bulut API yok'
+      + ' · <a href="/api/offline-proof" target="_blank">Yerel AI Kanıtı</a>';
+  } else {
+    dot.style.background = 'var(--red)';
+    text.textContent = 'çevrimdışı';
+    info.textContent = '❌ Backend çalışmıyor. cd mediscreen/backend && python main.py';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Language
+// ─────────────────────────────────────────────────────────────────────────────
+function setLang(l) {
+  language = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('lang-' + l).classList.add('active');
+  document.getElementById('msgInput').placeholder = PLACEHOLDER[l];
+  if (!sessionId) showGreet();
+}
+
+function showGreet() {
+  addBubble(GREET[language], 'in');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Bubble factories
+// ─────────────────────────────────────────────────────────────────────────────
+function addBubble(text, dir, meta = '') {
+  const area = document.getElementById('chatArea');
+  const row  = document.createElement('div');
+  row.className = 'msg-row ' + dir;
+  const time = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+  row.innerHTML = `
+    <div class="bubble">
+      ${escHtml(text)}
+      <div class="bubble-meta">${time}${meta ? ' · ' + meta : ''} ${dir === 'out' ? '✓✓' : ''}</div>
+    </div>`;
+  area.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+function addTyping() {
+  const area = document.getElementById('chatArea');
+  const row  = document.createElement('div');
+  row.className = 'msg-row in';
+  row.id = 'typingRow';
+  row.innerHTML = `
+    <div class="bubble bubble-typing">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+    </div>`;
+  area.appendChild(row);
+  scrollBottom();
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingRow');
+  if (el) el.remove();
+}
+
+function addSysMsg(text) {
+  const area = document.getElementById('chatArea');
+  const el   = document.createElement('div');
+  el.className = 'sys-msg';
+  el.innerHTML = `<span>${escHtml(text)}</span>`;
+  area.appendChild(el);
+  scrollBottom();
+}
+
+function addTriageCard(summary) {
+  const area  = document.getElementById('chatArea');
+  const level = (summary.triage_preview || summary.triage_level || 'YELLOW').toUpperCase();
+  const cls   = level === 'RED' ? 'red' : level === 'GREEN' ? 'green' : 'yellow';
+  const icon  = level === 'RED' ? '🚨' : level === 'GREEN' ? '✅' : '⚠️';
+  const el    = document.createElement('div');
+  el.className = 'triage-card ' + cls;
+  el.innerHTML = `
+    <div class="triage-badge">${icon} ${level}</div>
+    ${summary.chief_complaint ? `<div class="label">Ana Şikayet</div><div class="value">${escHtml(summary.chief_complaint)}</div>` : ''}
+    ${summary.recommended_action ? `<div class="label">Önerilen</div><div class="value">${escHtml(summary.recommended_action)}</div>` : ''}
+    ${summary.confidence_score ? `<div class="label">Güven Skoru</div><div class="value">${summary.confidence_score}%</div>` : ''}
+    <div class="label" style="margin-top:8px">Kaynak</div>
+    <div class="value" style="color:var(--text-sub);font-size:11px">Gemma 4 via Ollama (yerel) ${SOURCE_LABEL[language]}</div>
+  `;
+  area.appendChild(el);
+  scrollBottom();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Send logic
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendMessage() {
+  if (isBusy || isCompleted) return;
+  const inp = document.getElementById('msgInput');
+  const msg = inp.value.trim();
+  if (!msg) return;
+
+  inp.value = '';
+  inp.style.height = 'auto';
+  addBubble(msg, 'out');
+  document.getElementById('sendBtn').disabled = true;
+  isBusy = true;
+  addTyping();
+
+  try {
+    const body = {
+      channel: 'whatsapp_demo',
+      external_user_id: USER_ID,
+      message: msg,
+      language: language,
+      session_id: sessionId
+    };
+
+    const resp = await fetch(CHANNEL_EP, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+
+    removeTyping();
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      addBubble('❌ Hata: ' + (err.detail || resp.status), 'in');
+      return;
+    }
+
+    const data = await resp.json();
+    sessionId   = data.session_id || sessionId;
+    const reply = data.reply || '';
+    const next  = data.next_action || '';
+
+    // Step indicator güncelle
+    if (data.step) {
+      stepCurrent = data.step;
+      stepTotal   = data.total_steps || stepTotal;
+      const ind   = document.getElementById('stepIndicator');
+      ind.style.display = '';
+      ind.textContent = `Soru ${stepCurrent} / ${stepTotal}`;
+    }
+
+    addBubble(reply, 'in');
+
+    if (next === 'completed' || data.doctor_queue_created) {
+      isCompleted = true;
+      document.getElementById('stepIndicator').style.display = 'none';
+
+      // Triaj özeti
+      if (data.triage_preview || data.triage_level) {
+        addTriageCard(data);
+      }
+
+      // Tamamlanma sistemi mesajı
+      addSysMsg('🔒 Mülakat tamamlandı — Vaka doktor kuyruğuna iletildi');
+      addBubble(COMPLETED_MSG[language], 'in');
+
+      // Input kapat
+      document.getElementById('msgInput').disabled = true;
+      document.getElementById('msgInput').placeholder = '— mülakat tamamlandı —';
+      document.getElementById('sendBtn').disabled = true;
+
+      // Info paneli güncelle
+      document.getElementById('infoText').innerHTML =
+        `<span style="color:var(--green)">✅ Vaka tamamlandı</span>`
+        + ` · Triaj: <strong style="color:${data.triage_preview === 'RED' ? 'var(--red)' : data.triage_preview === 'GREEN' ? 'var(--green)' : 'var(--yellow)'}">${data.triage_preview || '?'}</strong>`
+        + ` · <a href="/doctor.html" target="_blank">Doktor paneli →</a>`;
+    }
+
+  } catch (e) {
+    removeTyping();
+    addBubble('❌ Bağlantı hatası: ' + e.message, 'in');
+  } finally {
+    isBusy = false;
+    if (!isCompleted) {
+      document.getElementById('sendBtn').disabled = false;
+      document.getElementById('msgInput').focus();
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Reset
+// ─────────────────────────────────────────────────────────────────────────────
+function resetChat() {
+  sessionId   = null;
+  isCompleted = false;
+  isBusy      = false;
+  stepCurrent = 0;
+  const area  = document.getElementById('chatArea');
+  area.innerHTML = `
+    <div class="date-sep"><span id="dateSep"></span></div>
+    <div class="sys-msg"><span>AnamnezAI Kanal Adapter Demo — Demo amaçlıdır</span></div>`;
+  document.getElementById('dateSep').textContent = new Date().toLocaleDateString('tr-TR', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  });
+  document.getElementById('msgInput').disabled = false;
+  document.getElementById('msgInput').placeholder = PLACEHOLDER[language];
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('stepIndicator').style.display = 'none';
+  checkBackend();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function scrollBottom() {
+  const a = document.getElementById('chatArea');
+  a.scrollTo({top: a.scrollHeight, behavior: 'smooth'});
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+</script>
+</body>
+</html>
+
