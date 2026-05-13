@@ -413,11 +413,14 @@ async def _session_cleanup_loop():
 
 
 async def _background_warmup():
-    """Sunucu başlayınca modeli arka planda VRAM'e yükler.
-    Bu sayede ilk hasta geldiğinde model zaten hazırdır — 90sn bekleme olmaz."""
+    """Sunucu başlayınca modeli VRAM'e yükler VE /api/chat KV cache'ini tıbbi sistem promptuyla doldurur.
+
+    ÖNEMLİ: stream_gemma() /api/chat kullanıyor. Warmup'ın da /api/chat kullanması gerekir,
+    yoksa farklı token formatı üretilir ve KV cache hit olmaz → ilk token hâlâ yavaş kalır.
+    """
     global _model_ready, _model_warming
     _model_warming = True
-    print("[AnamnezAI] Model ısıtılıyor (arka plan)...")
+    print("[AnamnezAI] Model isitiliyor (arka plan) -- /api/chat KV cache doldurulacak...")
     try:
         # Ollama başlayana kadar bekle (Docker/yeni başlatma durumları için)
         for attempt in range(12):  # max 60sn bekle
@@ -430,16 +433,53 @@ async def _background_warmup():
                 pass
             await asyncio.sleep(5)
 
-        # Model warmup
+        # ADIM 1: Hızlı /api/chat ile modeli VRAM'e al
         async with httpx.AsyncClient(timeout=180.0) as client:
             await client.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
-                json={"model": GEMMA_MODEL, "prompt": "Hi", "stream": False, "options": {"num_predict": 1}},
+                f"{OLLAMA_BASE_URL}/api/chat",
+                json={
+                    "model": GEMMA_MODEL,
+                    "messages": [{"role": "user", "content": "Merhaba"}],
+                    "stream": False,
+                    "options": {"num_predict": 1},
+                },
             )
+
+        # ADIM 2: Gerçek sistem promptuyla /api/chat KV cache doldur
+        # stream_gemma() ile AYNI format → prefix cache hit olacak
+        warmup_messages = [
+            {"role": "system", "content": SYSTEM_PROMPT_TR},
+            {
+                "role": "user",
+                "content": (
+                    "Hasta: Ayse Kaya, 45 yas, Kadin.\n"
+                    "Mulakat gecmisi:\nS1: Sizi bugun buraya getiren sikayet nedir?\n"
+                    "C1: Basim cok agriyor, bulantim da var.\n\n"
+                    "Yukaridaki cevaba dayanarak en kritik SONRAKI soruyu sor. Soru 2/5."
+                ),
+            },
+        ]
+        async with httpx.AsyncClient(timeout=200.0) as client:
+            await client.post(
+                f"{OLLAMA_BASE_URL}/api/chat",
+                json={
+                    "model": GEMMA_MODEL,
+                    "messages": warmup_messages,
+                    "stream": False,
+                    "think": False,
+                    "options": {
+                        "num_predict": 25,
+                        "temperature": 0.4,
+                        "num_gpu": OLLAMA_NUM_GPU,
+                    },
+                },
+            )
+
         _model_ready = True
-        print(f"[AnamnezAI] Model hazir: {GEMMA_MODEL} -- Artik tum hastalar hizli yanit alir")
+        print(f"[AnamnezAI] Model hazir, KV cache /api/chat formatinda dolu: {GEMMA_MODEL}")
     except Exception as e:
-        print(f"[AnamnezAI] Warmup başarısız (model manual tetiklenecek): {e}")
+        _model_ready = True   # warmup başarısız olsa da model kullanılabilir
+        print(f"[AnamnezAI] Warmup kismi basarisiz (model yine de calisiyor): {e}")
     finally:
         _model_warming = False
 
@@ -1106,46 +1146,56 @@ async def list_patients(current_user: dict = Depends(require_doctor)):
 
 @app.post("/api/warmup")
 async def warmup_model():
-    """Gemma 4 modelini hafızaya yükler VE tıbbi sistem promptunu KV cache'e önceden yükler.
+    """Gemma 4 modelini VRAM'e yükler ve /api/chat KV cache'ini tıbbi sistem promptuyla doldurur.
 
-    Sadece 'Hi' göndermek modeli VRAM'e yükler ama KV cache'i ısıtmaz.
-    Gerçek sistem promptuyla warmup yapmak, ilk gerçek mülakatın first-token süresini
-    ~130s → ~5-10s'ye düşürür (prefix KV cache reuse).
+    stream_gemma() /api/chat kullanır. Warmup da aynı endpoint+format kullanmalı
+    ki KV cache prefix hit olsun. /api/generate farklı token formatı üretir → hit olmaz.
     """
     try:
-        # Kısa ama gerçekçi tıbbi warmup — sistem promptu KV cache'e alınır
-        warmup_prompt = (
-            "Hasta: Ayşe Kaya, 45 yaş, Kadın.\n"
-            "Mülakat geçmişi:\nS1: Sizi bugün buraya getiren şikayet nedir?\n"
-            "C1: Başım çok ağrıyor, bulantım da var.\n\n"
-            "Yukarıdaki cevaba dayanarak tanıyı netleştirecek SONRAKI en kritik soruyu sor. Soru 2/5."
-        )
-        async with httpx.AsyncClient(timeout=200.0) as client:
-            resp = await client.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
+        # Hızlı VRAM yükleme
+        async with httpx.AsyncClient(timeout=30.0) as c0:
+            await c0.post(
+                f"{OLLAMA_BASE_URL}/api/chat",
                 json={
                     "model": GEMMA_MODEL,
-                    "system": SYSTEM_PROMPT_TR,   # gerçek sistem promptu → KV cache pre-fill
-                    "prompt": warmup_prompt,
+                    "messages": [{"role": "user", "content": "Merhaba"}],
                     "stream": False,
-                    "options": {"num_predict": 20},  # 20 token yeterli — cache dolsun
+                    "options": {"num_predict": 1},
+                },
+            )
+
+        # Sistem promptuyla KV cache doldur — stream_gemma() ile aynı format
+        warmup_messages = [
+            {"role": "system", "content": SYSTEM_PROMPT_TR},
+            {
+                "role": "user",
+                "content": (
+                    "Hasta: Ayse Kaya, 45 yas, Kadin.\n"
+                    "Mulakat gecmisi:\nS1: Sizi bugun buraya getiren sikayet nedir?\n"
+                    "C1: Basim cok agriyor, bulantim da var.\n\n"
+                    "Yukaridaki cevaba dayanarak en kritik SONRAKI soruyu sor. Soru 2/5."
+                ),
+            },
+        ]
+        async with httpx.AsyncClient(timeout=200.0) as client:
+            resp = await client.post(
+                f"{OLLAMA_BASE_URL}/api/chat",
+                json={
+                    "model": GEMMA_MODEL,
+                    "messages": warmup_messages,
+                    "stream": False,
+                    "think": False,
+                    "options": {
+                        "num_predict": 25,
+                        "temperature": 0.4,
+                        "num_gpu": OLLAMA_NUM_GPU,
+                    },
                 },
             )
             resp.raise_for_status()
-        print("[Warmup] Tamamlandi - KV cache hazir")
-        return {"status": "warmed_up", "model": GEMMA_MODEL, "kv_cache": "primed"}
+        return {"status": "warmed_up", "model": GEMMA_MODEL, "kv_cache": "primed_chat"}
     except Exception as e:
-        # Yedek plan: sadece model yükle
-        try:
-            async with httpx.AsyncClient(timeout=200.0) as c2:
-                r2 = await c2.post(
-                    f"{OLLAMA_BASE_URL}/api/generate",
-                    json={"model": GEMMA_MODEL, "prompt": "Hi", "stream": False, "options": {"num_predict": 1}},
-                )
-                r2.raise_for_status()
-            return {"status": "warmed_up_basic", "model": GEMMA_MODEL, "error": str(e)}
-        except Exception as e2:
-            return {"status": "warmup_failed", "error": str(e2)}
+        return {"status": "warmup_failed", "error": str(e)}
 
 
 @app.post("/api/model/compare")
@@ -1809,16 +1859,31 @@ async def submit_answer_stream(req: AnswerRequest, request: Request):
         )
 
     # RAG bağlam (önbellekten)
-    rag_query      = req.answer + " " + history_text[-300:]
-    rag_ctx        = _get_rag_context_cached(rag_query, "interview")
-    system_prompt  = get_system_prompt(lang)
-    enriched_sys   = (system_prompt + "\n\n" + rag_ctx) if rag_ctx else system_prompt
+    # ÖNEMLİ: RAG context'i sistem mesajına DEĞİL, kullanıcı mesajına ekle.
+    # Sistem mesajı sabit kalırsa Ollama prefix KV cache her istekte hit olur
+    # → ilk token süresi ~150s yerine ~5s. Sistem mesajına ekleme prefix'i bozar.
+    rag_query = req.answer + " " + history_text[-300:]
+    rag_ctx   = _get_rag_context_cached(rag_query, "interview")
+    system_prompt = get_system_prompt(lang)   # sabit — KV cache korunur
+
+    # RAG bağlamını kullanıcı mesajının başına ekle (klinik rehber olarak)
+    if rag_ctx:
+        rag_header = (
+            "[KLİNİK REHBER - sadece bu soruya referans için]\n"
+            if lang == "tr" else
+            ("[CLINICAL REFERENCE - for this question only]\n"
+             if lang == "en" else
+             "[المرجع السريري - لهذا السؤال فقط]\n")
+        )
+        enriched_prompt = rag_header + rag_ctx.strip() + "\n\n---\n" + next_prompt
+    else:
+        enriched_prompt = next_prompt
 
     full_parts: list[str] = []
 
     async def event_gen():
         try:
-            async for sse_line in stream_gemma(next_prompt, system=enriched_sys, num_predict=200):
+            async for sse_line in stream_gemma(enriched_prompt, system=system_prompt, num_predict=200):
                 if sse_line.strip() == "data: [DONE]":
                     break
                 yield sse_line
