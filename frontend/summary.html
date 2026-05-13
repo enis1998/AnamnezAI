@@ -906,11 +906,13 @@ async function exportPDF(){
       const rlines=pdf.splitTextToSize(d.recommended_action,CW-12);
       const rh=rlines.length*5.5+12;
       y=checkY(y,rh);
-      fill(...tc);pdf.roundedRect(ML,y,CW,rh,2,2,'F');
-      bold(null,7.5);pdf.setOpacity(0.75);rgb(255,255,255);
-      pdf.text(EN?'RECOMMENDED ACTION':'ÖNERİLEN EYLEM',ML+6,y+6.5);
-      pdf.setOpacity(1);
-      bold(null,10.5);rgb(255,255,255);pdf.text(rlines,ML+6,y+12.5);
+    fill(...tc);pdf.roundedRect(ML,y,CW,rh,2,2,'F');
+    pdf.saveGraphicsState();
+    pdf.setGState(new pdf.GState({opacity:0.75}));
+    bold(null,7.5);rgb(255,255,255);
+    pdf.text(EN?'RECOMMENDED ACTION':'ÖNERİLEN EYLEM',ML+6,y+6.5);
+    pdf.restoreGraphicsState();
+    bold(null,10.5);rgb(255,255,255);pdf.text(rlines,ML+6,y+12.5);
       y+=rh+6;
     }
 
