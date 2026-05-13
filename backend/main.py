@@ -1106,17 +1106,46 @@ async def list_patients(current_user: dict = Depends(require_doctor)):
 
 @app.post("/api/warmup")
 async def warmup_model():
-    """Gemma 4 modelini hafızaya yükler (ilk çağrıyı hızlandırır)."""
+    """Gemma 4 modelini hafızaya yükler VE tıbbi sistem promptunu KV cache'e önceden yükler.
+
+    Sadece 'Hi' göndermek modeli VRAM'e yükler ama KV cache'i ısıtmaz.
+    Gerçek sistem promptuyla warmup yapmak, ilk gerçek mülakatın first-token süresini
+    ~130s → ~5-10s'ye düşürür (prefix KV cache reuse).
+    """
     try:
+        # Kısa ama gerçekçi tıbbi warmup — sistem promptu KV cache'e alınır
+        warmup_prompt = (
+            "Hasta: Ayşe Kaya, 45 yaş, Kadın.\n"
+            "Mülakat geçmişi:\nS1: Sizi bugün buraya getiren şikayet nedir?\n"
+            "C1: Başım çok ağrıyor, bulantım da var.\n\n"
+            "Yukarıdaki cevaba dayanarak tanıyı netleştirecek SONRAKI en kritik soruyu sor. Soru 2/5."
+        )
         async with httpx.AsyncClient(timeout=200.0) as client:
             resp = await client.post(
                 f"{OLLAMA_BASE_URL}/api/generate",
-                json={"model": GEMMA_MODEL, "prompt": "Hi", "stream": False, "options": {"num_predict": 1}},
+                json={
+                    "model": GEMMA_MODEL,
+                    "system": SYSTEM_PROMPT_TR,   # gerçek sistem promptu → KV cache pre-fill
+                    "prompt": warmup_prompt,
+                    "stream": False,
+                    "options": {"num_predict": 20},  # 20 token yeterli — cache dolsun
+                },
             )
             resp.raise_for_status()
-        return {"status": "warmed_up", "model": GEMMA_MODEL}
+        print("[Warmup] Tamamlandi - KV cache hazir")
+        return {"status": "warmed_up", "model": GEMMA_MODEL, "kv_cache": "primed"}
     except Exception as e:
-        return {"status": "warmup_failed", "error": str(e)}
+        # Yedek plan: sadece model yükle
+        try:
+            async with httpx.AsyncClient(timeout=200.0) as c2:
+                r2 = await c2.post(
+                    f"{OLLAMA_BASE_URL}/api/generate",
+                    json={"model": GEMMA_MODEL, "prompt": "Hi", "stream": False, "options": {"num_predict": 1}},
+                )
+                r2.raise_for_status()
+            return {"status": "warmed_up_basic", "model": GEMMA_MODEL, "error": str(e)}
+        except Exception as e2:
+            return {"status": "warmup_failed", "error": str(e2)}
 
 
 @app.post("/api/model/compare")
