@@ -994,6 +994,32 @@ async function submitAnswer(){
   let fullText = '';
   let completed = false;
 
+  // ── Bekleme süresi sayacı — "sistem donuk mu?" hissini önler ──
+  let _streamWaitSecs = 0;
+  const _streamTimer = setInterval(() => {
+    _streamWaitSecs++;
+    if (!fullText) {
+      // Henüz token gelmedi — sayaç göster
+      const waitMsg = lang === 'tr'
+        ? `Gemma 4 düşünüyor… ${_streamWaitSecs}s`
+        : lang === 'ar'
+        ? `Gemma 4 يفكر… ${_streamWaitSecs}s`
+        : `Gemma 4 thinking… ${_streamWaitSecs}s`;
+      streamText.innerHTML = `<span style="opacity:0.6;font-size:12px">${waitMsg}</span> <span style="opacity:0.5;animation:db .6s ease infinite alternate">▋</span>`;
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+  }, 1000);
+
+  // ── Tamamlanmayı kesin işleme — birden fazla güvenlik katmanı ──
+  const _handleCompletion = async () => {
+    clearInterval(_streamTimer);
+    completed = true;
+    streamRow.remove();
+    showView('view-analyzing');
+    if (sessionId) localStorage.setItem('last_session_id', sessionId);
+    await fetchSummary();
+  };
+
   try {
     const res = await fetch(`${API}/api/session/answer/stream`,{
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -1006,7 +1032,7 @@ async function submitAnswer(){
     const decoder = new TextDecoder();
     let lineBuf   = '';
 
-    while(true){
+    outer: while(true){
       const {done, value} = await reader.read();
       if(done) break;
       lineBuf += decoder.decode(value, {stream:true});
@@ -1016,34 +1042,42 @@ async function submitAnswer(){
       for(const line of lines){
         if(!line.startsWith('data: ')) continue;
         const raw = line.slice(6).trim();
-        if(raw === '[DONE]') break;
+        if(raw === '[DONE]') break outer;
         try{
           const chunk = JSON.parse(raw);
           if(chunk.token){
-            if(!fullText) streamText.textContent = ''; // imleci kaldır
+            if(!fullText) {
+              clearInterval(_streamTimer); // sayacı durdur — artık token geliyor
+              streamText.textContent = '';
+            }
             fullText += chunk.token;
             streamText.textContent = fullText;
             chatArea.scrollTop = chatArea.scrollHeight;
           } else if(chunk.metadata){
             updateProgress(chunk.metadata.step, chunk.metadata.total_steps);
-            if(chunk.metadata.completed) completed = true;
+            // completed flag'i VEYA step >= total_steps → aynı anlam
+            if(chunk.metadata.completed || chunk.metadata.step >= chunk.metadata.total_steps) {
+              completed = true;
+            }
           } else if(chunk.error){
             throw new Error(chunk.error);
           }
-        } catch(_){}
+        } catch(parseErr){
+          if(parseErr.message && !parseErr.message.startsWith('JSON')) throw parseErr;
+          // JSON parse hatası — sessizce geç
+        }
       }
     }
+
+    clearInterval(_streamTimer);
 
     // TTS — tam cümle geldikten sonra seslendir
     if(fullText) speakText(fullText);
 
     if(completed){
-      streamRow.remove(); // streaming balonu kaldır
-      showView('view-analyzing');
-      // sessionId'yi localStorage'a yedekle — redirecton fail için
-      if(sessionId) localStorage.setItem('last_session_id', sessionId);
-      await fetchSummary();
+      await _handleCompletion();
     } else if(!fullText){
+      // Token gelmedi ama completed da değil → fallback
       throw new Error('empty_stream');
     } else {
       // Streaming tamamlandı (yeni soru geldi) — chatHistory'ye ekle ve DOM'u düzelt
@@ -1053,6 +1087,12 @@ async function submitAnswer(){
     }
 
   } catch(e){
+    clearInterval(_streamTimer);
+    // ── GÜVENLIK: streaming sırasında completed flag set edildiyse direkt yönlendir ──
+    if(completed){
+      await _handleCompletion();
+      return;
+    }
     // Fallback — eski non-streaming endpoint
     streamRow.remove();
     showTyping(true);
@@ -1073,7 +1113,22 @@ async function submitAnswer(){
         body:JSON.stringify({session_id:sessionId,answer:ans}),
         signal: AbortSignal.timeout(190000)
       });
-      if(!res2.ok){ const err=await res2.json().catch(()=>({})); throw new Error(err.detail||`HTTP ${res2.status}`); }
+      if(!res2.ok){
+        const err=await res2.json().catch(()=>({}));
+        const detail = err.detail || `HTTP ${res2.status}`;
+        // 400 + "tamamlandı" → mülakat bitti ama streaming kaçırdı
+        if(res2.status === 400 && detail.includes('tamamlandı')){
+          showTyping(false);
+          if(thinkInterval) clearInterval(thinkInterval);
+          // Doğrudan analiz ekranına geç
+          showView('view-analyzing');
+          if(sessionId) localStorage.setItem('last_session_id', sessionId);
+          completed = true;
+          await fetchSummary();
+          return;
+        }
+        throw new Error(detail);
+      }
       const data=await res2.json();
       showTyping(false);
       if(data.question==='__COMPLETED__'){
@@ -1082,7 +1137,7 @@ async function submitAnswer(){
         await fetchSummary();
         completed=true;
       } else {
-        const q = data.question?.trim() || (lang==='tr'?'Anlıyorum, devam edin lütfen.':(lang==='ar'?'حسناً، تفضل/ي.'                :'I see, please continue.'));
+        const q = data.question?.trim() || (lang==='tr'?'Anlıyorum, devam edin lütfen.':(lang==='ar'?'حسناً، تفضل/ي.'               :'I see, please continue.'));
         addAIMessage(q);
         updateProgress(data.step, data.total_steps);
       }
