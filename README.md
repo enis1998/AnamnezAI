@@ -214,6 +214,7 @@ curl -X POST http://localhost:8000/api/rag/ingest/builtin
 | `http://localhost:8000/evaluation.html` | AI Quality Evaluation Dashboard ← _new_ |
 | `http://localhost:8000/admin.html` | Admin dashboard |
 | `http://localhost:8000/analytics.html` | Analytics charts |
+| `http://localhost:8000/channel_demo.html` | WhatsApp-style Channel Adapter Demo ← _new_ |
 | `http://localhost:8000/docs` | Swagger UI |
 
 > **GPU note.** With 8 GB VRAM and Ollama, Gemma 4 e4b loads fully to GPU (verified: 7.9 GB VRAM used, RTX series). RAM requirement drops to < 1 GB. Without a GPU the model requires ~6.7 GB free system RAM — stop Docker and other memory-heavy processes first.
@@ -469,6 +470,9 @@ Every capability claim can be verified independently:
 | Claim | How to verify |
 |-------|---------------|
 | Local Gemma 4 — no cloud | `GET /api/offline-proof` → `cloud_api_keys_required: false` |
+| MCP-ready layer | `GET /api/offline-proof` → `mcp_ready: true` |
+| Channel adapters optional | `GET /api/offline-proof` → `channel_adapters_optional: true` |
+| Cloud translation disabled | `GET /api/offline-proof` → `cloud_translation_enabled: false` |
 | Safety guardrails exist | `backend/safety.py` — 8 RED + 3 YELLOW rules |
 | RAG enabled | `GET /api/rag/status` → `total_chunks: 90, enabled: true` |
 | Triage accuracy 93% | `/evaluation.html` or `python evaluation/run_eval.py` |
@@ -477,6 +481,8 @@ Every capability claim can be verified independently:
 | AI execution log | `GET /api/session/{id}/summary` → `ai_execution_log` |
 | FHIR R4 export | `GET /api/session/{id}/fhir` → FHIR Bundle JSON |
 | FHIR preview | `GET /api/session/{id}/fhir-preview` → resource counts |
+| Channel intake demo | `POST /api/channel/intake/message` or open `/channel_demo.html` |
+| MCP tool schemas | `cd mcp_server && python tools.py` |
 | Human-in-the-loop audit | Override triage in doctor panel → reason + AI vs doctor logged |
 | Patient timeline | `GET /api/session/{id}/timeline` → previous visits + risk trend |
 | Doctor override + audit | `clinical_review.html` — login as `doctor@anamnezai.tr` |
@@ -517,19 +523,20 @@ Target metrics: ≥ 80 % triage accuracy ✅ · ≥ 90 % red-flag recall ✅ · 
 ```
 mediscreen/
 ├── backend/
-│   ├── main.py                ← FastAPI — interview engine, triage, SSE, FHIR, auth, RAG
+│   ├── main.py                ← FastAPI — interview engine, triage, SSE, FHIR, auth, RAG, channel adapter
 │   ├── safety.py              ← Safety Guardrail Layer — deterministic RED/YELLOW rules ← NEW
 │   ├── rag.py                 ← ChromaDB RAG engine + built-in medical corpus (~90 chunks)
 │   ├── auth.py                ← JWT + Google OAuth2 + 4-role RBAC
 │   ├── requirements.txt
 │   └── tests/
-│       └── test_smoke.py      ← 10 unit tests (no Ollama required)
+│       └── test_smoke.py      ← 18 unit tests (no Ollama required) — includes MCP + channel tests ← UPDATED
 ├── frontend/
 │   ├── index.html             ← Patient interview chat UI + landing page
 │   ├── summary.html           ← Clinical report — Trust Layer + PDF / print export
 │   ├── doctor.html            ← Doctor triage queue — Kanban + list, override with reason
 │   ├── clinical_review.html   ← Full review: evidence map, completeness, AI log, FHIR preview
 │   ├── evaluation.html        ← AI Quality Evaluation Dashboard ← NEW
+│   ├── channel_demo.html      ← WhatsApp-style Channel Adapter Demo ← NEW
 │   ├── kiosk.html             ← Kiosk touch mode — QR ticket + TTS
 │   ├── admin.html             ← Admin dashboard — RAG, model test, audit log
 │   ├── analytics.html         ← Time-series analytics (Chart.js)
@@ -540,6 +547,11 @@ mediscreen/
 │   └── vendor/                ← Locally bundled JS — zero CDN calls for PDF export
 │       ├── jspdf.umd.min.js       v2.5.1 · 364 KB
 │       └── html2canvas.min.js     v1.4.1 · 199 KB
+├── mcp_server/                ← MCP-ready Developer Layer ← NEW
+│   ├── tools.py               ← 10 MCP tool schemas (input_schema + example I/O)
+│   ├── server.py              ← MCP server skeleton (SDK optional — fallback mode if absent)
+│   ├── client_example.py      ← End-to-end demo: intake → summary → FHIR → local AI proof
+│   └── README.md              ← Developer documentation
 ├── evaluation/
 │   ├── triage_cases.jsonl     ← 15 synthetic clinical test cases (JSONL)
 │   ├── run_eval.py            ← 15-case evaluation runner
@@ -613,8 +625,96 @@ mediscreen/
 - ✅ **Safety Guardrail Layer** — deterministic rules independently ensure patient safety beyond LLM capability
 - ✅ **MedGemma Vision** (`medgemma:4b`) for medical image analysis (optional; pulled separately)
 - ✅ **Fully offline** — no external AI APIs, no CDN JS dependencies at runtime, no patient data egress
+- ✅ **MCP-ready Developer Layer** — external channel adapters can integrate via `mcp_server/` without touching core
 - ✅ Open source — **CC-BY 4.0**
 - ✅ Live evaluation: **93% triage accuracy** (14/15) · **100%** on 5 clinical scenarios · **RED flag recall 100%**
+
+---
+
+## Developer Layer: MCP-ready Clinical Intake Engine
+
+> **AnamnezAI is not a chatbot API; it is a local-first clinical intake engine that turns unstructured patient complaints into doctor-reviewable, safety-guarded, evidence-linked clinical summaries.**
+
+The `mcp_server/` directory adds an **optional MCP (Model Context Protocol) adapter layer** that allows other developers to integrate AnamnezAI's clinical intake engine into their own channels and workflows — without copying any business logic.
+
+### Architecture
+
+```
+Web / Kiosk / WhatsApp-style Demo / Future Mobile Apps
+                    ↓
+        AnamnezAI MCP-ready Developer Layer
+                    ↓
+     Existing FastAPI Clinical Intake Engine
+                    ↓
+  Local Gemma 4 + Local RAG + Safety Guardrails
+                    ↓
+     Doctor Review + PDF + FHIR + Evaluation
+```
+
+### Example channels
+
+- **WhatsApp-style patient intake** — `/api/channel/intake/message` + `frontend/channel_demo.html`
+- **Hospital kiosks** — `kiosk.html` (existing, fully functional)
+- **Call-center assistants** — channel adapter integration
+- **Mobile health apps** — session API + channel adapter
+- **Telemedicine platforms** — FHIR R4 export + session API
+- **Ambulance / field triage tools** — offline PWA + intake engine
+
+### Privacy modes
+
+#### 🔒 Strict Local Mode (default)
+
+Runs within the institution's own network via web/kiosk. Patient data **never** leaves the machine to any external AI API. Gemma 4 and RAG run entirely on local hardware. KVKK / GDPR compliant.
+
+```bash
+ALLOW_CLOUD_TRANSLATION=false  # default — cloud translation disabled
+```
+
+#### 📡 Channel Adapter Mode (optional)
+
+External channels such as WhatsApp or Telegram can optionally use the MCP tools via `/api/channel/intake/message`.
+
+> ⚠️ In this mode the messaging provider's (Meta, Telegram, etc.) data policies may apply to the message transport. All AI inference and RAG remain fully local. The channel adapter mode is explicitly **optional** and labelled as "Channel Demo".
+
+### MCP tools
+
+| Tool | Endpoint | Description |
+|------|----------|-------------|
+| `anamnezai_start_intake` | `POST /api/session/start` | Start new patient interview |
+| `anamnezai_submit_answer` | `POST /api/session/answer` | Submit answer, get next question |
+| `anamnezai_next_question` | `GET /api/session/{id}/detail` | Query current session state |
+| `anamnezai_finalize_summary` | `GET /api/session/{id}/summary` | Generate clinical summary + triage |
+| `anamnezai_get_clinical_review` | `GET /api/session/{id}/detail` | Full clinical review data |
+| `anamnezai_send_to_doctor_queue` | `GET /api/patients/queue` | Check doctor queue status |
+| `anamnezai_create_queue_ticket` | `POST /api/channel/intake/message` | Send external channel message |
+| `anamnezai_export_fhir` | `GET /api/session/{id}/fhir` | FHIR R4 Bundle export |
+| `anamnezai_get_local_ai_proof` | `GET /api/offline-proof` | Local AI proof |
+| `anamnezai_get_evaluation_results` | `GET /api/evaluation` | AI quality metrics |
+
+### Quick start for developers
+
+```bash
+# MCP tools schema overview
+cd mcp_server && python tools.py
+
+# End-to-end demo (requires backend running)
+pip install httpx
+python mcp_server/client_example.py
+
+# With real MCP SDK
+pip install mcp httpx
+python mcp_server/server.py
+```
+
+### Channel demo page
+
+```
+http://localhost:8000/channel_demo.html
+```
+
+WhatsApp-style intake UI — clearly labelled as "Channel Adapter Demo".
+**This is not a real WhatsApp integration. It demonstrates the channel adapter architecture.**
+Main CTA (patient intake / kiosk / doctor demo) is unchanged.
 
 ---
 
