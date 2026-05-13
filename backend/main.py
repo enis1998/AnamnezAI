@@ -1496,6 +1496,8 @@ async def submit_answer(req: AnswerRequest, request: Request):
         session["completed"] = True
         db_save_session(req.session_id, session)
         await notify_queue_update()
+        # ── Özet arka planda başlat — hasta beklemiyor, doktor kuyruğu hazır olacak ──
+        asyncio.create_task(_background_summary(req.session_id))
         return SessionResponse(session_id=req.session_id, question="__COMPLETED__", step=current_step, total_steps=total_steps)
 
     lang = session["language"]
@@ -1594,6 +1596,8 @@ async def submit_answer_stream(req: AnswerRequest, request: Request):
         session["completed"] = True
         db_save_session(req.session_id, session)
         asyncio.create_task(notify_queue_update())
+        # ── Özet arka planda başlat — streaming biter bitmez AI analizi başlıyor ──
+        asyncio.create_task(_background_summary(req.session_id))
 
         async def completed_gen():
             yield f"data: {json.dumps({'metadata': {'completed': True, 'step': current_step, 'total_steps': total_steps}})}\n\n"
@@ -1692,9 +1696,59 @@ async def submit_answer_stream(req: AnswerRequest, request: Request):
     )
 
 
+# ── Özet arka plan üretici + durum takibi ────────────────────────────────────
+# Mülakat tamamlanır tamamlanmaz başlatılır — hasta beklemiyor.
+# Frontend /summary/status ile polling yapar, hazır olunca tek seferlik /summary çağırır.
+_summary_generating: set[str] = set()   # hangi session'lar şu an üretiliyor
+
+async def _background_summary(session_id: str) -> None:
+    """
+    Özeti arka planda üretir ve `summaries` dict'ine kaydeder.
+    `get_clinical_summary` zaten cache'i kontrol ettiği için hazırsa anlık döner.
+    Hata olursa sessizce geçilir — frontend /summary'yi tekrar çağırırsa on-demand üretilir.
+    """
+    if session_id in summaries:
+        return                           # zaten hazır, tekrar üretme
+    if session_id in _summary_generating:
+        return                           # zaten başlatılmış, ikinci task açma
+    _summary_generating.add(session_id)
+    try:
+        await get_clinical_summary(session_id)
+    except Exception as e:
+        print(f"[BG-Summary] {session_id[:8]}... hata: {e}")
+    finally:
+        _summary_generating.discard(session_id)
+
+
+@app.get("/api/session/{session_id}/summary/status")
+async def get_summary_status(session_id: str):
+    """
+    Özet hazır mı? Frontend bu endpoint'i polling ile sorgular.
+    Bloklamaz — anlık durum döner.
+
+    Yanıt:
+      ready=true  → /api/session/{id}/summary çağrılabilir, anlık yanıt gelir
+      ready=false → generating=true ise arka planda üretiliyor, birkaç sn bekle
+    """
+    session = sessions.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+
+    ready = session_id in summaries
+    generating = session_id in _summary_generating
+    completed = session.get("completed", False)
+
+    return {
+        "session_id": session_id,
+        "ready": ready,
+        "generating": generating,
+        "completed": completed,
+        "estimated_wait_seconds": 0 if ready else (20 if generating else None),
+    }
+
+
 @app.get("/api/session/{session_id}/summary", response_model=ClinicalSummaryResponse)
 async def get_clinical_summary(session_id: str):
-    """Tamamlanan mülakattan Gemma 4 ile klinik özet ve triaj üretir."""
     session = sessions.get(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
