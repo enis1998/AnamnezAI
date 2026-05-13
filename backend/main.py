@@ -736,7 +736,7 @@ async def stream_gemma(prompt: str, system: str = "", num_predict: int = 400) ->
 SYSTEM_PROMPT_TR = """Sen AnamnezAI — deneyimli, empatik bir tıbbi pre-triaj asistanısın.
 Gemma 4 tarafından güçlendiriliyorsun ve tamamen yerel (Ollama) çalışıyorsun.
 UZMANLIK: Türkçe tıbbi terminoloji (dispne, taşikardi, diyaforez, presenkop, pallor, siyanoz, bradikardi, hipertansif kriz, troponin) ile düşün; halkın anlayacağı dilde sor.
-GÖREV: Hastanın semptomlarını anlamak için klinik açıdan değerli, bağlamsal sorular sor.
+GÖREV: Hastanın semptomlarını anlamak için klinik açıdan değerli, çeşitli ve bağlamsal sorular sor.
 KURALLAR:
 - Her seferinde SADECE 1 soru sor (maksimum 2 cümle).
 - Önceki cevapları dikkate alarak soru üret (bağlamsal mülakat).
@@ -748,23 +748,33 @@ KURALLAR:
   * Felç bulguları (yüz asimetrisi, kol güçsüzlüğü, konuşma bozukluğu) → tam olarak ne zaman başladı?
   * Şiddetli baş ağrısı → "hayatımın en kötüsü" mü, ense sertliği, ışık hassasiyeti?
 - OPQRST çerçevesini uygula: Başlangıç, Şiddet (1-10), Kalite, Yayılım, Tetikleyici, Süre.
+- KLİNİK TAM KAPSAM — Mülakat boyunca sadece mevcut semptomu sormakla kalma; uygun adımda şu kategorilerden bağlamsal olanları mutlaka sor:
+  * Geçmiş kronik hastalıklar (HT, DM, koroner arter hastalığı, KOAH, böbrek/karaciğer, inme/TİA)
+  * Güncel ilaç kullanımı (antikoagülan, antiagregan, antihipertansif, insülin, statin — adı ve dozu)
+  * Aile geçmişi (erken kardiyovasküler hastalık, ani ölüm, DM, inme, kanser)
+  * Risk faktörleri (sigara — kaç yıl/paket, alkol, obezite, sedanter yaşam)
+- SORU ÇEŞİTLİLİĞİ: Her soru FARKLI bir klinik boyutu ele almalı. Önceki sorularda ele alınan konuyu TEKRARLAMA.
 - MTS (Manchester Triage System) kriterlerine göre değerlendir.
 - Empatik, sakinleştirici ton. Soru işaretiyle bitir.
 
-ÖRNEK MÜLAKAT:
+ÖRNEK MÜLAKAT (çeşitli kategoriler):
 Hasta: Ali Yılmaz, 58 yaş, Erkek.
-S: "Merhaba Ali Bey, sizi bugün buraya getiren en önemli şikayetiniz nedir?"
-C: "Göğsümde baskı hissediyorum sabahtan beri."
-S: "Bu baskı hissi elinize, kolunuza ya da çenenize yayılıyor mu?"
-C: "Evet, sol koluma kadar geliyor."
-S: "Bu his 1'den 10'a kadar bir skalada kaç olur ve nefes almakta güçlük çekiyor musunuz?"
+S1: "Merhaba Ali Bey, sizi bugün buraya getiren en önemli şikayetiniz nedir?"
+C1: "Göğsümde baskı hissediyorum sabahtan beri."
+S2: "Bu baskı hissi elinize, kolunuza ya da çenenize yayılıyor mu?"
+C2: "Evet, sol koluma kadar geliyor."
+S3: "Bu his 1'den 10'a kadar bir skalada kaç olur ve nefes almakta güçlük çekiyor musunuz?"
+C3: "8/10, biraz nefes darlığım var."
+S4: "Daha önce kalp hastalığı, hipertansiyon veya şeker hastalığı teşhisi aldınız mı? Düzenli ilaç kullanıyor musunuz?"
+C4: "Tansiyon hastasıyım, metoprolol kullanıyorum."
+S5: "Ailenizde erken yaşta kalp hastalığı veya ani ölüm yaşayan var mı?"
 
-BU ÖRNEĞİ İZLE — Bağlamsal, derinleştirici ve klinisyen gibi düşünen sorular sor."""
+BU ÖRNEĞİ İZLE — Bağlamsal, derinleştirici, çeşitli kategorileri kapsayan klinisyen soruları sor."""
 
 SYSTEM_PROMPT_EN = """You are AnamnezAI — an experienced, empathetic medical pre-triage assistant.
 Powered by Gemma 4, running 100% locally via Ollama.
 EXPERTISE: Think with clinical terminology (dyspnea, tachycardia, diaphoresis, presyncope, pallor, cyanosis, hypertensive crisis); ask in plain language.
-TASK: Ask clinically relevant, contextual questions to understand the patient's symptoms.
+TASK: Ask clinically relevant, varied, and contextual questions to understand the patient's symptoms fully.
 RULES:
 - Ask ONLY ONE question at a time (max 2 sentences).
 - Generate questions based on ALL previous answers (contextual interview).
@@ -776,19 +786,29 @@ RULES:
   * Stroke signs (facial droop, arm weakness, speech) → exact onset time?
   * Severe headache → "worst of life", neck stiffness, photophobia?
 - Apply OPQRST: Onset, Quality, Radiation, Severity (1-10), Timing, Triggers.
+- CLINICAL COMPLETENESS — Don't only ask about the current symptom; at the right step, cover:
+  * Past medical history (HTN, DM, CAD, COPD, kidney/liver disease, stroke/TIA)
+  * Current medications (anticoagulants, antiplatelets, antihypertensives, insulin — name and dose)
+  * Family history (early cardiovascular disease, sudden death, DM, stroke, cancer)
+  * Risk factors (smoking — pack-years, alcohol, obesity, sedentary lifestyle)
+- QUESTION DIVERSITY: Each question must address a DIFFERENT clinical dimension. Never repeat a category already covered.
 - Apply MTS (Manchester Triage System) criteria throughout.
 - Empathetic, calming tone. End with a question mark.
 - IMPORTANT: Always respond in ENGLISH only.
 
-EXAMPLE EXCHANGE:
+EXAMPLE EXCHANGE (varied categories):
 Patient: John Doe, 58y, Male.
-Q: "Hello John, what's the main reason you're here today?"
-A: "I've had chest pressure since this morning."
-Q: "Does this pressure spread to your arm, jaw, or back?"
-A: "Yes, it goes down my left arm."
-Q: "On a scale of 1-10 how severe is it, and do you have any difficulty breathing?"
+Q1: "Hello John, what's the main reason you're here today?"
+A1: "I've had chest pressure since this morning."
+Q2: "Does this pressure spread to your arm, jaw, or back?"
+A2: "Yes, it goes down my left arm."
+Q3: "On a scale of 1-10 how severe is it, and do you have any difficulty breathing?"
+A3: "8/10, some shortness of breath."
+Q4: "Have you ever been diagnosed with heart disease, high blood pressure, or diabetes? Are you on any regular medications?"
+A4: "I have hypertension, I take metoprolol."
+Q5: "Does anyone in your family have early heart disease or a history of sudden cardiac death?"
 
-FOLLOW THIS EXAMPLE — contextual, deepening, clinician-like questions."""
+FOLLOW THIS EXAMPLE — contextual, deepening, multi-category clinician-like questions."""
 
 SYSTEM_PROMPT_AR = """أنت AnamnezAI — مساعد طبي خبير ومتعاطف لفرز المرضى مسبقاً.
 مدعوم بـ Gemma 4 ويعمل محلياً بالكامل عبر Ollama.
@@ -1550,6 +1570,74 @@ async def submit_answer(req: AnswerRequest, request: Request):
             f"Respond in English only."
         )
 
+    # ── Kategori çeşitliliği ipucu: daha önce sorulmamış klinik alanları tespit et ──
+    _diversity_hint = ""
+    if current_step >= 2:
+        _hl = history_text.lower()
+        _covered = []
+        if any(w in _hl for w in ["geçmiş", "hastalığ", "kronik", "diyab", "hipertans", "tansiyon hastası", "astım", "kanser", "böbrek", "karaciğer"]):
+            _covered.append("geçmiş hastalık")
+        if any(w in _hl for w in ["ilaç", "kullanıyor", "metoprolol", "aspirin", "hap", "tablet", "statin", "insülin"]):
+            _covered.append("ilaç kullanımı")
+        if any(w in _hl for w in ["aile", "babanız", "anneniz", "kardeş", "ebeveyn", "ailede"]):
+            _covered.append("aile geçmişi")
+        if any(w in _hl for w in ["sigara", "alkol", "içiyor", "içki", "paket", "bıraktım"]):
+            _covered.append("sigara/alkol")
+        _all_cats_tr = ["geçmiş hastalık", "ilaç kullanımı", "aile geçmişi", "sigara/alkol"]
+        _uncovered = [c for c in _all_cats_tr if c not in _covered]
+        if _uncovered:
+            if current_step >= 4:
+                # 4. adımdan sonra güçlü direktif: mevcut semptom yeterince sorgulandı
+                _diversity_hint = (
+                    f" ÇOK ÖNEMLİ: Mevcut semptomlar yeterince değerlendirildi. "
+                    f"Bu soru için MUTLAKA '{_uncovered[0]}' kategorisini sor."
+                )
+            else:
+                _diversity_hint = f" Henüz sorulmamış önemli kategori: {_uncovered[0]}."
+
+    if lang == "tr":
+        next_prompt = (
+            f"Hasta: {session['patient_name']}, {session['age']} yaşında, {session['gender']}.\n"
+            f"{pediatric_hint}"
+            f"Mülakat geçmişi:\n{history_text}\n\n"
+            f"Yukarıdaki cevaplara dayanarak tanıyı netleştirecek SONRAKI en kritik soruyu sor. "
+            f"Acil belirti varsa o yönde derinleş.{_diversity_hint} Soru {current_step+1}/{total_steps}."
+        )
+    elif lang == "ar":
+        next_prompt = (
+            f"المريض: {session['patient_name']}, {session['age']} سنة, {session['gender']}.\n"
+            f"{pediatric_hint}"
+            f"سجل المقابلة:\n{history_text}\n\n"
+            f"بناءً على الإجابات أعلاه، اطرح السؤال الأكثر أهمية التالي لتوضيح التشخيص. "
+            f"إذا كانت هناك أعراض طارئة، تعمق في هذا الاتجاه. السؤال {current_step+1}/{total_steps}. "
+            f"أجب باللغة العربية فقط."
+        )
+    else:
+        _diversity_hint_en = ""
+        if current_step >= 2:
+            _hl_en = history_text.lower()
+            _covered_en = []
+            if any(w in _hl_en for w in ["history", "diabetes", "hypertension", "heart disease", "copd", "kidney", "liver", "stroke"]):
+                _covered_en.append("past medical history")
+            if any(w in _hl_en for w in ["medication", "taking", "metoprolol", "aspirin", "insulin", "statin"]):
+                _covered_en.append("medications")
+            if any(w in _hl_en for w in ["family", "father", "mother", "sibling", "relative"]):
+                _covered_en.append("family history")
+            if any(w in _hl_en for w in ["smok", "alcohol", "drink", "pack", "quit"]):
+                _covered_en.append("smoking/alcohol")
+            _all_cats_en = ["past medical history", "medications", "family history", "smoking/alcohol"]
+            _uncovered_en = [c for c in _all_cats_en if c not in _covered_en]
+            if _uncovered_en:
+                _diversity_hint_en = f" Uncovered category to explore: {_uncovered_en[0]}."
+        next_prompt = (
+            f"Patient: {session['patient_name']}, {session['age']}y, {session['gender']}.\n"
+            f"{pediatric_hint}"
+            f"Interview so far:\n{history_text}\n\n"
+            f"Based on above answers, ask the NEXT most critical question to clarify the diagnosis. "
+            f"If emergency signs present, explore further.{_diversity_hint_en} Q{current_step+1}/{total_steps}. "
+            f"Respond in English only."
+        )
+
     rag_query = req.answer + " " + history_text[-300:]
     next_question = await ask_gemma_rag(next_prompt, system=get_system_prompt(lang),
                                          rag_query=rag_query, num_predict=200)
@@ -1627,13 +1715,51 @@ async def submit_answer_stream(req: AnswerRequest, request: Request):
                 "temperature reading and duration first.\n"
             )
 
+    # RAG bağlam (önbellekten)
+    # --- Kategori çeşitliliği ipucu (streaming path) ---
+    _diversity_hint_s = ""
+    if current_step >= 2:
+        _hl_s = history_text.lower()
+        _covered_s = []
+        if any(w in _hl_s for w in ["geçmiş", "hastalığ", "kronik", "diyab", "hipertans", "tansiyon hastası", "astım", "kanser"]):
+            _covered_s.append("geçmiş hastalık")
+        if any(w in _hl_s for w in ["ilaç", "kullanıyor", "metoprolol", "aspirin", "hap", "statin", "insülin"]):
+            _covered_s.append("ilaç kullanımı")
+        if any(w in _hl_s for w in ["aile", "babanız", "anneniz", "kardeş", "ailede"]):
+            _covered_s.append("aile geçmişi")
+        if any(w in _hl_s for w in ["sigara", "alkol", "içiyor", "paket", "bıraktım"]):
+            _covered_s.append("sigara/alkol")
+        _all_cats_s = ["geçmiş hastalık", "ilaç kullanımı", "aile geçmişi", "sigara/alkol"]
+        _uncovered_s = [c for c in _all_cats_s if c not in _covered_s]
+        if _uncovered_s:
+            if current_step >= 4:
+                if lang == "tr":
+                    _diversity_hint_s = (
+                        f" ÇOK ÖNEMLİ: Mevcut semptomlar yeterince değerlendirildi. "
+                        f"Bu soru için MUTLAKA '{_uncovered_s[0]}' kategorisini sor."
+                    )
+                elif lang == "en":
+                    _en_map = {"geçmiş hastalık": "past medical history", "ilaç kullanımı": "medications",
+                               "aile geçmişi": "family history", "sigara/alkol": "smoking/alcohol"}
+                    _diversity_hint_s = (
+                        f" CRITICAL: Current symptoms sufficiently explored. "
+                        f"This question MUST address: '{_en_map.get(_uncovered_s[0], _uncovered_s[0])}'."
+                    )
+            else:
+                if lang == "tr":
+                    _diversity_hint_s = f" Henüz sorulmamış önemli kategori: {_uncovered_s[0]}."
+                elif lang == "en":
+                    _en_map = {"geçmiş hastalık": "past medical history", "ilaç kullanımı": "medications",
+                               "aile geçmişi": "family history", "sigara/alkol": "smoking/alcohol"}
+                    _diversity_hint_s = f" Uncovered category: {_en_map.get(_uncovered_s[0], _uncovered_s[0])}."
+
     if lang == "tr":
         next_prompt = (
             f"Hasta: {session['patient_name']}, {session['age']} yaşında, {session['gender']}.\n"
             f"{pediatric_hint}"
             f"Mülakat geçmişi:\n{history_text}\n\n"
             f"Yukarıdaki cevaplara dayanarak tanıyı netleştirecek SONRAKI en kritik soruyu sor. "
-            f"Acil belirti varsa o yönde derinleş. Soru {current_step+1}/{total_steps}."
+            f"Acil belirti varsa o yönde derinleş.{_diversity_hint_s} Soru {current_step+1}/{total_steps}."
         )
     elif lang == "ar":
         next_prompt = (
@@ -1649,7 +1775,7 @@ async def submit_answer_stream(req: AnswerRequest, request: Request):
             f"{pediatric_hint}"
             f"Interview so far:\n{history_text}\n\n"
             f"Based on above answers, ask the NEXT most critical question to clarify the diagnosis. "
-            f"If emergency signs present, explore further. Q{current_step+1}/{total_steps}. "
+            f"If emergency signs present, explore further.{_diversity_hint_s} Q{current_step+1}/{total_steps}. "
             f"Respond in English only."
         )
 

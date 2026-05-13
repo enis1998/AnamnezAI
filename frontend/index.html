@@ -967,19 +967,26 @@ async function submitAnswer(){
   document.getElementById('inp-answer').value='';
 
   // Streaming mesaj balonu — kullanıcı ilk tokeni hemen görür
+  // Stil: renderChat AI bubble ile tutarlı (smart_toy ikonu, pric/10 arka plan)
   const chatArea = document.getElementById('chat-area');
   const streamRow = document.createElement('div');
   streamRow.className = 'flex items-start gap-3 slide';
   const streamBubble = document.createElement('div');
-  streamBubble.className = 'flex-1 bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm border border-surfc text-[15px] leading-relaxed text-ons';
+  streamBubble.className = 'max-w-[82%]';
   const aiLabel = document.createElement('p');
-  aiLabel.className = 'text-[11px] font-bold text-sec mb-2 uppercase tracking-wide';
-  aiLabel.textContent = 'ANAMNEZAI · GEMMA 4';
+  aiLabel.className = 'text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
+  aiLabel.textContent = 'AnamnezAI · Gemma 4';
+  const bubbleInner = document.createElement('div');
+  bubbleInner.className = 'bg-white rounded-2xl rounded-tl-sm px-4 py-3 text-[14px] text-ons leading-relaxed shadow-sm border border-surfc';
   const streamText = document.createElement('span');
-  streamText.innerHTML = `<span style="opacity:0.3;animation:db .6s ease infinite alternate">▋</span>`;
+  streamText.innerHTML = `<span style="opacity:0.5;animation:db .6s ease infinite alternate">▋</span>`;
+  bubbleInner.appendChild(streamText);
   streamBubble.appendChild(aiLabel);
-  streamBubble.appendChild(streamText);
-  streamRow.innerHTML = `<div class="w-9 h-9 rounded-full bg-secc flex items-center justify-center flex-shrink-0 mt-1"><span class="material-symbols-outlined msym-fill text-sec text-[18px]">psychology</span></div>`;
+  streamBubble.appendChild(bubbleInner);
+  const aiAvatar = document.createElement('div');
+  aiAvatar.className = 'w-8 h-8 rounded-full bg-pric/10 flex items-center justify-center flex-shrink-0 mt-0.5';
+  aiAvatar.innerHTML = `<span class="material-symbols-outlined msym text-pric text-[15px]">smart_toy</span>`;
+  streamRow.appendChild(aiAvatar);
   streamRow.appendChild(streamBubble);
   chatArea.appendChild(streamRow);
   chatArea.scrollTop = chatArea.scrollHeight;
@@ -1033,9 +1040,16 @@ async function submitAnswer(){
     if(completed){
       streamRow.remove(); // streaming balonu kaldır
       showView('view-analyzing');
+      // sessionId'yi localStorage'a yedekle — redirecton fail için
+      if(sessionId) localStorage.setItem('last_session_id', sessionId);
       await fetchSummary();
     } else if(!fullText){
       throw new Error('empty_stream');
+    } else {
+      // Streaming tamamlandı (yeni soru geldi) — chatHistory'ye ekle ve DOM'u düzelt
+      chatHistory.push({role:'ai', text: fullText});
+      streamRow.remove();
+      renderChat();
     }
 
   } catch(e){
@@ -1062,7 +1076,11 @@ async function submitAnswer(){
       if(!res2.ok){ const err=await res2.json().catch(()=>({})); throw new Error(err.detail||`HTTP ${res2.status}`); }
       const data=await res2.json();
       showTyping(false);
-      if(data.question==='__COMPLETED__'){ showView('view-analyzing'); await fetchSummary(); completed=true;
+      if(data.question==='__COMPLETED__'){
+        showView('view-analyzing');
+        if(sessionId) localStorage.setItem('last_session_id', sessionId);
+        await fetchSummary();
+        completed=true;
       } else {
         const q = data.question?.trim() || (lang==='tr'?'Anlıyorum, devam edin lütfen.':(lang==='ar'?'حسناً، تفضل/ي.'                :'I see, please continue.'));
         addAIMessage(q);
@@ -1109,7 +1127,6 @@ async function fetchSummary(){
     // ── Arka plan üretimini bekle (polling) ─────────────────────────────────────
     // Backend zaten asyncio.create_task ile özet üretmeye başladı.
     // Bloklamak yerine 2 sn aralıklarla durum sorguluyoruz.
-    // view-analyzing ekranı kullanıcıya zaten "analiz yapılıyor" mesajını gösteriyor.
     const MAX_POLL = 35;
     for (let i = 0; i < MAX_POLL; i++) {
       await new Promise(r => setTimeout(r, 2000));
@@ -1117,7 +1134,7 @@ async function fetchSummary(){
         const stRes = await fetch(`${API}/api/session/${sessionId}/summary/status`);
         if (stRes.ok) {
           const st = await stRes.json();
-          if (st.ready) break;   // Hazır → döngüden çık, summary'yi çek
+          if (st.ready) break;
           // Henüz değil → ekran metnini güncelle
           const tip = document.querySelector('#view-analyzing p');
           if (tip) {
@@ -1127,11 +1144,11 @@ async function fetchSummary(){
               : `AI cevaplarınızı analiz ediyor… (${elapsed}s)`;
           }
         }
-      } catch(e) { break; }
+      } catch(e) { /* polling hatası — devam et */ }
     }
     // ── Özet hazır (veya timeout) → tek seferlik çek ───────────────────────────
     const res = await fetch(`${API}/api/session/${sessionId}/summary`);
-    if(!res.ok) throw new Error();
+    if(!res.ok) throw new Error(`summary_${res.status}`);
     const data = await res.json();
 
     // 🔬 Görüntü varsa — MedGemma Vision analizi
@@ -1165,10 +1182,45 @@ async function fetchSummary(){
     data.claim_code = localStorage.getItem('pending_claim_code') || null;
     localStorage.setItem('anamnez_summary', JSON.stringify(data));
     window.location.href='summary.html';
-  } catch {
-    showToast(t('errConn'),true);
-    showView('view-interview');
+  } catch(err) {
+    console.error('[fetchSummary] Hata:', err);
+    // Analyzing ekranında kal — retry butonu göster
+    _showSummaryRetryUI();
   }
+}
+
+function _showSummaryRetryUI() {
+  // Zaten retry UI varsa tekrar ekleme
+  if(document.getElementById('summary-retry-ui')) return;
+  const analyzing = document.getElementById('view-analyzing');
+  if(!analyzing) return;
+  const tip = analyzing.querySelector('p');
+  if(tip) tip.textContent = lang==='tr' ? 'Rapor oluşturulamadı. Lütfen tekrar deneyin.' : 'Report generation failed. Please retry.';
+  const retryDiv = document.createElement('div');
+  retryDiv.id = 'summary-retry-ui';
+  retryDiv.className = 'mt-6 flex flex-col items-center gap-3';
+  retryDiv.innerHTML = `
+    <button onclick="fetchSummaryRetry()"
+      class="px-7 py-3 bg-pric text-white rounded-xl font-bold text-[14px] hover:bg-pri active:scale-[.97] transition-all shadow-lg flex items-center gap-2">
+      <span class="material-symbols-outlined msym text-[18px]">refresh</span>
+      ${lang==='tr' ? 'Raporu Yeniden Oluştur' : 'Retry Report'}
+    </button>
+    <button onclick="showView('view-interview')"
+      class="text-[12px] text-onsv hover:text-pri transition-colors underline">
+      ${lang==='tr' ? '← Mülakata Dön' : '← Back to Interview'}
+    </button>
+  `;
+  analyzing.appendChild(retryDiv);
+}
+
+async function fetchSummaryRetry() {
+  const retryUi = document.getElementById('summary-retry-ui');
+  if(retryUi) retryUi.remove();
+  const tip = document.querySelector('#view-analyzing p');
+  if(tip) tip.textContent = lang==='tr' ? 'Gemma 4 semptomlarınızı değerlendiriyor...' : 'Gemma 4 is evaluating your symptoms...';
+  // sessionId'yi yedekten geri yükle
+  if(!sessionId) sessionId = localStorage.getItem('last_session_id');
+  await fetchSummary();
 }
 
 // ── Voice ──
