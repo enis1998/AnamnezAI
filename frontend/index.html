@@ -1106,6 +1106,30 @@ function retryAnswer(ans) {
 
 async function fetchSummary(){
   try {
+    // ── Arka plan üretimini bekle (polling) ─────────────────────────────────────
+    // Backend zaten asyncio.create_task ile özet üretmeye başladı.
+    // Bloklamak yerine 2 sn aralıklarla durum sorguluyoruz.
+    // view-analyzing ekranı kullanıcıya zaten "analiz yapılıyor" mesajını gösteriyor.
+    const MAX_POLL = 35;
+    for (let i = 0; i < MAX_POLL; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      try {
+        const stRes = await fetch(`${API}/api/session/${sessionId}/summary/status`);
+        if (stRes.ok) {
+          const st = await stRes.json();
+          if (st.ready) break;   // Hazır → döngüden çık, summary'yi çek
+          // Henüz değil → ekran metnini güncelle
+          const tip = document.querySelector('#view-analyzing p');
+          if (tip) {
+            const elapsed = (i + 1) * 2;
+            tip.textContent = lang === 'en'
+              ? `AI is analyzing your answers… (${elapsed}s)`
+              : `AI cevaplarınızı analiz ediyor… (${elapsed}s)`;
+          }
+        }
+      } catch(e) { break; }
+    }
+    // ── Özet hazır (veya timeout) → tek seferlik çek ───────────────────────────
     const res = await fetch(`${API}/api/session/${sessionId}/summary`);
     if(!res.ok) throw new Error();
     const data = await res.json();

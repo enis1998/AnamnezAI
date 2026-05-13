@@ -845,59 +845,74 @@ async function sendKioskAnswer() {
 }
 
 async function fetchKioskSummary() {
-  try {
-    await new Promise(r => setTimeout(r, 1000));
-    const res = await fetch(`${API}/api/session/${kioskSessionId}/summary`);
-    if (!res.ok) throw new Error();
-    const data = await res.json();
+  // ── ADIM 1: Done ekranını ANİNDA göster ──────────────────────────────────────
+  // Hasta sıra numarasını ve zaman damgasını beklemeden görür.
+  const ticketNo = kioskSessionId
+    ? String(parseInt(kioskSessionId.replace(/\D/g,'').slice(-4) || '0001', 10)).padStart(4,'0')
+    : String(Math.floor(Math.random()*9000)+1000);
+  document.getElementById('done-ticket-no').textContent = ticketNo;
+  document.getElementById('qr-ticket-no').textContent   = ticketNo;
+  const now = new Date();
+  document.getElementById('done-timestamp').textContent =
+    now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) + ' · ' +
+    now.toLocaleDateString('tr-TR');
 
-    const levelMap = {
-      RED:    currentLang === 'en' ? '🔴 EMERGENCY'    : '🔴 ACİL',
-      YELLOW: currentLang === 'en' ? '🟡 URGENT'       : '🟡 İKİNCİL ACİL',
-      GREEN:  currentLang === 'en' ? '🟢 ROUTINE'      : '🟢 RUTİN',
-    };
-    const badgeColors = {
-      RED:    {bg:'rgba(186,26,26,0.25)', border:'rgba(186,26,26,0.5)', text:'#ff897d'},
-      YELLOW: {bg:'rgba(176,85,8,0.25)',  border:'rgba(176,85,8,0.5)',  text:'#ffb77c'},
-      GREEN:  {bg:'rgba(0,106,104,0.25)', border:'rgba(0,106,104,0.5)', text:'#a0f1ed'},
-    };
-    const lvl = data.triage_level || 'GREEN';
-    const bc = badgeColors[lvl] || badgeColors.GREEN;
+  // Triaj badge — arka plan üretimi tamamlanana kadar "Değerlendiriliyor" göster
+  const pendingLabel = currentLang === 'en' ? '⏳ Evaluating…' : '⏳ Değerlendiriliyor…';
+  document.getElementById('done-level').textContent = pendingLabel;
+  const badge = document.getElementById('done-level-badge');
+  badge.style.background = 'rgba(80,80,80,0.25)';
+  badge.style.border      = '2px solid rgba(150,150,150,0.4)';
+  badge.style.color       = '#aaa';
+  document.getElementById('done-triage').classList.remove('hidden');
 
-    // Triaj badge
-    document.getElementById('done-level').textContent = levelMap[lvl];
-    const badge = document.getElementById('done-level-badge');
-    badge.style.background = bc.bg;
-    badge.style.border = `2px solid ${bc.border}`;
-    badge.style.color = bc.text;
-    document.getElementById('done-complaint').textContent = data.chief_complaint || '';
-    document.getElementById('done-triage').classList.remove('hidden');
+  goTo('scr-done');   // ← Kullanıcı HEMEN sıra numarasını görür
 
-    // Sıra numarası — session ID'nin son 4 hanesi (demo)
-    const ticketNo = kioskSessionId
-      ? String(parseInt(kioskSessionId.replace(/\D/g,'').slice(-4) || '0001', 10)).padStart(4,'0')
-      : String(Math.floor(Math.random()*9000)+1000);
-    document.getElementById('done-ticket-no').textContent = ticketNo;
-    document.getElementById('qr-ticket-no').textContent = ticketNo;
+  // ── ADIM 2: Arka planda summary/status polling ────────────────────────────────
+  // Backend zaten asyncio.create_task(_background_summary) ile üretmeye başladı.
+  // Biz sadece hazır olmasını bekliyoruz — bloklamadan.
+  const levelMap = {
+    RED:    currentLang === 'en' ? '🔴 EMERGENCY'    : '🔴 ACİL',
+    YELLOW: currentLang === 'en' ? '🟡 URGENT'       : '🟡 İKİNCİL ACİL',
+    GREEN:  currentLang === 'en' ? '🟢 ROUTINE'      : '🟢 RUTİN',
+  };
+  const badgeColors = {
+    RED:    {bg:'rgba(186,26,26,0.25)', border:'rgba(186,26,26,0.5)', text:'#ff897d'},
+    YELLOW: {bg:'rgba(176,85,8,0.25)',  border:'rgba(176,85,8,0.5)',  text:'#ffb77c'},
+    GREEN:  {bg:'rgba(0,106,104,0.25)', border:'rgba(0,106,104,0.5)', text:'#a0f1ed'},
+  };
 
-    // Zaman damgası
-    const now = new Date();
-    document.getElementById('done-timestamp').textContent =
-      now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) + ' · ' +
-      now.toLocaleDateString('tr-TR');
+  (async () => {
+    const MAX_ATTEMPTS = 35;   // maks ~70 sn
+    const INTERVAL_MS  = 2000;
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      await new Promise(r => setTimeout(r, INTERVAL_MS));
+      try {
+        // Önce durum sorgula (non-blocking, anlık yanıt)
+        const stRes = await fetch(`${API}/api/session/${kioskSessionId}/summary/status`);
+        if (!stRes.ok) break;
+        const st = await stRes.json();
+        if (!st.ready) continue;   // henüz hazır değil, 2 sn sonra tekrar sor
 
-    localStorage.setItem('anamnez_summary', JSON.stringify(data));
-  } catch(e) {
-    // Offline — hâlâ sıra no göster
-    const ticketNo = String(Math.floor(Math.random()*9000)+1000);
-    document.getElementById('done-ticket-no').textContent = ticketNo;
-    document.getElementById('qr-ticket-no').textContent = ticketNo;
-    const now = new Date();
-    document.getElementById('done-timestamp').textContent =
-      now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) + ' · ' +
-      now.toLocaleDateString('tr-TR');
-  }
-  goTo('scr-done');
+        // Hazır → tek seferlik summary çek ve badge'i güncelle
+        const res = await fetch(`${API}/api/session/${kioskSessionId}/summary`);
+        if (!res.ok) break;
+        const data = await res.json();
+
+        const lvl = data.triage_level || 'GREEN';
+        const bc  = badgeColors[lvl] || badgeColors.GREEN;
+        document.getElementById('done-level').textContent = levelMap[lvl];
+        badge.style.background = bc.bg;
+        badge.style.border     = `2px solid ${bc.border}`;
+        badge.style.color      = bc.text;
+        document.getElementById('done-complaint').textContent = data.chief_complaint || '';
+        localStorage.setItem('anamnez_summary', JSON.stringify(data));
+        return;   // Tamamlandı, polling sona erdi
+      } catch(e) {
+        break;   // Ağ hatası — badge "Değerlendiriliyor" olarak kalır, önemli değil
+      }
+    }
+  })();
 }
 
 // ── Login ────────────────────────────────────────────────────────────────────
