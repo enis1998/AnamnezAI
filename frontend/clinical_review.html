@@ -785,8 +785,10 @@ async function markSeen() {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}` }
     });
-    alert('Hasta görüldü olarak işaretlendi.');
-  } catch(e) {}
+    // Toast benzeri inline bildirim
+    const btn = event?.target || document.querySelector('[onclick*="markSeen"]');
+    if (btn) { btn.textContent = '✅ Görüldü'; btn.style.background = '#22c55e'; btn.disabled = true; }
+  } catch(e) { console.warn('markSeen hatası:', e); }
 }
 
 async function exportFHIR() {
@@ -855,7 +857,8 @@ async function exportPDF() {
     pdf.save(`AnamnezAI_KlinikInceleme_${(sessionId || 'rapor').slice(0, 8)}_${new Date().toISOString().slice(0,10)}.pdf`);
   } catch (err) {
     console.error('PDF hatası:', err);
-    alert('PDF oluşturulamadı: ' + err.message);
+    const pdfBtn = document.getElementById('pdf-btn') || document.querySelector('.pdf-btn');
+    if (pdfBtn) { pdfBtn.textContent = '❌ PDF Hatası'; pdfBtn.style.background = '#ef4444'; }
   } finally {
     document.querySelectorAll('.no-print, header').forEach(el => el.style.removeProperty('display'));
     document.body.style.background = '';

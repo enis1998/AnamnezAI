@@ -529,8 +529,8 @@ async function checkAuth() {
     if (!r.ok) { window.location.href = 'login.html'; return; }
     const d = await r.json();
     if (d.user.role !== 'admin') {
-      alert('Bu sayfaya sadece admin kullanıcılar erişebilir.');
-      window.location.href = 'doctor.html';
+      showToast('⛔ Bu sayfa yalnızca admin için.', true);
+      setTimeout(() => { window.location.href = 'login.html'; }, 1500);
       return;
     }
     document.getElementById('txt-admin-name').textContent = `${d.user.name} · Admin`;

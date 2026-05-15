@@ -639,7 +639,7 @@ function doLogout() {
 // ── Sprint 13: Kiosk Kilit/Açma ──────────────────────────────────────────────
 async function kioskLock(lock) {
   const token = getToken();
-  if (!token) { alert('Oturum açmanız gerekiyor.'); return; }
+  if (!token) { window.location.href = 'login.html'; return; }
   const ep = lock ? `${API}/api/kiosk/lock` : `${API}/api/kiosk/unlock`;
   try {
     const res = await fetch(ep, {
@@ -658,7 +658,12 @@ async function kioskLock(lock) {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2500);
   } catch(e) {
-    alert('Kiosk işlemi başarısız: ' + e.message);
+    console.error('Kiosk işlemi başarısız:', e.message);
+    const t2 = document.createElement('div');
+    t2.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;padding:10px 20px;border-radius:8px;z-index:9999';
+    t2.textContent = '❌ Kiosk hatası: ' + e.message;
+    document.body.appendChild(t2);
+    setTimeout(() => t2.remove(), 3000);
   }
 }
 
