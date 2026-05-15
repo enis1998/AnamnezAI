@@ -1732,14 +1732,18 @@ async function createDemoAppointments() {
     });
     if (!res.ok) {
       const err = await res.json();
-      alert('Hata: ' + (err.detail || 'Bilinmeyen hata'));
+      const errMsg = err.detail || 'Bilinmeyen hata';
+      btn.innerHTML = '❌ ' + errMsg.slice(0, 40);
+      btn.style.background = '#ef4444';
+      setTimeout(() => { btn.disabled=false; btn.innerHTML='<span class="material-symbols-outlined msym text-[14px]">refresh</span><span>Tekrar dene</span>'; btn.style.background=''; }, 3000);
       return;
     }
     const data = await res.json();
     if (!_previsitOpen) togglePrevisitSection();
     else loadPrevisitAppointments();
   } catch(e) {
-    alert('Bağlantı hatası: ' + e.message);
+    console.error('Bağlantı hatası:', e.message);
+    btn.innerHTML = '❌ Bağlantı hatası'; btn.style.background='#ef4444';
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<span class="material-symbols-outlined msym text-[14px]">add</span><span id="txt-demo-appts-btn">Demo Randevu</span>';
