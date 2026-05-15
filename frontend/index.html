@@ -547,6 +547,11 @@ const T = {
     analyzeBtn:'Gemma 4 ile Analiz Et',
     chatHint:'📷 Görüntü yükle · 🎤 Sesli gir · Ctrl+Enter ile gönder',
     imgOpt1:'🩹 Yara / Kesik', imgOpt2:'🔴 Cilt Döküntüsü', imgOpt3:'❤️ EKG / Ritim Şeridi', imgOpt4:'🫁 Röntgen / X-Ray', imgOpt5:'📸 Diğer Tıbbi Görüntü',
+    visionAnalyzing:'Tıbbi görüntü MedGemma Vision ile analiz ediliyor...',
+    reportFailed:'Rapor oluşturulamadı. Lütfen tekrar deneyin.',
+    reportRetry:'Raporu Yeniden Oluştur', backToInterview:'← Mülakata Dön',
+    modelWarming:'Model Isınıyor...',
+    modelWarmBanner:'⏳ Gemma 4 modeli arka planda yükleniyor — ilk mülakatınız biraz daha uzun sürebilir.',
   },
   en:{
     powered:'Powered by Gemma 4',
@@ -576,6 +581,11 @@ const T = {
     analyzeBtn:'Analyze with Gemma 4',
     chatHint:'📷 Upload image · 🎤 Voice input · Ctrl+Enter to send',
     imgOpt1:'🩹 Wound / Cut', imgOpt2:'🔴 Skin Rash', imgOpt3:'❤️ ECG / Rhythm Strip', imgOpt4:'🫁 X-Ray / Chest', imgOpt5:'📸 Other Medical Image',
+    visionAnalyzing:'Analyzing medical image with MedGemma Vision...',
+    reportFailed:'Report generation failed. Please retry.',
+    reportRetry:'Retry Report', backToInterview:'← Back to Interview',
+    modelWarming:'Model Loading...',
+    modelWarmBanner:'⏳ Gemma 4 is loading in the background — your first interview may take a bit longer.',
   },
   ar:{
     powered:'مدعوم بـ Gemma 4',
@@ -605,6 +615,11 @@ const T = {
     analyzeBtn:'تحليل بـ Gemma 4',
     chatHint:'📷 رفع صورة · 🎤 إدخال صوتي · Ctrl+Enter للإرسال',
     imgOpt1:'🩹 جرح / قطع', imgOpt2:'🔴 طفح جلدي', imgOpt3:'❤️ تخطيط القلب', imgOpt4:'🫁 أشعة سينية', imgOpt5:'📸 صورة طبية أخرى',
+    visionAnalyzing:'جارٍ تحليل الصورة الطبية بـ MedGemma Vision...',
+    reportFailed:'فشل إنشاء التقرير. الرجاء المحاولة مجدداً.',
+    reportRetry:'إعادة إنشاء التقرير', backToInterview:'← العودة للمقابلة',
+    modelWarming:'النموذج يُحمَّل...',
+    modelWarmBanner:'⏳ Gemma 4 يُحمَّل في الخلفية — قد تستغرق مقابلتك الأولى وقتاً أطول قليلاً.',
   }
 };
 const t = k => T[lang][k] ?? k;
@@ -720,13 +735,11 @@ async function checkHealth(){
       // Bağlantı var ama model VRAM'e yükleniyor
       pill.className='flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700';
       dot.className='w-1.5 h-1.5 rounded-full bg-amber-400 dot-pulse';
-      txt.textContent=lang==='tr'?'Model Isınıyor...':'Model Loading...';
+      txt.textContent=(T[lang]||T.tr).modelWarming;
       if(btn){ btn.disabled=false; } // Kullanıcı yine de başlatabilir
       if(statusBanner){
         statusBanner.classList.remove('hidden');
-        document.getElementById('banner-text').textContent = lang==='tr'
-          ? '⏳ Gemma 4 modeli arka planda yükleniyor — ilk mülakatınız biraz daha uzun sürebilir.'
-          : '⏳ Gemma 4 is loading in the background — your first interview may take a bit longer.';
+        document.getElementById('banner-text').textContent = (T[lang]||T.tr).modelWarmBanner;
       }
     } else if(ok && !modelReady && !modelWarming){
       // Bağlı ama warmup henüz başlamadı (eski backend ile uyumluluk)
@@ -1224,7 +1237,7 @@ async function fetchSummary(){
         const viewEl = document.getElementById('view-analyzing');
         if(viewEl){
           const tip = viewEl.querySelector('p');
-          if(tip) tip.textContent = 'Tıbbi görüntü MedGemma Vision ile analiz ediliyor...';
+          if(tip) tip.textContent = (T[lang]||T.tr).visionAnalyzing;
         }
         const form = new FormData();
         form.append('file', selectedImageFile);
@@ -1262,7 +1275,7 @@ function _showSummaryRetryUI() {
   const analyzing = document.getElementById('view-analyzing');
   if(!analyzing) return;
   const tip = analyzing.querySelector('p');
-  if(tip) tip.textContent = lang==='tr' ? 'Rapor oluşturulamadı. Lütfen tekrar deneyin.' : 'Report generation failed. Please retry.';
+  if(tip) tip.textContent = (T[lang]||T.tr).reportFailed;
   const retryDiv = document.createElement('div');
   retryDiv.id = 'summary-retry-ui';
   retryDiv.className = 'mt-6 flex flex-col items-center gap-3';
@@ -1270,11 +1283,11 @@ function _showSummaryRetryUI() {
     <button onclick="fetchSummaryRetry()"
       class="px-7 py-3 bg-pric text-white rounded-xl font-bold text-[14px] hover:bg-pri active:scale-[.97] transition-all shadow-lg flex items-center gap-2">
       <span class="material-symbols-outlined msym text-[18px]">refresh</span>
-      ${lang==='tr' ? 'Raporu Yeniden Oluştur' : 'Retry Report'}
+      ${(T[lang]||T.tr).reportRetry}
     </button>
     <button onclick="showView('view-interview')"
       class="text-[12px] text-onsv hover:text-pri transition-colors underline">
-      ${lang==='tr' ? '← Mülakata Dön' : '← Back to Interview'}
+      ${(T[lang]||T.tr).backToInterview}
     </button>
   `;
   analyzing.appendChild(retryDiv);

@@ -67,11 +67,11 @@ tailwind.config={theme:{extend:{colors:{
 
       <!-- Pre-Visit Mode -->
       <div class="pt-3 pb-1 px-3">
-        <p class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Randevular</p>
+        <p id="txt-nav-appts" class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Randevular</p>
       </div>
       <button onclick="showPrevisitSection()"
         class="w-full flex items-center gap-2.5 text-onsv hover:bg-surfc rounded-xl px-3 py-2.5 text-[13px] transition-colors">
-        <span class="material-symbols-outlined msym text-[17px]">event_available</span><span>Pre-Visit Briefs</span>
+        <span class="material-symbols-outlined msym text-[17px]">event_available</span><span id="txt-nav-previsit">Pre-Visit Briefs</span>
       </button>
 
       <!-- Sprint 13: Kiosk Yönetim -->
@@ -457,6 +457,40 @@ const DL = {
     ageFn:(age)=>`${age} yaş`,
     seenBadge:'✓ Görüldü', overrideBadge:'✎ Override',
     logout:'Çıkış Yap',
+    // ── Previsit / Appointments ────────────────────────────────
+    navAppts:'Randevular', navPrevisit:'Pre-Visit Briefs',
+    previsitTitle:"Bugünün Randevuları & Pre-Visit Briefs",
+    previsitSub:'Randevu öncesi hasta anamnez görüşmeleri',
+    previsitRefresh:'Yenile', previsitDemoBtn:'Demo Randevu',
+    previsitShowBtn:'Göster', previsitHideBtn:'Gizle',
+    previsitEmpty:'Demo randevu oluşturmak için "Demo Randevu" butonuna tıklayın.',
+    previsitCreating:'Oluşturuluyor...', previsitRetry:'Tekrar dene',
+    previsitAuthErr:'Doktor yetkisi gerekli.',
+    previsitLoadErr:'Yükleme hatası:',
+    previsitCountFn:(n)=>`${n} randevu`,
+    previsitNoApptsFn:(d)=>`Bugün (${d}) için randevu bulunamadı. Demo oluşturmak için "Demo Randevu" butonuna tıklayın.`,
+    tbApptPatient:'Hasta', tbApptDoctor:'Doktor / Bölüm',
+    tbApptTime:'Saat', tbApptStatus:'Pre-Visit Durum', tbApptActions:'İşlemler',
+    previsitLink:'Hasta Linki',
+    pvsPending:'Bekliyor', pvsProgress:'Devam Ediyor', pvsDone:'Tamamlandı', pvsBrief:'Brief Hazır',
+    pvsGenerating:'Oluşturuluyor...',
+    pvBriefPatientHeader:'Hasta', pvBriefApptHeader:'Doktor · Randevu',
+    pvBriefWarnTitle:'⚠️ Randevuyu Beklememe Uyarısı',
+    pvBriefWarnDefault:'Red flag tespit edildi — doktor değerlendirmesi için acil başvuru önerilir.',
+    pvBriefChiefTitle:'Ana Şikayet', pvBriefDuration:'Süre', pvBriefSeverity:'Şiddet',
+    pvBriefSymptomsTitle:'Eşlik Eden Semptomlar',
+    pvBriefChronicTitle:'Kronik Hastalıklar', pvBriefMedsTitle:'Mevcut İlaçlar', pvBriefAllergyTitle:'Alerjiler ⚠️',
+    pvBriefMissingTitle:'Eksik Bilgiler', pvBriefSuggestedTitle:'Doktor İçin Önerilen Sorular',
+    pvBriefClinicalTitle:'Klinik Özet Notu',
+    pvBriefTranscriptFn:(n)=>`Görüşme Transkripti (${n} soru)`,
+    pvBriefNoAnswer:'Yanıt yok',
+    pvBriefDisclaimer:'Bu brief AI tarafından üretilmiştir. Klinik karar tamamen hekime aittir. • AnamnezAI Pre-Visit Mode',
+    pvBriefNotStarted:'Hasta henüz pre-visit görüşmesini başlatmamış.',
+    pvBriefInProgressFn:(s,tot)=>`Görüşme devam ediyor (${s}/${tot} soru). Tamamlandığında brief otomatik oluşacak.`,
+    pvBriefGenerating:'Görüşme tamamlandı. Brief birkaç saniye içinde hazır olacak. Sayfayı yenileyin.',
+    pvBriefNotReady:'Brief henüz hazır değil.',
+    pvBriefPatientLinkHint:'Hasta pre-visit linkini kullanmalı:',
+    pvBriefError:'Hata:',
   },
   en:{
     navTriage:'Triage Panel', navRefresh:'Refresh List', navLock:'Lock Kiosk', navUnlock:'Unlock Kiosk',
@@ -530,6 +564,40 @@ const DL = {
     ageFn:(age)=>`${age}y`,
     seenBadge:'✓ Seen', overrideBadge:'✎ Override',
     logout:'Log Out',
+    // ── Previsit / Appointments ────────────────────────────────
+    navAppts:'Appointments', navPrevisit:'Pre-Visit Briefs',
+    previsitTitle:"Today's Appointments & Pre-Visit Briefs",
+    previsitSub:'Pre-visit patient intake interviews',
+    previsitRefresh:'Refresh', previsitDemoBtn:'Demo Appointments',
+    previsitShowBtn:'Show', previsitHideBtn:'Hide',
+    previsitEmpty:'Click "Demo Appointments" to create demo data.',
+    previsitCreating:'Creating...', previsitRetry:'Retry',
+    previsitAuthErr:'Doctor authorization required.',
+    previsitLoadErr:'Load error:',
+    previsitCountFn:(n)=>`${n} appointment(s)`,
+    previsitNoApptsFn:(d)=>`No appointments found for today (${d}). Click "Demo Appointments" to create demo data.`,
+    tbApptPatient:'Patient', tbApptDoctor:'Doctor / Dept',
+    tbApptTime:'Time', tbApptStatus:'Pre-Visit Status', tbApptActions:'Actions',
+    previsitLink:'Patient Link',
+    pvsPending:'Pending', pvsProgress:'In Progress', pvsDone:'Completed', pvsBrief:'Brief Ready',
+    pvsGenerating:'Generating...',
+    pvBriefPatientHeader:'Patient', pvBriefApptHeader:'Doctor · Appointment',
+    pvBriefWarnTitle:'⚠️ Do Not Wait for Appointment',
+    pvBriefWarnDefault:'Red flag detected — urgent doctor evaluation recommended.',
+    pvBriefChiefTitle:'Chief Complaint', pvBriefDuration:'Duration', pvBriefSeverity:'Severity',
+    pvBriefSymptomsTitle:'Associated Symptoms',
+    pvBriefChronicTitle:'Chronic Conditions', pvBriefMedsTitle:'Current Medications', pvBriefAllergyTitle:'Allergies ⚠️',
+    pvBriefMissingTitle:'Missing Information', pvBriefSuggestedTitle:'Suggested Questions for Doctor',
+    pvBriefClinicalTitle:'Clinical Summary Note',
+    pvBriefTranscriptFn:(n)=>`Interview Transcript (${n} questions)`,
+    pvBriefNoAnswer:'No answer',
+    pvBriefDisclaimer:'This brief was generated by AI. Clinical decisions remain entirely with the physician. • AnamnezAI Pre-Visit Mode',
+    pvBriefNotStarted:'Patient has not started the pre-visit interview yet.',
+    pvBriefInProgressFn:(s,tot)=>`Interview in progress (${s}/${tot} questions). Brief will be generated automatically when complete.`,
+    pvBriefGenerating:'Interview completed. Brief will be ready in a few seconds. Refresh the page.',
+    pvBriefNotReady:'Brief not ready yet.',
+    pvBriefPatientLinkHint:'Patient should use the pre-visit link:',
+    pvBriefError:'Error:',
   },
   ar:{
     navTriage:'لوحة الفرز', navRefresh:'تحديث القائمة', navLock:'قفل الكشك', navUnlock:'فتح الكشك',
@@ -603,6 +671,40 @@ const DL = {
     ageFn:(age)=>`${age} سنة`,
     seenBadge:'✓ مُعاين', overrideBadge:'✎ تعديل',
     logout:'تسجيل الخروج',
+    // ── Previsit / Appointments ────────────────────────────────
+    navAppts:'المواعيد', navPrevisit:'ملخصات ما قبل الزيارة',
+    previsitTitle:"مواعيد اليوم & ملخصات ما قبل الزيارة",
+    previsitSub:'مقابلات ما قبل الزيارة للمرضى',
+    previsitRefresh:'تحديث', previsitDemoBtn:'مواعيد تجريبية',
+    previsitShowBtn:'عرض', previsitHideBtn:'إخفاء',
+    previsitEmpty:'انقر على "مواعيد تجريبية" لإنشاء بيانات تجريبية.',
+    previsitCreating:'جارٍ الإنشاء...', previsitRetry:'إعادة المحاولة',
+    previsitAuthErr:'مطلوب صلاحية الطبيب.',
+    previsitLoadErr:'خطأ في التحميل:',
+    previsitCountFn:(n)=>`${n} موعد`,
+    previsitNoApptsFn:(d)=>`لا توجد مواعيد اليوم (${d}). انقر على "مواعيد تجريبية" لإنشاء بيانات.`,
+    tbApptPatient:'المريض', tbApptDoctor:'الطبيب / القسم',
+    tbApptTime:'الوقت', tbApptStatus:'حالة ما قبل الزيارة', tbApptActions:'الإجراءات',
+    previsitLink:'رابط المريض',
+    pvsPending:'قيد الانتظار', pvsProgress:'جارٍ', pvsDone:'مكتمل', pvsBrief:'الملخص جاهز',
+    pvsGenerating:'جارٍ الإنشاء...',
+    pvBriefPatientHeader:'المريض', pvBriefApptHeader:'الطبيب · الموعد',
+    pvBriefWarnTitle:'⚠️ تحذير: لا تنتظر الموعد',
+    pvBriefWarnDefault:'تم اكتشاف علامة تحذيرية — يُنصح بالتقييم الطبي العاجل.',
+    pvBriefChiefTitle:'الشكوى الرئيسية', pvBriefDuration:'المدة', pvBriefSeverity:'الشدة',
+    pvBriefSymptomsTitle:'الأعراض المصاحبة',
+    pvBriefChronicTitle:'الأمراض المزمنة', pvBriefMedsTitle:'الأدوية الحالية', pvBriefAllergyTitle:'الحساسية ⚠️',
+    pvBriefMissingTitle:'المعلومات المفقودة', pvBriefSuggestedTitle:'أسئلة مقترحة للطبيب',
+    pvBriefClinicalTitle:'ملاحظة سريرية ملخصة',
+    pvBriefTranscriptFn:(n)=>`نص المقابلة (${n} سؤال)`,
+    pvBriefNoAnswer:'لا توجد إجابة',
+    pvBriefDisclaimer:'تم إنشاء هذا الملخص بواسطة الذكاء الاصطناعي. القرار السريري يعود بالكامل للطبيب. • AnamnezAI Pre-Visit Mode',
+    pvBriefNotStarted:'لم يبدأ المريض مقابلة ما قبل الزيارة بعد.',
+    pvBriefInProgressFn:(s,tot)=>`المقابلة جارية (${s}/${tot} سؤال). سيتم إنشاء الملخص تلقائياً عند الانتهاء.`,
+    pvBriefGenerating:'اكتملت المقابلة. سيكون الملخص جاهزاً خلال ثوانٍ. أعد تحميل الصفحة.',
+    pvBriefNotReady:'الملخص غير جاهز بعد.',
+    pvBriefPatientLinkHint:'يجب أن يستخدم المريض رابط ما قبل الزيارة:',
+    pvBriefError:'خطأ:',
   }
 };
 
@@ -803,9 +905,9 @@ async function loadDemoCases() {
       statsEl.textContent = `${DEMO.length} vaka · ${r2} RED · ${y2} YELLOW · ${g2} GREEN`;
     }
   } catch(e) {
-    console.warn('[demo] Demo vakalar yüklenemedi:', e.message);
+    console.warn('[demo] Demo cases could not load:', e.message);
     const el = document.getElementById('demo-table');
-    if (el) el.innerHTML = `<div class="text-center py-8 text-onsv text-[12px]">Demo vakalar yüklenemiyor.</div>`;
+    if (el) el.innerHTML = `<div class="text-center py-8 text-onsv text-[12px]">${t('previsitLoadErr')} demo</div>`;
   }
 }
 
@@ -1609,6 +1711,7 @@ function setLang(l){
     'txt-nav-lock': d.navLock, 'txt-nav-unlock': d.navUnlock,
     'txt-nav-analytics': d.navAnalytics, 'txt-nav-logout': d.navLogout,
     'txt-nav-kiosk-mgmt': d.navKioskMgmt, 'txt-nav-sistem': d.navSistem,
+    'txt-nav-appts': d.navAppts, 'txt-nav-previsit': d.navPrevisit,
     'txt-panel-title': d.panelTitle, 'txt-refresh-btn': d.refreshBtn,
     'txt-kiosk-btn': d.kioskBtn, 'txt-live-lbl': d.liveLbl,
     'model-status-txt': d.modelChecking,
@@ -1626,6 +1729,10 @@ function setLang(l){
     'txt-label-manual': d.labelManual, 'txt-label-ai': d.labelAI,
     'txt-detail-header': d.detailHeader,
     'txt-report-new-tab': d.reportNewTab,
+    // Previsit section
+    'txt-previsit-title': d.previsitTitle, 'txt-previsit-sub': d.previsitSub,
+    'txt-previsit-refresh': d.previsitRefresh, 'txt-demo-appts-btn': d.previsitDemoBtn,
+    'txt-previsit-empty': d.previsitEmpty,
   };
   Object.entries(m).forEach(([id, val]) => {
     const el = document.getElementById(id);
@@ -1652,6 +1759,10 @@ function setLang(l){
     const isOpen = !document.getElementById('seen-archive')?.classList.contains('hidden');
     seenToggle.textContent = isOpen ? d.seenHideBtn : d.seenShowBtn;
   }
+
+  // Previsit toggle button
+  const pvToggle = document.getElementById('txt-previsit-toggle');
+  if (pvToggle) pvToggle.textContent = _previsitOpen ? d.previsitHideBtn : d.previsitShowBtn;
 
   // Lang button active styles
   ['dlbtn-tr','dlbtn-en','dlbtn-ar'].forEach(id => {
@@ -1707,12 +1818,12 @@ function togglePrevisitSection() {
   if (_previsitOpen) {
     content.classList.remove('hidden');
     icon.textContent = 'expand_less';
-    btn.textContent = 'Gizle';
+    if (btn) btn.textContent = t('previsitHideBtn');
     loadPrevisitAppointments();
   } else {
     content.classList.add('hidden');
     icon.textContent = 'expand_more';
-    btn.textContent = 'Göster';
+    if (btn) btn.textContent = t('previsitShowBtn');
   }
 }
 
@@ -1724,7 +1835,7 @@ function showPrevisitSection() {
 async function createDemoAppointments() {
   const btn = document.getElementById('btn-demo-appts');
   btn.disabled = true;
-  btn.innerHTML = '<span class="material-symbols-outlined msym spin text-[14px]">refresh</span><span>Oluşturuluyor...</span>';
+  btn.innerHTML = `<span class="material-symbols-outlined msym spin text-[14px]">refresh</span><span>${t('previsitCreating')}</span>`;
   try {
     const res = await fetch(`${API}/api/appointments/demo`, {
       method: 'POST',
@@ -1732,10 +1843,10 @@ async function createDemoAppointments() {
     });
     if (!res.ok) {
       const err = await res.json();
-      const errMsg = err.detail || 'Bilinmeyen hata';
+      const errMsg = err.detail || t('previsitLoadErr');
       btn.innerHTML = '❌ ' + errMsg.slice(0, 40);
       btn.style.background = '#ef4444';
-      setTimeout(() => { btn.disabled=false; btn.innerHTML='<span class="material-symbols-outlined msym text-[14px]">refresh</span><span>Tekrar dene</span>'; btn.style.background=''; }, 3000);
+      setTimeout(() => { btn.disabled=false; btn.innerHTML=`<span class="material-symbols-outlined msym text-[14px]">refresh</span><span id="txt-demo-appts-btn">${t('previsitRetry')}</span>`; btn.style.background=''; }, 3000);
       return;
     }
     const data = await res.json();
@@ -1743,10 +1854,10 @@ async function createDemoAppointments() {
     else loadPrevisitAppointments();
   } catch(e) {
     console.error('Bağlantı hatası:', e.message);
-    btn.innerHTML = '❌ Bağlantı hatası'; btn.style.background='#ef4444';
+    btn.innerHTML = '❌ ' + t('previsitLoadErr'); btn.style.background='#ef4444';
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<span class="material-symbols-outlined msym text-[14px]">add</span><span id="txt-demo-appts-btn">Demo Randevu</span>';
+    btn.innerHTML = `<span class="material-symbols-outlined msym text-[14px]">add</span><span id="txt-demo-appts-btn">${t('previsitDemoBtn')}</span>`;
   }
 }
 
@@ -1756,7 +1867,7 @@ async function loadPrevisitAppointments() {
   try {
     const res = await fetch(`${API}/api/appointments/today`, { headers: authHeaders() });
     if (res.status === 401 || res.status === 403) {
-      container.innerHTML = '<div class="text-center py-8 text-[12px] text-onsv">Doktor yetkisi gerekli.</div>';
+      container.innerHTML = `<div class="text-center py-8 text-[12px] text-onsv">${t('previsitAuthErr')}</div>`;
       return;
     }
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1766,26 +1877,27 @@ async function loadPrevisitAppointments() {
     const countEl = document.getElementById('txt-previsit-count');
     const total = (data.appointments || []).length;
     if (total > 0) {
-      countEl.textContent = total + ' randevu';
+      countEl.textContent = t('previsitCountFn', total);
       countEl.classList.remove('hidden');
     } else {
       countEl.classList.add('hidden');
     }
   } catch(e) {
-    container.innerHTML = `<div class="text-center py-8 text-[12px] text-onsv">Yükleme hatası: ${e.message}</div>`;
+    container.innerHTML = `<div class="text-center py-8 text-[12px] text-onsv">${t('previsitLoadErr')} ${e.message}</div>`;
   }
 }
 
 function previsitStatusBadge(status) {
   const map = {
-    'pending':     { bg:'#f4f7f9', color:'#3f4749', icon:'hourglass_empty', label:'Bekliyor' },
-    'in_progress': { bg:'#fff8e1', color:'#b05508', icon:'chat',            label:'Devam Ediyor' },
-    'completed':   { bg:'#e8f5e9', color:'#2e7d32', icon:'task_alt',        label:'Tamamlandı' },
-    'brief_ready': { bg:'#e8f5f3', color:'#006a68', icon:'description',     label:'Brief Hazır' },
+    'pending':     { bg:'#f4f7f9', color:'#3f4749', icon:'hourglass_empty', labelKey:'pvsPending' },
+    'in_progress': { bg:'#fff8e1', color:'#b05508', icon:'chat',            labelKey:'pvsProgress' },
+    'completed':   { bg:'#e8f5e9', color:'#2e7d32', icon:'task_alt',        labelKey:'pvsDone' },
+    'brief_ready': { bg:'#e8f5f3', color:'#006a68', icon:'description',     labelKey:'pvsBrief' },
   };
   const s = map[status] || map['pending'];
+  const label = t(s.labelKey);
   return `<span style="display:inline-flex;align-items:center;gap:4px;background:${s.bg};color:${s.color};font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px">
-    <span class="material-symbols-outlined msym" style="font-size:12px">${s.icon}</span>${s.label}
+    <span class="material-symbols-outlined msym" style="font-size:12px">${s.icon}</span>${label}
   </span>`;
 }
 
@@ -1794,7 +1906,7 @@ function renderPrevisitTable(appointments, dateStr) {
   if (!appointments.length) {
     container.innerHTML = `<div class="text-center py-10 text-onsv text-[13px]">
       <span class="material-symbols-outlined msym text-ouv text-[32px] block mb-2">calendar_today</span>
-      <p>Bugün (${dateStr || ''}) için randevu bulunamadı. Demo oluşturmak için "Demo Randevu" butonuna tıklayın.</p>
+      <p>${t('previsitNoApptsFn', dateStr || '')}</p>
     </div>`;
     return;
   }
@@ -1802,39 +1914,38 @@ function renderPrevisitTable(appointments, dateStr) {
   let html = '<div class="overflow-x-auto">';
   html += `<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="background:#f4f7f9;color:#3f4749">
-      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">Hasta</th>
-      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">Doktor / Bölüm</th>
-      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">Saat</th>
-      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">Pre-Visit Durum</th>
-      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">İşlemler</th>
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">${t('tbApptPatient')}</th>
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">${t('tbApptDoctor')}</th>
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">${t('tbApptTime')}</th>
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">${t('tbApptStatus')}</th>
+      <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">${t('tbApptActions')}</th>
     </tr></thead><tbody>`;
 
+  const lang = uiLang || 'tr';
   appointments.forEach((appt, idx) => {
     const isEven = idx % 2 === 0;
     const rowBg = isEven ? '#fff' : '#fafbfc';
-    const apptTime = appt.appointment_time ? new Date(appt.appointment_time).toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'}) : '—';
+    const apptTime = appt.appointment_time ? new Date(appt.appointment_time).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : lang === 'ar' ? 'ar-SA' : 'en-US', {hour:'2-digit',minute:'2-digit'}) : '—';
     const hasWarn = appt.wait_warning;
     const rowBorder = hasWarn ? 'border-left: 3px solid #e07b26;' : '';
 
     let actionsHtml = '';
-    // Patient link
     actionsHtml += `<a href="/previsit.html?appt=${appt.appointment_id}" target="_blank"
       style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:#e8f5f3;color:#006a68;font-weight:700;font-size:11px;text-decoration:none;margin-right:4px">
-      <span class="material-symbols-outlined msym" style="font-size:13px">open_in_new</span>Hasta Linki
+      <span class="material-symbols-outlined msym" style="font-size:13px">open_in_new</span>${t('previsitLink')}
     </a>`;
 
-    // Brief button (only if ready)
     if (appt.previsit_status === 'brief_ready' || appt.previsit_status === 'completed') {
       actionsHtml += `<button onclick="openPrevisitBrief('${appt.appointment_id}')"
         style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:#002f40;color:#fff;font-weight:700;font-size:11px;border:none;cursor:pointer">
-        <span class="material-symbols-outlined msym text-white" style="font-size:13px">description</span>Brief
+        <span class="material-symbols-outlined msym text-white" style="font-size:13px">description</span>${t('pvsBrief')}
       </button>`;
     }
 
     html += `<tr style="background:${rowBg};${rowBorder}" class="row-hover" onclick="openPrevisitBrief('${appt.appointment_id}')">
       <td style="padding:12px 16px">
         <div style="font-weight:700;color:#191c1d">${appt.patient_name || '—'}</div>
-        <div style="color:#3f4749;font-size:11px">${appt.patient_age ? appt.patient_age + ' yaş' : ''}</div>
+        <div style="color:#3f4749;font-size:11px">${appt.patient_age ? t('ageFn', appt.patient_age) : ''}</div>
         ${hasWarn ? '<span style="display:inline-flex;align-items:center;gap:3px;background:#fff3e0;color:#e07b26;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-top:2px"><span class="material-symbols-outlined msym" style="font-size:11px">warning</span>Red Flag</span>' : ''}
       </td>
       <td style="padding:12px 16px">
@@ -1887,40 +1998,42 @@ async function openPrevisitBrief(apptId) {
     const data = await res.json();
 
     const statusMap = {
-      pending: { label:'Bekliyor', bg:'#f4f7f9', color:'#3f4749' },
-      in_progress: { label:'Devam Ediyor', bg:'#fff8e1', color:'#b05508' },
-      generating: { label:'Oluşturuluyor...', bg:'#e3f2fd', color:'#1565c0' },
-      completed: { label:'Tamamlandı', bg:'#e8f5e9', color:'#2e7d32' },
-      brief_ready: { label:'Brief Hazır', bg:'#e8f5f3', color:'#006a68' },
+      pending:     { labelKey:'pvsPending',    bg:'#f4f7f9', color:'#3f4749' },
+      in_progress: { labelKey:'pvsProgress',   bg:'#fff8e1', color:'#b05508' },
+      generating:  { labelKey:'pvsGenerating', bg:'#e3f2fd', color:'#1565c0' },
+      completed:   { labelKey:'pvsDone',       bg:'#e8f5e9', color:'#2e7d32' },
+      brief_ready: { labelKey:'pvsBrief',      bg:'#e8f5f3', color:'#006a68' },
     };
     const st = statusMap[data.status] || statusMap['pending'];
-    document.getElementById('pv-brief-status').textContent = st.label;
+    document.getElementById('pv-brief-status').textContent = t(st.labelKey);
     document.getElementById('pv-brief-status').style.background = st.bg;
     document.getElementById('pv-brief-status').style.color = st.color;
 
     document.getElementById('pv-brief-body').innerHTML = renderBriefContent(data);
   } catch(e) {
-    document.getElementById('pv-brief-body').innerHTML = `<div style="color:#c62828;padding:20px">Hata: ${e.message}</div>`;
+    document.getElementById('pv-brief-body').innerHTML = `<div style="color:#c62828;padding:20px">${t('pvBriefError')} ${e.message}</div>`;
   }
 }
 
 function renderBriefContent(data) {
   const brief = data.brief;
-  const apptTime = data.appointment_time ? new Date(data.appointment_time).toLocaleString('tr-TR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  const lang = uiLang || 'tr';
+  const apptTime = data.appointment_time ? new Date(data.appointment_time).toLocaleString(lang === 'tr' ? 'tr-TR' : lang === 'ar' ? 'ar-SA' : 'en-US', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
 
   if (!brief) {
-    const msgMap = {
-      'pending': 'Hasta henüz pre-visit görüşmesini başlatmamış.',
-      'in_progress': `Görüşme devam ediyor (${data.step || 0}/${data.total_steps || 5} soru). Tamamlandığında brief otomatik oluşacak.`,
-      'generating': 'Görüşme tamamlandı. Brief birkaç saniye içinde hazır olacak. Sayfayı yenileyin.',
-    };
+    const status = data.status;
+    let msg;
+    if (status === 'pending') msg = t('pvBriefNotStarted');
+    else if (status === 'in_progress') msg = t('pvBriefInProgressFn', data.step || 0, data.total_steps || 5);
+    else if (status === 'generating') msg = t('pvBriefGenerating');
+    else msg = data.message || t('pvBriefNotReady');
     return `<div style="text-align:center;padding:40px 20px">
       <div style="width:60px;height:60px;border-radius:50%;background:#f4f7f9;margin:0 auto 16px;display:flex;align-items:center;justify-content:center">
         <span class="material-symbols-outlined msym" style="color:#bfc7cd;font-size:28px">schedule</span>
       </div>
-      <p style="font-size:13px;color:#3f4749">${msgMap[data.status] || data.message || 'Brief henüz hazır değil.'}</p>
+      <p style="font-size:13px;color:#3f4749">${msg}</p>
       <p style="font-size:11px;color:#bfc7cd;margin-top:8px">
-        Hasta pre-visit linkini kullanmalı: <code style="background:#f4f7f9;padding:2px 6px;border-radius:4px">/previsit.html?appt=${data.appointment_id}</code>
+        ${t('pvBriefPatientLinkHint')} <code style="background:#f4f7f9;padding:2px 6px;border-radius:4px">/previsit.html?appt=${data.appointment_id}</code>
       </p>
     </div>`;
   }
@@ -1932,12 +2045,12 @@ function renderBriefContent(data) {
   // Patient + appointment header
   html += `<div style="background:#f4f7f9;border-radius:14px;padding:16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:16px">
     <div style="flex:1;min-width:180px">
-      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Hasta</p>
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${t('pvBriefPatientHeader')}</p>
       <p style="font-size:15px;font-weight:700;color:#002f40">${data.patient_name || '—'}</p>
-      <p style="font-size:12px;color:#3f4749">${data.patient_age ? data.patient_age + ' yaş · ' : ''}${data.patient_gender || ''}</p>
+      <p style="font-size:12px;color:#3f4749">${data.patient_age ? t('ageFn', data.patient_age) + ' · ' : ''}${data.patient_gender || ''}</p>
     </div>
     <div style="flex:1;min-width:180px">
-      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Doktor · Randevu</p>
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${t('pvBriefApptHeader')}</p>
       <p style="font-size:13px;font-weight:700;color:#002f40">${data.doctor_name || '—'}</p>
       <p style="font-size:12px;color:#3f4749">${data.specialty || ''} · ${apptTime}</p>
     </div>
@@ -1948,26 +2061,26 @@ function renderBriefContent(data) {
     html += `<div style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;gap:10px">
       <span class="material-symbols-outlined msym-fill" style="color:#e07b26;font-size:22px;flex-shrink:0">warning</span>
       <div>
-        <p style="font-size:13px;font-weight:700;color:#e07b26">⚠️ Randevuyu Beklememe Uyarısı</p>
-        <p style="font-size:12px;color:#3f4749;margin-top:4px">${brief.wait_warning_reason || 'Red flag tespit edildi — doktor değerlendirmesi için acil başvuru önerilir.'}</p>
+        <p style="font-size:13px;font-weight:700;color:#e07b26">${t('pvBriefWarnTitle')}</p>
+        <p style="font-size:12px;color:#3f4749;margin-top:4px">${brief.wait_warning_reason || t('pvBriefWarnDefault')}</p>
       </div>
     </div>`;
   }
 
   // Chief complaint
   html += `<div style="margin-bottom:14px">
-    <p style="font-size:10px;font-weight:700;color:#006a68;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Ana Şikayet</p>
+    <p style="font-size:10px;font-weight:700;color:#006a68;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${t('pvBriefChiefTitle')}</p>
     <p style="font-size:14px;color:#191c1d;line-height:1.5;background:#f0faf9;padding:12px;border-radius:10px">${brief.chief_complaint || '—'}</p>
     <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
-      ${brief.complaint_duration ? `<span style="font-size:12px;color:#3f4749"><b>Süre:</b> ${brief.complaint_duration}</span>` : ''}
-      ${brief.severity ? `<span style="font-size:12px;color:#3f4749"><b>Şiddet:</b> ${brief.severity}</span>` : ''}
+      ${brief.complaint_duration ? `<span style="font-size:12px;color:#3f4749"><b>${t('pvBriefDuration')}:</b> ${brief.complaint_duration}</span>` : ''}
+      ${brief.severity ? `<span style="font-size:12px;color:#3f4749"><b>${t('pvBriefSeverity')}:</b> ${brief.severity}</span>` : ''}
     </div>
   </div>`;
 
   // Associated symptoms
   if (brief.associated_symptoms?.length) {
     html += `<div style="margin-bottom:14px">
-      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Eşlik Eden Semptomlar</p>
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${t('pvBriefSymptomsTitle')}</p>
       <div>${brief.associated_symptoms.map(s => chip(s, '#f0faf9', '#006a68')).join('')}</div>
     </div>`;
   }
@@ -1977,15 +2090,15 @@ function renderBriefContent(data) {
   if (hasMedHist) {
     html += `<div style="background:#f8fafb;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:14px">`;
     if (brief.chronic_conditions?.length) html += `<div style="flex:1;min-width:140px">
-      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;margin-bottom:4px">Kronik Hastalıklar</p>
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;margin-bottom:4px">${t('pvBriefChronicTitle')}</p>
       ${brief.chronic_conditions.map(s => `<p style="font-size:12px;color:#191c1d">• ${s}</p>`).join('')}
     </div>`;
     if (brief.current_medications?.length) html += `<div style="flex:1;min-width:140px">
-      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;margin-bottom:4px">Mevcut İlaçlar</p>
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;margin-bottom:4px">${t('pvBriefMedsTitle')}</p>
       ${brief.current_medications.map(s => `<p style="font-size:12px;color:#191c1d">• ${s}</p>`).join('')}
     </div>`;
     if (brief.allergies?.length) html += `<div style="flex:1;min-width:140px">
-      <p style="font-size:10px;font-weight:700;color:#c62828;text-transform:uppercase;margin-bottom:4px">Alerjiler ⚠️</p>
+      <p style="font-size:10px;font-weight:700;color:#c62828;text-transform:uppercase;margin-bottom:4px">${t('pvBriefAllergyTitle')}</p>
       ${brief.allergies.map(s => `<p style="font-size:12px;color:#c62828">• ${s}</p>`).join('')}
     </div>`;
     html += '</div>';
@@ -1995,11 +2108,11 @@ function renderBriefContent(data) {
   if (brief.missing_information?.length || brief.suggested_questions?.length) {
     html += `<div style="background:#fffde7;border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid #fff9c4;display:flex;flex-wrap:wrap;gap:16px">`;
     if (brief.missing_information?.length) html += `<div style="flex:1;min-width:200px">
-      <p style="font-size:10px;font-weight:700;color:#b05508;text-transform:uppercase;margin-bottom:6px">Eksik Bilgiler</p>
+      <p style="font-size:10px;font-weight:700;color:#b05508;text-transform:uppercase;margin-bottom:6px">${t('pvBriefMissingTitle')}</p>
       ${brief.missing_information.map(s => `<p style="font-size:12px;color:#3f4749;margin-bottom:3px">❓ ${s}</p>`).join('')}
     </div>`;
     if (brief.suggested_questions?.length) html += `<div style="flex:1;min-width:200px">
-      <p style="font-size:10px;font-weight:700;color:#006a68;text-transform:uppercase;margin-bottom:6px">Doktor İçin Önerilen Sorular</p>
+      <p style="font-size:10px;font-weight:700;color:#006a68;text-transform:uppercase;margin-bottom:6px">${t('pvBriefSuggestedTitle')}</p>
       ${brief.suggested_questions.map(s => `<p style="font-size:12px;color:#3f4749;margin-bottom:3px">💬 ${s}</p>`).join('')}
     </div>`;
     html += '</div>';
@@ -2016,7 +2129,7 @@ function renderBriefContent(data) {
   // Clinical note
   if (brief.clinical_note) {
     html += `<div style="margin-bottom:14px">
-      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Klinik Özet Notu</p>
+      <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${t('pvBriefClinicalTitle')}</p>
       <p style="font-size:12px;color:#191c1d;line-height:1.6;background:#f4f7f9;padding:12px;border-radius:10px">${brief.clinical_note}</p>
     </div>`;
   }
@@ -2025,20 +2138,18 @@ function renderBriefContent(data) {
   const qa = data.qa_history;
   if (qa?.length) {
     html += `<details style="margin-bottom:14px">
-      <summary style="font-size:11px;font-weight:700;color:#3f4749;text-transform:uppercase;cursor:pointer;padding:8px 0">Görüşme Transkripti (${qa.length} soru)</summary>
+      <summary style="font-size:11px;font-weight:700;color:#3f4749;text-transform:uppercase;cursor:pointer;padding:8px 0">${t('pvBriefTranscriptFn', qa.length)}</summary>
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
         ${qa.map((item, i) => `
           <div style="font-size:12px">
             <p style="color:#006a68;font-weight:600">S${i+1}: ${item.question}</p>
-            <p style="color:#191c1d;margin-top:2px;padding-left:12px">↳ ${item.answer || '<em style="color:#bfc7cd">Yanıt yok</em>'}</p>
+            <p style="color:#191c1d;margin-top:2px;padding-left:12px">↳ ${item.answer || `<em style="color:#bfc7cd">${t('pvBriefNoAnswer')}</em>`}</p>
           </div>`).join('')}
       </div>
     </details>`;
   }
 
-  html += `<p style="font-size:10px;color:#bfc7cd;margin-top:4px">
-    Bu brief AI tarafından üretilmiştir. Klinik karar tamamen hekime aittir. • AnamnezAI Pre-Visit Mode
-  </p>`;
+  html += `<p style="font-size:10px;color:#bfc7cd;margin-top:4px">${t('pvBriefDisclaimer')}</p>`;
 
   return html;
 }
