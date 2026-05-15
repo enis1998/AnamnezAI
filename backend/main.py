@@ -27,6 +27,13 @@ import secrets
 import string
 from datetime import datetime
 import time as _time
+import mimetypes
+
+# woff2/woff font MIME type'larını Python'a kaydet (varsayılan olarak bilinmiyor)
+mimetypes.add_type('font/woff2', '.woff2')
+mimetypes.add_type('font/woff', '.woff')
+mimetypes.add_type('font/ttf', '.ttf')
+mimetypes.add_type('font/otf', '.otf')
 
 # PostgreSQL
 from database import get_cursor, get_conn, init_db as pg_init_db, close_pool
