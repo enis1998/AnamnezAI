@@ -45,15 +45,21 @@ tailwind.config={theme:{extend:{colors:{
       </div>
     </div>
     <div class="flex items-center gap-2">
+      <!-- Lang buttons -->
+      <div class="flex bg-white/10 rounded-full p-0.5 gap-0.5">
+        <button onclick="setAdminLang('tr')" id="alng-tr" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-white text-pri">TR</button>
+        <button onclick="setAdminLang('en')" id="alng-en" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-white/70">EN</button>
+        <button onclick="setAdminLang('ar')" id="alng-ar" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-white/70">AR</button>
+      </div>
       <a href="evaluation.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white text-[12px] font-medium hover:bg-white/20 transition-all">
         <span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24">analytics</span>
         AI Evaluation
       </a>
       <a href="doctor.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white text-[12px] font-medium hover:bg-white/20 transition-all">
-        <span class="material-symbols-outlined msym text-[14px]">medical_services</span>Doktor Paneli
+        <span class="material-symbols-outlined msym text-[14px]">medical_services</span><span id="txt-admin-doctor-panel">Doktor Paneli</span>
       </a>
       <button onclick="logout()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-white text-[12px] font-medium hover:bg-white/20 transition-all">
-        <span class="material-symbols-outlined msym text-[14px]">logout</span>Çıkış
+        <span class="material-symbols-outlined msym text-[14px]">logout</span><span id="txt-admin-logout">Çıkış</span>
       </button>
     </div>
   </header>
@@ -429,6 +435,70 @@ tailwind.config={theme:{extend:{colors:{
 <script>
 const API = '';
 let allUsers = [];
+let adminLang = localStorage.getItem('ui_lang') || 'tr';
+
+const ADL = {
+  tr: {
+    adminTitle:'Admin Paneli', doctorPanel:'Doktor Paneli', logout:'Çıkış',
+    tabStats:'Sistem', tabUsers:'Kullanıcılar', tabAudit:'Audit Log',
+    tabKiosk:'Kiosk', tabRag:'RAG', tabCompare:'Model Karşılaştır',
+    csvBtn:'Analytics CSV İndir', cleanupBtn:'Eski Oturumları Temizle',
+    refreshBtn:'İstatistikleri Yenile',
+    searchPlaceholder:'İsim veya e-posta ara...', allRoles:'Tüm Roller',
+    userList:'Kullanıcı Listesi',
+  },
+  en: {
+    adminTitle:'Admin Panel', doctorPanel:'Doctor Panel', logout:'Logout',
+    tabStats:'System', tabUsers:'Users', tabAudit:'Audit Log',
+    tabKiosk:'Kiosk', tabRag:'RAG', tabCompare:'Model Compare',
+    csvBtn:'Download Analytics CSV', cleanupBtn:'Clean Old Sessions',
+    refreshBtn:'Refresh Stats',
+    searchPlaceholder:'Search name or email...', allRoles:'All Roles',
+    userList:'User List',
+  },
+  ar: {
+    adminTitle:'لوحة المشرف', doctorPanel:'لوحة الطبيب', logout:'تسجيل الخروج',
+    tabStats:'النظام', tabUsers:'المستخدمون', tabAudit:'سجل التدقيق',
+    tabKiosk:'الكشك', tabRag:'RAG', tabCompare:'مقارنة النموذج',
+    csvBtn:'تنزيل CSV التحليلات', cleanupBtn:'تنظيف الجلسات القديمة',
+    refreshBtn:'تحديث الإحصائيات',
+    searchPlaceholder:'ابحث عن الاسم أو البريد...', allRoles:'جميع الأدوار',
+    userList:'قائمة المستخدمين',
+  },
+};
+
+function setAdminLang(l) {
+  adminLang = l;
+  localStorage.setItem('ui_lang', l);
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  const d = ADL[l] || ADL.tr;
+  // Update text elements
+  const m = {
+    'txt-admin-doctor-panel': d.doctorPanel,
+    'txt-admin-logout': d.logout,
+  };
+  Object.entries(m).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.textContent = val; });
+  // Tab buttons
+  const tabs = {stats:d.tabStats, users:d.tabUsers, audit:d.tabAudit, kiosk:d.tabKiosk, rag:d.tabRag, compare:d.tabCompare};
+  Object.entries(tabs).forEach(([tab, label]) => {
+    const btn = document.getElementById(`tab-${tab}`);
+    if (btn) { const icon = btn.querySelector('.material-symbols-outlined'); const iconHtml = icon ? icon.outerHTML : ''; btn.innerHTML = iconHtml + label; }
+  });
+  // Lang button styles
+  ['tr','en','ar'].forEach(lang => {
+    const el = document.getElementById(`alng-${lang}`);
+    if (!el) return;
+    el.className = lang === l
+      ? 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-white text-pri'
+      : 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-white/70';
+  });
+  // Search placeholder
+  const si = document.getElementById('user-search'); if (si) si.placeholder = d.searchPlaceholder;
+  const rf = document.getElementById('user-role-filter'); if (rf && rf.options[0]) rf.options[0].text = d.allRoles;
+}
+
+// Init language on load
+(function(){ setAdminLang(adminLang); })();
 
 function authHeaders() {
   const token = localStorage.getItem('anamnez_token');
@@ -778,7 +848,13 @@ async function setKiosk(lock) {
 
 async function clearOldSessions() {
   if (!confirm('Görüldü işaretlenen tüm eski oturumlar RAM\'den temizlenecek. Emin misiniz?')) return;
-  showToast('Bu özellik geliştirme aşamasında.');
+  try {
+    const r = await fetch(`${API}/api/admin/sessions/cleanup`, { method: 'POST', headers: authHeaders() });
+    if (!r.ok) { showToast('Temizleme başarısız: ' + r.status, true); return; }
+    const d = await r.json();
+    showToast(`✅ ${d.cleaned} oturum temizlendi.`);
+    loadStats();
+  } catch(e) { showToast('Bağlantı hatası: ' + e.message, true); }
 }
 
 // ── Sprint 18: Model Karşılaştırma ──

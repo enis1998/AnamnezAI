@@ -776,192 +776,34 @@ function _updateModelBar(barId, available, label) {
   if (specEl) specEl.textContent = user.specialty || 'Sağlık Personeli';
 })();
 
-// Demo data — Gemma 4 örnek çıktıs�� (5 zengin vaka — jüri demo için)
-const _now = new Date();
-const _ago = (m) => new Date(_now - m * 60000).toISOString();
+// Demo data — Artık DB'den yükleniyor (frontend'de hardcoded değil)
+// loadDemoCases() ile /api/demo/cases endpoint'inden çekilir
+let DEMO = [];
 
-const DEMO = [
-  // ── VAKA 1: RED — STEMI (Gaziantep senaryosu — hikayenin kendisi) ────────
-  {
-    session_id: 'demo-1',
-    patient_name: 'Mehmet Yılmaz',
-    age: 66,
-    gender: 'Erkek',
-    triage_level: 'RED',
-    triage_color: '#ba1a1a',
-    confidence_score: 98,
-    chief_complaint: 'Göğüs ağrısı — sol kola yayılım + terleme',
-    symptoms_summary:
-      'Sabahtan beri süren göğüs baskısı, sol kola ve çeneye yayılım, aşırı terleme, nefes darlığı. ' +
-      'Diyabetik hasta, 10 yıldır hipertansiyon. Ağrı şiddeti 9/10.',
-    possible_conditions: ['Akut Miyokard Enfarktüsü (STEMI)', 'Unstabil Angina Pektoris', 'Aort Diseksiyonu'],
-    urgency_flags: [
-      '��� GUARDRAIL [cardiac_emergency]: Olası kardiyak acil (AMI/AKS)',
-      '⚠️ Kardiyak risk faktörleri: DM + HT + 66 yaş erkek',
-      '🔴 Klasik STEMI triadı: Göğüs + sol kol + diyaforez',
-    ],
-    recommended_action: 'Derhal EKG + troponin; kardiyoloji acil konsültasyonu; aspirin 300 mg PO',
-    clinical_notes:
-      'MTS RED: Akut koroner sendrom bulguları mevcut. 3 kırmızı bayrak eş zamanlı. ' +
-      'AI mülakat süresi: 4 dakika. Manuel triajda bu hasta 22 dakika bekletilmişti. ' +
-      'Safety guardrail devreye girdi — cardiac_emergency kuralı tetiklendi.',
-    vitals: { blood_pressure: '160/95 mmHg', pulse: 108, temperature: 36.8, spo2: 94 },
-    evidence: [
-      'Göğüs baskısı — sol kola ve çeneye yayılım',
-      'Diyaforez (aşırı terleme) — kardiyak kaynaklı',
-      'Nefes darlığı — kardiyak yetmezlik şüphesi',
-      'Diyabetik hasta: MI sessiz seyredebilir',
-    ],
-    guideline_sources: ['MTS Göğüs Ağrısı Diskriminatörü', 'CTAS Level 1 Kardiyak'],
-    safety_guardrail_triggered: true,
-    guardrail_rules_fired: ['Olası kardiyak acil (AMI/AKS)'],
-    ai_execution_log: {
-      model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false,
-      patient_data_egress: false, inference_latency_s: 14.3,
-    },
-    // Timeline karşılaştırması — demo değeri
-    _demo_timeline: {
-      ai_triage_seconds: 14,
-      manual_triage_minutes: 22,
-      story: 'Gaziantep STEMI — 09:15 — Hasta 22 dakika bekledi. AI bu vakayı 14 saniyede RED olarak sınıflandırırdı.',
-    },
-    generated_at: _ago(3),
-  },
+async function loadDemoCases() {
+  try {
+    const r = await fetch(`${API}/api/demo/cases`, {signal: AbortSignal.timeout(8000)});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    DEMO = data.cases || [];
+    DEMO.forEach(p => { allPatients[p.session_id] = p; });
+    updateTCFGLabels();
+    if (DEMO.length > 0) renderTable(DEMO, 'demo-table', false);
+    updateStats(calcStats([...Object.values(allPatients)]));
+    const statsEl = document.getElementById('txt-demo-stats');
+    if (statsEl && DEMO.length) {
+      const r2 = DEMO.filter(p=>p.triage_level==='RED').length;
+      const y2 = DEMO.filter(p=>p.triage_level==='YELLOW').length;
+      const g2 = DEMO.filter(p=>p.triage_level==='GREEN').length;
+      statsEl.textContent = `${DEMO.length} vaka · ${r2} RED · ${y2} YELLOW · ${g2} GREEN`;
+    }
+  } catch(e) {
+    console.warn('[demo] Demo vakalar yüklenemedi:', e.message);
+    const el = document.getElementById('demo-table');
+    if (el) el.innerHTML = `<div class="text-center py-8 text-onsv text-[12px]">Demo vakalar yüklenemiyor.</div>`;
+  }
+}
 
-  // ── VAKA 2: RED — İnme (FAST kriterleri) ────────────────────────────────
-  {
-    session_id: 'demo-2',
-    patient_name: 'Fatma Şahin',
-    age: 71,
-    gender: 'Kadın',
-    triage_level: 'RED',
-    triage_color: '#ba1a1a',
-    confidence_score: 96,
-    chief_complaint: 'Ani konuşma bozukluğu ve sağ kol güçsüzlüğü',
-    symptoms_summary:
-      'Son 2 saatte başlayan konuşma bozukluğu (kelime bulamıyor), sağ kol güçsüzlüğü, hafif yüz asimetrisi. ' +
-      '71 yaşında, AF tanısı var, antikoagülan kullanıyo.',
-    possible_conditions: ['İskemik İnme (İntra-serebral)', 'TIA', 'Todd Felci'],
-    urgency_flags: [
-      '⚡ GUARDRAIL [stroke_fast]: Olası inme — FAST kriterleri pozitif',
-      '⚠️ 2 saatlik pencere — tPA adayı olabilir',
-      '⚠️ Atriyal fibrilasyon + antikoagülan geçmişi',
-    ],
-    recommended_action: 'Acil BT beyin; nöroloji konsültasyonu; tPA penceresi değerlendirme',
-    clinical_notes:
-      'FAST: Yüz (kısmi) + Kol (güçsüzlük) + Konuşma (afazi) — üç kriter pozitif. ' +
-      '2 saatlik semptom penceresi ile intravenöz tPA adayı olabilir.',
-    vitals: { blood_pressure: '178/102 mmHg', pulse: 88, spo2: 97 },
-    evidence: [
-      'Konuşma bozukluğu (afazi) — FAST-S pozitif',
-      'Sağ kol güçsüzlüğü — FAST-A pozitif',
-      'Hafif yüz asimetrisi — FAST-F pozitif',
-    ],
-    guideline_sources: ['MTS Nörolojik Diskriminatörler', 'AHA/ASA İnme Kılavuzu'],
-    safety_guardrail_triggered: true,
-    guardrail_rules_fired: ['Olası inme (FAST kriterleri)'],
-    ai_execution_log: { model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false, patient_data_egress: false, inference_latency_s: 18.7 },
-    generated_at: _ago(8),
-  },
-
-  // ── VAKA 3: YELLOW — Pediatrik Ateş (3 yaşında kız çocuğu) ─────────────
-  {
-    session_id: 'demo-3',
-    patient_name: 'Elif Aydın (3 yaş)',
-    age: 3,
-    gender: 'Kız',
-    triage_level: 'YELLOW',
-    triage_color: '#e07b26',
-    confidence_score: 88,
-    chief_complaint: 'Çocuk ateş — 39.8°C, halsizlik',
-    symptoms_summary:
-      '39.8°C ateş, 2 gündür devam ediyor. İştahsızlık, hafif öksürük. ' +
-      'Ebeveyn ense sertliği sorulduğunda net cevap veremedi. Ateş paracetamol ile geçici düşüyor.',
-    possible_conditions: ['Viral ÜSYE', 'Akut Otit Media', 'Pnömoni (Atipik)'],
-    urgency_flags: [
-      '⚡ GUARDRAIL [pediatric_high_fever]: Çocuk yüksek ateş — acil değerlendirme gerekir',
-      '⚠️ Ense sertliği dışlanamadı — meningit göz önünde bulundurulmalı',
-    ],
-    recommended_action: 'Pediatri muayenesi; ense muayenesi; KBB-Kulak değerlendirme',
-    clinical_notes:
-      'Pediatrik protokol (Sprint 22): İlk soru ateş derecesini sordu (klinik doğru). ' +
-      '39.8°C ateş — MTS YELLOW. Ense tutukluğu dışlanana kadar meningit ihtimali göz ardı edilemez.',
-    vitals: { temperature: 39.8, pulse: 124 },
-    evidence: [
-      'Ateş 39.8°C — 2 gündür devam ediyor',
-      'Taşikardi (nabız 124) — ateşe bağlı / dehidrasyon',
-    ],
-    guideline_sources: ['MTS Pediatrik Ateş Diskriminatörü'],
-    safety_guardrail_triggered: true,
-    guardrail_rules_fired: ['Bebek / küçük çocuk ateşi — acil değerlendirme gerekir'],
-    ai_execution_log: { model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false, patient_data_egress: false, inference_latency_s: 11.2 },
-    generated_at: _ago(15),
-  },
-
-  // ── VAKA 4: YELLOW — Apandisit şüphesi ────────────────────────────────
-  {
-    session_id: 'demo-4',
-    patient_name: 'Serkan Koç',
-    age: 24,
-    gender: 'Erkek',
-    triage_level: 'YELLOW',
-    triage_color: '#e07b26',
-    confidence_score: 82,
-    chief_complaint: 'Sağ alt karın ağrısı, bulantı, iştahsızlık',
-    symptoms_summary:
-      '12 saattir göbek çevresinde başlayan, sağ alt kadrana göçen ağrı. 7/10 şiddetinde. ' +
-      'Bulantı mevcut, 1 kez kusma. Hafif ateş (37.9°C). McBurney noktası hassasiyeti sorulduğunda "evet" yanıtladı.',
-    possible_conditions: ['Akut Apandisit', 'Mesenteric Lenfadenit', 'Sağ Üreter Taşı'],
-    urgency_flags: [
-      '⚠️ Göçen ağrı (göbek → sağ alt kadran) — apandisit klasik sunumu',
-      '⚠️ Hafif ateş + lökositoz şüphesi',
-    ],
-    recommended_action: 'Cerrahi konsültasyon; Alvarado skoru; karın US veya BT',
-    clinical_notes:
-      'Alvarado puanı: 6-7 (migration + nausea + RLQ tenderness + fever). ' +
-      'Cerrahi değerlendirme öncelikli. Oral alım kısıtlanmalı.',
-    vitals: { temperature: 37.9, pulse: 95 },
-    evidence: [
-      'Göbek çevresinden sağ alt kadrana göçen ağrı',
-      'Bulantı + 1 kez kusma',
-      'Hafif ateş (37.9°C)',
-    ],
-    guideline_sources: ['MTS Karın Ağrısı Diskriminatörü', 'Alvarado Apandisit Skoru'],
-    safety_guardrail_triggered: false,
-    ai_execution_log: { model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false, patient_data_egress: false, inference_latency_s: 16.8 },
-    generated_at: _ago(22),
-  },
-
-  // ── VAKA 5: GREEN — Basit ÜSYE ──────────────────────────────────���─────
-  {
-    session_id: 'demo-5',
-    patient_name: 'Zeynep Arslan',
-    age: 29,
-    gender: 'Kadın',
-    triage_level: 'GREEN',
-    triage_color: '#006a68',
-    confidence_score: 91,
-    chief_complaint: 'Boğaz ağrısı, hafif ateş, burun akıntısı — 3 gün',
-    symptoms_summary:
-      'Son 3 gündür boğaz ağrısı, 37.5°C hafif ateş, burun akıntısı ve hafif baş ağrısı. ' +
-      'Nefes darlığı yok, terleme yok. Genel durumu iyi, sıvı alıyor. İlaç alerjisi yok.',
-    possible_conditions: ['Akut Farenjit (viral)', 'Rinit', 'ÜSYE'],
-    urgency_flags: [],
-    recommended_action: 'Semptomatik tedavi; bol sıvı; analjezik/antipretik; 3 günde düzelmezse tekrar başvuru',
-    clinical_notes:
-      'MTS GREEN: Hayati risk yok, kronik hastalık yok, genel durum iyi. ' +
-      'Rutin muayene sırası — tahmini bekleme 45 dakika.',
-    vitals: { temperature: 37.5, pulse: 76 },
-    evidence: [
-      'Hafif ateş (37.5°C) — viral seyre uyumlu',
-      'Burun + boğaz semptomları — ÜSYE tablosu',
-    ],
-    guideline_sources: ['MTS ÜSYE Diskriminatörü'],
-    safety_guardrail_triggered: false,
-    ai_execution_log: { model: 'gemma4:e4b', runtime: 'Ollama (local)', external_api: false, patient_data_egress: false, inference_latency_s: 9.4 },
-    generated_at: _ago(35),
-  },
-];
 
 const TCFG = {
   RED:    {bg:'#fff5f5',color:'#ba1a1a',badge:'background:#ba1a1a',dot:'background:#ba1a1a',lbl:'🔴 ACİL'},
@@ -1043,8 +885,8 @@ async function loadQueue(){
       </div>`;
     document.getElementById('txt-queue-sub').textContent=t('queueBackendOffline');
   }
-  DEMO.forEach(p=>{allPatients[p.session_id]=p;});
-  renderTable(DEMO,'demo-table',false);
+  loadDemoCases(); // Demo vakalar API'den yükleniyor
+  // renderTable(DEMO) moved to loadDemoCases()
   updateStats(calcStats([...Object.values(allPatients)]));
 }
 
@@ -1727,9 +1569,9 @@ function connectSSE(){
   sseConnection.onopen = () => {
     document.getElementById('live-indicator').classList.remove('hidden');
     document.getElementById('live-indicator').style.display='flex';
-    DEMO.forEach(p=>{ allPatients[p.session_id]=p; });
+    // Demo data from API - loaded by loadDemoCases()
     updateTCFGLabels();
-    renderTable(DEMO,'demo-table',false);
+    // renderTable(DEMO) moved to loadDemoCases()
   };
 
   sseConnection.onerror = () => {
@@ -1823,7 +1665,7 @@ function setLang(l){
 
   // Re-render dynamic content with new language
   // DEMO her zaman render edilir (allPatients'ten bağımsız)
-  renderTable(DEMO, 'demo-table', false);
+  if (DEMO.length > 0) renderTable(DEMO, 'demo-table', false); else loadDemoCases();
   // Gerçek hastalar varsa onları da render et
   const livePatients = Object.values(allPatients).filter(p => !p.is_seen && !p.session_id?.startsWith('demo-'));
   if (livePatients.length > 0) renderTable(livePatients, 'live-table', true);

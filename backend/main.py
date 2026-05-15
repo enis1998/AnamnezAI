@@ -101,6 +101,16 @@ async def lifespan(app: FastAPI):
     pg_init_db()
     init_auth_tables()      # ← Kullanıcı tablolarını oluştur (+ demo doktor)
     db_load_all()
+    # Randevuları DB'den yükle (restart sonrası geri getir)
+    try:
+        db_load_appointments()
+    except Exception as _e:
+        print(f"[AnamnezAI] Randevu yükleme hatası: {_e}")
+    # Demo vakaları seed et (DB'de yoksa)
+    try:
+        db_seed_demo_cases()
+    except Exception as _e:
+        print(f"[AnamnezAI] Demo seed hatası: {_e}")
     print(f"[AnamnezAI v5.0] PostgreSQL DB hazır")
     # Modeli arka planda ısıt — ilk hasta gelene kadar hazır olsun
     asyncio.create_task(_background_warmup())
@@ -3091,6 +3101,7 @@ async def offline_proof():
         "external_ai_api": False,
         "remote_embeddings": False,
         "cloud_translation_enabled": ALLOW_CLOUD_TRANSLATION,
+        "strict_local_mode": not ALLOW_CLOUD_TRANSLATION,
         "mcp_ready": True,
         "channel_adapters_optional": True,
         "cloud_api_keys_required": False,
@@ -3113,6 +3124,324 @@ async def offline_proof():
         ),
     }
 
+
+
+# ─────────────────────────────────────────────
+#  Demo Cases — DB-backed hardcoded-free demo
+# ─────────────────────────────────────────────
+
+_DEMO_CASES_SEED = [
+    {
+        "session_id": "demo-1",
+        "patient_name": "Mehmet Yılmaz",
+        "age": 66, "gender": "Erkek",
+        "triage_level": "RED", "triage_color": "#ba1a1a",
+        "confidence_score": 98,
+        "chief_complaint": "Göğüs ağrısı — sol kola yayılım + terleme",
+        "symptoms_summary": "Sabahtan beri süren göğüs baskısı, sol kola ve çeneye yayılım, aşırı terleme, nefes darlığı. Diyabetik hasta, 10 yıldır hipertansiyon. Ağrı şiddeti 9/10.",
+        "possible_conditions": ["Akut Miyokard Enfarktüsü (STEMI)", "Unstabil Angina Pektoris", "Aort Diseksiyonu"],
+        "urgency_flags": ["🔴 GUARDRAIL [cardiac_emergency]: Olası kardiyak acil (AMI/AKS)", "⚠️ Kardiyak risk faktörleri: DM + HT + 66 yaş erkek", "🔴 Klasik STEMI triadı: Göğüs + sol kol + diyaforez"],
+        "recommended_action": "Derhal EKG + troponin; kardiyoloji acil konsültasyonu; aspirin 300 mg PO",
+        "clinical_notes": "MTS RED: Akut koroner sendrom bulguları mevcut. 3 kırmızı bayrak eş zamanlı. AI mülakat süresi: 4 dakika. Manuel triajda bu hasta 22 dakika bekletilmişti. Safety guardrail devreye girdi.",
+        "vitals": {"blood_pressure": "160/95 mmHg", "pulse": 108, "temperature": 36.8, "spo2": 94},
+        "evidence": ["Göğüs baskısı — sol kola ve çeneye yayılım", "Diyaforez (aşırı terleme) — kardiyak kaynaklı", "Nefes darlığı — kardiyak yetmezlik şüphesi", "Diyabetik hasta: MI sessiz seyredebilir"],
+        "guideline_sources": ["MTS Göğüs Ağrısı Diskriminatörü", "CTAS Level 1 Kardiyak"],
+        "safety_guardrail_triggered": True, "guardrail_rules_fired": ["Olası kardiyak acil (AMI/AKS)"],
+        "ai_execution_log": {"model": "gemma4:e4b", "runtime": "Ollama (local)", "external_api": False, "patient_data_egress": False, "inference_latency_s": 14.3},
+        "is_demo": True, "source": "seed_demo",
+    },
+    {
+        "session_id": "demo-2",
+        "patient_name": "Fatma Şahin",
+        "age": 71, "gender": "Kadın",
+        "triage_level": "RED", "triage_color": "#ba1a1a",
+        "confidence_score": 96,
+        "chief_complaint": "Ani konuşma bozukluğu ve sağ kol güçsüzlüğü",
+        "symptoms_summary": "Son 2 saatte başlayan konuşma bozukluğu (kelime bulamıyor), sağ kol güçsüzlüğü, hafif yüz asimetrisi. 71 yaşında, AF tanısı var, antikoagülan kullanıyor.",
+        "possible_conditions": ["İskemik İnme (İntra-serebral)", "TIA", "Todd Felci"],
+        "urgency_flags": ["⚡ GUARDRAIL [stroke_fast]: Olası inme — FAST kriterleri pozitif", "⚠️ 2 saatlik pencere — tPA adayı olabilir", "⚠️ Atriyal fibrilasyon + antikoagülan geçmişi"],
+        "recommended_action": "Acil BT beyin; nöroloji konsültasyonu; tPA penceresi değerlendirme",
+        "clinical_notes": "FAST: Yüz (kısmi) + Kol (güçsüzlük) + Konuşma (afazi) — üç kriter pozitif. 2 saatlik semptom penceresi ile intravenöz tPA adayı olabilir.",
+        "vitals": {"blood_pressure": "178/102 mmHg", "pulse": 88, "spo2": 97},
+        "evidence": ["Konuşma bozukluğu (afazi) — FAST-S pozitif", "Sağ kol güçsüzlüğü — FAST-A pozitif", "Hafif yüz asimetrisi — FAST-F pozitif"],
+        "guideline_sources": ["MTS Nörolojik Diskriminatörler", "AHA/ASA İnme Kılavuzu"],
+        "safety_guardrail_triggered": True, "guardrail_rules_fired": ["Olası inme (FAST kriterleri)"],
+        "ai_execution_log": {"model": "gemma4:e4b", "runtime": "Ollama (local)", "external_api": False, "patient_data_egress": False, "inference_latency_s": 18.7},
+        "is_demo": True, "source": "seed_demo",
+    },
+    {
+        "session_id": "demo-3",
+        "patient_name": "Elif Aydın (3 yaş)",
+        "age": 3, "gender": "Kız",
+        "triage_level": "YELLOW", "triage_color": "#e07b26",
+        "confidence_score": 88,
+        "chief_complaint": "Çocuk ateş — 39.8°C, halsizlik",
+        "symptoms_summary": "39.8°C ateş, 2 gündür devam ediyor. İştahsızlık, hafif öksürük. Ebeveyn ense sertliği sorulduğunda net cevap veremedi. Ateş paracetamol ile geçici düşüyor.",
+        "possible_conditions": ["Viral ÜSYE", "Akut Otit Media", "Pnömoni (Atipik)"],
+        "urgency_flags": ["⚡ GUARDRAIL [pediatric_high_fever]: Çocuk yüksek ateş — acil değerlendirme gerekir", "⚠️ Ense sertliği dışlanamadı — meningit göz önünde bulundurulmalı"],
+        "recommended_action": "Pediatri muayenesi; ense muayenesi; KBB-Kulak değerlendirme",
+        "clinical_notes": "Pediatrik protokol: İlk soru ateş derecesini sordu. 39.8°C ateş — MTS YELLOW. Ense tutukluğu dışlanana kadar meningit ihtimali göz ardı edilemez.",
+        "vitals": {"temperature": 39.8, "pulse": 124},
+        "evidence": ["Ateş 39.8°C — 2 gündür devam ediyor", "Taşikardi (nabız 124) — ateşe bağlı / dehidrasyon"],
+        "guideline_sources": ["MTS Pediatrik Ateş Diskriminatörü"],
+        "safety_guardrail_triggered": True, "guardrail_rules_fired": ["Bebek / küçük çocuk ateşi — acil değerlendirme gerekir"],
+        "ai_execution_log": {"model": "gemma4:e4b", "runtime": "Ollama (local)", "external_api": False, "patient_data_egress": False, "inference_latency_s": 11.2},
+        "is_demo": True, "source": "seed_demo",
+    },
+    {
+        "session_id": "demo-4",
+        "patient_name": "Serkan Koç",
+        "age": 24, "gender": "Erkek",
+        "triage_level": "YELLOW", "triage_color": "#e07b26",
+        "confidence_score": 82,
+        "chief_complaint": "Sağ alt karın ağrısı, bulantı, iştahsızlık",
+        "symptoms_summary": "12 saattir göbek çevresinde başlayan, sağ alt kadrana göçen ağrı. 7/10 şiddetinde. Bulantı mevcut, 1 kez kusma. Hafif ateş (37.9°C).",
+        "possible_conditions": ["Akut Apandisit", "Mesenteric Lenfadenit", "Sağ Üreter Taşı"],
+        "urgency_flags": ["⚠️ Göçen ağrı (göbek → sağ alt kadran) — apandisit klasik sunumu", "⚠️ Hafif ateş + lökositoz şüphesi"],
+        "recommended_action": "Cerrahi konsültasyon; Alvarado skoru; karın US veya BT",
+        "clinical_notes": "Alvarado puanı: 6-7 (migration + nausea + RLQ tenderness + fever). Cerrahi değerlendirme öncelikli. Oral alım kısıtlanmalı.",
+        "vitals": {"temperature": 37.9, "pulse": 95},
+        "evidence": ["Göbek çevresinden sağ alt kadrana göçen ağrı", "Bulantı + 1 kez kusma", "Hafif ateş (37.9°C)"],
+        "guideline_sources": ["MTS Karın Ağrısı Diskriminatörü", "Alvarado Apandisit Skoru"],
+        "safety_guardrail_triggered": False,
+        "ai_execution_log": {"model": "gemma4:e4b", "runtime": "Ollama (local)", "external_api": False, "patient_data_egress": False, "inference_latency_s": 16.8},
+        "is_demo": True, "source": "seed_demo",
+    },
+    {
+        "session_id": "demo-5",
+        "patient_name": "Zeynep Arslan",
+        "age": 29, "gender": "Kadın",
+        "triage_level": "GREEN", "triage_color": "#006a68",
+        "confidence_score": 91,
+        "chief_complaint": "Boğaz ağrısı, hafif ateş, burun akıntısı — 3 gün",
+        "symptoms_summary": "Son 3 gündür boğaz ağrısı, 37.5°C hafif ateş, burun akıntısı ve hafif baş ağrısı. Nefes darlığı yok, genel durum iyi, sıvı alıyor.",
+        "possible_conditions": ["Akut Farenjit (viral)", "Rinit", "ÜSYE"],
+        "urgency_flags": [],
+        "recommended_action": "Semptomatik tedavi; bol sıvı; analjezik/antipretik; 3 günde düzelmezse tekrar başvuru",
+        "clinical_notes": "MTS GREEN: Hayati risk yok, kronik hastalık yok, genel durum iyi. Rutin muayene sırası.",
+        "vitals": {"temperature": 37.5, "pulse": 76},
+        "evidence": ["Hafif ateş (37.5°C) — viral seyre uyumlu", "Burun + boğaz semptomları — ÜSYE tablosu"],
+        "guideline_sources": ["MTS ÜSYE Diskriminatörü"],
+        "safety_guardrail_triggered": False,
+        "ai_execution_log": {"model": "gemma4:e4b", "runtime": "Ollama (local)", "external_api": False, "patient_data_egress": False, "inference_latency_s": 9.4},
+        "is_demo": True, "source": "seed_demo",
+    },
+]
+
+
+def db_seed_demo_cases():
+    """Demo vakaları DB'ye seed eder (idempotent — zaten varsa atlar)."""
+    try:
+        with get_cursor() as cur:
+            for case in _DEMO_CASES_SEED:
+                cur.execute(
+                    """INSERT INTO demo_cases (session_id, data, is_demo, source)
+                       VALUES (%s, %s::jsonb, %s, %s)
+                       ON CONFLICT (session_id) DO NOTHING""",
+                    (case["session_id"], json.dumps(case), True, "seed_demo")
+                )
+        print("[DB] Demo vakalar seed edildi.")
+    except Exception as e:
+        print(f"[DB] Demo seed hatası: {e}")
+
+
+def db_get_demo_cases() -> list[dict]:
+    """DB'deki demo vakalarını döndürür."""
+    try:
+        with get_cursor() as cur:
+            cur.execute("SELECT data FROM demo_cases WHERE is_demo = TRUE ORDER BY id")
+            rows = cur.fetchall()
+            return [
+                (r["data"] if isinstance(r["data"], dict) else json.loads(r["data"]))
+                for r in rows
+            ]
+    except Exception as e:
+        print(f"[DB] Demo vakalar alınamadı: {e}")
+        return []
+
+
+@app.get("/api/demo/cases")
+async def get_demo_cases(current_user: Optional[dict] = Depends(get_current_user)):
+    """DB'den demo hasta vakalarını döndürür (frontend hardcoded DEMO yerine)."""
+    cases = db_get_demo_cases()
+    if not cases:
+        db_seed_demo_cases()
+        cases = db_get_demo_cases()
+    # Dinamik created_at ekle (bekleme süresi gösterimi için)
+    offsets = [3, 8, 15, 22, 35]
+    now_dt = datetime.utcnow()
+    for i, c in enumerate(cases):
+        if not c.get("created_at"):
+            from datetime import timedelta
+            c["created_at"] = (now_dt - timedelta(minutes=offsets[i % len(offsets)])).isoformat()
+    return {"cases": cases, "total": len(cases), "source": "db_seed"}
+
+
+@app.post("/api/demo/cases/seed")
+async def seed_demo_cases_endpoint(current_user: Optional[dict] = Depends(get_current_user)):
+    """Demo vakaları yeniden seed eder."""
+    db_seed_demo_cases()
+    cases = db_get_demo_cases()
+    return {"seeded": len(cases), "cases": [c["session_id"] for c in cases], "status": "ok"}
+
+
+# ─────────────────────────────────────────────
+#  Admin — Oturum Temizleme
+# ─────────────────────────────────────────────
+
+@app.post("/api/admin/sessions/cleanup")
+async def cleanup_old_sessions(body: dict = {}, current_user: dict = Depends(require_admin)):
+    """
+    Eski oturumları temizler:
+    - 'seen' işaretlenmiş ve 7+ gün geçmiş oturumlar
+    - RAM + DB'den
+    """
+    from datetime import timedelta
+    cutoff_days = int((body or {}).get("days", 7))
+    cutoff = datetime.utcnow() - timedelta(days=cutoff_days)
+
+    to_delete_mem = []
+    for sid, s in sessions.items():
+        if s.get("is_seen"):
+            seen_at_str = s.get("seen_by", {}).get("timestamp", "")
+            if seen_at_str:
+                try:
+                    if datetime.fromisoformat(seen_at_str) < cutoff:
+                        to_delete_mem.append(sid)
+                except Exception:
+                    pass
+
+    for sid in to_delete_mem:
+        sessions.pop(sid, None)
+        summaries.pop(sid, None)
+
+    deleted_db = 0
+    try:
+        with get_cursor() as cur:
+            cur.execute(
+                "DELETE FROM sessions WHERE created_at < %s AND data->>'is_seen' = 'true'",
+                (cutoff.isoformat(),)
+            )
+            deleted_db = cur.rowcount
+    except Exception as e:
+        print(f"[cleanup] DB temizleme hatası: {e}")
+
+    audit("sessions_cleanup", user_id=current_user["user_id"], user_role=current_user["role"],
+          details=f"RAM:{len(to_delete_mem)} DB:{deleted_db} cutoff:{cutoff_days}d")
+
+    return {
+        "status": "ok",
+        "deleted_from_memory": len(to_delete_mem),
+        "deleted_from_db": deleted_db,
+        "cutoff_days": cutoff_days,
+        "cutoff_date": cutoff.isoformat(),
+    }
+
+
+# ─────────────────────────────────────────────
+#  Public Landing Metrics
+# ─────────────────────────────────────────────
+
+@app.get("/api/public/landing-metrics")
+async def public_landing_metrics():
+    """Public endpoint — landing sayfası için metrikleri döndürür. Auth gerektirmez."""
+    eval_data = {
+        "triage_accuracy_pct": 93.0,
+        "cases_tested": 15,
+        "passed": 14,
+        "medgemma_score": "5/5",
+        "avg_latency_ai_s": 15,
+        "avg_latency_manual_min": 22,
+        "languages": 3,
+        "avg_interview_questions": 5,
+        "guardrail_layers": 23,
+        "local_inference": True,
+        "cloud_api_used": False,
+    }
+    try:
+        completed = sum(1 for s in sessions.values() if s.get("completed"))
+        if completed >= 5:
+            s_list = list(summaries.values())
+            scores = [s.get("confidence_score", 0) for s in s_list if s.get("confidence_score")]
+            if scores:
+                eval_data["avg_confidence"] = round(sum(scores) / len(scores), 1)
+            eval_data["total_live_sessions"] = completed
+    except Exception:
+        pass
+
+    return {
+        "source": "evaluation",
+        "metrics": eval_data,
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "fallback": False,
+    }
+
+
+# ─────────────────────────────────────────────
+#  Appointments DB persistence helpers
+# ─────────────────────────────────────────────
+
+def db_save_appointment(appt_id: str, appt_data: dict):
+    """Randevuyu DB'ye kaydeder."""
+    try:
+        appt_date = (appt_data.get("appointment_time") or "")[:10]
+        is_demo_flag = appt_id.startswith("appt-demo-")
+        with get_cursor() as cur:
+            cur.execute(
+                """INSERT INTO appointments (appointment_id, data, appointment_date, is_demo)
+                   VALUES (%s, %s::jsonb, %s, %s)
+                   ON CONFLICT (appointment_id) DO UPDATE SET data = EXCLUDED.data""",
+                (appt_id, json.dumps(appt_data), appt_date, is_demo_flag)
+            )
+    except Exception as e:
+        print(f"[DB] Randevu kayıt hatası: {e}")
+
+
+def db_load_appointments():
+    """DB'deki randevuları belleğe yükler."""
+    try:
+        with get_cursor() as cur:
+            cur.execute("SELECT appointment_id, data FROM appointments ORDER BY created_at DESC LIMIT 500")
+            for r in cur.fetchall():
+                appt_data = r["data"] if isinstance(r["data"], dict) else json.loads(r["data"])
+                _appointments[r["appointment_id"]] = appt_data
+        print(f"[DB] {len(_appointments)} randevu yüklendi.")
+    except Exception as e:
+        print(f"[DB] Randevu yükleme hatası: {e}")
+
+
+@app.post("/api/demo/appointments/seed")
+async def seed_demo_appointments(current_user: Optional[dict] = Depends(get_current_user)):
+    """Demo randevuları DB'ye seed eder — restart sonrası kaybolmaz."""
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    demo_appts = [
+        {
+            "appointment_id": f"appt-demo-{i+1:03d}",
+            "patient_name": n, "patient_age": a, "patient_gender": g,
+            "doctor_name": d, "specialty": s,
+            "appointment_time": f"{today}T{t}:00",
+            "appointment_type": at, "language": "tr", "status": "scheduled",
+            "previsit_status": "pending", "session_id": None, "brief": None,
+            "created_at": datetime.utcnow().isoformat(),
+        }
+        for i, (n, a, g, d, s, t, at) in enumerate([
+            ("Ayşe Kaya",     45, "Kadın",  "Dr. Fatma Şahin",   "Kardiyoloji",     "09:00", "kontrol"),
+            ("Mehmet Demir",  62, "Erkek",  "Dr. Ali Yıldız",    "İç Hastalıkları", "10:30", "yeni_hasta"),
+            ("Zeynep Arslan", 28, "Kadın",  "Dr. Fatma Şahin",   "Kardiyoloji",     "11:00", "kontrol"),
+            ("Hasan Çelik",   71, "Erkek",  "Dr. Elif Koca",     "Nöroloji",        "14:00", "takip"),
+            ("Elif Yılmaz",    8, "Kız",    "Dr. Osman Güneş",   "Pediatri",        "15:30", "kontrol"),
+        ])
+    ]
+    for appt in demo_appts:
+        _appointments[appt["appointment_id"]] = appt
+        db_save_appointment(appt["appointment_id"], appt)
+
+    return {
+        "created": len(demo_appts),
+        "appointments": demo_appts,
+        "persisted": True,
+        "note": "Demo randevular DB'ye kaydedildi — sunucu yeniden başlatılsa da kaybolmaz.",
+    }
 
 
 # ─────────────────────────────────────────────
@@ -3360,7 +3689,7 @@ async def channel_intake_message(req: ChannelIntakeRequest, request: Request):
 #  Randevu öncesi hasta anamnez görüşmesi — doktor brief'i üretir
 # ─────────────────────────────────────────────
 
-# Bellek içi randevu deposu (prod → PostgreSQL / Redis)
+# Bellek içi randevu deposu (DB ile senkronize — restart sonrası geri yüklenir)
 _appointments: dict[str, dict] = {}  # appointment_id → appointment data
 _appt_sessions: dict[str, str]  = {}  # appointment_id → session_id
 
@@ -3568,11 +3897,12 @@ async def create_demo_appointments(current_user: Optional[dict] = Depends(get_cu
     ]
     for appt in demo_appts:
         _appointments[appt["appointment_id"]] = appt
+        db_save_appointment(appt["appointment_id"], appt)
 
     return {
         "created": len(demo_appts),
         "appointments": demo_appts,
-        "note": "Demo veri — gerçek randevu takip sistemi entegrasyonu için /api/appointments/demo kullanın.",
+        "note": "Demo veri DB'ye kaydedildi — sunucu yeniden başlatılsa da kaybolmaz.",
     }
 
 
@@ -4167,6 +4497,232 @@ FRONTEND_DIR = os.getenv(
     "FRONTEND_DIR",
     os.path.join(os.path.dirname(__file__), "..", "frontend"),
 )
+
+# ─────────────────────────────────────────────
+#  Demo Cases — DB-backed (no hardcoded frontend data)
+# ─────────────────────────────────────────────
+
+_DEMO_SEED_CASES = [
+    {
+        "session_id": "demo-stemi-001",
+        "patient_name": "Mehmet Yılmaz",
+        "age": 66, "gender": "Erkek",
+        "triage_level": "RED", "triage_color": "#ba1a1a",
+        "confidence_score": 98,
+        "chief_complaint": "Göğüs ağrısı, sol kola yayılan, terleme",
+        "symptoms_summary": "66 yaşında erkek, 30 dakika önce başlayan şiddetli retrosternal ağrı, sol kola yayılım, diaphoresis, bulantı. EKG'de ST yükselmesi.",
+        "possible_conditions": ["STEMI (Akut Miyokard İnfarktüsü)", "Akut Koroner Sendrom", "İnstabil Angina"],
+        "urgency_flags": ["STEMI şüphesi — immedyat kardiyoloji konsültasyonu", "Sol kol yayılım + diaphoresis = kardiyak acil"],
+        "recommended_action": "ACİL KARDİYOLOJİ — STEMI protokolü aktive et, aspirin 300mg, PCI hazırlığı",
+        "clinical_notes": "Gaziantep STEMI senaryosu. Manuel triajda 22 dakika bekledi. AI: 14 saniye.",
+        "allergy_flags": [],
+        "vitals": {"blood_pressure": "170/100", "pulse": "110", "temperature": 36.8, "spo2": 94},
+        "evidence": ["Retrosternal ağrı + sol kol yayılım = tip 1 MI kriteri", "Diaphoresis yüksek riskli bulgu", "ST elevasyonu varsa <90dk PPCI"],
+        "guideline_sources": ["ESC STEMI 2023", "MTS Kardiyak Triaj"],
+        "is_demo": True, "source": "seed_demo",
+        "created_at": "2026-05-15T08:14:00",
+        "generated_at": "2026-05-15T08:14:14",
+        "completed": True, "is_seen": False,
+    },
+    {
+        "session_id": "demo-sepsis-002",
+        "patient_name": "Fatma Kaya",
+        "age": 78, "gender": "Kadın",
+        "triage_level": "RED", "triage_color": "#ba1a1a",
+        "confidence_score": 95,
+        "chief_complaint": "Yüksek ateş, bilinç bulanıklığı, hızlı nefes",
+        "symptoms_summary": "78 yaşında kadın, 3 gündür ateş, gece başlayan bilinç değişikliği, solunum hızlanması. İdrar yolu enfeksiyonu öyküsü.",
+        "possible_conditions": ["Sepsis / Septik Şok", "Üriner Sepsis", "Pnömoni + Sepsis"],
+        "urgency_flags": ["Sepsis kriteri: ateş + taşikardi + bilinç değişikliği", "qSOFA ≥2 — yüksek mortalite riski"],
+        "recommended_action": "ACİL — Sepsis bundle başlat, laktat, kan kültürü, antibiyotik <1 saat içinde",
+        "clinical_notes": "Yaşlı hastada sepsis belirtileri. qSOFA skoru değerlendir.",
+        "allergy_flags": ["Penisilin alerjisi"],
+        "vitals": {"blood_pressure": "90/60", "pulse": "118", "temperature": 39.4, "spo2": 91},
+        "evidence": ["Hipotansiyon + taşikardi + ateş = SIRS", "Bilinç değişikliği = organ disfonksiyonu"],
+        "guideline_sources": ["Surviving Sepsis Campaign 2021"],
+        "is_demo": True, "source": "seed_demo",
+        "created_at": "2026-05-15T09:02:00",
+        "generated_at": "2026-05-15T09:02:21",
+        "completed": True, "is_seen": False,
+    },
+    {
+        "session_id": "demo-pediatric-003",
+        "patient_name": "Mia Demir",
+        "age": 4, "gender": "Kız",
+        "triage_level": "YELLOW", "triage_color": "#e07b26",
+        "confidence_score": 89,
+        "chief_complaint": "Yüksek ateş (39.8°C), kulak ağrısı, huzursuzluk",
+        "symptoms_summary": "4 yaşında çocuk, dün gece başlayan yüksek ateş, sağ kulak ağrısı, iştahsızlık. Otit media şüphesi.",
+        "possible_conditions": ["Akut Otit Media", "Viral Üst Solunum Yolu Enfeksiyonu", "Farenjit"],
+        "urgency_flags": ["39.8°C — febril konvülziyon riski izle"],
+        "recommended_action": "KBB viziti — antibiyotik (amoksisilin) değerlendirmesi, antipiretik",
+        "clinical_notes": "Pediatric ateş protokolü. Serumlu ateş takibi.",
+        "allergy_flags": [],
+        "vitals": {"temperature": 39.8, "pulse": "120"},
+        "is_demo": True, "source": "seed_demo",
+        "created_at": "2026-05-15T10:30:00",
+        "generated_at": "2026-05-15T10:30:18",
+        "completed": True, "is_seen": False,
+    },
+    {
+        "session_id": "demo-appendix-004",
+        "patient_name": "Emre Şahin",
+        "age": 22, "gender": "Erkek",
+        "triage_level": "YELLOW", "triage_color": "#e07b26",
+        "confidence_score": 87,
+        "chief_complaint": "Sağ alt karın ağrısı, ateş, bulantı",
+        "symptoms_summary": "22 yaşında erkek, 8 saat önce göbek çevresinde başlayan, sonra sağ alt kadrana yerleşen ağrı. Hafif ateş, bulantı, iştahsızlık.",
+        "possible_conditions": ["Akut Apandisit", "Mezenterik Lenfadenit", "Kasık Fıtığı Komplikasyonu"],
+        "urgency_flags": ["McBurney noktası hassasiyeti — apandisit protokolü", "Rebound hassasiyeti sorgulanmalı"],
+        "recommended_action": "Genel Cerrahi konsültasyonu — US/BT, Alvarado skoru hesapla",
+        "clinical_notes": "Klasik akut apandisit prezentasyonu. Perforasyon riski izle.",
+        "allergy_flags": [],
+        "vitals": {"temperature": 38.1, "pulse": "95"},
+        "is_demo": True, "source": "seed_demo",
+        "created_at": "2026-05-15T11:15:00",
+        "generated_at": "2026-05-15T11:15:15",
+        "completed": True, "is_seen": False,
+    },
+    {
+        "session_id": "demo-migraine-005",
+        "patient_name": "Elif Arslan",
+        "age": 31, "gender": "Kadın",
+        "triage_level": "GREEN", "triage_color": "#006a68",
+        "confidence_score": 92,
+        "chief_complaint": "Şiddetli baş ağrısı, ışık hassasiyeti, bulantı",
+        "symptoms_summary": "31 yaşında kadın, migren öyküsü var. Benzer önceki ataklar. Ense sertliği YOK. Bilinç açık. Ateş yok.",
+        "possible_conditions": ["Migren (Aurasız)", "Gerilim Baş Ağrısı", "Küme Baş Ağrısı"],
+        "urgency_flags": [],
+        "recommended_action": "Triptan + NSAID — sessiz/karanlık oda. Ense sertliği/ateş gelişirse acile gönder.",
+        "clinical_notes": "Bilinen migren. Menenjit red flag yok. Standart protokol.",
+        "allergy_flags": [],
+        "vitals": {},
+        "is_demo": True, "source": "seed_demo",
+        "created_at": "2026-05-15T13:00:00",
+        "generated_at": "2026-05-15T13:00:11",
+        "completed": True, "is_seen": False,
+    },
+]
+
+@app.post("/api/demo/cases/seed")
+async def seed_demo_cases(current_user: Optional[dict] = Depends(get_current_user)):
+    """Demo vakaları DB'ye seed eder — frontend'e hardcoded veri gerek kalmaz."""
+    seeded = 0
+    for case in _DEMO_SEED_CASES:
+        sid = case["session_id"]
+        session_data = {
+            "patient_name": case["patient_name"],
+            "age": case["age"],
+            "gender": case["gender"],
+            "language": "tr",
+            "completed": True,
+            "is_seen": False,
+            "is_demo": True,
+            "source": "seed_demo",
+            "created_at": case["created_at"],
+            "qa_history": [],
+            "vitals": case.get("vitals"),
+            "step": 5, "total_steps": 5,
+        }
+        summary_data = {k: v for k, v in case.items() if k not in {"completed", "is_seen"}}
+        summary_data["generated_at"] = case["generated_at"]
+        sessions[sid] = session_data
+        summaries[sid] = summary_data
+        db_save_session(sid, session_data)
+        db_save_summary(sid, summary_data)
+        seeded += 1
+    return {"seeded": seeded, "message": "Demo vakalar DB'ye kaydedildi.", "session_ids": [c["session_id"] for c in _DEMO_SEED_CASES]}
+
+
+@app.get("/api/demo/cases")
+async def get_demo_cases(current_user: Optional[dict] = Depends(get_current_user)):
+    """Demo vakaları döndürür — DB'den okunur, frontend'de hardcoded değil."""
+    result = []
+    for sid, summ in summaries.items():
+        if summ.get("is_demo") or summ.get("source") == "seed_demo" or sid.startswith("demo-"):
+            session = sessions.get(sid, {})
+            p = {
+                "session_id": sid,
+                "patient_name": summ.get("patient_name", session.get("patient_name", "")),
+                "age": summ.get("age", session.get("age", 0)),
+                "gender": summ.get("gender", session.get("gender", "")),
+                "triage_level": summ.get("triage_level", "PENDING"),
+                "triage_color": summ.get("triage_color", "#8c9499"),
+                "confidence_score": summ.get("confidence_score", 0),
+                "chief_complaint": summ.get("chief_complaint", ""),
+                "symptoms_summary": summ.get("symptoms_summary", ""),
+                "possible_conditions": summ.get("possible_conditions", []),
+                "urgency_flags": summ.get("urgency_flags", []),
+                "recommended_action": summ.get("recommended_action", ""),
+                "clinical_notes": summ.get("clinical_notes", ""),
+                "allergy_flags": summ.get("allergy_flags", []),
+                "vitals": summ.get("vitals") or session.get("vitals"),
+                "evidence": summ.get("evidence", []),
+                "guideline_sources": summ.get("guideline_sources", []),
+                "is_demo": True,
+                "created_at": summ.get("created_at", session.get("created_at", "")),
+                "generated_at": summ.get("generated_at", ""),
+                "is_seen": session.get("is_seen", False),
+                "doctor_notes": session.get("doctor_notes", []),
+                "triage_override": session.get("triage_override"),
+            }
+            result.append(p)
+    # If no demo cases in DB, auto-seed
+    if not result:
+        await seed_demo_cases(current_user)
+        for case in _DEMO_SEED_CASES:
+            sid = case["session_id"]
+            p = {
+                "session_id": sid,
+                "patient_name": case["patient_name"],
+                "age": case["age"],
+                "gender": case["gender"],
+                "triage_level": case["triage_level"],
+                "triage_color": case["triage_color"],
+                "confidence_score": case["confidence_score"],
+                "chief_complaint": case["chief_complaint"],
+                "symptoms_summary": case["symptoms_summary"],
+                "possible_conditions": case["possible_conditions"],
+                "urgency_flags": case["urgency_flags"],
+                "recommended_action": case["recommended_action"],
+                "clinical_notes": case["clinical_notes"],
+                "allergy_flags": case.get("allergy_flags", []),
+                "vitals": case.get("vitals"),
+                "evidence": case.get("evidence", []),
+                "guideline_sources": case.get("guideline_sources", []),
+                "is_demo": True,
+                "created_at": case["created_at"],
+                "generated_at": case["generated_at"],
+                "is_seen": False,
+                "doctor_notes": [],
+                "triage_override": None,
+            }
+            result.append(p)
+    priority = {"RED": 0, "YELLOW": 1, "GREEN": 2, "PENDING": 3}
+    result.sort(key=lambda x: priority.get(x.get("triage_level", "PENDING"), 3))
+    return {"total": len(result), "cases": result}
+
+
+
+# ─────────────────────────────────────────────
+#  Admin: Session Cleanup
+# ─────────────────────────────────────────────
+
+@app.post("/api/admin/sessions/cleanup")
+async def admin_cleanup_sessions(current_user: dict = Depends(require_admin)):
+    """Görüldü işaretlenen eski oturumları RAM'den temizler (DB'de kalır)."""
+    removed_ids = []
+    for sid, s in list(sessions.items()):
+        if s.get("is_seen") and s.get("completed") and not sid.startswith("demo-"):
+            sessions.pop(sid, None)
+            summaries.pop(sid, None)
+            removed_ids.append(sid)
+    return {
+        "cleaned": len(removed_ids),
+        "message": f"{len(removed_ids)} oturum RAM'den temizlendi (DB'de korunuyor).",
+        "session_ids": removed_ids[:20],  # İlk 20 ID'yi döndür
+    }
+
 
 # Root "/" → landing.html (Marketing / entry page)
 # Interview form is accessible at /index.html

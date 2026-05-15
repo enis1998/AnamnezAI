@@ -741,7 +741,7 @@ async function exportPDF(){
     bold(null,14);rgb(255,255,255);
     pdf.text('AnamnezAI',ML+16,15);
     norm(null,8);rgb(160,210,208);
-    pdf.text(EN?'Clinical Pre-Triage Report  ·  by MediScreen':'Klinik Ön Triaj Raporu  ·  MediScreen Sağlık',ML+16,21);
+    pdf.text(EN?'Clinical Pre-Triage Report  ·  by AnamnezAI':'Klinik Ön Triaj Raporu  ·  AnamnezAI',ML+16,21);
     // Right: date + session
     norm(null,7.5);rgb(200,220,225);
     pdf.text(dtStr,PW-MR,14,{align:'right'});

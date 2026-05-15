@@ -454,5 +454,109 @@ def test_intake_type_previsit_in_session():
     assert "pre_visit" in src, "start_previsit must set intake_type to 'pre_visit'"
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  New endpoints tests (QA pass)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_demo_cases_endpoint_registered():
+    """GET /api/demo/cases must be registered."""
+    import main
+    routes = [r.path for r in main.app.routes]
+    assert "/api/demo/cases" in routes, "GET /api/demo/cases must be registered"
+
+
+def test_demo_cases_seed_endpoint_registered():
+    """POST /api/demo/cases/seed must be registered."""
+    import main
+    routes = [r.path for r in main.app.routes]
+    assert "/api/demo/cases/seed" in routes, "POST /api/demo/cases/seed must be registered"
+
+
+def test_public_landing_metrics_endpoint_registered():
+    """GET /api/public/landing-metrics must be registered."""
+    import main
+    routes = [r.path for r in main.app.routes]
+    assert "/api/public/landing-metrics" in routes, "GET /api/public/landing-metrics must be registered"
+
+
+def test_admin_sessions_cleanup_endpoint_registered():
+    """POST /api/admin/sessions/cleanup must be registered."""
+    import main
+    routes = [r.path for r in main.app.routes]
+    assert "/api/admin/sessions/cleanup" in routes, "POST /api/admin/sessions/cleanup must be registered"
+
+
+def test_rag_allow_cloud_translation_default_false():
+    """rag.py ALLOW_CLOUD_TRANSLATION must default to False."""
+    import rag
+    assert hasattr(rag, "ALLOW_CLOUD_TRANSLATION"), "ALLOW_CLOUD_TRANSLATION must be defined in rag.py"
+    assert rag.ALLOW_CLOUD_TRANSLATION is False, (
+        "rag.ALLOW_CLOUD_TRANSLATION must default to False (no cloud translation in local-first mode)"
+    )
+
+
+def test_landing_metrics_returns_expected_keys():
+    """GET /api/public/landing-metrics must return key metric fields."""
+    from fastapi.testclient import TestClient
+    import main
+    client = TestClient(main.app)
+    response = client.get("/api/public/landing-metrics")
+    assert response.status_code == 200
+    data = response.json()
+    # Either flat format or nested "metrics" key
+    metrics = data.get("metrics", data)
+    assert "local_inference" in metrics
+    assert metrics["local_inference"] is True
+    assert "cloud_api_used" in metrics
+    assert metrics["cloud_api_used"] is False
+
+
+def test_demo_cases_returns_cases():
+    """GET /api/demo/cases must return a list of demo cases with correct shape."""
+    from fastapi.testclient import TestClient
+    import main
+    client = TestClient(main.app)
+    # No auth needed for this endpoint (optional auth)
+    response = client.get("/api/demo/cases")
+    assert response.status_code == 200
+    data = response.json()
+    assert "cases" in data
+    assert "total" in data
+    assert data["total"] >= 0
+    if data["cases"]:
+        case = data["cases"][0]
+        assert "session_id" in case
+        assert "triage_level" in case
+        assert "patient_name" in case
+
+
+def test_no_raw_i18n_keys_in_doctor_html():
+    """doctor.html must not use raw i18n key strings as literal text in static HTML elements."""
+    import os, re
+    frontend_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+    path = os.path.join(frontend_dir, "doctor.html")
+    if not os.path.exists(path):
+        pytest.skip("doctor.html not found")
+    content = open(path, encoding="utf-8").read()
+    # Static HTML should not contain raw i18n keys as text content
+    raw_key_pattern = re.compile(r'>(?:btnReport|queueBackendOffline|detailClinicalTitle|detailICD10Title|detailDoctorNotesTitle|TBPATIENT|TBTRIAGE|TBCOMPLAINT)<')
+    matches = raw_key_pattern.findall(content)
+    assert not matches, f"Raw i18n keys found in doctor.html static HTML: {matches}"
+
+
+def test_no_hardcoded_demo_patients_in_doctor_html():
+    """doctor.html must not contain hardcoded patient objects like 'Mehmet Yılmaz' in const DEMO."""
+    import os
+    frontend_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+    path = os.path.join(frontend_dir, "doctor.html")
+    if not os.path.exists(path):
+        pytest.skip("doctor.html not found")
+    content = open(path, encoding="utf-8").read()
+    # Check that DEMO is not hardcoded with patient data
+    assert "const DEMO = []" in content or 'const DEMO = [];' in content or 'let DEMO = []' in content, \
+        "doctor.html must not hardcode patient data in DEMO variable"
+
+
+
 
 

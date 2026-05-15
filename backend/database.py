@@ -144,6 +144,26 @@ CREATE TABLE IF NOT EXISTS audit_log (
     created_at  TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log (created_at DESC);
+
+-- Demo vakalar (DB seed — frontend hardcoded olmayacak)
+CREATE TABLE IF NOT EXISTS demo_cases (
+    id          BIGSERIAL PRIMARY KEY,
+    session_id  TEXT UNIQUE NOT NULL,
+    data        JSONB NOT NULL,
+    is_demo     BOOLEAN NOT NULL DEFAULT TRUE,
+    source      TEXT NOT NULL DEFAULT 'seed_demo',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Randevular (pre-visit mode — kalıcı, restart sonrası kaybolmaz)
+CREATE TABLE IF NOT EXISTS appointments (
+    appointment_id   TEXT PRIMARY KEY,
+    data             JSONB NOT NULL,
+    appointment_date TEXT NOT NULL,
+    is_demo          BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments (appointment_date);
 """
 
 def init_db():

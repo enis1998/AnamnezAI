@@ -32,6 +32,9 @@ _embed_model = None
 
 CHROMA_DIR = os.getenv("CHROMA_DIR", os.path.join(os.path.dirname(__file__), "..", "chroma_db"))
 COLLECTION_NAME = "medical_knowledge"
+
+# Privacy: cloud translation only when explicitly enabled (default: off)
+ALLOW_CLOUD_TRANSLATION: bool = os.getenv("ALLOW_CLOUD_TRANSLATION", "false").lower() == "true"
 EMBED_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 CHUNK_SIZE = 400      # kelime
 CHUNK_OVERLAP = 60    # kelime
@@ -264,8 +267,8 @@ def translate_query_to_english(query: str) -> str:
     if detected_lang == "en":
         return query
 
-    # Diğer diller → deep-translator ile çevir
-    if trans_ok and detected_lang not in ("tr", "en"):
+    # Diğer diller → deep-translator ile çevir (yalnızca ALLOW_CLOUD_TRANSLATION=true ise)
+    if trans_ok and ALLOW_CLOUD_TRANSLATION and detected_lang not in ("tr", "en"):
         try:
             from deep_translator import GoogleTranslator
             translated = GoogleTranslator(source="auto", target="en").translate(query)
