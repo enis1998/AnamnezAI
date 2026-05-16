@@ -32,6 +32,7 @@ h1,h2,h3,h4{font-family:'Manrope',sans-serif}
 @keyframes spin{to{transform:rotate(360deg)}}
 input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px #006a68}
 .nav-active{background:#f4f7f9;color:#006a68;font-weight:600}
+.lang-active{background:#00475e!important;color:#fff!important;box-shadow:0 1px 4px rgba(0,71,94,.35)!important}
 </style>
 </head>
 <body>
@@ -923,12 +924,12 @@ function setLang(l){
   document.documentElement.lang = l;
   const d = PDL[l] || PDL.tr;
 
-  // Dil butonları — sadece inline style ile yönet (HTML'de class yok)
+  // Dil butonları
   ['pd-btn-tr','pd-btn-en','pd-btn-ar'].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     const isActive = id === 'pd-btn-' + l;
-    el.style.background = isActive ? '#00475e' : '';
-    el.style.color = isActive ? '#ffffff' : '#3f4749';
+    el.classList.toggle('lang-active', isActive);
+    el.style.color = isActive ? '' : '';
   });
 
   // Statik metin eşlemesi

@@ -39,6 +39,7 @@ tailwind.config={theme:{extend:{colors:{
   @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
   .dot-pulse{animation:dp 1.2s ease infinite}
   @keyframes dp{0%,100%{opacity:1}50%{opacity:.3}}
+  .lang-active{background:#00475e!important;color:#fff!important;box-shadow:0 1px 4px rgba(0,71,94,.35)!important}
 </style>
 </head>
 <body>
@@ -1769,9 +1770,8 @@ function setLang(l){
     const el = document.getElementById(id);
     if (!el) return;
     const isActive = id === 'dlbtn-' + l;
-    el.style.background = isActive ? '#00475e' : '';
-    el.style.color = isActive ? '#ffffff' : '#3f4749';
-    el.style.fontWeight = '700';
+    el.classList.toggle('lang-active', isActive);
+    el.style.color = isActive ? '' : '#3f4749';
   });
 
   // TCFG badge etiketlerini güncelle (triage rozetleri)
