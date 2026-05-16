@@ -1150,8 +1150,9 @@ async function exportPDF(){
   }
 }
 applyLangUI();
-if(data){
-  try { render(data); }
+
+function _doRender(d){
+  try { render(d); }
   catch(err){
     console.error('render error:', err);
     const ls=document.getElementById('loading-state');
@@ -1163,9 +1164,38 @@ if(data){
     </div>`;
   }
 }
-else{
+
+function _showErr(msg){
   const ls=document.getElementById('loading-state');
-  if(ls) ls.innerHTML=`<div class="text-center py-20"><span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span><p class="text-err font-bold mb-4">${I18N.tr.noData}</p><a href="index.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">${I18N.tr.goHome}</a></div>`;
+  if(ls) ls.innerHTML=`<div class="text-center py-20">
+    <span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span>
+    <p class="text-err font-bold mb-4">${msg||I18N.tr.noData}</p>
+    <a href="patient_dashboard.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Geçmişime Dön</a>
+  </div>`;
+}
+
+// Önce URL parametresi: ?sid=SESSION_ID
+const _urlSid = new URLSearchParams(location.search).get('sid');
+if(_urlSid){
+  // Direkt API'dan çek — localStorage/cache bağımsız
+  const _tok = localStorage.getItem('anamnez_token');
+  fetch(`/api/session/${encodeURIComponent(_urlSid)}/summary`,
+    _tok ? {headers:{Authorization:`Bearer ${_tok}`}} : {}
+  )
+  .then(r => r.ok ? r.json() : null)
+  .then(d => {
+    if(d){
+      localStorage.setItem('anamnez_summary', JSON.stringify(d));
+      _doRender(d);
+    } else {
+      _showErr('Rapor sunucudan alınamadı.');
+    }
+  })
+  .catch(e => _showErr('Bağlantı hatası: ' + e.message));
+} else if(data){
+  _doRender(data);
+} else {
+  _showErr(I18N.tr.noData);
 }
 
 // ── i18n: inherit language from localStorage ─────────────────────────────────

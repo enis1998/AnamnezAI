@@ -574,11 +574,29 @@ function renderVisits(visits){
     return;
   }
   const lbl={RED:d.triageRed,YELLOW:d.triageYellow,GREEN:d.triageGreen};
+  const _pdLocalize=(str)=>{
+    if(!str||pdLang==='tr') return str||'';
+    const _map={
+      'Değerlendirme tamamlandı':{en:'Assessment completed',ar:'اكتمل التقييم'},
+      'Degerlendirme tamamlandi':{en:'Assessment completed',ar:'اكتمل التقييم'},
+      'Özet bekleniyor...':{en:'Summary pending...',ar:'الملخص قيد الانتظار...'},
+      'Ozet bekleniyor...':{en:'Summary pending...',ar:'الملخص قيد الانتظار...'},
+      'Göğüs ağrısı':{en:'Chest pain',ar:'ألم في الصدر'},
+      'Baş ağrısı':{en:'Headache',ar:'صداع'},
+      'Ateş':{en:'Fever',ar:'حمى'},
+      'Nefes darlığı':{en:'Shortness of breath',ar:'ضيق التنفس'},
+      'Karın ağrısı':{en:'Abdominal pain',ar:'ألم في البطن'},
+      'Mide bulantısı':{en:'Nausea',ar:'غثيان'},
+    };
+    const e=_map[str.trim()];
+    if(e) return e[pdLang]||e['en']||str;
+    return str;
+  };
   const makeCard=(v,i)=>{
     const tl=v.triage_level||v.summary?.triage_level||'GREEN';
     const locale=pdLang==='ar'?'ar-SA':pdLang==='en'?'en-US':'tr-TR';
     const date=v.created_at?new Date(v.created_at).toLocaleString(locale):'—';
-    const complaint=v.chief_complaint||v.summary?.chief_complaint||d.notSpecified;
+    const complaint=_pdLocalize(v.chief_complaint||v.summary?.chief_complaint||d.notSpecified);
     const sid=v.session_id||v.id;
     return `<div class="card p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 fade" style="animation-delay:${i*0.05}s">
       <div class="flex items-start gap-4">
@@ -712,29 +730,8 @@ function showClaimMsg(text,type){
 }
 
 function openVisitReport(sessionId){
-  // Butonun loading state'ini aktive et
-  const btn = event && event.target ? event.target.closest('button') : null;
-  const origHtml = btn ? btn.innerHTML : '';
-  if(btn){ btn.disabled=true; btn.innerHTML=`<span class="material-symbols-outlined msym text-[14px] spin">refresh</span>`; }
-  const controller = new AbortController();
-  const timeoutId = setTimeout(()=>controller.abort(), 60000); // 60 sn timeout
-
-  fetch(`${API}/api/session/${sessionId}/summary`,{
-    headers:{Authorization:`Bearer ${token}`},
-    signal: controller.signal
-  })
-    .then(r=>{ clearTimeout(timeoutId); return r.ok?r.json():null; })
-    .then(data=>{
-      if(btn){ btn.disabled=false; btn.innerHTML=origHtml; }
-      if(data){localStorage.setItem('anamnez_summary',JSON.stringify(data));window.location.href='summary.html';}
-      else showToast((PDL[pdLang]||PDL.tr).toastReport||'Rapor yüklenemedi.',true);
-    })
-    .catch((e)=>{
-      clearTimeout(timeoutId);
-      if(btn){ btn.disabled=false; btn.innerHTML=origHtml; }
-      const msg = e.name==='AbortError' ? 'Zaman aşımı — rapor çok uzun sürdü.' : (PDL[pdLang]||PDL.tr).toastReport||'Rapor yüklenemedi.';
-      showToast(msg, true);
-    });
+  // Direkt summary.html?sid= ile yönlendir — cache/localStorage bağımsız
+  window.location.href = 'summary.html?sid=' + encodeURIComponent(sessionId);
 }
 
 function showToast(msg,isErr=false){
