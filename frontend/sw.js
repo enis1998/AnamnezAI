@@ -3,8 +3,8 @@
  * Sprint 4: Offline support, background sync, cache strategy
  */
 
-const CACHE_NAME = 'anamnezai-v11';
-const APP_VERSION = '2026.05.15-ai-fixed';
+const CACHE_NAME = 'anamnezai-v12';
+const APP_VERSION = '2026.05.17-report-fix';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
