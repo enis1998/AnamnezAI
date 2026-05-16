@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Allow: /landing.html
+Allow: /index.html
+Allow: /doctor.html
+Allow: /kiosk.html
+Allow: /admin.html
+Allow: /api/public/
+
+Disallow: /api/session/
+Disallow: /api/admin/
+Disallow: /api/patients/
+Disallow: /api/audit/
+Disallow: /*.log$
+
+Sitemap: https://lifetrack.com.tr/sitemap.xml

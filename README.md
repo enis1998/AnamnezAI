@@ -17,6 +17,22 @@
 
 ---
 
+## Screenshots
+
+| Patient Info Form | AI Interview (in progress) | Clinical Summary |
+|:-----------------:|:--------------------------:|:----------------:|
+| ![Patient Info Form](docs/screenshots/01_patient_info_form.png) | ![AI Interview](docs/screenshots/02_patient_interview.png) | ![Clinical Summary](docs/screenshots/03_clinical_summary.png) |
+
+| Doctor Triage Queue | Kiosk Touch Screen | Clinical Review |
+|:-------------------:|:------------------:|:---------------:|
+| ![Doctor Panel](docs/screenshots/04_doctor_panel.png) | ![Kiosk](docs/screenshots/05_kiosk.png) | ![Clinical Review](docs/screenshots/06_clinical_review.png) |
+
+| Admin Dashboard | Landing Page | Patient Registration |
+|:---------------:|:------------:|:--------------------:|
+| ![Admin](docs/screenshots/07_admin.png) | ![Landing](docs/screenshots/08_landing.png) | ![Register](docs/screenshots/09_register.png) |
+
+---
+
 ## The Story — Why This Exists
 
 ### A waiting room no one wants to be in

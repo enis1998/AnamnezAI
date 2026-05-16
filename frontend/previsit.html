@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>AnamnezAI — Randevu Öncesi Görüşme</title>
+<title>AnamnezAI — Pre-Visit Consultation</title>
 <script src="vendor/tailwind.min.js"></script>
 <link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
 <link href="vendor/fonts/material_symbols_local.css" rel="stylesheet"/>
@@ -171,7 +171,7 @@ let appointmentId = null;
 let sessionId = null;
 let currentStep = 0;
 let totalSteps = 5;
-let lang = 'tr';
+let lang = 'en';
 let isWaiting = false;
 let isCompleted = false;
 
@@ -446,7 +446,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   appointmentId = params.get('appt') || params.get('appointment_id');
 
-  const langParam = params.get('lang') || 'tr';
+  const langParam = params.get('lang') || 'en';
   setLang(langParam);
 
   document.getElementById('hdr-subtitle').textContent = t('subtitle');

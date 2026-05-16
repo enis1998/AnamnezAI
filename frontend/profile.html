@@ -1,9 +1,9 @@
 ﻿<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AnamnezAI — Profilim</title>
+<title>AnamnezAI — My Profile</title>
 <script src="vendor/tailwind.min.js"></script>
 <link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
 <link href="vendor/fonts/material_symbols_local.css" rel="stylesheet"/>
@@ -238,6 +238,14 @@ tailwind.config = {
 
 <script>
 const API = '';
+function extractText(val){
+  if(!val) return '';
+  const s=String(val).trim();
+  if(s.startsWith('{')){
+    try{const obj=JSON.parse(s);return obj.symptoms_summary||obj.narrative||obj.chief_complaint||obj.clinical_notes||obj.summary||s;}catch(e){}
+  }
+  return s;
+}
 const TRIAGE_CFG = {
   RED:    {bg:'#fff5f5',color:'#ba1a1a',label:'🔴 ACİL',border:'#ffa8a8'},
   YELLOW: {bg:'#fff8f0',color:'#b05508',label:'🟡 ACIL',border:'#ffcf8b'},
@@ -409,9 +417,9 @@ async function loadHistory() {
               <span class="text-[11px] font-bold px-2 py-0.5 rounded-full border" style="background:${cfg.bg};color:${cfg.color};border-color:${cfg.border}">${cfg.label}</span>
               <span class="text-[10px] text-ouv">${date} ${time}</span>
             </div>
-            <p class="text-sm font-semibold text-pri truncate">${h.chief_complaint || 'Şikayet bilgisi yok'}</p>
-            ${h.symptoms_summary ? `<p class="text-xs text-onsv mt-0.5 line-clamp-2">${h.symptoms_summary}</p>` : ''}
-            ${h.recommended_action ? `<p class="text-xs text-sec mt-1 font-medium">→ ${h.recommended_action}</p>` : ''}
+            <p class="text-sm font-semibold text-pri truncate">${extractText(h.chief_complaint) || 'Şikayet bilgisi yok'}</p>
+            ${h.symptoms_summary ? `<p class="text-xs text-onsv mt-0.5 line-clamp-2">${extractText(h.symptoms_summary)}</p>` : ''}
+            ${h.recommended_action ? `<p class="text-xs text-sec mt-1 font-medium">→ ${extractText(h.recommended_action)}</p>` : ''}
           </div>
           <div class="text-center flex-shrink-0">
             <div class="text-[20px] font-head font-bold" style="color:${cfg.color}">${h.confidence_score || '—'}</div>

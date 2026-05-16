@@ -11,8 +11,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-anamnezai_secret}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # Port 5432 host'a açılmıyor — backend iç network üzerinden bağlanır
+    # (host'ta başka bir postgres olabilir, çakışma önlenir)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U anamnezai -d anamnezai"]
       interval: 10s

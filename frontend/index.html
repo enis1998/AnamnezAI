@@ -1,15 +1,15 @@
 ﻿<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AnamnezAI — Akıllı Hasta Ön Triaj</title>
+<title>AnamnezAI — AI-Powered Patient Pre-Triage</title>
 <link rel="manifest" href="/manifest.json"/>
 <meta name="theme-color" content="#006a68"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="AnamnezAI"/>
-<meta name="description" content="AI-Powered Patient Pre-Triage — Gemma 4 | Yapay Zeka Destekli Hasta Ön Triajı"/>
+<meta name="description" content="AI-Powered Patient Pre-Triage — Gemma 4 | Intelligent symptom analysis, local AI, zero data sharing."/>
 <script src="vendor/tailwind.min.js"></script>
 <link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
 <link href="vendor/fonts/material_symbols_local.css" rel="stylesheet"/>
@@ -410,7 +410,7 @@ tailwind.config = {
 
 <script>
 const API = '';
-let sessionId = null, lang = localStorage.getItem('ui_lang') || 'tr', recognition = null;
+let sessionId = null, lang = localStorage.getItem('ui_lang') || 'en', recognition = null;
 let chatHistory = [];
 let lastStartParams = null;
 let prepTimerRef = null;   // legacy — artık kullanılmıyor
@@ -671,6 +671,9 @@ function applyT(){
   // Textarea placeholder
   const ia = document.getElementById('inp-answer');
   if(ia) ia.placeholder = t('ansPh');
+  // Name input placeholder
+  const ni = document.getElementById('inp-name');
+  if(ni && !ni.value) ni.placeholder = lang==='tr'?'Adınızı girin':(lang==='ar'?'أدخل اسمك':'Enter your name');
   // Görüntü context seçenekleri
   const imgCtx = document.getElementById('img-context');
   if(imgCtx && imgCtx.options.length>=5){

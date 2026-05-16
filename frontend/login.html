@@ -1,9 +1,9 @@
 ﻿<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AnamnezAI — Giriş</title>
+<title>AnamnezAI — Sign In</title>
 <script src="vendor/tailwind.min.js"></script>
 <link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
 <link href="vendor/fonts/material_symbols_local.css" rel="stylesheet"/>
@@ -62,41 +62,41 @@ tailwind.config = {
 <main class="pt-14 min-h-screen flex items-center justify-center px-4">
 <div class="w-full max-w-md fade">
 
-  <!-- Zaten giriş yapılmışsa banner (JS ile gösterilir) -->
+  <!-- Already logged-in banner -->
   <div id="already-logged-in-banner" class="hidden mb-5 p-4 rounded-2xl border border-warn/40 bg-warn/5">
     <div class="flex items-center gap-3 mb-3">
       <span class="material-symbols-outlined msym-fill text-warn text-[22px]">info</span>
       <div>
-        <p class="font-semibold text-pri text-sm" id="banner-name">Dr. Kullanıcı</p>
-        <p class="text-xs text-onsv" id="banner-role">olarak aktif oturum var</p>
+        <p class="font-semibold text-pri text-sm" id="banner-name">Dr. User</p>
+        <p class="text-xs text-onsv" id="banner-role">active session</p>
       </div>
     </div>
-    <p class="text-xs text-onsv mb-3">Farklı bir hesapla giriş yapmak istiyorsanız önce çıkış yapın.</p>
+    <p class="text-xs text-onsv mb-3">To sign in with a different account, please log out first.</p>
     <div class="flex gap-2">
       <button onclick="doLogoutAndStay()"
         class="flex-1 py-2 rounded-xl bg-pri text-white text-sm font-semibold hover:bg-pric transition-all">
-        <span id="lg-btn-logout">Çıkış Yap / Farklı Hesap</span>
+        <span id="lg-btn-logout">Logout / Switch Account</span>
       </button>
       <a id="banner-panel-link" href="doctor.html"
         class="flex-1 py-2 text-center rounded-xl border border-surfc bg-surf text-onsv text-sm font-semibold hover:bg-surfc transition-all">
-        Panele Dön
+        Back to Panel
       </a>
     </div>
   </div>
 
-  <!-- Giriş yapmadan mülakat başlat -->
+  <!-- Try without signing in -->
   <div class="mb-5 p-4 rounded-2xl border border-surfc bg-surf flex items-center justify-between gap-3">
     <div class="flex items-center gap-2.5">
       <span class="material-symbols-outlined msym-fill text-sec text-[20px]">play_circle</span>
       <div>
-        <p class="text-sm font-semibold text-pri">Giriş Yapmadan Dene</p>
-        <p class="text-xs text-onsv">Kayıt olmadan hızlı mülakat başlat</p>
+        <p class="text-sm font-semibold text-pri">Try Without Signing In</p>
+        <p class="text-xs text-onsv">Start a quick interview without registration</p>
       </div>
     </div>
     <a href="index.html"
       class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sec text-white text-xs font-bold hover:bg-pric transition-all whitespace-nowrap">
       <span class="material-symbols-outlined msym text-[14px]">arrow_forward</span>
-      Başla
+      Start
     </a>
   </div>
 
@@ -105,40 +105,40 @@ tailwind.config = {
     <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-pric to-sec flex items-center justify-center mx-auto mb-4 shadow-lg">
       <span class="material-symbols-outlined msym-fill text-white text-3xl">local_hospital</span>
     </div>
-    <h1 class="text-2xl font-head font-bold text-pri">Hoş Geldiniz</h1>
-    <p class="text-sm text-onsv mt-1">AnamnezAI'ya giriş yapın</p>
+    <h1 class="text-2xl font-head font-bold text-pri">Welcome</h1>
+    <p class="text-sm text-onsv mt-1">Sign in to AnamnezAI</p>
   </div>
 
-  <!-- Tab Seçici -->
+  <!-- Tab selector -->
   <div class="flex bg-surfc rounded-full p-1 mb-6 gap-1">
     <button onclick="setTab('patient')" id="tab-patient"
       class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-semibold transition-all tab-active">
       <span class="material-symbols-outlined msym text-[17px]">person</span>
-      Hasta Girişi
+      Patient Login
     </button>
     <button onclick="setTab('doctor')" id="tab-doctor"
       class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-semibold transition-all text-onsv">
       <span class="material-symbols-outlined msym text-[17px]">stethoscope</span>
-      Doktor Girişi
+      Doctor Login
     </button>
   </div>
 
   <!-- Login Card -->
   <div class="card p-6">
 
-    <!-- Hasta modu açıklaması -->
+    <!-- Patient mode info -->
     <div id="info-patient" class="flex items-start gap-3 p-3 rounded-xl bg-surf mb-5 text-sm text-onsv">
       <span class="material-symbols-outlined msym-fill text-sec text-[18px] mt-0.5">info</span>
-      <span>Kayıtlı hesabınızla giriş yapın veya <a href="register.html" class="text-sec font-semibold underline-offset-2 hover:underline">yeni hesap oluşturun</a>.</span>
+      <span>Sign in with your account or <a href="register.html" class="text-sec font-semibold underline-offset-2 hover:underline">create a new account</a>.</span>
     </div>
 
-    <!-- Doktor modu açıklaması -->
+    <!-- Doctor mode info -->
     <div id="info-doctor" class="hidden flex items-start gap-3 p-3 rounded-xl bg-blue-50 mb-5 text-sm text-onsv">
       <span class="material-symbols-outlined msym-fill text-pric text-[18px] mt-0.5">medical_services</span>
-      <span>Kurumsal doktor hesabıyla giriş yapın. Demo: <b>doctor@anamnezai.tr</b> / <b>doctor123</b></span>
+      <span>Sign in with your clinic doctor account. Demo: <b>doctor@anamnezai.tr</b> / <b>doctor123</b></span>
     </div>
 
-    <!-- Hata mesajı -->
+    <!-- Error message -->
     <div id="err-msg" class="hidden flex items-center gap-2 p-3 rounded-xl bg-errc text-err text-sm mb-4 font-medium">
       <span class="material-symbols-outlined msym text-[17px]">error</span>
       <span id="err-text"></span>
@@ -147,17 +147,17 @@ tailwind.config = {
     <form id="login-form" onsubmit="doLogin(event)" class="space-y-4">
       <!-- Email -->
       <div>
-        <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">E-posta</label>
+        <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">Email</label>
         <div class="relative">
           <span class="material-symbols-outlined msym absolute left-3 top-1/2 -translate-y-1/2 text-ouv text-[18px]">mail</span>
-          <input id="inp-email" type="email" placeholder="ornek@mail.com" required autocomplete="email"
+          <input id="inp-email" type="email" placeholder="example@mail.com" required autocomplete="email"
             class="w-full pl-10 pr-4 py-2.5 border border-surfc rounded-xl text-sm focus:border-sec transition-all bg-surf"/>
         </div>
       </div>
 
-      <!-- Şifre -->
+      <!-- Password -->
       <div>
-        <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">Şifre</label>
+        <label class="block text-xs font-semibold text-onsv mb-1.5 uppercase tracking-wide">Password</label>
         <div class="relative">
           <span class="material-symbols-outlined msym absolute left-3 top-1/2 -translate-y-1/2 text-ouv text-[18px]">lock</span>
           <input id="inp-pass" type="password" placeholder="••••••••" required autocomplete="current-password"
@@ -172,19 +172,19 @@ tailwind.config = {
       <button type="submit" id="btn-login"
         class="w-full py-3 bg-pri hover:bg-pric text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 mt-2">
         <span class="material-symbols-outlined msym-fill text-[18px]">login</span>
-        <span id="btn-login-text">Giriş Yap</span>
+        <span id="btn-login-text">Sign In</span>
       </button>
     </form>
 
-    <!-- Hasta kayıt linki -->
+    <!-- Register link -->
     <div id="register-link" class="mt-5 text-center text-sm text-onsv">
-      Hesabınız yok mu?
-      <a href="register.html" class="text-sec font-semibold hover:underline underline-offset-2 ml-1">Kayıt Ol</a>
+      Don't have an account?
+      <a href="register.html" class="text-sec font-semibold hover:underline underline-offset-2 ml-1">Register</a>
     </div>
 
-    <!-- Google ile Giriş (sadece hasta modu) -->
+    <!-- Google Sign In (patient mode only) -->
     <div id="google-section" class="mt-1">
-      <div class="divider">veya</div>
+      <div class="divider">or</div>
       <button type="button" onclick="doGoogleLogin()" class="btn-google">
         <!-- Google SVG Icon -->
         <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -193,17 +193,17 @@ tailwind.config = {
           <path d="M11.019 28.518A14.73 14.73 0 0 1 10.27 24c0-1.567.27-3.089.749-4.518v-6.2H2.95A23.93 23.93 0 0 0 .48 24c0 3.86.928 7.51 2.47 10.718l8.069-6.2z" fill="#FBBC05"/>
           <path d="M24.48 9.575c3.526 0 6.687 1.212 9.177 3.59l6.878-6.877C36.435 2.378 30.979 0 24.48 0 15.063 0 6.92 5.226 2.95 13.282l8.069 6.2c1.895-5.68 7.2-9.907 13.461-9.907z" fill="#EA4335"/>
         </svg>
-        Google ile Devam Et
+        Continue with Google
       </button>
       <p id="google-status" class="text-center text-xs text-ouv mt-2 hidden"></p>
     </div>
 
   </div>
 
-  <!-- Alt bilgi -->
+  <!-- Footer -->
   <p class="text-center text-xs text-ouv mt-6">
     <span class="material-symbols-outlined msym text-[13px] align-middle">shield</span>
-    Verileriniz KVKK kapsamında korunmaktadır · AnamnezAI v4.0
+    Your data is protected under GDPR/KVKK · AnamnezAI v4.0
   </p>
 
 </div>
@@ -225,7 +225,6 @@ function setTab(tab) {
   document.getElementById('info-patient').className = `flex items-start gap-3 p-3 rounded-xl bg-surf mb-5 text-sm text-onsv ${isDoctor ? 'hidden' : ''}`;
   document.getElementById('info-doctor').className = `flex items-start gap-3 p-3 rounded-xl bg-blue-50 mb-5 text-sm text-onsv ${isDoctor ? '' : 'hidden'}`;
   document.getElementById('register-link').className = `mt-5 text-center text-sm text-onsv ${isDoctor ? 'hidden' : ''}`;
-  // Google butonu sadece hasta sekmesinde görünür
   document.getElementById('google-section').style.display = isDoctor ? 'none' : '';
   hideErr();
 }
@@ -258,11 +257,8 @@ async function saveAndRedirect(data) {
   const role = data.user.role;
   const next = new URLSearchParams(window.location.search).get('next');
   if (next) { window.location.href = next + '.html'; return; }
-  if (['doctor','admin','personnel'].includes(role)) {
-    window.location.href = 'doctor.html';
-  } else {
-    window.location.href = 'patient_dashboard.html';
-  }
+  if (['doctor','admin','personnel'].includes(role)) { window.location.href = 'doctor.html'; }
+  else { window.location.href = 'patient_dashboard.html'; }
 }
 
 async function doLogin(e) {
@@ -274,7 +270,7 @@ async function doLogin(e) {
   const btnText = document.getElementById('btn-login-text');
 
   btn.disabled = true;
-  btnText.textContent = 'Giriş yapılıyor...';
+  btnText.textContent = 'Signing in...';
 
   try {
     const res = await fetch(`${API}/auth/login`, {
@@ -284,12 +280,12 @@ async function doLogin(e) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showErr(data.detail || 'Giriş başarısız.');
+      showErr(data.detail || 'Sign in failed.');
       return;
     }
 
     if (currentTab === 'doctor' && !['doctor','admin','personnel'].includes(data.user.role)) {
-      showErr('Bu hesap hasta hesabı. Lütfen "Hasta Girişi" sekmesini kullanın.');
+      showErr('This is a patient account. Please use the "Patient Login" tab.');
       localStorage.removeItem('anamnez_token');
       localStorage.removeItem('anamnez_user');
       return;
@@ -298,10 +294,10 @@ async function doLogin(e) {
     saveAndRedirect(data);
 
   } catch (err) {
-    showErr('Sunucuya bağlanılamadı. Backend çalışıyor mu?');
+    showErr('Could not connect to server. Is the backend running?');
   } finally {
     btn.disabled = false;
-    btnText.textContent = 'Giriş Yap';
+    btnText.textContent = 'Sign In';
   }
 }
 
@@ -311,7 +307,7 @@ function doGoogleLogin() {
 
   if (!GOOGLE_CLIENT_ID) {
     // Client ID yoksa kullanıcıya bilgi ver
-    statusEl.textContent = '⚠️ Google OAuth henüz yapılandırılmamış. E-posta/şifre ile giriş yapın.';
+    statusEl.textContent = '⚠️ Google OAuth is not configured. Please use email/password.';
     statusEl.className = 'text-center text-xs text-warn mt-2';
     statusEl.classList.remove('hidden');
     return;
@@ -319,7 +315,7 @@ function doGoogleLogin() {
 
   // Google Identity Services popup
   if (!window.google) {
-    statusEl.textContent = 'Google kütüphanesi yükleniyor, lütfen bekleyin...';
+    statusEl.textContent = 'Loading Google library, please wait...';
     statusEl.className = 'text-center text-xs text-ouv mt-2';
     statusEl.classList.remove('hidden');
     loadGoogleScript().then(doGoogleLogin);
@@ -348,7 +344,7 @@ function loadGoogleScript() {
 
 async function handleGoogleResponse(response) {
   const statusEl = document.getElementById('google-status');
-  statusEl.textContent = 'Google hesabı doğrulanıyor...';
+  statusEl.textContent = 'Verifying Google account...';
   statusEl.className = 'text-center text-xs text-onsv mt-2';
   statusEl.classList.remove('hidden');
 
@@ -360,13 +356,13 @@ async function handleGoogleResponse(response) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showErr(data.detail || 'Google ile giriş başarısız.');
+      showErr(data.detail || 'Google sign-in failed.');
       statusEl.classList.add('hidden');
       return;
     }
     saveAndRedirect(data);
   } catch(err) {
-    showErr('Google girişi sırasında sunucu hatası.');
+    showErr('Server error during Google sign-in.');
     statusEl.classList.add('hidden');
   }
 }
@@ -382,17 +378,10 @@ if (GOOGLE_CLIENT_ID) loadGoogleScript();
 
   function showBanner(u) {
     let panelHref, roleLabel;
-    if (u.role === 'admin') {
-      panelHref = 'admin.html';
-      roleLabel = 'Yönetici olarak giriş yaptınız';
-    } else if (['doctor','personnel'].includes(u.role)) {
-      panelHref = 'doctor.html';
-      roleLabel = 'Doktor/Personel olarak giriş yaptınız';
-    } else {
-      panelHref = 'patient_dashboard.html';
-      roleLabel = 'Hasta olarak giriş yaptınız';
-    }
-    document.getElementById('banner-name').textContent = u.name || u.email || 'Kullanıcı';
+    if (u.role === 'admin') { panelHref = 'admin.html'; roleLabel = 'Signed in as Administrator'; }
+    else if (['doctor','personnel'].includes(u.role)) { panelHref = 'doctor.html'; roleLabel = 'Signed in as Doctor/Staff'; }
+    else { panelHref = 'patient_dashboard.html'; roleLabel = 'Signed in as Patient'; }
+    document.getElementById('banner-name').textContent = u.name || u.email || 'User';
     document.getElementById('banner-role').textContent = roleLabel;
     document.getElementById('banner-panel-link').href = panelHref;
     document.getElementById('already-logged-in-banner').classList.remove('hidden');
@@ -423,16 +412,10 @@ function doLogoutAndStay() {
 
 // i18n: apply stored language
 (function(){
-  const l = localStorage.getItem('ui_lang') || 'tr';
+  const l = localStorage.getItem('ui_lang') || 'en';
   document.documentElement.lang = l;
   document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
-  const logoutEl = document.getElementById('lg-btn-logout');
-  if (logoutEl) {
-    const labels = {tr:'Çıkış Yap / Farklı Hesap', en:'Logout / Switch Account', ar:'تسجيل الخروج / تغيير الحساب'};
-    logoutEl.textContent = labels[l] || labels.tr;
-  }
 })();
-
 </script>
 </body>
 </html>

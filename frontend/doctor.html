@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
-<html lang="tr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AnamnezAI — Doktor Paneli</title>
+<title>AnamnezAI � Doctor Panel</title>
 <script src="vendor/tailwind.min.js"></script>
 <link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
 <link href="vendor/fonts/material_symbols_local.css" rel="stylesheet"/>
@@ -48,7 +48,7 @@ tailwind.config={theme:{extend:{colors:{
 
 <div class="flex h-screen">
 
-  <!-- ── SIDEBAR ── -->
+  <!-- �� SIDEBAR �� -->
   <aside id="main-sidebar" class="w-56 flex-shrink-0 bg-white flex flex-col border-r border-surfc">
     <div class="px-5 py-4 flex items-center gap-2.5 border-b border-surfc">
       <div class="w-8 h-8 rounded-lg bg-pric flex items-center justify-center">
@@ -74,9 +74,9 @@ tailwind.config={theme:{extend:{colors:{
         <span class="material-symbols-outlined msym text-[17px]">event_available</span><span id="txt-nav-previsit">Pre-Visit Briefs</span>
       </button>
 
-      <!-- Sprint 13: Kiosk Yönetim -->
+      <!-- Sprint 13: Kiosk Y�netim -->
       <div class="pt-3 pb-1 px-3">
-        <p id="txt-nav-kiosk-mgmt" class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Kiosk Yönetim</p>
+        <p id="txt-nav-kiosk-mgmt" class="text-[9px] font-bold text-onsv uppercase tracking-widest opacity-50">Kiosk Y�netim</p>
       </div>
       <button onclick="kioskLock(true)"
         class="w-full flex items-center gap-2.5 text-onsv hover:bg-errc hover:text-err rounded-xl px-3 py-2.5 text-[13px] transition-colors">
@@ -84,7 +84,7 @@ tailwind.config={theme:{extend:{colors:{
       </button>
       <button onclick="kioskLock(false)"
         class="w-full flex items-center gap-2.5 text-onsv hover:bg-secc hover:text-sec rounded-xl px-3 py-2.5 text-[13px] transition-colors">
-        <span class="material-symbols-outlined msym text-[17px]">lock_open</span><span id="txt-nav-unlock">Kiosk'u Aç</span>
+        <span class="material-symbols-outlined msym text-[17px]">lock_open</span><span id="txt-nav-unlock">Kiosk'u A�</span>
       </button>
 
       <!-- Sistem -->
@@ -105,27 +105,27 @@ tailwind.config={theme:{extend:{colors:{
     <div class="p-3 border-t border-surfc">
       <div id="sidebar-status" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surfc text-[11px]">
         <div class="w-1.5 h-1.5 rounded-full bg-ouv dot-pulse"></div>
-        <span class="text-onsv font-medium">Bağlanıyor...</span>
+        <span class="text-onsv font-medium">Ba�lan�yor...</span>
       </div>
       <div class="flex items-center gap-2.5 px-3 py-2.5 mt-1">
         <div class="w-8 h-8 rounded-full bg-pric/10 flex items-center justify-center">
           <span class="material-symbols-outlined msym text-pric text-[16px]">stethoscope</span>
         </div>
         <div class="flex-1 min-w-0">
-          <p class="text-[12px] font-bold text-pri truncate" id="doctor-name-sidebar">Dr. Kullanıcı</p>
-          <p class="text-[10px] text-onsv truncate" id="doctor-spec-sidebar">Klinik Yöneticisi</p>
+          <p class="text-[12px] font-bold text-pri truncate" id="doctor-name-sidebar">Dr. Kullan�c�</p>
+          <p class="text-[10px] text-onsv truncate" id="doctor-spec-sidebar">Klinik Y�neticisi</p>
         </div>
       </div>
       <button onclick="doLogout()" class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-onsv hover:bg-errc hover:text-err transition-all text-[12px] font-medium mt-1">
-        <span class="material-symbols-outlined msym text-[16px]">logout</span><span id="txt-nav-logout">Çıkış Yap</span>
+        <span class="material-symbols-outlined msym text-[16px]">logout</span><span id="txt-nav-logout">��k�� Yap</span>
       </button>
     </div>
   </aside>
 
-  <!-- ── MAIN ── -->
+  <!-- �� MAIN �� -->
   <div class="flex-1 flex flex-col min-w-0">
 
-    <!-- Model Durum Bar kaldırıldı -->
+    <!-- Model Durum Bar kald�r�ld� -->
 
     <!-- Top Bar -->
     <header class="bg-white border-b border-surfc px-4 sm:px-6 py-3 flex justify-between items-center flex-shrink-0">
@@ -147,7 +147,7 @@ tailwind.config={theme:{extend:{colors:{
         </div>
         <div id="live-indicator" class="hidden items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
           <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 dot-pulse"></div>
-          <span id="txt-live-lbl">Canlı</span>
+          <span id="txt-live-lbl">Canl�</span>
         </div>
         <button onclick="loadQueue()"
           class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
@@ -155,9 +155,9 @@ tailwind.config={theme:{extend:{colors:{
         </button>
         <a href="kiosk.html" target="_blank"
           class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sec text-white text-[12px] font-bold hover:bg-pric transition-all">
-          <span class="material-symbols-outlined msym text-[15px]">monitor</span><span id="txt-kiosk-btn">Kiosk Ekranı</span>
+          <span class="material-symbols-outlined msym text-[15px]">monitor</span><span id="txt-kiosk-btn">Kiosk Ekran�</span>
         </a>
-        <!-- Dil Seçici -->
+        <!-- Dil Se�ici -->
         <div class="flex bg-surfc rounded-full p-0.5 gap-0.5">
           <button onclick="setLang('tr')" id="dlbtn-tr" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all">TR</button>
           <button onclick="setLang('en')" id="dlbtn-en" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all">EN</button>
@@ -173,22 +173,22 @@ tailwind.config={theme:{extend:{colors:{
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <div class="card p-4">
           <p id="txt-stat-total-lbl" class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1">Toplam</p>
-          <p class="text-[28px] font-head font-bold text-pri" id="stat-total">—</p>
+          <p class="text-[28px] font-head font-bold text-pri" id="stat-total">�</p>
           <p id="txt-stat-total-sub" class="text-[11px] text-onsv">aktif hasta</p>
         </div>
         <div class="card p-4" style="background:#fff5f5">
-          <p id="txt-stat-red-lbl" class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#ba1a1a">🔴 Acil</p>
-          <p class="text-[28px] font-head font-bold" style="color:#ba1a1a" id="stat-red">—</p>
-          <p id="txt-stat-red-sub" class="text-[11px] text-onsv">derhal müdahale</p>
+          <p id="txt-stat-red-lbl" class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#ba1a1a">?? Acil</p>
+          <p class="text-[28px] font-head font-bold" style="color:#ba1a1a" id="stat-red">�</p>
+          <p id="txt-stat-red-sub" class="text-[11px] text-onsv">derhal m�dahale</p>
         </div>
         <div class="card p-4" style="background:#fff8f0">
-          <p id="txt-stat-yellow-lbl" class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#b05508">🟡 Acil/Bekleyebilir</p>
-          <p class="text-[28px] font-head font-bold" style="color:#b05508" id="stat-yellow">—</p>
-          <p id="txt-stat-yellow-sub" class="text-[11px] text-onsv">kısa süre içinde</p>
+          <p id="txt-stat-yellow-lbl" class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#b05508">?? Acil/Bekleyebilir</p>
+          <p class="text-[28px] font-head font-bold" style="color:#b05508" id="stat-yellow">�</p>
+          <p id="txt-stat-yellow-sub" class="text-[11px] text-onsv">k�sa s�re i�inde</p>
         </div>
         <div class="card p-4" style="background:#f0faf9">
-          <p id="txt-stat-green-lbl" class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#006a68">🟢 Rutin</p>
-          <p class="text-[28px] font-head font-bold" style="color:#006a68" id="stat-green">—</p>
+          <p id="txt-stat-green-lbl" class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#006a68">?? Rutin</p>
+          <p class="text-[28px] font-head font-bold" style="color:#006a68" id="stat-green">�</p>
           <p id="txt-stat-green-sub" class="text-[11px] text-onsv">standart kuyruk</p>
         </div>
       </div>
@@ -197,8 +197,8 @@ tailwind.config={theme:{extend:{colors:{
       <div class="card mb-5 overflow-hidden">
         <div class="px-5 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b border-surfc">
           <div>
-            <h2 id="txt-queue-title" class="font-head font-bold text-pri text-[15px]">Aktif Triaj Kuyruğu</h2>
-            <p class="text-[11px] text-onsv" id="txt-queue-sub">Backend'den yükleniyor...</p>
+            <h2 id="txt-queue-title" class="font-head font-bold text-pri text-[15px]">Aktif Triaj Kuyru�u</h2>
+            <p class="text-[11px] text-onsv" id="txt-queue-sub">Backend'den y�kleniyor...</p>
           </div>
           <div class="flex items-center gap-2">
           <!-- Hasta Ara -->
@@ -212,16 +212,16 @@ tailwind.config={theme:{extend:{colors:{
             <!-- Triaj filtresi -->
             <select id="sel-filter" onchange="filterQueue(document.getElementById('inp-search').value)"
               class="rounded-xl bg-surfc border border-transparent px-2.5 py-1.5 text-[12px] text-onsv" style="outline:none">
-              <option id="txt-filter-all" value="">Tümü</option>
-              <option id="txt-filter-red" value="RED">🔴 Acil</option>
-              <option id="txt-filter-yellow" value="YELLOW">🟡 İkincil</option>
-              <option id="txt-filter-green" value="GREEN">🟢 Rutin</option>
+              <option id="txt-filter-all" value="">T�m�</option>
+              <option id="txt-filter-red" value="RED">?? Acil</option>
+              <option id="txt-filter-yellow" value="YELLOW">?? �kincil</option>
+              <option id="txt-filter-green" value="GREEN">?? Rutin</option>
             </select>
             <span id="txt-queue-count" class="text-[12px] font-bold text-onsv bg-surfc px-3 py-1 rounded-full"></span>
-            <!-- Görünüm toggle -->
+            <!-- G�r�n�m toggle -->
             <button onclick="toggleQueueView()" id="btn-view-toggle"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium"
-              title="Tablo / Kanban görünümü">
+              title="Tablo / Kanban g�r�n�m�">
               <span class="material-symbols-outlined msym text-[15px]" id="icon-view-toggle">view_kanban</span>
             </button>
           </div>
@@ -230,26 +230,26 @@ tailwind.config={theme:{extend:{colors:{
         <div id="live-kanban" class="hidden p-4"></div>
       </div>
 
-      <!-- Görüldü Arşivi -->
+      <!-- G�r�ld� Ar�ivi -->
       <div class="card mb-5 overflow-hidden">
         <div class="px-5 py-4 flex justify-between items-center border-b border-surfc">
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined msym text-green-600 text-[17px]">inventory_2</span>
             <div>
-              <h2 id="txt-seen-title" class="font-head font-bold text-pri text-[15px]">Görüldü Arşivi</h2>
-              <p class="text-[11px] text-onsv" id="txt-seen-sub">Görüldü işaretlenen hastalar</p>
+              <h2 id="txt-seen-title" class="font-head font-bold text-pri text-[15px]">G�r�ld� Ar�ivi</h2>
+              <p class="text-[11px] text-onsv" id="txt-seen-sub">G�r�ld� i�aretlenen hastalar</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
             <span id="txt-seen-count" class="text-[12px] font-bold text-onsv bg-surfc px-3 py-1 rounded-full hidden"></span>
             <button onclick="toggleSeenArchive()" id="btn-seen-toggle"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
-              <span class="material-symbols-outlined msym text-[14px]">expand_more</span><span id="txt-seen-toggle-btn">Göster</span>
+              <span class="material-symbols-outlined msym text-[14px]">expand_more</span><span id="txt-seen-toggle-btn">G�ster</span>
             </button>
           </div>
         </div>
         <div id="seen-archive" class="hidden">
-          <div id="seen-table"><div class="text-center py-8 text-onsv text-[13px]">Yükleniyor...</div></div>
+          <div id="seen-table"><div class="text-center py-8 text-onsv text-[13px]">Y�kleniyor...</div></div>
         </div>
       </div>
       <div id="analytics-panel" class="hidden card mb-5 overflow-hidden">
@@ -271,8 +271,8 @@ tailwind.config={theme:{extend:{colors:{
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined msym text-sec text-[17px]">event_available</span>
             <div>
-              <h2 id="txt-previsit-title" class="font-head font-bold text-pri text-[15px]">Bugünün Randevuları & Pre-Visit Briefs</h2>
-              <p class="text-[11px] text-onsv" id="txt-previsit-sub">Randevu öncesi hasta anamnez görüşmeleri</p>
+              <h2 id="txt-previsit-title" class="font-head font-bold text-pri text-[15px]">Bug�n�n Randevular� & Pre-Visit Briefs</h2>
+              <p class="text-[11px] text-onsv" id="txt-previsit-sub">Randevu �ncesi hasta anamnez g�r��meleri</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -288,14 +288,14 @@ tailwind.config={theme:{extend:{colors:{
             <button onclick="togglePrevisitSection()" id="btn-previsit-toggle"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium">
               <span class="material-symbols-outlined msym text-[14px]" id="icon-previsit-toggle">expand_more</span>
-              <span id="txt-previsit-toggle">Göster</span>
+              <span id="txt-previsit-toggle">G�ster</span>
             </button>
           </div>
         </div>
         <div id="previsit-content" class="hidden">
           <div id="previsit-table"><div class="text-center py-10 text-onsv text-[13px]">
             <span class="material-symbols-outlined msym text-ouv text-[32px] block mb-2">calendar_today</span>
-            <p id="txt-previsit-empty">Demo randevu oluşturmak için "Demo Randevu" butonuna tıklayın.</p>
+            <p id="txt-previsit-empty">Demo randevu olu�turmak i�in "Demo Randevu" butonuna t�klay�n.</p>
           </div></div>
         </div>
       </div>
@@ -305,11 +305,11 @@ tailwind.config={theme:{extend:{colors:{
         <div class="px-5 py-4 border-b border-surfc flex items-center gap-2">
           <span class="material-symbols-outlined msym text-sec text-[16px]">science</span>
           <h2 id="txt-demo-title" class="font-head font-bold text-pri text-[14px]">Demo Hastalar</h2>
-          <span id="txt-demo-badge" class="text-[10px] text-onsv bg-secc/40 text-sec px-2 py-0.5 rounded-full font-bold ml-1">Gemma 4 Örnek Çıktısı</span>
-          <span id="txt-demo-stats" class="ml-auto text-[10px] text-onsv">5 vaka · 2 RED · 2 YELLOW · 1 GREEN</span>
+          <span id="txt-demo-badge" class="text-[10px] text-onsv bg-secc/40 text-sec px-2 py-0.5 rounded-full font-bold ml-1">Gemma 4 �rnek ��kt�s�</span>
+          <span id="txt-demo-stats" class="ml-auto text-[10px] text-onsv">5 vaka � 2 RED � 2 YELLOW � 1 GREEN</span>
         </div>
 
-        <!-- STEMI Timeline Karşılaştırma Banner -->
+        <!-- STEMI Timeline Kar��la�t�rma Banner -->
         <div class="mx-4 mt-4 mb-2 rounded-2xl border border-red-200 bg-red-50 p-4">
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div class="flex items-center gap-2 flex-shrink-0">
@@ -318,19 +318,19 @@ tailwind.config={theme:{extend:{colors:{
               </div>
               <div>
                 <p id="txt-stemi-title" class="text-[12px] font-bold text-red-700">Gaziantep STEMI Senaryosu</p>
-                <p id="txt-stemi-sub" class="text-[10px] text-onsv">Mehmet Yılmaz · 66 yaş · Vaka 1</p>
+                <p id="txt-stemi-sub" class="text-[10px] text-onsv">Mehmet Y�lmaz � 66 ya� � Vaka 1</p>
               </div>
             </div>
             <div id="txt-stemi-body" class="flex-1 text-[12px] text-ons leading-relaxed hidden sm:block">
-              Aynı hasta, aynı semptomlar. Manuel triajda 22 dakika bekledi ve STEMI geçirdi.
-              AI bu vakayı <strong>14 saniyede RED</strong> olarak sınıflandırdı.
+              Ayn� hasta, ayn� semptomlar. Manuel triajda 22 dakika bekledi ve STEMI ge�irdi.
+              AI bu vakay� <strong>14 saniyede RED</strong> olarak s�n�fland�rd�.
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
               <div class="text-center px-3 py-2 rounded-xl bg-red-100 border border-red-200">
                 <div class="text-[20px] font-head font-black text-red-600">22<span id="txt-unit-min" class="text-[11px]">dk</span></div>
                 <div id="txt-label-manual" class="text-[9px] font-bold text-red-500 uppercase">Manuel</div>
               </div>
-              <span class="text-red-300 font-bold">→</span>
+              <span class="text-red-300 font-bold">�</span>
               <div class="text-center px-3 py-2 rounded-xl bg-white border border-red-200">
                 <div class="text-[20px] font-head font-black text-sec">14<span id="txt-unit-sec" class="text-[11px]">sn</span></div>
                 <div id="txt-label-ai" class="text-[9px] font-bold text-sec uppercase">AI Triaj</div>
@@ -345,10 +345,10 @@ tailwind.config={theme:{extend:{colors:{
     </div>
   </div>
 
-  <!-- ── DETAIL PANEL ── -->
+  <!-- �� DETAIL PANEL �� -->
   <div id="detail-panel" class="hidden w-[380px] flex-shrink-0 bg-white border-l border-surfc flex flex-col slide-in">
     <div class="px-5 py-4 border-b border-surfc flex justify-between items-center flex-shrink-0">
-      <h3 id="txt-detail-header" class="font-head font-bold text-pri text-[14px]">Hasta Detayı</h3>
+      <h3 id="txt-detail-header" class="font-head font-bold text-pri text-[14px]">Hasta Detay�</h3>
       <button onclick="closePanel()" class="w-7 h-7 rounded-lg bg-surfc flex items-center justify-center hover:bg-ouv/30 transition-all">
         <span class="material-symbols-outlined msym text-onsv text-[16px]">close</span>
       </button>
@@ -358,7 +358,7 @@ tailwind.config={theme:{extend:{colors:{
 
 </div>
 
-<!-- ── RAPOR MODAL ── -->
+<!-- �� RAPOR MODAL �� -->
 <div id="report-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center" style="background:rgba(0,0,0,0.55);backdrop-filter:blur(4px)" onclick="if(event.target===this)closeReportModal()">
   <div class="bg-white rounded-2xl shadow-2xl flex flex-col" style="width:92vw;max-width:900px;height:90vh">
     <div class="flex items-center gap-3 px-5 py-3.5 border-b border-surfc flex-shrink-0">
@@ -366,7 +366,7 @@ tailwind.config={theme:{extend:{colors:{
       <span class="font-head font-bold text-pri text-[15px]" id="report-modal-title">Hasta Raporu</span>
       <div class="ml-auto flex items-center gap-2">
         <button onclick="openReportNewTab()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 text-[12px] font-medium transition-all">
-          <span class="material-symbols-outlined msym text-[14px]">open_in_new</span><span id="txt-report-new-tab">Yeni Sekmede Aç</span>
+          <span class="material-symbols-outlined msym text-[14px]">open_in_new</span><span id="txt-report-new-tab">Yeni Sekmede A�</span>
         </button>
         <button onclick="closeReportModal()" class="w-8 h-8 rounded-xl bg-surfc hover:bg-errc hover:text-err flex items-center justify-center transition-all">
           <span class="material-symbols-outlined msym text-[16px]">close</span>
@@ -377,119 +377,149 @@ tailwind.config={theme:{extend:{colors:{
   </div>
 </div>
 <script>
-const API = '';
-let allPatients = {};
-let currentDetailSid = null;
+// ── Global text helpers ───────────────────────────────────────────────────────
+function extractText(val){
+  if(!val) return '';
+  const s=String(val).trim();
+  if(s.startsWith('{')){
+    try{
+      const obj=JSON.parse(s);
+      return obj.symptoms_summary||obj.narrative||obj.chief_complaint||obj.clinical_notes||obj.summary||s;
+    }catch(e){}
+  }
+  return s;
+}
+function localize(str){
+  if(!str) return '';
+  const l = typeof uiLang !== 'undefined' ? uiLang : 'en';
+  if(l==='tr') return str;
+  const map={
+    'Doktor muayenesi onerilir':        {en:'Physician consultation recommended'},
+    'Doktor muayenesi \u00f6nerilir':   {en:'Physician consultation recommended'},
+    'Doktor degerlendirmesi gerekli':   {en:'Requires physician evaluation'},
+    'Doktor de\u011flendirmesi gerekli':{en:'Requires physician evaluation'},
+    'De\u011flendirme tamamland\u0131': {en:'Assessment completed'},
+    'Degerlendirme tamamlandi':         {en:'Assessment completed'},
+    'Erkek':    {en:'Male'},
+    'Kad\u0131n':{en:'Female'},
+    'Kadin':    {en:'Female'},
+    'Bilinmiyor':{en:'Not provided'},
+  };
+  const entry=map[str.trim()];
+  if(entry) return entry[l]||entry['en']||str;
+  return str;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
-// ── Dil Desteği — SCRIPT BAŞINDA TANIMLANMALI (TDZ sorununu önler) ──────────
-let uiLang = localStorage.getItem('ui_lang') || 'tr';
+// Dil Destegi
+let uiLang = localStorage.getItem('ui_lang') || 'en';
 
 const DL = {
   tr:{
-    navTriage:'Triaj Paneli', navRefresh:'Listeyi Yenile', navLock:"Kiosk'u Kilitle", navUnlock:"Kiosk'u Aç",
-    navAnalytics:'Analitik', navLogout:'Çıkış Yap', navKioskMgmt:'Kiosk Yönetim', navSistem:'Sistem',
-    panelTitle:'Klinik Triaj Paneli', refreshBtn:'Yenile', kioskBtn:'Kiosk Ekranı', liveLbl:'Canlı',
+    navTriage:'Triaj Paneli', navRefresh:'Listeyi Yenile', navLock:"Kiosk'u Kilitle", navUnlock:"Kiosk'u A�",
+    navAnalytics:'Analitik', navLogout:'��k�� Yap', navKioskMgmt:'Kiosk Y�netim', navSistem:'Sistem',
+    panelTitle:'Klinik Triaj Paneli', refreshBtn:'Yenile', kioskBtn:'Kiosk Ekran�', liveLbl:'Canl�',
     modelChecking:'Model Kontrol Ediliyor',
     statTotalLbl:'Toplam', statTotalSub:'aktif hasta',
-    statRedLbl:'🔴 Acil', statRedSub:'derhal müdahale',
-    statYellowLbl:'🟡 Acil/Bekleyebilir', statYellowSub:'kısa süre içinde',
-    statGreenLbl:'🟢 Rutin', statGreenSub:'standart kuyruk',
-    queueTitle:'Aktif Triaj Kuyruğu', queueLoading:'Hasta kuyruğu yükleniyor...',
-    queueBackendOff:'Backend bağlantısı yok — demo veriler aşağıda', queueBackendOffline:'Backend çevrimdışı',
-    queueCompletedFn:(n)=>`${n} tamamlanan mülakat`, queueCountFn:(n)=>`${n} hasta`,
-    queueEmpty:'Henüz gerçek hasta yok.', queueEmptyDemo:'Henüz hasta yok.',
+    statRedLbl:'?? Acil', statRedSub:'derhal m�dahale',
+    statYellowLbl:'?? Acil/Bekleyebilir', statYellowSub:'k�sa s�re i�inde',
+    statGreenLbl:'?? Rutin', statGreenSub:'standart kuyruk',
+    queueTitle:'Aktif Triaj Kuyru�u', queueLoading:'Hasta kuyru�u y�kleniyor...',
+    queueBackendOff:'Backend ba�lant�s� yok � demo veriler a�a��da', queueBackendOffline:'Backend �evrimd���',
+    queueCompletedFn:(n)=>`${n} tamamlanan m�lakat`, queueCountFn:(n)=>`${n} hasta`,
+    queueEmpty:'Hen�z ger�ek hasta yok.', queueEmptyDemo:'Hen�z hasta yok.',
     searchPlaceholder:'Hasta ara...',
-    filterAll:'Tümü', filterRed:'🔴 Acil', filterYellow:'🟡 İkincil', filterGreen:'🟢 Rutin',
-    tbPatient:'Hasta', tbTriage:'Triaj', tbComplaint:'Ana Şikayet',
-    tbConfidence:'Kanıt Gücü', tbWaiting:'Bekleme', tbAction:'İşlem',
+    filterAll:'T�m�', filterRed:'?? Acil', filterYellow:'?? �kincil', filterGreen:'?? Rutin',
+    tbPatient:'Hasta', tbTriage:'Triaj', tbComplaint:'Ana �ikayet',
+    tbConfidence:'Kan�t G�c�', tbWaiting:'Bekleme', tbAction:'��lem',
     btnReport:'Rapor', allergyLabel:'Alerji',
     unitMin:'dk', unitSec:'sn', unitHour:'s',
-    seenTitle:'Görüldü Arşivi', seenSub:'Görüldü işaretlenen hastalar',
-    seenShowBtn:'Göster', seenHideBtn:'Gizle',
-    seenAuthError:'Yetki hatası veya bağlantı sorunu.', seenLoadError:'Arşiv yüklenemedi.',
-    seenEmpty:'Henüz görüldü işaretlenen hasta yok.',
-    seenAt:'Görüldü:', seenViewReport:'Raporu Görüntüle', seenReturnQueue:'Kuyruğa Geri Al',
-    seenPatientsFn:(n)=>`${n} hasta görüldü olarak işaretlendi`,
+    seenTitle:'G�r�ld� Ar�ivi', seenSub:'G�r�ld� i�aretlenen hastalar',
+    seenShowBtn:'G�ster', seenHideBtn:'Gizle',
+    seenAuthError:'Yetki hatas� veya ba�lant� sorunu.', seenLoadError:'Ar�iv y�klenemedi.',
+    seenEmpty:'Hen�z g�r�ld� i�aretlenen hasta yok.',
+    seenAt:'G�r�ld�:', seenViewReport:'Raporu G�r�nt�le', seenReturnQueue:'Kuyru�a Geri Al',
+    seenPatientsFn:(n)=>`${n} hasta g�r�ld� olarak i�aretlendi`,
     seenCountFn:(n)=>`${n} hasta`,
     analyticsTitle:'Triaj Analitik',
     analyticsTotal:'Toplam', analyticsRed:'Acil', analyticsGreen:'Rutin',
-    analyticsAgeGroups:'Yaş Grupları', analyticsAvgConf:'Ortalama Güven',
-    analyticsSeen:'Görüldü', analyticsTopFlags:'En Sık Acil Bulgular', analyticsNoData:'Henüz veri yok.',
-    demoTitle:'Demo Hastalar', demoBadge:'Gemma 4 Örnek Çıktısı',
-    demoStats:'5 vaka · 2 RED · 2 YELLOW · 1 GREEN',
-    stemiTitle:'Gaziantep STEMI Senaryosu', stemiSub:'Mehmet Yılmaz · 66 yaş · Vaka 1',
-    stemiBody:'Aynı hasta, aynı semptomlar. Manuel triajda 22 dakika bekledi ve STEMI geçirdi. AI bu vakayı <strong>14 saniyede RED</strong> olarak sınıflandırdı.',
+    analyticsAgeGroups:'Ya� Gruplar�', analyticsAvgConf:'Ortalama G�ven',
+    analyticsSeen:'G�r�ld�', analyticsTopFlags:'En S�k Acil Bulgular', analyticsNoData:'Hen�z veri yok.',
+    demoTitle:'Demo Hastalar', demoBadge:'Gemma 4 �rnek ��kt�s�',
+    demoStats:'5 vaka � 2 RED � 2 YELLOW � 1 GREEN',
+    stemiTitle:'Gaziantep STEMI Senaryosu', stemiSub:'Mehmet Y�lmaz � 66 ya� � Vaka 1',
+    stemiBody:'Ayn� hasta, ayn� semptomlar. Manuel triajda 22 dakika bekledi ve STEMI ge�irdi. AI bu vakay� <strong>14 saniyede RED</strong> olarak s�n�fland�rd�.',
     labelManual:'Manuel', labelAI:'AI Triaj',
-    detailHeader:'Hasta Detayı',
-    detailConfLabel:'AI Güven Skoru', detailUrgentTitle:'⚠️ Acil Uyarılar',
-    detailVitalsTitle:'Vital Bulgular', vitalBP:'KB', vitalPulse:'NABIZ', vitalTemp:'ATEŞ',
-    detailComplaintTitle:'Ana Şikayet', detailSymptomsTitle:'Semptom Özeti',
-    detailDxTitle:'Olası Tanılar', detailVisionTitle:'Vision Bulguları',
+    detailHeader:'Hasta Detay�',
+    detailConfLabel:'AI G�ven Skoru', detailUrgentTitle:'?? Acil Uyar�lar',
+    detailVitalsTitle:'Vital Bulgular', vitalBP:'KB', vitalPulse:'NABIZ', vitalTemp:'ATE�',
+    detailComplaintTitle:'Ana �ikayet', detailSymptomsTitle:'Semptom �zeti',
+    detailDxTitle:'Olas� Tan�lar', detailVisionTitle:'Vision Bulgular�',
     detailClinicalTitle:'Klinik Notlar (AI)',
-    detailICD10Title:'ICD-10 Kod Önerisi', detailICD10Btn:'Gemma 4 ile Öner',
-    detailICD10None:'Henüz öneride bulunulmadı.', detailICD10Fail:'ICD-10 önerisi başarısız.',
-    detailICD10NoSugg:'Öneride bulunulamadı.', detailICD10Analyzing:'Analiz...',
-    detailICD10Computing:'Gemma 4 ICD-10 kodları hesaplıyor...', detailICD10Retry:'Yeniden Öner',
-    detailDoctorNotesTitle:'Doktor Notları', detailNotesNone:'Not yok.',
+    detailICD10Title:'ICD-10 Kod �nerisi', detailICD10Btn:'Gemma 4 ile �ner',
+    detailICD10None:'Hen�z �neride bulunulmad�.', detailICD10Fail:'ICD-10 �nerisi ba�ar�s�z.',
+    detailICD10NoSugg:'�neride bulunulamad�.', detailICD10Analyzing:'Analiz...',
+    detailICD10Computing:'Gemma 4 ICD-10 kodlar� hesapl�yor...', detailICD10Retry:'Yeniden �ner',
+    detailDoctorNotesTitle:'Doktor Notlar�', detailNotesNone:'Not yok.',
     detailAddNotePlaceholder:'Doktor notu ekle...',
-    detailOverrideTitle:'Triaj Seviyesini Değiştir',
-    detailOverrideRed:'🔴 ACİL', detailOverrideYellow:'🟡 İKİNCİL', detailOverrideGreen:'🟢 RUTİN',
-    detailOverridePlaceholder:'Override gerekçesi (opsiyonel)...',
-    detailOverrideSavedLabel:'Human Override Kaydedildi:', detailOverrideReasonLabel:'Gerekçe:',
-    detailAIReasonTitle:'🧠 AI neden bu triajı önerdi?',
-    detailRecommendTitle:'Önerilen Eylem',
-    btnMarkSeen:'Görüldü İşaretle', btnMarkedSeen:'Görüldü ✓',
-    btnFullReport:'Tam Raporu Aç', btnClinicalReview:'Klinik İnceleme', btnFHIR:'FHIR R4 İndir',
-    kanbanRed:'🔴 Derhal Müdahale', kanbanYellow:'🟡 Kısa Sürede',
-    kanbanGreen:'🟢 Rutin Kuyruk', kanbanPending:'⏳ Analiz Bekleniyor',
+    detailOverrideTitle:'Triaj Seviyesini De�i�tir',
+    detailOverrideRed:'ACIL', detailOverrideYellow:'İKİNCİL', detailOverrideGreen:'RUTİN',
+    detailOverridePlaceholder:'Override gerek�esi (opsiyonel)...',
+    detailOverrideSavedLabel:'Human Override Kaydedildi:', detailOverrideReasonLabel:'Gerek�e:',
+    detailAIReasonTitle:'?? AI neden bu triaj� �nerdi?',
+    detailRecommendTitle:'�nerilen Eylem',
+    btnMarkSeen:'G�r�ld� ��aretle', btnMarkedSeen:'G�r�ld� ?',
+    btnFullReport:'Tam Raporu A�', btnClinicalReview:'Klinik �nceleme', btnFHIR:'FHIR R4 �ndir',
+    kanbanRed:'?? Derhal M�dahale', kanbanYellow:'?? K�sa S�rede',
+    kanbanGreen:'?? Rutin Kuyruk', kanbanPending:'? Analiz Bekleniyor',
     kanbanNoPatients:'Hasta yok',
-    triageBadgeRed:'🔴 ACİL', triageBadgeYellow:'🟡 ACİL/BEK', triageBadgeGreen:'🟢 RUTİN', triageBadgePending:'⏳ BEKL',
+    triageBadgeRed:'ACIL', triageBadgeYellow:'ACIL/BEK', triageBadgeGreen:'RUTIN', triageBadgePending:'BEKLE',
     triageLabelRed:'Acil', triageLabelYellow:'Acil/Bekleyebilir', triageLabelGreen:'Rutin',
-    statusConnecting:'Bağlanıyor...', statusReady:'Gemma 4 Hazır ✓', statusWarming:'Model Isınıyor...',
-    statusActive:'Gemma 4 Aktif', statusWaiting:'Ollama Bekleniyor', statusOffline:'Bağlantı Yok',
-    modelOffline:'Model Çevrimdışı', backendOffline:'Backend Bağlanamıyor',
-    kioskLocked:'🔒 Kiosk kilitlendi', kioskUnlocked:'🔓 Kiosk açıldı',
-    confirmOverrideFn:(l)=>`Triaj seviyesini ${l} olarak değiştirmek istediğinize emin misiniz?`,
-    alertOverrideFail:'Triaj değiştirilemedi.', alertSeenFail:'İşlem başarısız.',
-    alertUnseenFail:'Geri alma başarısız.', alertNoteFail:'Not eklenemedi.',
-    alertReportFail:'Rapor açılamadı: ',
-    reportNewTab:'Yeni Sekmede Aç',
-    ageFn:(age)=>`${age} yaş`,
-    seenBadge:'✓ Görüldü', overrideBadge:'✎ Override',
-    logout:'Çıkış Yap',
-    // ── Previsit / Appointments ────────────────────────────────
+    statusConnecting:'Ba�lan�yor...', statusReady:'Gemma 4 Haz�r ?', statusWarming:'Model Is�n�yor...',
+    statusActive:'Gemma 4 Aktif', statusWaiting:'Ollama Bekleniyor', statusOffline:'Ba�lant� Yok',
+    modelOffline:'Model �evrimd���', backendOffline:'Backend Ba�lanam�yor',
+    kioskLocked:'?? Kiosk kilitlendi', kioskUnlocked:'?? Kiosk a��ld�',
+    confirmOverrideFn:(l)=>`Triaj seviyesini ${l} olarak de�i�tirmek istedi�inize emin misiniz?`,
+    alertOverrideFail:'Triaj de�i�tirilemedi.', alertSeenFail:'��lem ba�ar�s�z.',
+    alertUnseenFail:'Geri alma ba�ar�s�z.', alertNoteFail:'Not eklenemedi.',
+    alertReportFail:'Rapor a��lamad�: ',
+    reportNewTab:'Yeni Sekmede A�',
+    ageFn:(age)=>`${age} ya�`,
+    seenBadge:'? G�r�ld�', overrideBadge:'? Override',
+    logout:'��k�� Yap',
+    // �� Previsit / Appointments ��������������������������������
     navAppts:'Randevular', navPrevisit:'Pre-Visit Briefs',
-    previsitTitle:"Bugünün Randevuları & Pre-Visit Briefs",
-    previsitSub:'Randevu öncesi hasta anamnez görüşmeleri',
+    previsitTitle:"Bug�n�n Randevular� & Pre-Visit Briefs",
+    previsitSub:'Randevu �ncesi hasta anamnez g�r��meleri',
     previsitRefresh:'Yenile', previsitDemoBtn:'Demo Randevu',
-    previsitShowBtn:'Göster', previsitHideBtn:'Gizle',
-    previsitEmpty:'Demo randevu oluşturmak için "Demo Randevu" butonuna tıklayın.',
-    previsitCreating:'Oluşturuluyor...', previsitRetry:'Tekrar dene',
+    previsitShowBtn:'G�ster', previsitHideBtn:'Gizle',
+    previsitEmpty:'Demo randevu olu�turmak i�in "Demo Randevu" butonuna t�klay�n.',
+    previsitCreating:'Olu�turuluyor...', previsitRetry:'Tekrar dene',
     previsitAuthErr:'Doktor yetkisi gerekli.',
-    previsitLoadErr:'Yükleme hatası:',
+    previsitLoadErr:'Y�kleme hatas�:',
     previsitCountFn:(n)=>`${n} randevu`,
-    previsitNoApptsFn:(d)=>`Bugün (${d}) için randevu bulunamadı. Demo oluşturmak için "Demo Randevu" butonuna tıklayın.`,
-    tbApptPatient:'Hasta', tbApptDoctor:'Doktor / Bölüm',
-    tbApptTime:'Saat', tbApptStatus:'Pre-Visit Durum', tbApptActions:'İşlemler',
+    previsitNoApptsFn:(d)=>`Bug�n (${d}) i�in randevu bulunamad�. Demo olu�turmak i�in "Demo Randevu" butonuna t�klay�n.`,
+    tbApptPatient:'Hasta', tbApptDoctor:'Doktor / B�l�m',
+    tbApptTime:'Saat', tbApptStatus:'Pre-Visit Durum', tbApptActions:'��lemler',
     previsitLink:'Hasta Linki',
-    pvsPending:'Bekliyor', pvsProgress:'Devam Ediyor', pvsDone:'Tamamlandı', pvsBrief:'Brief Hazır',
-    pvsGenerating:'Oluşturuluyor...',
-    pvBriefPatientHeader:'Hasta', pvBriefApptHeader:'Doktor · Randevu',
-    pvBriefWarnTitle:'⚠️ Randevuyu Beklememe Uyarısı',
-    pvBriefWarnDefault:'Red flag tespit edildi — doktor değerlendirmesi için acil başvuru önerilir.',
-    pvBriefChiefTitle:'Ana Şikayet', pvBriefDuration:'Süre', pvBriefSeverity:'Şiddet',
-    pvBriefSymptomsTitle:'Eşlik Eden Semptomlar',
-    pvBriefChronicTitle:'Kronik Hastalıklar', pvBriefMedsTitle:'Mevcut İlaçlar', pvBriefAllergyTitle:'Alerjiler ⚠️',
-    pvBriefMissingTitle:'Eksik Bilgiler', pvBriefSuggestedTitle:'Doktor İçin Önerilen Sorular',
-    pvBriefClinicalTitle:'Klinik Özet Notu',
-    pvBriefTranscriptFn:(n)=>`Görüşme Transkripti (${n} soru)`,
-    pvBriefNoAnswer:'Yanıt yok',
-    pvBriefDisclaimer:'Bu brief AI tarafından üretilmiştir. Klinik karar tamamen hekime aittir. • AnamnezAI Pre-Visit Mode',
-    pvBriefNotStarted:'Hasta henüz pre-visit görüşmesini başlatmamış.',
-    pvBriefInProgressFn:(s,tot)=>`Görüşme devam ediyor (${s}/${tot} soru). Tamamlandığında brief otomatik oluşacak.`,
-    pvBriefGenerating:'Görüşme tamamlandı. Brief birkaç saniye içinde hazır olacak. Sayfayı yenileyin.',
-    pvBriefNotReady:'Brief henüz hazır değil.',
-    pvBriefPatientLinkHint:'Hasta pre-visit linkini kullanmalı:',
+    pvsPending:'Bekliyor', pvsProgress:'Devam Ediyor', pvsDone:'Tamamland�', pvsBrief:'Brief Haz�r',
+    pvsGenerating:'Olu�turuluyor...',
+    pvBriefPatientHeader:'Hasta', pvBriefApptHeader:'Doktor � Randevu',
+    pvBriefWarnTitle:'?? Randevuyu Beklememe Uyar�s�',
+    pvBriefWarnDefault:'Red flag tespit edildi � doktor de�erlendirmesi i�in acil ba�vuru �nerilir.',
+    pvBriefChiefTitle:'Ana �ikayet', pvBriefDuration:'S�re', pvBriefSeverity:'�iddet',
+    pvBriefSymptomsTitle:'E�lik Eden Semptomlar',
+    pvBriefChronicTitle:'Kronik Hastal�klar', pvBriefMedsTitle:'Mevcut �la�lar', pvBriefAllergyTitle:'Alerjiler ??',
+    pvBriefMissingTitle:'Eksik Bilgiler', pvBriefSuggestedTitle:'Doktor ��in �nerilen Sorular',
+    pvBriefClinicalTitle:'Klinik �zet Notu',
+    pvBriefTranscriptFn:(n)=>`G�r��me Transkripti (${n} soru)`,
+    pvBriefNoAnswer:'Yan�t yok',
+    pvBriefDisclaimer:'Bu brief AI taraf�ndan �retilmi�tir. Klinik karar tamamen hekime aittir. � AnamnezAI Pre-Visit Mode',
+    pvBriefNotStarted:'Hasta hen�z pre-visit g�r��mesini ba�latmam��.',
+    pvBriefInProgressFn:(s,tot)=>`G�r��me devam ediyor (${s}/${tot} soru). Tamamland���nda brief otomatik olu�acak.`,
+    pvBriefGenerating:'G�r��me tamamland�. Brief birka� saniye i�inde haz�r olacak. Sayfay� yenileyin.',
+    pvBriefNotReady:'Brief hen�z haz�r de�il.',
+    pvBriefPatientLinkHint:'Hasta pre-visit linkini kullanmal�:',
     pvBriefError:'Hata:',
   },
   en:{
@@ -498,15 +528,15 @@ const DL = {
     panelTitle:'Clinical Triage Panel', refreshBtn:'Refresh', kioskBtn:'Kiosk Screen', liveLbl:'Live',
     modelChecking:'Checking Model',
     statTotalLbl:'Total', statTotalSub:'active patients',
-    statRedLbl:'🔴 Emergency', statRedSub:'immediate intervention',
-    statYellowLbl:'🟡 Urgent/Can Wait', statYellowSub:'attend shortly',
-    statGreenLbl:'🟢 Routine', statGreenSub:'standard queue',
+    statRedLbl:'?? Emergency', statRedSub:'immediate intervention',
+    statYellowLbl:'?? Urgent/Can Wait', statYellowSub:'attend shortly',
+    statGreenLbl:'?? Routine', statGreenSub:'standard queue',
     queueTitle:'Active Triage Queue', queueLoading:'Loading patient queue...',
-    queueBackendOff:'No backend connection — demo data below', queueBackendOffline:'Backend offline',
+    queueBackendOff:'No backend connection � demo data below', queueBackendOffline:'Backend offline',
     queueCompletedFn:(n)=>`${n} completed interviews`, queueCountFn:(n)=>`${n} patients`,
     queueEmpty:'No real patients yet.', queueEmptyDemo:'No patients yet.',
     searchPlaceholder:'Search patient...',
-    filterAll:'All', filterRed:'🔴 Emergency', filterYellow:'🟡 Urgent', filterGreen:'🟢 Routine',
+    filterAll:'All', filterRed:'?? Emergency', filterYellow:'?? Urgent', filterGreen:'?? Routine',
     tbPatient:'Patient', tbTriage:'Triage', tbComplaint:'Chief Complaint',
     tbConfidence:'Evidence Score', tbWaiting:'Waiting', tbAction:'Action',
     btnReport:'Report', allergyLabel:'Allergy',
@@ -523,12 +553,12 @@ const DL = {
     analyticsAgeGroups:'Age Groups', analyticsAvgConf:'Avg. Confidence',
     analyticsSeen:'Seen', analyticsTopFlags:'Top Urgency Flags', analyticsNoData:'No data yet.',
     demoTitle:'Demo Patients', demoBadge:'Gemma 4 Sample Output',
-    demoStats:'5 cases · 2 RED · 2 YELLOW · 1 GREEN',
-    stemiTitle:'Gaziantep STEMI Scenario', stemiSub:'Mehmet Yılmaz · Age 66 · Case 1',
+    demoStats:'5 cases � 2 RED � 2 YELLOW � 1 GREEN',
+    stemiTitle:'Gaziantep STEMI Scenario', stemiSub:'Mehmet Y�lmaz � Age 66 � Case 1',
     stemiBody:'Same patient, same symptoms. With manual triage, patient waited 22 minutes and had STEMI. AI classified this case as RED in <strong>14 seconds</strong>.',
     labelManual:'Manual', labelAI:'AI Triage',
     detailHeader:'Patient Detail',
-    detailConfLabel:'AI Confidence Score', detailUrgentTitle:'⚠️ Urgent Warnings',
+    detailConfLabel:'AI Confidence Score', detailUrgentTitle:'?? Urgent Warnings',
     detailVitalsTitle:'Vital Signs', vitalBP:'BP', vitalPulse:'PULSE', vitalTemp:'TEMP',
     detailComplaintTitle:'Chief Complaint', detailSymptomsTitle:'Symptom Summary',
     detailDxTitle:'Possible Diagnoses', detailVisionTitle:'Vision Findings',
@@ -540,31 +570,31 @@ const DL = {
     detailDoctorNotesTitle:'Doctor Notes', detailNotesNone:'No notes.',
     detailAddNotePlaceholder:'Add doctor note...',
     detailOverrideTitle:'Change Triage Level',
-    detailOverrideRed:'🔴 EMERGENCY', detailOverrideYellow:'🟡 URGENT', detailOverrideGreen:'🟢 ROUTINE',
+    detailOverrideRed:'RED - EMERGENCY', detailOverrideYellow:'YELLOW - URGENT', detailOverrideGreen:'GREEN - ROUTINE',
     detailOverridePlaceholder:'Override reason (optional)...',
     detailOverrideSavedLabel:'Human Override Saved:', detailOverrideReasonLabel:'Reason:',
-    detailAIReasonTitle:'🧠 Why did AI suggest this triage?',
+    detailAIReasonTitle:'?? Why did AI suggest this triage?',
     detailRecommendTitle:'Recommended Action',
-    btnMarkSeen:'Mark as Seen', btnMarkedSeen:'Seen ✓',
+    btnMarkSeen:'Mark as Seen', btnMarkedSeen:'Seen ?',
     btnFullReport:'Open Full Report', btnClinicalReview:'Clinical Review', btnFHIR:'Download FHIR R4',
-    kanbanRed:'🔴 Immediate', kanbanYellow:'🟡 Shortly',
-    kanbanGreen:'🟢 Routine Queue', kanbanPending:'⏳ Awaiting Analysis',
+    kanbanRed:'?? Immediate', kanbanYellow:'?? Shortly',
+    kanbanGreen:'?? Routine Queue', kanbanPending:'? Awaiting Analysis',
     kanbanNoPatients:'No patients',
     triageLabelRed:'Emergency', triageLabelYellow:'Urgent/Can Wait', triageLabelGreen:'Routine',
-    triageBadgeRed:'🔴 EMERG', triageBadgeYellow:'🟡 URGENT', triageBadgeGreen:'🟢 ROUTINE', triageBadgePending:'⏳ PENDING',
-    statusConnecting:'Connecting...', statusReady:'Gemma 4 Ready ✓', statusWarming:'Model Warming...',
+    triageBadgeRed:'EMERG', triageBadgeYellow:'URGENT', triageBadgeGreen:'ROUTINE', triageBadgePending:'PENDING',
+    statusConnecting:'Connecting...', statusReady:'Gemma 4 Ready ?', statusWarming:'Model Warming...',
     statusActive:'Gemma 4 Active', statusWaiting:'Waiting for Ollama', statusOffline:'No Connection',
     modelOffline:'Model Offline', backendOffline:'Backend Unreachable',
-    kioskLocked:'🔒 Kiosk locked', kioskUnlocked:'🔓 Kiosk unlocked',
+    kioskLocked:'?? Kiosk locked', kioskUnlocked:'?? Kiosk unlocked',
     confirmOverrideFn:(l)=>`Are you sure you want to change triage level to ${l}?`,
     alertOverrideFail:'Could not change triage.', alertSeenFail:'Operation failed.',
     alertUnseenFail:'Could not undo.', alertNoteFail:'Could not add note.',
     alertReportFail:'Could not open report: ',
     reportNewTab:'Open in New Tab',
     ageFn:(age)=>`${age}y`,
-    seenBadge:'✓ Seen', overrideBadge:'✎ Override',
+    seenBadge:'? Seen', overrideBadge:'? Override',
     logout:'Log Out',
-    // ── Previsit / Appointments ────────────────────────────────
+    // �� Previsit / Appointments ��������������������������������
     navAppts:'Appointments', navPrevisit:'Pre-Visit Briefs',
     previsitTitle:"Today's Appointments & Pre-Visit Briefs",
     previsitSub:'Pre-visit patient intake interviews',
@@ -581,17 +611,17 @@ const DL = {
     previsitLink:'Patient Link',
     pvsPending:'Pending', pvsProgress:'In Progress', pvsDone:'Completed', pvsBrief:'Brief Ready',
     pvsGenerating:'Generating...',
-    pvBriefPatientHeader:'Patient', pvBriefApptHeader:'Doctor · Appointment',
-    pvBriefWarnTitle:'⚠️ Do Not Wait for Appointment',
-    pvBriefWarnDefault:'Red flag detected — urgent doctor evaluation recommended.',
+    pvBriefPatientHeader:'Patient', pvBriefApptHeader:'Doctor � Appointment',
+    pvBriefWarnTitle:'?? Do Not Wait for Appointment',
+    pvBriefWarnDefault:'Red flag detected � urgent doctor evaluation recommended.',
     pvBriefChiefTitle:'Chief Complaint', pvBriefDuration:'Duration', pvBriefSeverity:'Severity',
     pvBriefSymptomsTitle:'Associated Symptoms',
-    pvBriefChronicTitle:'Chronic Conditions', pvBriefMedsTitle:'Current Medications', pvBriefAllergyTitle:'Allergies ⚠️',
+    pvBriefChronicTitle:'Chronic Conditions', pvBriefMedsTitle:'Current Medications', pvBriefAllergyTitle:'Allergies ??',
     pvBriefMissingTitle:'Missing Information', pvBriefSuggestedTitle:'Suggested Questions for Doctor',
     pvBriefClinicalTitle:'Clinical Summary Note',
     pvBriefTranscriptFn:(n)=>`Interview Transcript (${n} questions)`,
     pvBriefNoAnswer:'No answer',
-    pvBriefDisclaimer:'This brief was generated by AI. Clinical decisions remain entirely with the physician. • AnamnezAI Pre-Visit Mode',
+    pvBriefDisclaimer:'This brief was generated by AI. Clinical decisions remain entirely with the physician. � AnamnezAI Pre-Visit Mode',
     pvBriefNotStarted:'Patient has not started the pre-visit interview yet.',
     pvBriefInProgressFn:(s,tot)=>`Interview in progress (${s}/${tot} questions). Brief will be generated automatically when complete.`,
     pvBriefGenerating:'Interview completed. Brief will be ready in a few seconds. Refresh the page.',
@@ -600,115 +630,115 @@ const DL = {
     pvBriefError:'Error:',
   },
   ar:{
-    navTriage:'لوحة الفرز', navRefresh:'تحديث القائمة', navLock:'قفل الكشك', navUnlock:'فتح الكشك',
-    navAnalytics:'التحليلات', navLogout:'تسجيل الخروج', navKioskMgmt:'إدارة الكشك', navSistem:'النظام',
-    panelTitle:'لوحة الفرز السريري', refreshBtn:'تحديث', kioskBtn:'شاشة الكشك', liveLbl:'مباشر',
-    modelChecking:'جارٍ التحقق من النموذج',
-    statTotalLbl:'الإجمالي', statTotalSub:'مريض نشط',
-    statRedLbl:'🔴 طوارئ', statRedSub:'تدخل فوري',
-    statYellowLbl:'🟡 عاجل / يمكن الانتظار', statYellowSub:'خلال وقت قصير',
-    statGreenLbl:'🟢 روتيني', statGreenSub:'قائمة انتظار عادية',
-    queueTitle:'قائمة انتظار الفرز النشطة', queueLoading:'جارٍ تحميل قائمة المرضى...',
-    queueBackendOff:'لا يوجد اتصال بالخادم — البيانات التجريبية أدناه', queueBackendOffline:'الخادم غير متصل',
-    queueCompletedFn:(n)=>`${n} مقابلة مكتملة`, queueCountFn:(n)=>`${n} مريض`,
-    queueEmpty:'لا يوجد مرضى حقيقيون بعد.', queueEmptyDemo:'لا يوجد مرضى بعد.',
-    searchPlaceholder:'ابحث عن مريض...',
-    filterAll:'الكل', filterRed:'🔴 طوارئ', filterYellow:'🟡 عاجل', filterGreen:'🟢 روتيني',
-    tbPatient:'المريض', tbTriage:'الفرز', tbComplaint:'الشكوى الرئيسية',
-    tbConfidence:'درجة الثقة', tbWaiting:'وقت الانتظار', tbAction:'إجراء',
-    btnReport:'تقرير', allergyLabel:'حساسية',
-    unitMin:'د', unitSec:'ث', unitHour:'س',
-    seenTitle:'أرشيف المُعاينين', seenSub:'المرضى الذين تمت مراجعتهم',
-    seenShowBtn:'عرض', seenHideBtn:'إخفاء',
-    seenAuthError:'خطأ في الصلاحية أو مشكلة في الاتصال.', seenLoadError:'تعذر تحميل الأرشيف.',
-    seenEmpty:'لا يوجد مرضى مُعاينون بعد.',
-    seenAt:'تمت المراجعة:', seenViewReport:'عرض التقرير', seenReturnQueue:'إعادة إلى القائمة',
-    seenPatientsFn:(n)=>`تم تعيين ${n} مريض كمُعاين`,
-    seenCountFn:(n)=>`${n} مريض`,
-    analyticsTitle:'تحليلات الفرز',
-    analyticsTotal:'الإجمالي', analyticsRed:'طوارئ', analyticsGreen:'روتيني',
-    analyticsAgeGroups:'الفئات العمرية', analyticsAvgConf:'متوسط الثقة',
-    analyticsSeen:'مُعاين', analyticsTopFlags:'أبرز علامات الخطر', analyticsNoData:'لا توجد بيانات بعد.',
-    demoTitle:'مرضى تجريبيون', demoBadge:'نموذج Gemma 4 التجريبي',
-    demoStats:'5 حالات · 2 RED · 2 YELLOW · 1 GREEN',
-    stemiTitle:'سيناريو STEMI غازي عنتاب', stemiSub:'محمت يلماظ · 66 عامًا · الحالة 1',
-    stemiBody:'نفس المريض، نفس الأعراض. في الفرز اليدوي انتظر 22 دقيقة وأُصيب بـ STEMI. صنّف الذكاء الاصطناعي هذه الحالة باللون الأحمر في <strong>14 ثانية</strong>.',
-    labelManual:'يدوي', labelAI:'فرز الذكاء الاصطناعي',
-    detailHeader:'تفاصيل المريض',
-    detailConfLabel:'درجة ثقة الذكاء الاصطناعي', detailUrgentTitle:'⚠️ تحذيرات عاجلة',
-    detailVitalsTitle:'العلامات الحيوية', vitalBP:'ض.د', vitalPulse:'نبض', vitalTemp:'حرارة',
-    detailComplaintTitle:'الشكوى الرئيسية', detailSymptomsTitle:'ملخص الأعراض',
-    detailDxTitle:'التشخيصات المحتملة', detailVisionTitle:'نتائج التصوير',
-    detailClinicalTitle:'ملاحظات سريرية (ذكاء اصطناعي)',
-    detailICD10Title:'اقتراح رمز ICD-10', detailICD10Btn:'اقتراح بـ Gemma 4',
-    detailICD10None:'لا يوجد اقتراح بعد.', detailICD10Fail:'فشل اقتراح ICD-10.',
-    detailICD10NoSugg:'تعذر الاقتراح.', detailICD10Analyzing:'جارٍ التحليل...',
-    detailICD10Computing:'Gemma 4 يحسب رموز ICD-10...', detailICD10Retry:'اقتراح مجدداً',
-    detailDoctorNotesTitle:'ملاحظات الطبيب', detailNotesNone:'لا توجد ملاحظات.',
-    detailAddNotePlaceholder:'أضف ملاحظة طبية...',
-    detailOverrideTitle:'تغيير مستوى الفرز',
-    detailOverrideRed:'🔴 طوارئ', detailOverrideYellow:'🟡 عاجل', detailOverrideGreen:'🟢 روتيني',
-    detailOverridePlaceholder:'سبب التعديل (اختياري)...',
-    detailOverrideSavedLabel:'تم حفظ تعديل الطبيب:', detailOverrideReasonLabel:'السبب:',
-    detailAIReasonTitle:'🧠 لماذا اقترح الذكاء الاصطناعي هذا الفرز؟',
-    detailRecommendTitle:'الإجراء الموصى به',
-    btnMarkSeen:'علّم كمُعاين', btnMarkedSeen:'مُعاين ✓',
-    btnFullReport:'فتح التقرير الكامل', btnClinicalReview:'مراجعة سريرية', btnFHIR:'تنزيل FHIR R4',
-    kanbanRed:'🔴 فوري', kanbanYellow:'🟡 قريبًا',
-    kanbanGreen:'🟢 قائمة روتينية', kanbanPending:'⏳ في انتظار التحليل',
-    kanbanNoPatients:'لا يوجد مرضى',
-    triageLabelRed:'طوارئ', triageLabelYellow:'عاجل/يمكن الانتظار', triageLabelGreen:'روتيني',
-    triageBadgeRed:'🔴 طوارئ', triageBadgeYellow:'🟡 عاجل', triageBadgeGreen:'🟢 روتيني', triageBadgePending:'⏳ انتظار',
-    statusConnecting:'جارٍ الاتصال...', statusReady:'Gemma 4 جاهز ✓', statusWarming:'النموذج يسخن...',
-    statusActive:'Gemma 4 نشط', statusWaiting:'في انتظار Ollama', statusOffline:'لا يوجد اتصال',
-    modelOffline:'النموذج غير متصل', backendOffline:'الخادم غير متاح',
-    kioskLocked:'🔒 تم قفل الكشك', kioskUnlocked:'🔓 تم فتح الكشك',
-    confirmOverrideFn:(l)=>`هل أنت متأكد من تغيير مستوى الفرز إلى ${l}؟`,
-    alertOverrideFail:'تعذر تغيير الفرز.', alertSeenFail:'فشلت العملية.',
-    alertUnseenFail:'تعذر التراجع.', alertNoteFail:'تعذر إضافة الملاحظة.',
-    alertReportFail:'تعذر فتح التقرير: ',
-    reportNewTab:'فتح في تبويب جديد',
-    ageFn:(age)=>`${age} سنة`,
-    seenBadge:'✓ مُعاين', overrideBadge:'✎ تعديل',
-    logout:'تسجيل الخروج',
-    // ── Previsit / Appointments ────────────────────────────────
-    navAppts:'المواعيد', navPrevisit:'ملخصات ما قبل الزيارة',
-    previsitTitle:"مواعيد اليوم & ملخصات ما قبل الزيارة",
-    previsitSub:'مقابلات ما قبل الزيارة للمرضى',
-    previsitRefresh:'تحديث', previsitDemoBtn:'مواعيد تجريبية',
-    previsitShowBtn:'عرض', previsitHideBtn:'إخفاء',
-    previsitEmpty:'انقر على "مواعيد تجريبية" لإنشاء بيانات تجريبية.',
-    previsitCreating:'جارٍ الإنشاء...', previsitRetry:'إعادة المحاولة',
-    previsitAuthErr:'مطلوب صلاحية الطبيب.',
-    previsitLoadErr:'خطأ في التحميل:',
-    previsitCountFn:(n)=>`${n} موعد`,
-    previsitNoApptsFn:(d)=>`لا توجد مواعيد اليوم (${d}). انقر على "مواعيد تجريبية" لإنشاء بيانات.`,
-    tbApptPatient:'المريض', tbApptDoctor:'الطبيب / القسم',
-    tbApptTime:'الوقت', tbApptStatus:'حالة ما قبل الزيارة', tbApptActions:'الإجراءات',
-    previsitLink:'رابط المريض',
-    pvsPending:'قيد الانتظار', pvsProgress:'جارٍ', pvsDone:'مكتمل', pvsBrief:'الملخص جاهز',
-    pvsGenerating:'جارٍ الإنشاء...',
-    pvBriefPatientHeader:'المريض', pvBriefApptHeader:'الطبيب · الموعد',
-    pvBriefWarnTitle:'⚠️ تحذير: لا تنتظر الموعد',
-    pvBriefWarnDefault:'تم اكتشاف علامة تحذيرية — يُنصح بالتقييم الطبي العاجل.',
-    pvBriefChiefTitle:'الشكوى الرئيسية', pvBriefDuration:'المدة', pvBriefSeverity:'الشدة',
-    pvBriefSymptomsTitle:'الأعراض المصاحبة',
-    pvBriefChronicTitle:'الأمراض المزمنة', pvBriefMedsTitle:'الأدوية الحالية', pvBriefAllergyTitle:'الحساسية ⚠️',
-    pvBriefMissingTitle:'المعلومات المفقودة', pvBriefSuggestedTitle:'أسئلة مقترحة للطبيب',
-    pvBriefClinicalTitle:'ملاحظة سريرية ملخصة',
-    pvBriefTranscriptFn:(n)=>`نص المقابلة (${n} سؤال)`,
-    pvBriefNoAnswer:'لا توجد إجابة',
-    pvBriefDisclaimer:'تم إنشاء هذا الملخص بواسطة الذكاء الاصطناعي. القرار السريري يعود بالكامل للطبيب. • AnamnezAI Pre-Visit Mode',
-    pvBriefNotStarted:'لم يبدأ المريض مقابلة ما قبل الزيارة بعد.',
-    pvBriefInProgressFn:(s,tot)=>`المقابلة جارية (${s}/${tot} سؤال). سيتم إنشاء الملخص تلقائياً عند الانتهاء.`,
-    pvBriefGenerating:'اكتملت المقابلة. سيكون الملخص جاهزاً خلال ثوانٍ. أعد تحميل الصفحة.',
-    pvBriefNotReady:'الملخص غير جاهز بعد.',
-    pvBriefPatientLinkHint:'يجب أن يستخدم المريض رابط ما قبل الزيارة:',
-    pvBriefError:'خطأ:',
+    navTriage:'???? ?????', navRefresh:'????? ???????', navLock:'??? ?????', navUnlock:'??? ?????',
+    navAnalytics:'?????????', navLogout:'????? ??????', navKioskMgmt:'????? ?????', navSistem:'??????',
+    panelTitle:'???? ????? ???????', refreshBtn:'?????', kioskBtn:'???? ?????', liveLbl:'?????',
+    modelChecking:'???? ?????? ?? ???????',
+    statTotalLbl:'????????', statTotalSub:'???? ???',
+    statRedLbl:'?? ?????', statRedSub:'???? ????',
+    statYellowLbl:'?? ???? / ???? ????????', statYellowSub:'???? ??? ????',
+    statGreenLbl:'?? ??????', statGreenSub:'????? ?????? ?????',
+    queueTitle:'????? ?????? ????? ??????', queueLoading:'???? ????? ????? ??????...',
+    queueBackendOff:'?? ???? ????? ??????? � ???????? ????????? ?????', queueBackendOffline:'?????? ??? ????',
+    queueCompletedFn:(n)=>`${n} ?????? ??????`, queueCountFn:(n)=>`${n} ????`,
+    queueEmpty:'?? ???? ???? ??????? ???.', queueEmptyDemo:'?? ???? ???? ???.',
+    searchPlaceholder:'???? ?? ????...',
+    filterAll:'????', filterRed:'?? ?????', filterYellow:'?? ????', filterGreen:'?? ??????',
+    tbPatient:'??????', tbTriage:'?????', tbComplaint:'?????? ????????',
+    tbConfidence:'???? ?????', tbWaiting:'??? ????????', tbAction:'?????',
+    btnReport:'?????', allergyLabel:'??????',
+    unitMin:'?', unitSec:'?', unitHour:'?',
+    seenTitle:'????? ??????????', seenSub:'?????? ????? ??? ????????',
+    seenShowBtn:'???', seenHideBtn:'?????',
+    seenAuthError:'??? ?? ???????? ?? ????? ?? ???????.', seenLoadError:'???? ????? ???????.',
+    seenEmpty:'?? ???? ???? ???????? ???.',
+    seenAt:'??? ????????:', seenViewReport:'??? ???????', seenReturnQueue:'????? ??? ???????',
+    seenPatientsFn:(n)=>`?? ????? ${n} ???? ???????`,
+    seenCountFn:(n)=>`${n} ????`,
+    analyticsTitle:'??????? ?????',
+    analyticsTotal:'????????', analyticsRed:'?????', analyticsGreen:'??????',
+    analyticsAgeGroups:'?????? ???????', analyticsAvgConf:'????? ?????',
+    analyticsSeen:'??????', analyticsTopFlags:'???? ?????? ?????', analyticsNoData:'?? ???? ?????? ???.',
+    demoTitle:'???? ????????', demoBadge:'????? Gemma 4 ????????',
+    demoStats:'5 ????? � 2 RED � 2 YELLOW � 1 GREEN',
+    stemiTitle:'??????? STEMI ???? ?????', stemiSub:'???? ????? � 66 ????? � ?????? 1',
+    stemiBody:'??? ??????? ??? ???????. ?? ????? ?????? ????? 22 ????? ?????? ?? STEMI. ???? ?????? ????????? ??? ?????? ?????? ?? <strong>14 ?????</strong>.',
+    labelManual:'????', labelAI:'??? ?????? ?????????',
+    detailHeader:'?????? ??????',
+    detailConfLabel:'???? ??? ?????? ?????????', detailUrgentTitle:'?? ??????? ?????',
+    detailVitalsTitle:'???????? ???????', vitalBP:'?.?', vitalPulse:'???', vitalTemp:'?????',
+    detailComplaintTitle:'?????? ????????', detailSymptomsTitle:'???? ???????',
+    detailDxTitle:'????????? ????????', detailVisionTitle:'????? ???????',
+    detailClinicalTitle:'??????? ?????? (???? ???????)',
+    detailICD10Title:'?????? ??? ICD-10', detailICD10Btn:'?????? ?? Gemma 4',
+    detailICD10None:'?? ???? ?????? ???.', detailICD10Fail:'??? ?????? ICD-10.',
+    detailICD10NoSugg:'???? ????????.', detailICD10Analyzing:'???? ???????...',
+    detailICD10Computing:'Gemma 4 ???? ???? ICD-10...', detailICD10Retry:'?????? ??????',
+    detailDoctorNotesTitle:'??????? ??????', detailNotesNone:'?? ???? ???????.',
+    detailAddNotePlaceholder:'??? ?????? ????...',
+    detailOverrideTitle:'????? ????? ?????',
+    detailOverrideRed:'ACIL', detailOverrideYellow:'ACIL', detailOverrideGreen:'RUTIN',
+    detailOverridePlaceholder:'??? ??????? (???????)...',
+    detailOverrideSavedLabel:'?? ??? ????? ??????:', detailOverrideReasonLabel:'?????:',
+    detailAIReasonTitle:'?? ????? ????? ?????? ????????? ??? ??????',
+    detailRecommendTitle:'??????? ?????? ??',
+    btnMarkSeen:'???? ???????', btnMarkedSeen:'?????? ?',
+    btnFullReport:'??? ??????? ??????', btnClinicalReview:'?????? ??????', btnFHIR:'????? FHIR R4',
+    kanbanRed:'?? ????', kanbanYellow:'?? ??????',
+    kanbanGreen:'?? ????? ???????', kanbanPending:'? ?? ?????? ???????',
+    kanbanNoPatients:'?? ???? ????',
+    triageLabelRed:'?????', triageLabelYellow:'????/???? ????????', triageLabelGreen:'??????',
+    triageBadgeRed:'ACIL', triageBadgeYellow:'ACIL', triageBadgeGreen:'RUTIN', triageBadgePending:'BEKLE',
+    statusConnecting:'???? ???????...', statusReady:'Gemma 4 ???? ?', statusWarming:'??????? ????...',
+    statusActive:'Gemma 4 ???', statusWaiting:'?? ?????? Ollama', statusOffline:'?? ???? ?????',
+    modelOffline:'??????? ??? ????', backendOffline:'?????? ??? ????',
+    kioskLocked:'?? ?? ??? ?????', kioskUnlocked:'?? ?? ??? ?????',
+    confirmOverrideFn:(l)=>`?? ??? ????? ?? ????? ????? ????? ??? ${l}?`,
+    alertOverrideFail:'???? ????? ?????.', alertSeenFail:'???? ???????.',
+    alertUnseenFail:'???? ???????.', alertNoteFail:'???? ????? ????????.',
+    alertReportFail:'???? ??? ???????: ',
+    reportNewTab:'??? ?? ????? ????',
+    ageFn:(age)=>`${age} ???`,
+    seenBadge:'? ??????', overrideBadge:'? ?????',
+    logout:'????? ??????',
+    // �� Previsit / Appointments ��������������������������������
+    navAppts:'????????', navPrevisit:'?????? ?? ??? ???????',
+    previsitTitle:"?????? ????? & ?????? ?? ??? ???????",
+    previsitSub:'??????? ?? ??? ??????? ??????',
+    previsitRefresh:'?????', previsitDemoBtn:'?????? ???????',
+    previsitShowBtn:'???', previsitHideBtn:'?????',
+    previsitEmpty:'???? ??? "?????? ???????" ?????? ?????? ???????.',
+    previsitCreating:'???? ???????...', previsitRetry:'????? ????????',
+    previsitAuthErr:'????? ?????? ??????.',
+    previsitLoadErr:'??? ?? ???????:',
+    previsitCountFn:(n)=>`${n} ????`,
+    previsitNoApptsFn:(d)=>`?? ???? ?????? ????? (${d}). ???? ??? "?????? ???????" ?????? ??????.`,
+    tbApptPatient:'??????', tbApptDoctor:'?????? / ?????',
+    tbApptTime:'?????', tbApptStatus:'???? ?? ??? ???????', tbApptActions:'?????????',
+    previsitLink:'???? ??????',
+    pvsPending:'??? ????????', pvsProgress:'????', pvsDone:'?????', pvsBrief:'?????? ????',
+    pvsGenerating:'???? ???????...',
+    pvBriefPatientHeader:'??????', pvBriefApptHeader:'?????? � ??????',
+    pvBriefWarnTitle:'?? ?????: ?? ????? ??????',
+    pvBriefWarnDefault:'?? ?????? ????? ??????? � ????? ???????? ????? ??????.',
+    pvBriefChiefTitle:'?????? ????????', pvBriefDuration:'?????', pvBriefSeverity:'?????',
+    pvBriefSymptomsTitle:'??????? ????????',
+    pvBriefChronicTitle:'??????? ???????', pvBriefMedsTitle:'??????? ???????', pvBriefAllergyTitle:'???????? ??',
+    pvBriefMissingTitle:'????????? ????????', pvBriefSuggestedTitle:'????? ?????? ??????',
+    pvBriefClinicalTitle:'?????? ?????? ?????',
+    pvBriefTranscriptFn:(n)=>`?? ???????? (${n} ????)`,
+    pvBriefNoAnswer:'?? ???? ?????',
+    pvBriefDisclaimer:'?? ????? ??? ?????? ?????? ?????? ?????????. ?????? ??????? ???? ??????? ??????. � AnamnezAI Pre-Visit Mode',
+    pvBriefNotStarted:'?? ???? ?????? ?????? ?? ??? ??????? ???.',
+    pvBriefInProgressFn:(s,tot)=>`???????? ????? (${s}/${tot} ????). ???? ????? ?????? ???????? ??? ????????.`,
+    pvBriefGenerating:'?????? ????????. ????? ?????? ?????? ???? ?????. ??? ????? ??????.',
+    pvBriefNotReady:'?????? ??? ???? ???.',
+    pvBriefPatientLinkHint:'??? ?? ?????? ?????? ???? ?? ??? ???????:',
+    pvBriefError:'???:',
   }
 };
 
-// ── Çeviri yardımcısı ────────────────────────────────────────────────────────
+// �� �eviri yard�mc�s� ��������������������������������������������������������
 function t(key, ...args) {
   try {
     const d = DL[uiLang] || DL.tr;
@@ -722,7 +752,7 @@ function t(key, ...args) {
 function openSidebar(){ document.getElementById('main-sidebar').classList.add('open'); document.getElementById('mobile-sidebar-overlay').classList.add('open'); }
 function closeSidebar(){ document.getElementById('main-sidebar').classList.remove('open'); document.getElementById('mobile-sidebar-overlay').classList.remove('open'); }
 
-// ── Auth Guard ──
+// �� Auth Guard ��
 function getToken() { return localStorage.getItem('anamnez_token'); }
 function getUser() { return JSON.parse(localStorage.getItem('anamnez_user') || 'null'); }
 
@@ -738,7 +768,7 @@ function doLogout() {
   window.location.href = 'login.html';
 }
 
-// ── Sprint 13: Kiosk Kilit/Açma ──────────────────────────────────────────────
+// �� Sprint 13: Kiosk Kilit/A�ma ����������������������������������������������
 async function kioskLock(lock) {
   const token = getToken();
   if (!token) { window.location.href = 'login.html'; return; }
@@ -753,33 +783,33 @@ async function kioskLock(lock) {
       throw new Error(err.detail || `HTTP ${res.status}`);
     }
     const d = await res.json();
-    // Kısa toast bildirimi
+    // K�sa toast bildirimi
     const toast = document.createElement('div');
     toast.textContent = lock ? t('kioskLocked') : t('kioskUnlocked');
     toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;animation:fadein .2s';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2500);
   } catch(e) {
-    console.error('Kiosk işlemi başarısız:', e.message);
+    console.error('Kiosk i�lemi ba�ar�s�z:', e.message);
     const t2 = document.createElement('div');
     t2.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;padding:10px 20px;border-radius:8px;z-index:9999';
-    t2.textContent = '❌ Kiosk hatası: ' + e.message;
+    t2.textContent = '? Kiosk hatas�: ' + e.message;
     document.body.appendChild(t2);
     setTimeout(() => t2.remove(), 3000);
   }
 }
 
-// ── Bekleme süresi badge ────────────────────────────────
+// �� Bekleme s�resi badge ��������������������������������
 function _waitBadge(createdAt, level) {
-  if (!createdAt) return '<span class="text-[11px] text-ouv">—</span>';
+  if (!createdAt) return '<span class="text-[11px] text-ouv">�</span>';
   const mins = Math.floor((Date.now() - new Date(createdAt)) / 60000);
-  if (isNaN(mins) || mins < 0) return '<span class="text-[11px] text-ouv">—</span>';
+  if (isNaN(mins) || mins < 0) return '<span class="text-[11px] text-ouv">�</span>';
   const txt = mins < 60 ? `${mins} ${t('unitMin')}` : `${Math.floor(mins/60)}${t('unitHour')} ${mins%60}${t('unitMin')}`;
   const alarm = (level === 'RED' && mins >= 5) || (level === 'YELLOW' && mins >= 20);
-  return `<span class="text-[11px] font-bold ${alarm ? 'text-err' : 'text-onsv'}">${txt}${alarm ? ' ⚠️' : ''}</span>`;
+  return `<span class="text-[11px] font-bold ${alarm ? 'text-err' : 'text-onsv'}">${txt}${alarm ? ' ??' : ''}</span>`;
 }
 
-// ── Hasta arama / filtre ─────────────────────────────────
+// �� Hasta arama / filtre ���������������������������������
 function filterQueue(q) {
   const filter = document.getElementById('sel-filter')?.value || '';
   const term = (q || '').toLowerCase();
@@ -788,13 +818,13 @@ function filterQueue(q) {
     const txt = row.textContent.toLowerCase();
     const triage = row.querySelector('span[style*="background"]')?.textContent?.trim() || '';
     const matchTerm = !term || txt.includes(term);
-    const matchFilter = !filter || txt.includes(filter === 'RED' ? '🔴' : filter === 'YELLOW' ? '🟡' : '🟢')
+    const matchFilter = !filter || txt.includes(filter === 'RED' ? '??' : filter === 'YELLOW' ? '??' : '??')
       || row.innerHTML.includes(`triage_level":"${filter}`);
     row.style.display = matchTerm && matchFilter ? '' : 'none';
   });
 }
 
-// ── Model durumu kontrol ─────────────────────────────────
+// �� Model durumu kontrol ���������������������������������
 async function checkModelStatus() {
   const pill = document.getElementById('model-status-pill');
   const dot  = document.getElementById('model-status-dot');
@@ -807,40 +837,40 @@ async function checkModelStatus() {
     const d = await r.json();
     const online = d.status === 'ok';
 
-    // Top-bar model pill güncelle
+    // Top-bar model pill g�ncelle
     dot.className   = `w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-500' : 'bg-warn dot-pulse'}`;
     pill.className  = `flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${online ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`;
-    txt.textContent = online ? (d.gemma_model || 'Gemma 4') + ' Aktif' : 'Model Çevrimdışı';
+    txt.textContent = online ? (d.gemma_model || 'Gemma 4') + ' Aktif' : 'Model �evrimd���';
 
-    // Sprint 15: Model Status Bar'ı güncelle
-    _updateModelBar('mbar-gemma4', d.gemma_available, `Gemma 4 e4b ${d.model_ready ? '✅ ACTIVE' : d.model_warming ? '⏳ LOADING' : '⚠ STANDBY'}`);
-    _updateModelBar('mbar-medgemma', d.medgemma_available, `MedGemma 4b ${d.medgemma_available ? '✅ READY' : '⚠ YOK'}`);
-    _updateModelBar('mbar-lite', d.lite_model_available, `Lite 1b ${d.lite_model_available ? '✅ READY' : '⚠ YOK'}`);
+    // Sprint 15: Model Status Bar'� g�ncelle
+    _updateModelBar('mbar-gemma4', d.gemma_available, `Gemma 4 e4b ${d.model_ready ? '? ACTIVE' : d.model_warming ? '? LOADING' : '? STANDBY'}`);
+    _updateModelBar('mbar-medgemma', d.medgemma_available, `MedGemma 4b ${d.medgemma_available ? '? READY' : '? YOK'}`);
+    _updateModelBar('mbar-lite', d.lite_model_available, `Lite 1b ${d.lite_model_available ? '? READY' : '? YOK'}`);
 
     // RAG durumu
     const ragEl = document.getElementById('mbar-rag-txt');
     if (ragEl) {
       if (d.rag_enabled && d.rag_chunks > 0) {
-        ragEl.textContent = `RAG ✅ ${d.rag_chunks} chunk`;
+        ragEl.textContent = `RAG ? ${d.rag_chunks} chunk`;
         ragEl.style.color = '#006a68';
       } else if (d.rag_enabled) {
-        ragEl.textContent = 'RAG ⚠ Veri yok';
+        ragEl.textContent = 'RAG ? Veri yok';
         ragEl.style.color = '#e07b26';
       } else {
-        ragEl.textContent = 'RAG — Devre dışı';
+        ragEl.textContent = 'RAG � Devre d���';
         ragEl.style.color = '#8c9499';
       }
     }
-    // Offline / local badge — shown when Ollama is connected (proves no cloud)
+    // Offline / local badge � shown when Ollama is connected (proves no cloud)
     const offBadge = document.getElementById('offline-badge');
     if (offBadge && d.ollama === 'connected') offBadge.classList.remove('hidden');
   } catch {
     dot.className  = 'w-1.5 h-1.5 rounded-full bg-err';
     pill.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-errc text-err';
-    txt.textContent = 'Backend Bağlanamıyor';
-    _updateModelBar('mbar-gemma4', false, 'Gemma 4 — Bağlanamıyor');
-    _updateModelBar('mbar-medgemma', false, 'MedGemma — Bağlanamıyor');
-    _updateModelBar('mbar-lite', false, 'Lite — Bağlanamıyor');
+    txt.textContent = 'Backend Ba�lanam�yor';
+    _updateModelBar('mbar-gemma4', false, 'Gemma 4 � Ba�lanam�yor');
+    _updateModelBar('mbar-medgemma', false, 'MedGemma � Ba�lanam�yor');
+    _updateModelBar('mbar-lite', false, 'Lite � Ba�lanam�yor');
   }
 }
 
@@ -858,7 +888,7 @@ function _updateModelBar(barId, available, label) {
   txtEl.textContent = label;
 }
 
-// Doktor auth kontrolü
+// Doktor auth kontrol�
 (function doctorGuard() {
   const user = getUser();
   const token = getToken();
@@ -866,12 +896,12 @@ function _updateModelBar(barId, available, label) {
     window.location.href = 'login.html?next=doctor';
     return;
   }
-  // Admin → kendi paneline
+  // Admin � kendi paneline
   if (user.role === 'admin') {
     window.location.href = 'admin.html';
     return;
   }
-  // Hasta → kendi panosuna
+  // Hasta � kendi panosuna
   if (!['doctor','personnel'].includes(user.role)) {
     window.location.href = 'index.html';
     return;
@@ -879,12 +909,12 @@ function _updateModelBar(barId, available, label) {
   // Sidebar'a isim/unvan yaz
   const nameEl = document.getElementById('doctor-name-sidebar');
   const specEl = document.getElementById('doctor-spec-sidebar');
-  if (nameEl) nameEl.textContent = user.name || 'Dr. Kullanıcı';
-  if (specEl) specEl.textContent = user.specialty || 'Sağlık Personeli';
+  if (nameEl) nameEl.textContent = user.name || 'Dr. Kullan�c�';
+  if (specEl) specEl.textContent = user.specialty || 'Sa�l�k Personeli';
 })();
 
-// Demo data — Artık DB'den yükleniyor (frontend'de hardcoded değil)
-// loadDemoCases() ile /api/demo/cases endpoint'inden çekilir
+// Demo data � Art�k DB'den y�kleniyor (frontend'de hardcoded de�il)
+// loadDemoCases() ile /api/demo/cases endpoint'inden �ekilir
 let DEMO = [];
 
 async function loadDemoCases() {
@@ -902,7 +932,7 @@ async function loadDemoCases() {
       const r2 = DEMO.filter(p=>p.triage_level==='RED').length;
       const y2 = DEMO.filter(p=>p.triage_level==='YELLOW').length;
       const g2 = DEMO.filter(p=>p.triage_level==='GREEN').length;
-      statsEl.textContent = `${DEMO.length} vaka · ${r2} RED · ${y2} YELLOW · ${g2} GREEN`;
+      statsEl.textContent = `${DEMO.length} vaka � ${r2} RED � ${y2} YELLOW � ${g2} GREEN`;
     }
   } catch(e) {
     console.warn('[demo] Demo cases could not load:', e.message);
@@ -913,14 +943,14 @@ async function loadDemoCases() {
 
 
 const TCFG = {
-  RED:    {bg:'#fff5f5',color:'#ba1a1a',badge:'background:#ba1a1a',dot:'background:#ba1a1a',lbl:'🔴 ACİL'},
-  YELLOW: {bg:'#fff8f0',color:'#e07b26',badge:'background:#e07b26',dot:'background:#e07b26',lbl:'🟡 ACIL/BEK'},
-  GREEN:  {bg:'#f0faf9',color:'#006a68',badge:'background:#006a68',dot:'background:#006a68',lbl:'🟢 RUTİN'},
-  PENDING:{bg:'#f4f7f9',color:'#8c9499',badge:'background:#8c9499',dot:'background:#aaa',lbl:'⏳ BEKL'},
+  RED:    {bg:'#fff5f5',color:'#ba1a1a',badge:'background:#ba1a1a',dot:'background:#ba1a1a',lbl:'EMERG'},
+  YELLOW: {bg:'#fff8f0',color:'#e07b26',badge:'background:#e07b26',dot:'background:#e07b26',lbl:'URGENT'},
+  GREEN:  {bg:'#f0faf9',color:'#006a68',badge:'background:#006a68',dot:'background:#006a68',lbl:'ROUTINE'},
+  PENDING:{bg:'#f4f7f9',color:'#8c9499',badge:'background:#8c9499',dot:'background:#aaa',lbl:'PENDING'},
 };
-// TCFG badge etiketlerini mevcut dile güncelle
+// TCFG badge etiketlerini mevcut dile g�ncelle
 function updateTCFGLabels() {
-  if (typeof t !== 'function') return;  // t() henüz tanımlanmadıysa atla
+  if (typeof t !== 'function') return;  // t() hen�z tan�mlanmad�ysa atla
   TCFG.RED.lbl     = t('triageBadgeRed');
   TCFG.YELLOW.lbl  = t('triageBadgeYellow');
   TCFG.GREEN.lbl   = t('triageBadgeGreen');
@@ -933,7 +963,7 @@ function updateDateBar() {
   const el = document.getElementById('txt-date');
   if (el) el.textContent = new Date().toLocaleDateString(locale, {weekday:'long',year:'numeric',month:'long',day:'numeric'});
 }
-// İlk render — dil henüz yüklenmeden varsayılan TR formatı
+// �lk render � dil hen�z y�klenmeden varsay�lan TR format�
 updateDateBar();
 
 async function checkStatus(){
@@ -992,7 +1022,7 @@ async function loadQueue(){
       </div>`;
     document.getElementById('txt-queue-sub').textContent=t('queueBackendOffline');
   }
-  loadDemoCases(); // Demo vakalar API'den yükleniyor
+  loadDemoCases(); // Demo vakalar API'den y�kleniyor
   // renderTable(DEMO) moved to loadDemoCases()
   updateStats(calcStats([...Object.values(allPatients)]));
 }
@@ -1007,7 +1037,7 @@ function calcStats(pts){
 }
 
 function updateStats(s){
-  document.getElementById('stat-total').textContent = Object.values(allPatients).length || '—';
+  document.getElementById('stat-total').textContent = Object.values(allPatients).length || '�';
   document.getElementById('stat-red').textContent   = s.red||0;
   document.getElementById('stat-yellow').textContent= s.yellow||0;
   document.getElementById('stat-green').textContent = s.green||0;
@@ -1025,7 +1055,7 @@ function renderTable(patients, containerId, live){
   const rows = sorted.map(p=>{
     const cfg = TCFG[p.triage_level]||TCFG.PENDING;
     const init = p.patient_name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
-    const score = p.confidence_score ? `${p.confidence_score}%` : '—';
+    const score = p.confidence_score ? `${p.confidence_score}%` : '�';
     const flags = p.urgency_flags&&p.urgency_flags.length
       ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-err ml-2"><span class="material-symbols-outlined msym text-[12px]">warning</span>${p.urgency_flags.length}</span>`:'';
     const allergyBadge = p.allergy_flags&&p.allergy_flags.length
@@ -1039,14 +1069,14 @@ function renderTable(patients, containerId, live){
                style="background:${cfg.color}">${init}</div>
           <div>
             <p class="text-[13px] font-bold text-ons">${p.patient_name}${flags}${allergyBadge}</p>
-            <p class="text-[11px] text-onsv">${t('ageFn', p.age)} · ${p.gender}</p>
+            <p class="text-[11px] text-onsv">${t('ageFn', p.age)} � ${p.gender}</p>
           </div>
         </div>
       </td>
       <td class="px-4 py-3.5">
         <span class="px-2.5 py-1 rounded-full text-[11px] font-bold text-white" style="${cfg.badge}">${cfg.lbl}</span>
       </td>
-      <td class="px-4 py-3.5 text-[12px] text-ons max-w-[180px] truncate">${p.chief_complaint||'—'}</td>
+      <td class="px-4 py-3.5 text-[12px] text-ons max-w-[180px] truncate">${p.chief_complaint||'�'}</td>
       <td class="px-4 py-3.5">
         <span class="text-[13px] font-bold" style="color:${cfg.color}">${score}</span>
       </td>
@@ -1076,7 +1106,7 @@ function renderTable(patients, containerId, live){
     </table>`;
 }
 
-// ── Görünüm toggle (Tablo ↔ Kanban) ──────────────────────────────────
+// �� G�r�n�m toggle (Tablo - Kanban) ����������������������������������
 let _queueView = 'table'; // 'table' | 'kanban'
 
 function toggleQueueView() {
@@ -1124,14 +1154,14 @@ function renderKanban(patients, containerId, live) {
               style="background:${col.color}">${init}</div>
             <div class="flex-1 min-w-0">
               <p class="text-[12px] font-bold text-ons truncate">${p.patient_name}</p>
-              <p class="text-[10px] text-onsv">${t('ageFn', p.age)} · ${p.gender}</p>
+              <p class="text-[10px] text-onsv">${t('ageFn', p.age)} � ${p.gender}</p>
             </div>
             ${strength}
           </div>
-          <p class="text-[11px] text-onsv truncate mb-1.5">${p.chief_complaint || '—'}</p>
+          <p class="text-[11px] text-onsv truncate mb-1.5">${p.chief_complaint || '�'}</p>
           <div class="flex items-center justify-between">
             ${wait}
-            ${p.urgency_flags&&p.urgency_flags.length?`<span class="text-[10px] font-bold text-err">⚠️ ${p.urgency_flags.length}</span>`:''}
+            ${p.urgency_flags&&p.urgency_flags.length?`<span class="text-[10px] font-bold text-err">?? ${p.urgency_flags.length}</span>`:''}
           </div>
         </div>`;
       }).join('');
@@ -1150,7 +1180,7 @@ function showDetail(sid){
   const p = allPatients[sid];
   if(!p) return;
   currentDetailSid = sid;
-  // Paneli görünür yap
+  // Paneli g�r�n�r yap
   const _panel = document.getElementById('detail-panel');
   _panel.classList.remove('hidden');
   _panel.style.display = 'flex';
@@ -1159,16 +1189,16 @@ function showDetail(sid){
   const flagsHtml = p.urgency_flags&&p.urgency_flags.length?`
     <div class="rounded-xl p-3.5" style="background:#fff5f5">
       <p class="text-[10px] font-bold uppercase tracking-widest mb-2" style="color:#ba1a1a">${t('detailUrgentTitle')}</p>
-      ${p.urgency_flags.map(f=>`<p class="text-[12px] font-semibold text-red-700 mb-1">· ${f}</p>`).join('')}
+      ${p.urgency_flags.map(f=>`<p class="text-[12px] font-semibold text-red-700 mb-1">� ${f}</p>`).join('')}
     </div>`:'';
   const condHtml = p.possible_conditions&&p.possible_conditions.length?
     p.possible_conditions.map((c,i)=>`<span class="px-2.5 py-1 rounded-xl text-[11px] font-bold
       ${i===0?'text-white':'text-sec bg-secc/60'}"
-      ${i===0?`style="${cfg.badge}"`:''}>${c}</span>`).join(''):'—';
+      ${i===0?`style="${cfg.badge}"`:''}>${c}</span>`).join(''):'�';
   const existingNotes = (p.doctor_notes||[]).map(n=>
     `<div class="bg-blue-50 rounded-lg p-2.5 mb-2">
       <p class="text-[11px] text-ons">${n.text}</p>
-      <p class="text-[10px] text-ouv mt-1">${n.doctor_name} · ${new Date(n.timestamp).toLocaleString(uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR')}</p>
+      <p class="text-[10px] text-ouv mt-1">${n.doctor_name} � ${new Date(n.timestamp).toLocaleString(uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR')}</p>
     </div>`
   ).join('');
   const seenBadge = p.is_seen ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">${t('seenBadge')}</span>` : '';
@@ -1184,14 +1214,14 @@ function showDetail(sid){
           <p class="font-head font-bold text-pri text-[15px]">${p.patient_name}</p>
           ${seenBadge}${overrideBadge}
         </div>
-        <p class="text-[11px] text-onsv">${t('ageFn', p.age)} · ${p.gender}</p>
+        <p class="text-[11px] text-onsv">${t('ageFn', p.age)} ◆ ${localize(p.gender||'')}</p>
       </div>
       <span class="px-2.5 py-1 rounded-full text-[10px] font-bold text-white" style="${cfg.badge}">${cfg.lbl}</span>
     </div>
     <!-- Confidence -->
     <div class="flex items-center justify-between text-[12px]">
       <span class="text-onsv font-medium">${t('detailConfLabel')}</span>
-      <span class="font-bold text-[15px]" style="color:${cfg.color}">${p.confidence_score||'—'}%</span>
+      <span class="font-bold text-[15px]" style="color:${cfg.color}">${p.confidence_score||'�'}%</span>
     </div>
     ${flagsHtml}
     ${p.vitals && Object.keys(p.vitals||{}).length ? `
@@ -1200,19 +1230,19 @@ function showDetail(sid){
       <div class="grid grid-cols-2 gap-1.5">
         ${p.vitals.blood_pressure?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">${t('vitalBP')}</p><p class="text-[12px] font-bold text-pri">${p.vitals.blood_pressure}</p></div>`:''}
         ${p.vitals.pulse?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">${t('vitalPulse')}</p><p class="text-[12px] font-bold text-pri">${p.vitals.pulse} bpm</p></div>`:''}
-        ${p.vitals.temperature?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">${t('vitalTemp')}</p><p class="text-[12px] font-bold ${p.vitals.temperature>=38.5?'text-err':'text-pri'}">${p.vitals.temperature}°C</p></div>`:''}
+        ${p.vitals.temperature?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">${t('vitalTemp')}</p><p class="text-[12px] font-bold ${p.vitals.temperature>=38.5?'text-err':'text-pri'}">${p.vitals.temperature}�C</p></div>`:''}
         ${p.vitals.spo2?`<div class="bg-white rounded-lg p-2 text-center"><p class="text-[8px] font-bold text-onsv">SpO2</p><p class="text-[12px] font-bold ${p.vitals.spo2<95?'text-err':'text-pri'}">${p.vitals.spo2}%</p></div>`:''}
       </div>
     </div>` : ''}
     <!-- Chief Complaint -->
     <div class="rounded-xl p-3.5 bg-surfc">
       <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">${t('detailComplaintTitle')}</p>
-      <p class="text-[13px] font-semibold text-pri">${p.chief_complaint||'—'}</p>
+      <p class="text-[13px] font-semibold text-pri">${extractText(p.chief_complaint)||'—'}</p>
     </div>
     <!-- Symptoms -->
     <div class="rounded-xl p-3.5 bg-surfc">
       <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">${t('detailSymptomsTitle')}</p>
-      <p class="text-[12px] text-ons leading-relaxed">${p.symptoms_summary||'—'}</p>
+      <p class="text-[12px] text-ons leading-relaxed">${extractText(p.symptoms_summary)||'—'}</p>
     </div>
     <!-- Conditions -->
     <div class="rounded-xl p-3.5 bg-surfc">
@@ -1227,7 +1257,7 @@ function showDetail(sid){
     <!-- Clinical Notes (AI) -->
     <div class="rounded-xl p-3.5 bg-surfc">
       <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-1.5">${t('detailClinicalTitle')}</p>
-      <p class="text-[12px] text-ons leading-relaxed">${p.clinical_notes||'—'}</p>
+      <p class="text-[12px] text-ons leading-relaxed">${extractText(p.clinical_notes)||'—'}</p>
     </div>
     <!-- ICD-10 -->
     <div class="rounded-xl p-3.5 bg-surfc">
@@ -1266,26 +1296,26 @@ function showDetail(sid){
         class="w-full px-3 py-1.5 border border-surfc rounded-xl text-[11px] bg-white focus:border-pric transition-all" style="outline:none"/>
       ${p.triage_override ? `
       <div class="mt-2 p-2 bg-blue-50 rounded-lg text-[10px] text-blue-700">
-        <strong>${t('detailOverrideSavedLabel')}</strong> ${p.triage_override.ai_triage||'—'} → ${p.triage_override.level}
+        <strong>${t('detailOverrideSavedLabel')}</strong> ${p.triage_override.ai_triage||'�'} � ${p.triage_override.level}
         ${p.triage_override.override_reason ? `<br>${t('detailOverrideReasonLabel')} ${p.triage_override.override_reason}` : ''}
-        <br>${p.triage_override.doctor_name} · ${new Date(p.triage_override.timestamp).toLocaleString(uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR')}
+        <br>${p.triage_override.doctor_name} � ${new Date(p.triage_override.timestamp).toLocaleString(uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR')}
       </div>` : ''}
     </div>
     <!-- AI Reasoning -->
     ${(p.evidence&&p.evidence.length)||(p.guideline_sources&&p.guideline_sources.length) ? `
     <div class="rounded-xl p-3.5" style="background:#f0f4f7;border-left:3px solid #00475e">
       <p class="text-[10px] font-bold uppercase tracking-widest mb-2" style="color:#00475e">${t('detailAIReasonTitle')}</p>
-      ${p.evidence&&p.evidence.length ? `<ul class="space-y-1 mb-2">${p.evidence.map(e=>`<li class="text-[11px] text-ons flex items-start gap-1.5"><span class="text-pric font-bold text-[10px] mt-0.5">✓</span>${e}</li>`).join('')}</ul>` : ''}
+      ${p.evidence&&p.evidence.length ? `<ul class="space-y-1 mb-2">${p.evidence.map(e=>`<li class="text-[11px] text-ons flex items-start gap-1.5"><span class="text-pric font-bold text-[10px] mt-0.5">?</span>${e}</li>`).join('')}</ul>` : ''}
       ${p.guideline_sources&&p.guideline_sources.length ? `<div class="flex flex-wrap gap-1 mt-1">${p.guideline_sources.map(g=>`<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-pric/10 text-pric border border-pric/20">${g}</span>`).join('')}</div>` : ''}
     </div>` : ''}
     <!-- Disclaimer -->
     <div class="rounded-xl p-3 text-[10px] text-onsv bg-amber-50 border border-amber-200">
-      ⚕️ <strong>AI output is advisory.</strong> Final clinical responsibility belongs to the clinician. Override triage if clinical assessment differs.
+      ?? <strong>AI output is advisory.</strong> Final clinical responsibility belongs to the clinician. Override triage if clinical assessment differs.
     </div>
     <!-- Recommended Action -->
     <div class="rounded-xl p-3.5 text-white" style="background:${cfg.color}">
       <p class="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-1.5">${t('detailRecommendTitle')}</p>
-      <p class="text-[12px] font-semibold leading-relaxed">${p.recommended_action||'—'}</p>
+      <p class="text-[12px] font-semibold leading-relaxed">${extractText(p.recommended_action)||'—'}</p>
     </div>
     <!-- Actions -->
     <div class="flex gap-2 pt-1">
@@ -1300,13 +1330,11 @@ function showDetail(sid){
       </button>
     </div>
     <div class="flex gap-2">
-      <button onclick="exportFHIR('${sid}')"
-        class="flex-1 py-2.5 rounded-xl border-2 border-pric text-pric text-[12px] font-bold hover:bg-pric hover:text-white transition-all flex items-center justify-center gap-1.5">
+      <button onclick="exportFHIR('${sid}')" class="flex-1 py-2.5 rounded-xl border-2 border-pric text-pric text-[12px] font-bold hover:bg-pric hover:text-white transition-all flex items-center justify-center gap-1.5">
         <span class="material-symbols-outlined msym text-[14px]">download</span>
         FHIR R4
       </button>
-      <button onclick="openClinicalReview('${sid}')"
-        class="flex-1 py-2.5 rounded-xl border-2 border-sec text-sec text-[12px] font-bold hover:bg-sec hover:text-white transition-all flex items-center justify-center gap-1.5">
+      <button onclick="openClinicalReview('${sid}')" class="flex-1 py-2.5 rounded-xl border-2 border-sec text-sec text-[12px] font-bold hover:bg-sec hover:text-white transition-all flex items-center justify-center gap-1.5">
         <span class="material-symbols-outlined msym text-[14px]">folder_shared</span>
         ${t('btnClinicalReview')}
       </button>
@@ -1324,7 +1352,7 @@ function openReportModal(sid, patientName) {
   const iframe = document.getElementById('report-modal-iframe');
   const title = document.getElementById('report-modal-title');
   if (title) title.textContent = patientName || p.patient_name || 'Hasta Raporu';
-  // Doktor görünümünü summary'e bildir
+  // Doktor g�r�n�m�n� summary'e bildir
   localStorage.setItem('summary_from_doctor', '1');
   iframe.src = 'summary.html?t=' + Date.now();
   modal.classList.remove('hidden');
@@ -1376,7 +1404,7 @@ async function addNote(sid) {
       const locale = uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR';
       const noteHtml = `<div class="bg-blue-50 rounded-lg p-2.5 mb-2">
         <p class="text-[11px] text-ons">${data.note.text}</p>
-        <p class="text-[10px] text-ouv mt-1">${data.note.doctor_name} · ${new Date(data.note.timestamp).toLocaleString(locale)}</p>
+        <p class="text-[10px] text-ouv mt-1">${data.note.doctor_name} � ${new Date(data.note.timestamp).toLocaleString(locale)}</p>
       </div>`;
       if (container.querySelector('p')) container.innerHTML = '';
       container.insertAdjacentHTML('beforeend', noteHtml);
@@ -1473,8 +1501,8 @@ async function loadSeenPatients() {
     const locale = uiLang==='ar'?'ar-SA':uiLang==='en'?'en-GB':'tr-TR';
     tableEl.innerHTML = `<div class="divide-y divide-surfc">` + patients.map(p => {
       const color = TRIAGE_COLORS[p.triage_level] || '#8c9499';
-      const label = {RED:t('triageLabelRed'),YELLOW:t('triageLabelYellow'),GREEN:t('triageLabelGreen')}[p.triage_level] || '—';
-      const seenAt = p.seen_at ? new Date(p.seen_at).toLocaleString(locale) : '—';
+      const label = {RED:t('triageLabelRed'),YELLOW:t('triageLabelYellow'),GREEN:t('triageLabelGreen')}[p.triage_level] || '�';
+      const seenAt = p.seen_at ? new Date(p.seen_at).toLocaleString(locale) : '�';
       const sid = p.session_id;
       return `<div class="p-4 hover:bg-surf transition-colors">
         <div class="flex items-start gap-3">
@@ -1482,7 +1510,7 @@ async function loadSeenPatients() {
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-bold text-pri text-[14px]">${p.patient_name}</span>
-              <span class="text-[12px] text-onsv">${t('ageFn',p.age)} · ${p.gender}</span>
+              <span class="text-[12px] text-onsv">${t('ageFn',p.age)} � ${p.gender}</span>
               <span class="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style="background:${color}">${label}</span>
               <span class="ml-auto text-[10px] text-onsv">${t('seenAt')} ${seenAt}</span>
               ${p.seen_by_name ? `<span class="text-[10px] text-sec font-semibold">Dr. ${p.seen_by_name}</span>` : ''}
@@ -1491,12 +1519,10 @@ async function loadSeenPatients() {
           </div>
         </div>
         <div class="flex gap-2 mt-3 ml-5">
-          <button onclick="viewSeenSummary('${sid}')"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-sec text-sec bg-secc/20 hover:bg-sec hover:text-white transition-all">
+          <button onclick="viewSeenSummary('${sid}')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-sec text-sec bg-secc/20 hover:bg-sec hover:text-white transition-all">
             <span class="material-symbols-outlined msym text-[13px]">summarize</span>${t('seenViewReport')}
           </button>
-          <button onclick="unmarkSeen('${sid}')"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all">
+          <button onclick="unmarkSeen('${sid}')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all">
             <span class="material-symbols-outlined msym text-[13px]">undo</span>${t('seenReturnQueue')}
           </button>
         </div>
@@ -1510,7 +1536,7 @@ async function loadSeenPatients() {
 async function viewSeenSummary(sid) {
   try {
     const r = await fetch(`${API}/api/session/${sid}/detail`, { headers: authHeaders() });
-    if (!r.ok) throw new Error('Veri alınamadı');
+    if (!r.ok) throw new Error('Veri al�namad�');
     const detail = await r.json();
     const summary = detail.summary;
     if (summary) {
@@ -1635,14 +1661,14 @@ async function exportFHIR(sid) {
   }
 }
 checkStatus();
-// loadQueue() aşağıda setLang() sonrasında çağrılır (DL/t() hazır olsun diye)
+// loadQueue() a�a��da setLang() sonras�nda �a�r�l�r (DL/t() haz�r olsun diye)
 
-// ESC ile rapor modalını kapat
+// ESC ile rapor modal�n� kapat
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeReportModal();
 });
 
-// SSE ile gerçek zamanlı kuyruk güncellemeleri
+// SSE ile ger�ek zamanl� kuyruk g�ncellemeleri
 let sseConnection = null;
 
 function connectSSE(){
@@ -1669,7 +1695,7 @@ function connectSSE(){
           setTimeout(()=>{ liveInd.style.background=''; },2000);
         }
       }
-      // heartbeat — bağlantı canlı, sessizce geç
+      // heartbeat � ba�lant� canl�, sessizce ge�
     } catch {}
   };
 
@@ -1685,7 +1711,7 @@ function connectSSE(){
     sseConnection.close();
     sseConnection = null;
     document.getElementById('live-indicator').classList.add('hidden');
-    // SSE başarısız — polling'e geri dön
+    // SSE ba�ar�s�z � polling'e geri d�n
     setTimeout(connectSSE, 5000);
   };
 }
@@ -1694,8 +1720,8 @@ connectSSE();
 checkStatus();
 checkModelStatus();  // Top-bar model durum pill
 setInterval(checkStatus, 15000);
-setInterval(checkModelStatus, 30000);  // 30sn'de bir model durumu güncelle
-// SSE yoksa backup polling (sadece retry bağlantıda)
+setInterval(checkModelStatus, 30000);  // 30sn'de bir model durumu g�ncelle
+// SSE yoksa backup polling (sadece retry ba�lant�da)
 
 
 function setLang(l){
@@ -1753,7 +1779,7 @@ function setLang(l){
   const fYel = document.getElementById('txt-filter-yellow'); if(fYel) fYel.textContent = d.filterYellow;
   const fGrn = document.getElementById('txt-filter-green'); if(fGrn) fGrn.textContent = d.filterGreen;
 
-  // Seen toggle button (might be Göster or Gizle)
+  // Seen toggle button (might be G�ster or Gizle)
   const seenToggle = document.getElementById('txt-seen-toggle-btn');
   if (seenToggle) {
     const isOpen = !document.getElementById('seen-archive')?.classList.contains('hidden');
@@ -1769,25 +1795,25 @@ function setLang(l){
     const el = document.getElementById(id);
     if (!el) return;
     const isActive = id === 'dlbtn-' + l;
-    el.style.background = isActive ? '#00475e' : '';
+    el.style.background = isActive ? '#00475e' : 'transparent';
     el.style.color = isActive ? '#ffffff' : '#3f4749';
     el.style.fontWeight = '700';
-  });
+    el.style.boxShadow = isActive ? '0 0 0 2px #00475e' : '';
 
-  // TCFG badge etiketlerini güncelle (triage rozetleri)
+  // TCFG badge etiketlerini g�ncelle (triage rozetleri)
   updateTCFGLabels();
 
-  // Tarih göstergesini güncelle
+  // Tarih g�stergesini g�ncelle
   updateDateBar();
 
   // Re-render dynamic content with new language
-  // DEMO her zaman render edilir (allPatients'ten bağımsız)
+  // DEMO her zaman render edilir (allPatients'ten ba��ms�z)
   if (DEMO.length > 0) renderTable(DEMO, 'demo-table', false); else loadDemoCases();
-  // Gerçek hastalar varsa onları da render et
+  // Ger�ek hastalar varsa onlar� da render et
   const livePatients = Object.values(allPatients).filter(p => !p.is_seen && !p.session_id?.startsWith('demo-'));
   if (livePatients.length > 0) renderTable(livePatients, 'live-table', true);
   else {
-    // Live table placeholder'ı da dile çevir
+    // Live table placeholder'� da dile �evir
     const liveEl = document.getElementById('live-table');
     if (liveEl && liveEl.querySelector('.text-center')) {
       liveEl.innerHTML = `<div class="text-center py-10 text-onsv text-[12px]">${t('queueEmpty')}</div>`;
@@ -1800,15 +1826,15 @@ function setLang(l){
   if (currentDetailSid) showDetail(currentDetailSid);
 }
 
-// Sayfa yüklenince kayıtlı dili uygula
+// Sayfa y�klenince kay�tl� dili uygula
 (function(){ setLang(uiLang); })();
 
-// İlk kuyruk yüklemesi — DL ve t() hazır olduktan sonra
+// �lk kuyruk y�klemesi � DL ve t() haz�r olduktan sonra
 loadQueue();
 
-// ─────────────────────────────────────────────
+// ���������������������������������������������
 //  Pre-Visit Appointments Module
-// ─────────────────────────────────────────────
+// ���������������������������������������������
 let _previsitOpen = false;
 
 function togglePrevisitSection() {
@@ -1845,7 +1871,7 @@ async function createDemoAppointments() {
     if (!res.ok) {
       const err = await res.json();
       const errMsg = err.detail || t('previsitLoadErr');
-      btn.innerHTML = '❌ ' + errMsg.slice(0, 40);
+      btn.innerHTML = '? ' + errMsg.slice(0, 40);
       btn.style.background = '#ef4444';
       setTimeout(() => { btn.disabled=false; btn.innerHTML=`<span class="material-symbols-outlined msym text-[14px]">refresh</span><span id="txt-demo-appts-btn">${t('previsitRetry')}</span>`; btn.style.background=''; }, 3000);
       return;
@@ -1854,8 +1880,8 @@ async function createDemoAppointments() {
     if (!_previsitOpen) togglePrevisitSection();
     else loadPrevisitAppointments();
   } catch(e) {
-    console.error('Bağlantı hatası:', e.message);
-    btn.innerHTML = '❌ ' + t('previsitLoadErr'); btn.style.background='#ef4444';
+    console.error('Ba�lant� hatas�:', e.message);
+    btn.innerHTML = '? ' + t('previsitLoadErr'); btn.style.background='#ef4444';
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<span class="material-symbols-outlined msym text-[14px]">add</span><span id="txt-demo-appts-btn">${t('previsitDemoBtn')}</span>`;
@@ -1892,6 +1918,7 @@ function previsitStatusBadge(status) {
   const map = {
     'pending':     { bg:'#f4f7f9', color:'#3f4749', icon:'hourglass_empty', labelKey:'pvsPending' },
     'in_progress': { bg:'#fff8e1', color:'#b05508', icon:'chat',            labelKey:'pvsProgress' },
+    'generating':  { labelKey:'pvsGenerating', bg:'#e3f2fd', color:'#1565c0' },
     'completed':   { bg:'#e8f5e9', color:'#2e7d32', icon:'task_alt',        labelKey:'pvsDone' },
     'brief_ready': { bg:'#e8f5f3', color:'#006a68', icon:'description',     labelKey:'pvsBrief' },
   };
@@ -1922,11 +1949,11 @@ function renderPrevisitTable(appointments, dateStr) {
       <th style="padding:10px 16px;text-align:left;font-weight:700;white-space:nowrap">${t('tbApptActions')}</th>
     </tr></thead><tbody>`;
 
-  const lang = uiLang || 'tr';
+  const lang = uiLang || 'en';
   appointments.forEach((appt, idx) => {
     const isEven = idx % 2 === 0;
     const rowBg = isEven ? '#fff' : '#fafbfc';
-    const apptTime = appt.appointment_time ? new Date(appt.appointment_time).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : lang === 'ar' ? 'ar-SA' : 'en-US', {hour:'2-digit',minute:'2-digit'}) : '—';
+    const apptTime = appt.appointment_time ? new Date(appt.appointment_time).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : lang === 'ar' ? 'ar-SA' : 'en-US', {hour:'2-digit',minute:'2-digit'}) : '�';
     const hasWarn = appt.wait_warning;
     const rowBorder = hasWarn ? 'border-left: 3px solid #e07b26;' : '';
 
@@ -1945,12 +1972,12 @@ function renderPrevisitTable(appointments, dateStr) {
 
     html += `<tr style="background:${rowBg};${rowBorder}" class="row-hover" onclick="openPrevisitBrief('${appt.appointment_id}')">
       <td style="padding:12px 16px">
-        <div style="font-weight:700;color:#191c1d">${appt.patient_name || '—'}</div>
+        <div style="font-weight:700;color:#191c1d">${appt.patient_name || '�'}</div>
         <div style="color:#3f4749;font-size:11px">${appt.patient_age ? t('ageFn', appt.patient_age) : ''}</div>
         ${hasWarn ? '<span style="display:inline-flex;align-items:center;gap:3px;background:#fff3e0;color:#e07b26;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;margin-top:2px"><span class="material-symbols-outlined msym" style="font-size:11px">warning</span>Red Flag</span>' : ''}
       </td>
       <td style="padding:12px 16px">
-        <div style="font-weight:600;color:#191c1d">${appt.doctor_name || '—'}</div>
+        <div style="font-weight:600;color:#191c1d">${appt.doctor_name || '�'}</div>
         <div style="color:#3f4749;font-size:11px">${appt.specialty || ''}</div>
       </td>
       <td style="padding:12px 16px;color:#191c1d;white-space:nowrap">${apptTime}</td>
@@ -2002,8 +2029,8 @@ async function openPrevisitBrief(apptId) {
       pending:     { labelKey:'pvsPending',    bg:'#f4f7f9', color:'#3f4749' },
       in_progress: { labelKey:'pvsProgress',   bg:'#fff8e1', color:'#b05508' },
       generating:  { labelKey:'pvsGenerating', bg:'#e3f2fd', color:'#1565c0' },
-      completed:   { labelKey:'pvsDone',       bg:'#e8f5e9', color:'#2e7d32' },
-      brief_ready: { labelKey:'pvsBrief',      bg:'#e8f5f3', color:'#006a68' },
+      completed:   { bg:'#e8f5e9', color:'#2e7d32', icon:'task_alt',        labelKey:'pvsDone' },
+      brief_ready: { bg:'#e8f5f3', color:'#006a68', icon:'description',     labelKey:'pvsBrief' },
     };
     const st = statusMap[data.status] || statusMap['pending'];
     document.getElementById('pv-brief-status').textContent = t(st.labelKey);
@@ -2018,8 +2045,8 @@ async function openPrevisitBrief(apptId) {
 
 function renderBriefContent(data) {
   const brief = data.brief;
-  const lang = uiLang || 'tr';
-  const apptTime = data.appointment_time ? new Date(data.appointment_time).toLocaleString(lang === 'tr' ? 'tr-TR' : lang === 'ar' ? 'ar-SA' : 'en-US', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  const lang = uiLang || 'en';
+  const apptTime = data.appointment_time ? new Date(data.appointment_time).toLocaleString(lang === 'tr' ? 'tr-TR' : lang === 'ar' ? 'ar-SA' : 'en-US', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '�';
 
   if (!brief) {
     const status = data.status;
@@ -2047,13 +2074,13 @@ function renderBriefContent(data) {
   html += `<div style="background:#f4f7f9;border-radius:14px;padding:16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:16px">
     <div style="flex:1;min-width:180px">
       <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${t('pvBriefPatientHeader')}</p>
-      <p style="font-size:15px;font-weight:700;color:#002f40">${data.patient_name || '—'}</p>
-      <p style="font-size:12px;color:#3f4749">${data.patient_age ? t('ageFn', data.patient_age) + ' · ' : ''}${data.patient_gender || ''}</p>
+      <p style="font-size:15px;font-weight:700;color:#002f40">${data.patient_name || '�'}</p>
+      <p style="font-size:12px;color:#3f4749">${data.patient_age ? t('ageFn', data.patient_age) + ' � ' : ''}${data.patient_gender || ''}</p>
     </div>
     <div style="flex:1;min-width:180px">
       <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${t('pvBriefApptHeader')}</p>
-      <p style="font-size:13px;font-weight:700;color:#002f40">${data.doctor_name || '—'}</p>
-      <p style="font-size:12px;color:#3f4749">${data.specialty || ''} · ${apptTime}</p>
+      <p style="font-size:13px;font-weight:700;color:#002f40">${data.doctor_name || '�'}</p>
+      <p style="font-size:12px;color:#3f4749">${data.specialty || ''} � ${apptTime}</p>
     </div>
   </div>`;
 
@@ -2071,7 +2098,7 @@ function renderBriefContent(data) {
   // Chief complaint
   html += `<div style="margin-bottom:14px">
     <p style="font-size:10px;font-weight:700;color:#006a68;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${t('pvBriefChiefTitle')}</p>
-    <p style="font-size:14px;color:#191c1d;line-height:1.5;background:#f0faf9;padding:12px;border-radius:10px">${brief.chief_complaint || '—'}</p>
+    <p style="font-size:14px;color:#191c1d;line-height:1.5;background:#f0faf9;padding:12px;border-radius:10px">${brief.chief_complaint || '�'}</p>
     <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
       ${brief.complaint_duration ? `<span style="font-size:12px;color:#3f4749"><b>${t('pvBriefDuration')}:</b> ${brief.complaint_duration}</span>` : ''}
       ${brief.severity ? `<span style="font-size:12px;color:#3f4749"><b>${t('pvBriefSeverity')}:</b> ${brief.severity}</span>` : ''}
@@ -2092,15 +2119,15 @@ function renderBriefContent(data) {
     html += `<div style="background:#f8fafb;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:14px">`;
     if (brief.chronic_conditions?.length) html += `<div style="flex:1;min-width:140px">
       <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;margin-bottom:4px">${t('pvBriefChronicTitle')}</p>
-      ${brief.chronic_conditions.map(s => `<p style="font-size:12px;color:#191c1d">• ${s}</p>`).join('')}
+      ${brief.chronic_conditions.map(s => `<p style="font-size:12px;color:#191c1d">� ${s}</p>`).join('')}
     </div>`;
     if (brief.current_medications?.length) html += `<div style="flex:1;min-width:140px">
       <p style="font-size:10px;font-weight:700;color:#3f4749;text-transform:uppercase;margin-bottom:4px">${t('pvBriefMedsTitle')}</p>
-      ${brief.current_medications.map(s => `<p style="font-size:12px;color:#191c1d">• ${s}</p>`).join('')}
+      ${brief.current_medications.map(s => `<p style="font-size:12px;color:#191c1d">� ${s}</p>`).join('')}
     </div>`;
     if (brief.allergies?.length) html += `<div style="flex:1;min-width:140px">
       <p style="font-size:10px;font-weight:700;color:#c62828;text-transform:uppercase;margin-bottom:4px">${t('pvBriefAllergyTitle')}</p>
-      ${brief.allergies.map(s => `<p style="font-size:12px;color:#c62828">• ${s}</p>`).join('')}
+      ${brief.allergies.map(s => `<p style="font-size:12px;color:#c62828">� ${s}</p>`).join('')}
     </div>`;
     html += '</div>';
   }
@@ -2110,11 +2137,11 @@ function renderBriefContent(data) {
     html += `<div style="background:#fffde7;border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid #fff9c4;display:flex;flex-wrap:wrap;gap:16px">`;
     if (brief.missing_information?.length) html += `<div style="flex:1;min-width:200px">
       <p style="font-size:10px;font-weight:700;color:#b05508;text-transform:uppercase;margin-bottom:6px">${t('pvBriefMissingTitle')}</p>
-      ${brief.missing_information.map(s => `<p style="font-size:12px;color:#3f4749;margin-bottom:3px">❓ ${s}</p>`).join('')}
+      ${brief.missing_information.map(s => `<p style="font-size:12px;color:#3f4749;margin-bottom:3px">? ${s}</p>`).join('')}
     </div>`;
     if (brief.suggested_questions?.length) html += `<div style="flex:1;min-width:200px">
       <p style="font-size:10px;font-weight:700;color:#006a68;text-transform:uppercase;margin-bottom:6px">${t('pvBriefSuggestedTitle')}</p>
-      ${brief.suggested_questions.map(s => `<p style="font-size:12px;color:#3f4749;margin-bottom:3px">💬 ${s}</p>`).join('')}
+      ${brief.suggested_questions.map(s => `<p style="font-size:12px;color:#3f4749;margin-bottom:3px">?? ${s}</p>`).join('')}
     </div>`;
     html += '</div>';
   }
@@ -2122,8 +2149,8 @@ function renderBriefContent(data) {
   // Red flags
   if (brief.red_flags?.length) {
     html += `<div style="background:#fdecea;border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid #ef9a9a">
-      <p style="font-size:10px;font-weight:700;color:#c62828;text-transform:uppercase;margin-bottom:6px">🚩 Red Flags</p>
-      ${brief.red_flags.map(f => `<p style="font-size:12px;color:#c62828;margin-bottom:3px">• ${f}</p>`).join('')}
+      <p style="font-size:10px;font-weight:700;color:#c62828;text-transform:uppercase;margin-bottom:6px">?? Red Flags</p>
+      ${brief.red_flags.map(f => `<p style="font-size:12px;color:#c62828;margin-bottom:3px">� ${f}</p>`).join('')}
     </div>`;
   }
 
@@ -2144,7 +2171,7 @@ function renderBriefContent(data) {
         ${qa.map((item, i) => `
           <div style="font-size:12px">
             <p style="color:#006a68;font-weight:600">S${i+1}: ${item.question}</p>
-            <p style="color:#191c1d;margin-top:2px;padding-left:12px">↳ ${item.answer || `<em style="color:#bfc7cd">${t('pvBriefNoAnswer')}</em>`}</p>
+            <p style="color:#191c1d;margin-top:2px;padding-left:12px">? ${item.answer || `<em style="color:#bfc7cd">${t('pvBriefNoAnswer')}</em>`}</p>
           </div>`).join('')}
       </div>
     </details>`;

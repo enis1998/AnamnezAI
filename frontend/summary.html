@@ -1,9 +1,9 @@
 ﻿<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AnamnezAI — Klinik Özet Raporu</title>
+<title>AnamnezAI — Clinical Summary Report</title>
 <script src="vendor/tailwind.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
@@ -162,7 +162,7 @@ tailwind.config={theme:{extend:{colors:{
 const API = '';
 const raw = localStorage.getItem('anamnez_summary');
 const data = raw ? JSON.parse(raw) : null;
-let reportLang = (data && data.language) || localStorage.getItem('report_lang') || localStorage.getItem('ui_lang') || 'tr';
+let reportLang = (data && data.language) || localStorage.getItem('report_lang') || localStorage.getItem('ui_lang') || 'en';
 
 // Doktor kontrolü
 let _isDoctor = false;
@@ -334,6 +334,41 @@ const I18N = {
 
 function t(key){ return (I18N[reportLang]||I18N.tr)[key]||key; }
 
+// ── Global helpers (used by both render() and exportPDF()) ──────────────────
+
+// Parse JSON-embedded strings the backend may return as stringified objects
+function extractText(val){
+  if(!val) return '';
+  const s=String(val).trim();
+  if(s.startsWith('{')){
+    try{
+      const obj=JSON.parse(s);
+      return obj.symptoms_summary||obj.narrative||obj.chief_complaint||obj.clinical_notes||obj.summary||s;
+    }catch(e){}
+  }
+  return s;
+}
+
+// Translate common Turkish fallback strings when UI lang is EN or AR
+function localize(str){
+  if(!str) return '';
+  const lang=reportLang;
+  if(lang==='tr') return str;
+  const map={
+    'Doktor muayenesi onerilir':     {en:'Physician consultation recommended', ar:'يُوصى بمراجعة الطبيب'},
+    'Doktor muayenesi \u00f6nerilir':{en:'Physician consultation recommended', ar:'يُوصى بمراجعة الطبيب'},
+    'Doktor degerlendirmesi gerekli':{en:'Requires physician evaluation',       ar:'يلزم تقييم الطبيب'},
+    'Doktor de\u011flendirmesi gerekli':{en:'Requires physician evaluation',    ar:'يلزم تقييم الطبيب'},
+    'Erkek':    {en:'Male',    ar:'ذكر'},
+    'Kad\u0131n':{en:'Female', ar:'أنثى'},
+    'Kadin':    {en:'Female',  ar:'أنثى'},
+    'Bilinmiyor':{en:'Not provided', ar:'غير محدد'},
+  };
+  const entry=map[str.trim()];
+  if(entry) return entry[lang]||entry['en']||str;
+  return str;
+}
+
 function applyLangUI(){
   const m={'txt-pdf-btn':'pdfBtn','txt-print-btn':'printBtn','txt-new-btn':'newBtn','txt-panel-btn':'panelBtn','txt-doc-btn':'docBtn','txt-loading':'loading',
     // Hasta kartı
@@ -395,7 +430,7 @@ function render(d){
         <p class="text-[11px] font-bold text-err uppercase tracking-wider">${t('urgencyFlags')}</p>
       </div>
       <ul class="space-y-1.5">
-        ${d.urgency_flags.map(f=>`<li class="flex items-start gap-2 text-[13px] font-semibold text-red-700"><span class="material-symbols-outlined msym text-err text-[14px] mt-0.5 flex-shrink-0">error</span>${escHtml(f)}</li>`).join('')}
+        ${d.urgency_flags.map(f=>`<li class="flex items-start gap-2 text-[13px] font-semibold text-red-700"><span class="material-symbols-outlined msym text-err text-[14px] mt-0.5 flex-shrink-0">error</span>${escHtml(localize(f))}</li>`).join('')}
       </ul>
     </div>`:'';
 
@@ -429,19 +464,21 @@ function render(d){
       <span class="material-symbols-outlined msym text-[14px]">database</span>
       <span id="rag-source-txt">Bu özet RAG kaynaklarından yararlandı.</span>
     </div>`;
-  const condHtml=(d.possible_conditions||[]).map((c,i)=>{
-    // Sprint 16: ICD-10 arama linki ekle
-    const icdQuery = encodeURIComponent(c);
-    return `
+  const condHtml=(d.possible_conditions||[])
+    .map(c=>localize(String(c||'')))
+    .filter(c=>c&&c.length>1&&c.toLowerCase()!=='unknown')
+    .map((c,i)=>{
+      const icdQuery = encodeURIComponent(c);
+      return `
     <div class="flex items-center gap-2 flex-wrap">
       <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-[12px] font-bold ${i===0?'text-white':'text-sec bg-secc/60'}" ${i===0?`style="background:${color}"`:''}>${i===0?'#1 ':i===1?'#2 ':'#3 '}${escHtml(c)}</span>
-      <a href="https://www.icd10data.com/search?s=${icdQuery}" target="_blank" rel="noopener" class="text-[9px] text-ouv hover:text-sec underline font-medium">ICD-10 ara →</a>
+      <a href="https://www.icd10data.com/search?s=${icdQuery}" target="_blank" rel="noopener" class="text-[9px] text-ouv hover:text-sec underline font-medium">ICD-10 →</a>
     </div>`;
-  }).join('');
+    }).join('');
 
-  // Sprint 20 — Trust Layer: Klinik Kanıt & Kılavuz Kaynakları
-  const evidenceItems = (d.evidence||[]).filter(e=>e&&e.length>3);
-  const guidelineItems = (d.guideline_sources||[]).filter(g=>g&&g.length>2);
+  // Sprint 20 — Trust Layer
+  const evidenceItems = (d.evidence||[]).map(e=>localize(String(e||''))).filter(e=>e&&e.length>3);
+  const guidelineItems = (d.guideline_sources||[]).filter(g=>g&&g.length>2&&g.toLowerCase()!=='unknown'&&g!=='—');
   const hasTrust = evidenceItems.length>0 || guidelineItems.length>0;
   const trustLayerHtml = hasTrust ? `
     <div class="card p-5 mb-4 border-l-4" style="border-left-color:#00475e;background:#f0f4f7">
@@ -481,7 +518,7 @@ function render(d){
         <span class="text-[11px] text-onsv">${dtStr}</span>
       </div>
       <h1 class="text-[24px] sm:text-[28px] font-head font-bold text-pri mb-0.5">${escHtml(d.patient_name||'—')}</h1>
-      <p class="text-onsv text-[13px]">${d.age||'—'} ${t('yearsOld')} · ${escHtml(d.gender||'—')}</p>
+      <p class="text-onsv text-[13px]">${d.age||'—'} ${t('yearsOld')} · ${escHtml(localize(d.gender||'—'))}</p>
     </div>
 
     <div class="card p-5 mb-5 flex items-center justify-between gap-4 flex-wrap" style="background:${lv.bg};border-left:4px solid ${lv.border}">
@@ -512,7 +549,7 @@ function render(d){
       <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-2">${t('chiefComplaint')}</p>
       <div class="flex items-start gap-3">
         <span class="material-symbols-outlined msym-fill text-pric text-[20px] mt-0.5 flex-shrink-0">medical_information</span>
-        <p class="text-[15px] font-semibold text-pri leading-relaxed">${escHtml(d.chief_complaint||'—')}</p>
+        <p class="text-[15px] font-semibold text-pri leading-relaxed">${escHtml(localize(d.chief_complaint||'—'))}</p>
       </div>
     </div>
 
@@ -528,11 +565,11 @@ function render(d){
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <div class="card p-5">
         <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">${t('symptomsSummary')}</p>
-        <p class="text-[13px] text-ons leading-relaxed">${escHtml(d.symptoms_summary||'—')}</p>
+        <p class="text-[13px] text-ons leading-relaxed">${escHtml(localize(extractText(d.symptoms_summary))||'—')}</p>
       </div>
       <div class="card p-5">
         <p class="text-[10px] font-bold text-onsv uppercase tracking-widest mb-3">${t('doctorNotes')}</p>
-        <p class="text-[13px] text-ons leading-relaxed">${escHtml(d.clinical_notes||'—')}</p>
+        <p class="text-[13px] text-ons leading-relaxed">${escHtml(localize(extractText(d.clinical_notes))||'—')}</p>
       </div>
     </div>
 
@@ -547,7 +584,7 @@ function render(d){
       <p class="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">${t('recommendedAction')}</p>
       <div class="flex items-start gap-3">
         <span class="material-symbols-outlined msym-fill text-[22px] flex-shrink-0 mt-0.5">recommend</span>
-        <p class="text-[14px] font-semibold leading-relaxed">${escHtml(d.recommended_action||'—')}</p>
+        <p class="text-[14px] font-semibold leading-relaxed">${escHtml(localize(d.recommended_action||'—'))}</p>
       </div>
     </div>
 
@@ -679,7 +716,7 @@ function startStreamingNarrative(sessionId){  const textEl=document.getElementBy
 }
 
 async function exportPDF(){
-  if(!data){ console.error('PDF: report data not found'); document.getElementById('pdf-btn')?.setAttribute('title','Veri yüklenmedi'); return; }
+  if(!data){ console.error('PDF: report data not found'); return; }
   const btn=document.getElementById('pdf-btn');
   const btnB=document.getElementById('pdf-btn-bottom');
   const origT=btn?btn.innerHTML:'';
@@ -691,278 +728,421 @@ async function exportPDF(){
     const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
     const d=data;
     const EN=reportLang==='en';
-    const PW=210,PH=297,ML=15,MR=15,MB=12;
+    const PW=210,PH=297,ML=15,MR=15,MB=14;
     const CW=PW-ML-MR;
-    // ── Color helpers ──
+
+    // ── Helpers ──
     const rgb=(r,g,b)=>{pdf.setTextColor(r,g,b);};
     const fill=(r,g,b)=>{pdf.setFillColor(r,g,b);};
     const draw=(r,g,b)=>{pdf.setDrawColor(r,g,b);};
     const bold=(s,c)=>{pdf.setFont('helvetica','bold');if(c)pdf.setFontSize(c);};
     const norm=(s,c)=>{pdf.setFont('helvetica','normal');if(c)pdf.setFontSize(c);};
-    // Triage colors
-    const TC={RED:[186,26,26],YELLOW:[200,100,0],GREEN:[0,106,104]};
+
+    // Strip non-latin chars Helvetica cannot render
+    function safe7bit(str){
+      return String(str||'')
+        .replace(/[\u2713\u2714\u2705]/g,'-')
+        .replace(/[\u26A0\u26A1\u2757]/g,'!')
+        .replace(/[\u2022\u2023\u25E6\u2043]/g,'-')
+        .replace(/[\u2014\u2013]/g,'-')
+        .replace(/[^\x00-\xFF]/g,'');
+    }
+
+    // Parse JSON-embedded strings (backend may wrap full object as string)
+    function extractText(val){
+      if(!val) return '';
+      const s=String(val).trim();
+      if(s.startsWith('{')){
+        try{
+          const obj=JSON.parse(s);
+          return obj.symptoms_summary||obj.narrative||obj.chief_complaint||obj.clinical_notes||obj.summary||s;
+        }catch(e){}
+      }
+      return s;
+    }
+
+    // Translate common Turkish residuals when EN mode
+    function localize(str){
+      if(!str) return '';
+      if(!EN) return str;
+      const map={
+        'Doktor muayenesi onerilir':'Physician consultation recommended',
+        'Doktor muayenesi \u00f6nerilir':'Physician consultation recommended',
+        'Doktor degerlendirmesi gerekli':'Requires physician evaluation',
+        'Doktor de\u011flendirmesi gerekli':'Requires physician evaluation',
+        'Erkek':'Male','\u0130nsan':'Human',
+        'Kad\u0131n':'Female','Kadin':'Female',
+        'Bilinmiyor':'Not provided','bilinmiyor':'not provided',
+      };
+      return map[str.trim()]||str;
+    }
+
+    // Gender display
+    const genderMap={'Erkek':'Male','Kad\u0131n':'Female','Kadin':'Female','Male':'Male','Female':'Female'};
+    const genderDisplay=EN?(genderMap[d.gender]||d.gender||'—'):(d.gender||'—');
+
+    const TC={RED:[186,26,26],YELLOW:[175,85,0],GREEN:[0,106,104]};
     const tc=TC[d.triage_level]||TC.YELLOW;
-    const tcBg={RED:[255,245,245],YELLOW:[255,248,240],GREEN:[240,250,249]};
+    const tcBg={RED:[255,245,245],YELLOW:[255,248,235],GREEN:[240,250,249]};
     const tcb=tcBg[d.triage_level]||tcBg.YELLOW;
     let dtStr='—';try{dtStr=new Date(d.generated_at).toLocaleString(EN?'en-GB':'tr-TR');}catch(e){}
-    // ── Page footer func ──
+
+    // ── Footer ──
     function drawFooter(){
       const pg=pdf.internal.getCurrentPageInfo().pageNumber;
       const tp=pdf.internal.getNumberOfPages();
-      draw(200,208,212);pdf.setLineWidth(0.3);
-      pdf.line(ML,PH-MB-1,PW-MR,PH-MB-1);
-      norm(null,6.5);rgb(150,158,162);
-      const disc=EN?'AnamnezAI — AI-powered pre-triage. Not a medical diagnosis. Clinical decisions are the sole responsibility of the physician.':'AnamnezAI — Yapay zeka destekli ön triaj. Tıbbi tanı değildir. Klinik kararlar hekime aittir.';
-      const dlines=pdf.splitTextToSize(disc,CW-25);
-      pdf.text(dlines,ML,PH-MB+2);
-      bold(null,7);rgb(80,90,95);
-      pdf.text(`${pg} / ${tp}`,PW-MR,PH-MB+2,{align:'right'});
-      norm(null,6.5);rgb(160,168,172);
-      pdf.text(EN?'CONFIDENTIAL':'GİZLİ',PW/2,PH-MB+2,{align:'center'});
+      pdf.setFont('helvetica','normal');pdf.setFontSize(6.5);
+      draw(210,215,218);pdf.setLineWidth(0.3);
+      pdf.line(ML,PH-MB,PW-MR,PH-MB);
+      rgb(140,148,152);
+      const disc=EN
+        ?'AnamnezAI - AI-powered pre-triage. Not a medical diagnosis. Clinical decisions are the sole responsibility of the physician.'
+        :'AnamnezAI - Yapay zeka destekli on triaj. Tibbi tani degildir. Klinik kararlar hekime aittir.';
+      const dlines=pdf.splitTextToSize(disc,CW-24);
+      pdf.text(dlines,ML,PH-MB+4);
+      pdf.setFont('helvetica','bold');pdf.setFontSize(7);rgb(60,68,72);
+      pdf.text(`${pg} / ${tp}`,PW-MR,PH-MB+4,{align:'right'});
+      pdf.setFont('helvetica','normal');pdf.setFontSize(6.5);rgb(155,163,167);
+      pdf.text(EN?'CONFIDENTIAL':'GIZLI',PW/2,PH-MB+4,{align:'center'});
     }
+
     function checkY(y,need=20){
-      if(y+need>PH-MB-14){pdf.addPage();drawFooter();return 18;}
+      if(y+need>PH-MB-18){
+        drawFooter();
+        pdf.addPage();
+        return 18;
+      }
       return y;
     }
+
     function sectionTitle(label,y){
-      bold(null,7.5);rgb(63,71,73);
-      pdf.text(label.toUpperCase(),ML,y);
-      draw(220,224,226);pdf.setLineWidth(0.25);
-      pdf.line(ML,y+1.5,PW-MR,y+1.5);
-      return y+5;
+      pdf.setFont('helvetica','bold');pdf.setFontSize(7.5);rgb(50,58,62);
+      pdf.text(safe7bit(label),ML,y);
+      draw(210,215,218);pdf.setLineWidth(0.25);
+      pdf.line(ML,y+2,PW-MR,y+2);
+      return y+6.5;
     }
-    // ═══════════════════════════════════════════════════════
+
+    // ─────────────────────────────────────────────
     // HEADER BAR
-    // ═══════════════════════════════════════════════════════
-    fill(0,47,64);pdf.rect(0,0,PW,30,'F');
-    // Left logo box
-    fill(0,106,104);pdf.roundedRect(ML,7,12,12,1.5,1.5,'F');
-    bold(null,14);rgb(255,255,255);
-    pdf.text('+',ML+3.6,16.5);
-    bold(null,14);rgb(255,255,255);
-    pdf.text('AnamnezAI',ML+16,15);
-    norm(null,8);rgb(160,210,208);
-    pdf.text(EN?'Clinical Pre-Triage Report  ·  by AnamnezAI':'Klinik Ön Triaj Raporu  ·  AnamnezAI',ML+16,21);
-    // Right: date + session
-    norm(null,7.5);rgb(200,220,225);
+    // ─────────────────────────────────────────────
+    fill(0,47,64);pdf.rect(0,0,PW,33,'F');
+    fill(0,106,104);pdf.roundedRect(ML,7,13,13,2,2,'F');
+    bold(null,16);rgb(255,255,255);pdf.text('+',ML+3.5,17.5);
+    bold(null,15);rgb(255,255,255);pdf.text('AnamnezAI',ML+18,16);
+    norm(null,8.5);rgb(140,200,196);
+    pdf.text(EN?'Clinical Pre-Triage Report':'Klinik On Triaj Raporu',ML+18,22.5);
+    norm(null,7.5);rgb(170,210,215);
     pdf.text(dtStr,PW-MR,14,{align:'right'});
-    pdf.text((EN?'Session: ':'Seans: ')+(d.session_id||'—').slice(0,14),PW-MR,21,{align:'right'});
+    pdf.text((EN?'Session: ':'Seans: ')+(d.session_id||'—').slice(0,18),PW-MR,22,{align:'right'});
+    norm(null,6.5);rgb(100,170,168);
+    pdf.text('Powered by Gemma 4  |  100% Local Inference  |  Zero Data Egress',PW/2,29.5,{align:'center'});
 
-    let y=36;
+    let y=40;
 
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     // TRIAGE CLASSIFICATION
-    // ═══════════════════════════════════════════════════════
-    fill(...tcb);draw(...tc);pdf.setLineWidth(0.7);
-    pdf.roundedRect(ML,y,CW,22,2,2,'FD');pdf.setLineWidth(0.2);
-    fill(...tc);pdf.rect(ML,y,3.5,22,'F');
-    norm(null,7.5);rgb(63,71,73);
-    pdf.text(EN?'TRIAGE CLASSIFICATION':'TRİAJ SINIFLANDIRMASI',ML+7,y+6);
-    const tlabel={RED:EN?'IMMEDIATE — RED':'ACİL — KIRMIZI',YELLOW:EN?'URGENT — YELLOW':'İKİNCİL — SARI',GREEN:EN?'ROUTINE — GREEN':'RUTİN — YEŞİL'};
-    bold(null,17);rgb(...tc);
-    pdf.text(tlabel[d.triage_level]||d.triage_level,ML+7,y+17);
-    // Confidence ring approximation — just text
+    // ─────────────────────────────────────────────
+    fill(...tcb);draw(...tc);pdf.setLineWidth(0.8);
+    pdf.roundedRect(ML,y,CW,26,2.5,2.5,'FD');pdf.setLineWidth(0.2);
+    fill(...tc);pdf.rect(ML,y,4,26,'F');
+    norm(null,8);rgb(75,83,87);
+    pdf.text(EN?'TRIAGE CLASSIFICATION':'TRIAJ SINIFLANDIRMASI',ML+9,y+7.5);
+    const tlabel={
+      RED:EN?'IMMEDIATE - RED':'ACIL - KIRMIZI',
+      YELLOW:EN?'URGENT - YELLOW':'IKINCIL - SARI',
+      GREEN:EN?'ROUTINE - GREEN':'RUTIN - YESIL'
+    };
+    bold(null,20);rgb(...tc);
+    pdf.text(safe7bit(tlabel[d.triage_level]||d.triage_level),ML+9,y+20);
     const conf=Math.round(d.confidence_score||0);
-    bold(null,24);rgb(...tc);pdf.text(conf+'%',PW-MR-18,y+16,{align:'right'});
-    norm(null,7);rgb(63,71,73);pdf.text(EN?'AI Confidence':'AI Güven',PW-MR-18,y+21,{align:'right'});
-    y+=28;
+    bold(null,30);rgb(...tc);pdf.text(conf+'%',PW-MR-4,y+19,{align:'right'});
+    norm(null,7.5);rgb(80,88,92);pdf.text(EN?'AI Confidence':'AI Guven',PW-MR-4,y+25,{align:'right'});
+    if(d.safety_guardrail_triggered){
+      fill(186,26,26);pdf.roundedRect(ML+9,y+21,62,5.5,1,1,'F');
+      norm(null,7.5);rgb(255,255,255);
+      pdf.text(EN?'! Safety Guardrail Triggered':'! Guvenlik Kurali Etkin',ML+11.5,y+25);
+    }
+    y+=32;
 
-    // ═══════════════════════════════════════════════════════
-    // PATIENT INFO TABLE
-    // ═══════════════════════════════════════════════════════
-    y=sectionTitle(EN?'PATIENT INFORMATION':'HASTA BİLGİLERİ',y);
-    fill(244,247,249);draw(220,224,226);pdf.setLineWidth(0.2);
-    pdf.rect(ML,y,CW,13,'FD');
-    const cols=[[EN?'Full Name':'Ad Soyad',d.patient_name||'—'],[EN?'Age':'Yaş',(d.age||'—')+(EN?' y.o':' yaş')],[EN?'Gender':'Cinsiyet',d.gender||'—'],[EN?'Report Date':'Rapor Tarihi',dtStr.split(',')[0]||dtStr.slice(0,10)]];
+    // ─────────────────────────────────────────────
+    // PATIENT INFORMATION
+    // ─────────────────────────────────────────────
+    y=sectionTitle(EN?'PATIENT INFORMATION':'HASTA BILGILERI',y);
+    fill(244,247,249);draw(215,220,224);pdf.setLineWidth(0.2);
+    pdf.rect(ML,y,CW,15,'FD');
+    const cols=[
+      [EN?'Full Name':'Ad Soyad', d.patient_name||'—'],
+      [EN?'Age':'Yas', (d.age||'—')+(EN?' y.o':' yas')],
+      [EN?'Gender':'Cinsiyet', genderDisplay],
+      [EN?'Report Date':'Rapor Tarihi', dtStr.split(',')[0]||dtStr.slice(0,10)]
+    ];
     const cw=CW/cols.length;
     cols.forEach(([lbl,val],i)=>{
-      const cx=ML+i*cw+3;
-      norm(null,7);rgb(63,71,73);pdf.text(lbl,cx,y+4);
-      bold(null,9.5);rgb(0,47,64);
-      pdf.text(pdf.splitTextToSize(String(val),cw-4)[0],cx,y+10);
-      if(i>0){draw(220,224,226);pdf.setLineWidth(0.2);pdf.line(ML+i*cw,y+1.5,ML+i*cw,y+11.5);}
+      const cx=ML+i*cw+4;
+      norm(null,7);rgb(85,93,97);pdf.text(safe7bit(lbl),cx,y+5.5);
+      bold(null,10.5);rgb(0,47,64);
+      pdf.text(safe7bit(pdf.splitTextToSize(String(val),cw-5)[0]),cx,y+12);
+      if(i>0){draw(215,220,224);pdf.setLineWidth(0.2);pdf.line(ML+i*cw,y+2,ML+i*cw,y+13);}
     });
-    y+=17;
+    y+=19;
 
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     // URGENCY FLAGS
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     if(d.urgency_flags&&d.urgency_flags.length>0){
-      y=checkY(y,8+d.urgency_flags.length*7);
-      const fh=7+d.urgency_flags.length*7;
+      const flags=d.urgency_flags.map(f=>safe7bit(localize(String(f))));
+      const fh=10+flags.length*7;
+      y=checkY(y,fh+4);
       fill(255,245,245);draw(186,26,26);pdf.setLineWidth(0.5);
       pdf.roundedRect(ML,y,CW,fh,1.5,1.5,'FD');pdf.setLineWidth(0.2);
-      fill(186,26,26);pdf.rect(ML,y,3.5,fh,'F');
-      bold(null,8);rgb(186,26,26);
-      pdf.text(EN?'⚠ URGENCY FLAGS':'⚠ ACİLİYET BAYRAKLARI',ML+7,y+5.5);
-      let fy=y+5.5;
-      d.urgency_flags.forEach(f=>{fy+=7;norm(null,8.5);rgb(140,20,20);const ls=pdf.splitTextToSize('• '+f,CW-12);pdf.text(ls,ML+7,fy);fy+=(ls.length-1)*4;});
+      fill(186,26,26);pdf.rect(ML,y,4,fh,'F');
+      bold(null,8.5);rgb(186,26,26);
+      pdf.text(EN?'! URGENCY FLAGS':'! ACILIYET BAYRAKLARI',ML+8,y+7);
+      let fy=y+7;
+      flags.forEach(f=>{
+        fy+=6.5;
+        norm(null,9);rgb(140,20,20);
+        const ls=pdf.splitTextToSize('- '+f,CW-13);
+        pdf.text(ls,ML+8,fy);
+        fy+=(ls.length-1)*4.5;
+      });
       y+=fh+5;
     }
 
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     // VITAL SIGNS
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     if(d.vitals&&Object.keys(d.vitals).length>0){
-      const vkeys=[['blood_pressure',EN?'Blood Pressure':'Kan Basıncı','mmHg'],['pulse',EN?'Pulse':'Nabız','bpm'],['temperature',EN?'Temp':'Ateş','°C'],['spo2','SpO2','%'],['respiratory_rate',EN?'Resp. Rate':'Solunum Hz.','/dk']];
+      const vkeys=[
+        ['blood_pressure',EN?'Blood Pressure':'Kan Basinci','mmHg'],
+        ['pulse',EN?'Pulse':'Nabiz','bpm'],
+        ['temperature',EN?'Temperature':'Ates','C'],
+        ['spo2','SpO2','%'],
+        ['respiratory_rate',EN?'Resp. Rate':'Solunum','/min']
+      ];
       const pv=vkeys.filter(([k])=>d.vitals[k]!=null);
       if(pv.length>0){
-        y=checkY(y,20);
-        y=sectionTitle(EN?'VITAL SIGNS':'VİTAL BULGULAR',y);
+        y=checkY(y,24);
+        y=sectionTitle(EN?'VITAL SIGNS':'VITAL BULGULAR',y);
         const vcw=CW/pv.length;
-        fill(244,247,249);draw(220,224,226);pdf.setLineWidth(0.2);
-        pdf.rect(ML,y,CW,15,'FD');
+        fill(244,247,249);draw(215,220,224);pdf.setLineWidth(0.2);
+        pdf.rect(ML,y,CW,17,'FD');
         pv.forEach(([k,lbl,unit],i)=>{
-          const cx=ML+i*vcw+3;
+          const cx=ML+i*vcw+4;
           const val=d.vitals[k];
           const alert=(k==='temperature'&&parseFloat(val)>=38.5)||(k==='spo2'&&parseFloat(val)<95);
-          norm(null,7);rgb(63,71,73);pdf.text(lbl,cx,y+4.5);
-          bold(null,13);rgb(...(alert?[186,26,26]:[0,47,64]));pdf.text(String(val),cx,y+11.5);
-          norm(null,6.5);rgb(100,110,115);pdf.text(unit,cx,y+14.5);
-          if(i>0){draw(220,224,226);pdf.setLineWidth(0.2);pdf.line(ML+i*vcw,y+1.5,ML+i*vcw,y+13.5);}
+          norm(null,7);rgb(85,93,97);pdf.text(safe7bit(lbl),cx,y+6);
+          bold(null,14);rgb(...(alert?[186,26,26]:[0,47,64]));pdf.text(String(val),cx,y+13.5);
+          norm(null,6.5);rgb(105,113,117);pdf.text(unit,cx,y+16.5);
+          if(i>0){draw(215,220,224);pdf.setLineWidth(0.2);pdf.line(ML+i*vcw,y+2,ML+i*vcw,y+15);}
         });
-        y+=19;
+        y+=21;
       }
     }
 
-    // ═══════════════════════════════════════════════════════
-    // SYMPTOMS & AI NARRATIVE
-    // ═══════════════════════════════════════════════════════
-    if(d.symptoms_summary){
-      y=checkY(y,20);
-      y=sectionTitle(EN?'SYMPTOMS & AI NARRATIVE':'SEMPTOMLAR VE AI ANALİZİ',y);
-      norm(null,9);rgb(25,28,29);
-      const slines=pdf.splitTextToSize(d.symptoms_summary,CW);
-      y=checkY(y,slines.length*4.2+3);
-      pdf.text(slines,ML,y);
-      y+=slines.length*4.2+4;
+    // ─────────────────────────────────────────────
+    // CHIEF COMPLAINT
+    // ─────────────────────────────────────────────
+    const chiefComplaint=safe7bit(localize(d.chief_complaint||''));
+    if(chiefComplaint&&chiefComplaint.length>3){
+      y=checkY(y,22);
+      y=sectionTitle(EN?'CHIEF COMPLAINT':'BASVURU SIKAYETI',y);
+      fill(240,250,249);draw(0,106,104);pdf.setLineWidth(0.5);
+      const ccLines=pdf.splitTextToSize(chiefComplaint,CW-10);
+      const cch=ccLines.length*5.5+10;
+      pdf.roundedRect(ML,y-2,CW,cch,1.5,1.5,'F');
+      pdf.line(ML,y-2,ML,y-2+cch);pdf.setLineWidth(0.2);
+      bold(null,10.5);rgb(0,47,64);pdf.text(ccLines,ML+8,y+5);
+      y+=cch+4;
     }
 
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // SYMPTOMS & AI NARRATIVE
+    // ─────────────────────────────────────────────
+    const sympText=safe7bit(localize(extractText(d.symptoms_summary)));
+    if(sympText&&sympText.length>5){
+      y=checkY(y,22);
+      y=sectionTitle(EN?'SYMPTOMS & AI NARRATIVE':'SEMPTOMLAR VE AI ANALIZI',y);
+      norm(null,9.5);rgb(22,26,28);
+      const slines=pdf.splitTextToSize(sympText,CW);
+      y=checkY(y,slines.length*5.2+3);
+      pdf.text(slines,ML,y);
+      y+=slines.length*5.2+5;
+    }
+
+    // ─────────────────────────────────────────────
     // AI CLINICAL NOTES
-    // ═══════════════════════════════════════════════════════
-    if(d.clinical_notes){
-      y=checkY(y,20);
-      y=sectionTitle(EN?'AI CLINICAL NOTES':'AI KLİNİK NOTLARI',y);
-      const nlines=pdf.splitTextToSize(d.clinical_notes,CW-8);
-      const nh=nlines.length*4.2+8;
+    // ─────────────────────────────────────────────
+    const clinNotes=safe7bit(localize(extractText(d.clinical_notes)));
+    if(clinNotes&&clinNotes.length>5){
+      y=checkY(y,22);
+      y=sectionTitle(EN?'AI CLINICAL NOTES':'AI KLINIK NOTLARI',y);
+      const nlines=pdf.splitTextToSize(clinNotes,CW-10);
+      const nh=nlines.length*5.2+10;
       y=checkY(y,nh);
       fill(240,250,249);draw(0,106,104);pdf.setLineWidth(0.5);
       pdf.rect(ML,y-2,CW,nh,'F');
-      pdf.line(ML,y-2,ML,y-2+nh);
-      pdf.setLineWidth(0.2);
-      norm(null,8.5);rgb(25,28,29);pdf.text(nlines,ML+6,y+3);
-      y+=nh+4;
+      pdf.line(ML,y-2,ML,y-2+nh);pdf.setLineWidth(0.2);
+      norm(null,9.5);rgb(22,26,28);pdf.text(nlines,ML+8,y+5);
+      y+=nh+5;
     }
 
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     // POSSIBLE CONDITIONS
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     if(d.possible_conditions&&d.possible_conditions.length>0){
-      y=checkY(y,10+d.possible_conditions.length*9);
-      y=sectionTitle(EN?'POSSIBLE CONDITIONS (AI ASSESSMENT)':'OLASI TANI – AI DEĞERLENDİRMESİ',y);
-      d.possible_conditions.slice(0,3).forEach((c,i)=>{
-        y=checkY(y,10);
-        if(i===0){fill(...tc);}else{fill(232,236,238);}
-        pdf.roundedRect(ML,y,CW,7.5,1.2,1.2,'F');
-        bold(null,9.5);rgb(...(i===0?[255,255,255]:[0,47,64]));
-        pdf.text(`${i+1}. ${c}`,ML+4.5,y+5.2);
-        y+=9.5;
-      });
-      y+=2;
+      const conditions=d.possible_conditions
+        .map(c=>safe7bit(localize(String(c))))
+        .filter(c=>c&&c.length>2&&c.toLowerCase()!=='unknown');
+      if(conditions.length>0){
+        y=checkY(y,14+conditions.length*11);
+        y=sectionTitle(EN?'POSSIBLE CONDITIONS (AI ASSESSMENT)':'OLASI TANI - AI DEGERLENDIRMESI',y);
+        conditions.slice(0,4).forEach((c,i)=>{
+          y=checkY(y,12);
+          const bgColors=[[...tc],[220,228,234],[232,236,240],[240,242,244]];
+          fill(...(bgColors[i]||bgColors[3]));
+          pdf.roundedRect(ML,y,CW,9,1.5,1.5,'F');
+          bold(null,10.5);rgb(...(i===0?[255,255,255]:[0,47,64]));
+          pdf.text(`${i+1}. ${c}`,ML+5,y+6.2);
+          y+=11.5;
+        });
+        y+=3;
+      }
     }
 
-    // ═══════════════════════════════════════════════════════
-    // EVIDENCE & GUIDELINES
-    // ═══════════════════════════════════════════════════════
-    const evArr=(d.evidence||[]).filter(e=>e&&e.length>3);
-    const glArr=(d.guideline_sources||[]).filter(g=>g&&g.length>2);
+    // ─────────────────────────────────────────────
+    // CLINICAL EVIDENCE & GUIDELINES
+    // ─────────────────────────────────────────────
+    const evArr=(d.evidence||[]).map(e=>safe7bit(localize(String(e)))).filter(e=>e&&e.length>3);
+    const glArr=(d.guideline_sources||[])
+      .map(g=>safe7bit(String(g||'')))
+      .filter(g=>g&&g.length>2&&g.toLowerCase()!=='unknown'&&g!=='—'&&g!=='-');
     if(evArr.length>0||glArr.length>0){
-      y=checkY(y,12+evArr.length*5+glArr.length*7);
-      y=sectionTitle(EN?'CLINICAL EVIDENCE & GUIDELINES':'KLİNİK KANIT VE KILAVUZLAR',y);
+      y=checkY(y,14+evArr.length*7+glArr.length*9);
+      y=sectionTitle(EN?'CLINICAL EVIDENCE & GUIDELINES':'KLINIK KANIT VE KILAVUZLAR',y);
       evArr.forEach(e=>{
-        norm(null,8.5);rgb(25,28,29);
-        const ls=pdf.splitTextToSize('✓  '+e,CW);
-        y=checkY(y,ls.length*4+2);pdf.text(ls,ML,y);y+=ls.length*4+1.5;
+        norm(null,9.5);rgb(22,26,28);
+        const ls=pdf.splitTextToSize('- '+e,CW);
+        y=checkY(y,ls.length*5.2+2);
+        pdf.text(ls,ML,y);
+        y+=ls.length*5.2+2.5;
       });
       if(glArr.length>0){
-        y+=1;bold(null,7.5);rgb(0,71,94);pdf.text(EN?'Referenced Guidelines:':'Başvurulan Kılavuzlar:',ML,y);y+=5;
+        y+=2;bold(null,7.5);rgb(0,71,94);
+        pdf.text(EN?'Referenced Guidelines:':'Basvurulan Kilavuzlar:',ML,y);y+=5.5;
         let gx=ML;
         glArr.forEach(g=>{
-          const gw=pdf.getTextWidth(g)+8;
-          if(gx+gw>PW-MR){gx=ML;y+=7;}
-          fill(240,244,247);pdf.roundedRect(gx,y-4,gw,6,1,1,'F');
-          bold(null,7.5);rgb(0,71,94);pdf.text(g,gx+4,y);
-          gx+=gw+3;
+          const gw=pdf.getTextWidth(g)+12;
+          if(gx+gw>PW-MR-5){gx=ML;y+=9;}
+          fill(228,238,248);draw(0,71,94);pdf.setLineWidth(0.3);
+          pdf.roundedRect(gx,y-5,gw,7,1.2,1.2,'FD');
+          bold(null,7.5);rgb(0,47,80);pdf.text(g,gx+6,y);
+          gx+=gw+4;
         });
-        y+=7;
+        y+=9;
       }
-      y+=2;
+      y+=3;
     }
 
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     // RECOMMENDED ACTION
-    // ═══════════════════════════════════════════════════════
-    if(d.recommended_action){
-      const rlines=pdf.splitTextToSize(d.recommended_action,CW-12);
-      const rh=rlines.length*5.5+12;
+    // ─────────────────────────────────────────────
+    const recAction=safe7bit(localize(d.recommended_action||''));
+    if(recAction&&recAction.length>3){
+      const rlines=pdf.splitTextToSize(recAction,CW-14);
+      const rh=rlines.length*6+18;
       y=checkY(y,rh);
-    fill(...tc);pdf.roundedRect(ML,y,CW,rh,2,2,'F');
-    pdf.saveGraphicsState();
-    pdf.setGState(new pdf.GState({opacity:0.75}));
-    bold(null,7.5);rgb(255,255,255);
-    pdf.text(EN?'RECOMMENDED ACTION':'ÖNERİLEN EYLEM',ML+6,y+6.5);
-    pdf.restoreGraphicsState();
-    bold(null,10.5);rgb(255,255,255);pdf.text(rlines,ML+6,y+12.5);
-      y+=rh+6;
+      fill(...tc);pdf.roundedRect(ML,y,CW,rh,2.5,2.5,'F');
+      bold(null,8);rgb(255,255,255);
+      pdf.text(EN?'RECOMMENDED ACTION':'ONERILEN EYLEM',ML+8,y+8);
+      bold(null,11.5);rgb(255,255,255);pdf.text(rlines,ML+8,y+15.5);
+      y+=rh+7;
     }
 
-    // ═══════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // COMPLETENESS SCORE
+    // ─────────────────────────────────────────────
+    if(d.clinical_completeness_score!=null){
+      y=checkY(y,22);
+      y=sectionTitle(EN?'CLINICAL COMPLETENESS SCORE':'KLINIK TAMLAMA SKORU',y);
+      const score=Math.round(d.clinical_completeness_score);
+      const barW=CW-55;
+      fill(225,230,233);pdf.rect(ML,y,barW,6,'F');
+      const col=score>=80?[0,106,104]:score>=50?[175,85,0]:[186,26,26];
+      fill(...col);pdf.rect(ML,y,barW*(score/100),6,'F');
+      bold(null,18);rgb(...col);pdf.text(score+'%',ML+barW+6,y+6);
+      norm(null,7.5);rgb(80,88,92);pdf.text(EN?'Completeness':'Tamlama',ML+barW+6,y+11.5);
+      if(d.missing_information&&d.missing_information.length>0){
+        y+=14;
+        norm(null,8.5);rgb(95,103,107);
+        const miss=safe7bit((EN?'Missing: ':'Eksik: ')+d.missing_information.map(m=>String(m)).join(', '));
+        const mlines=pdf.splitTextToSize(miss,CW);
+        pdf.text(mlines,ML,y);
+        y+=mlines.length*5;
+      }
+      y+=7;
+    }
+
+    // ─────────────────────────────────────────────
     // NEXT STEPS
-    // ═══════════════════════════════════════════════════════
-    y=checkY(y,28);
-    fill(244,247,249);draw(220,224,226);pdf.setLineWidth(0.25);
-    pdf.roundedRect(ML,y,CW,27,2,2,'FD');
-    bold(null,7.5);rgb(0,71,94);
-    pdf.text(EN?'NEXT STEPS':'SONRAKI ADIMLAR',ML+5,y+6);
-    const steps=EN?['1. Download or print this report and show it to your doctor.','2. If symptoms worsen, call emergency services immediately (112).','3. Do not take any medication without consulting your doctor.']:['1. Bu raporu PDF olarak indirin veya yazdırın — doktorunuza gösterin.','2. Belirtiler kötüleşirse derhal acil servisi arayın (112).','3. Doktor onayı olmadan ilaç kullanmayın.'];
-    let sy=y+12;
-    steps.forEach(s=>{norm(null,8.5);rgb(25,28,29);const ls=pdf.splitTextToSize(s,CW-10);pdf.text(ls,ML+5,sy);sy+=ls.length*4.5+1;});
-    y+=30;
+    // ─────────────────────────────────────────────
+    y=checkY(y,33);
+    fill(244,247,249);draw(215,220,224);pdf.setLineWidth(0.25);
+    pdf.roundedRect(ML,y,CW,30,2,2,'FD');
+    bold(null,8.5);rgb(0,71,94);
+    pdf.text(EN?'NEXT STEPS':'SONRAKI ADIMLAR',ML+6,y+7.5);
+    const steps=EN
+      ?['1. Download or print this report and present it to your doctor.',
+        '2. If symptoms worsen, call emergency services immediately (112).',
+        '3. Do not take any medication without consulting your doctor.']
+      :['1. Bu raporu indirin veya yazdirinip doktorunuza gosterin.',
+        '2. Belirtiler kotulesiirse 112yi arayin.',
+        '3. Doktor onayi olmadan ilac kullanmayin.'];
+    let sy=y+14;
+    steps.forEach(s=>{
+      norm(null,9);rgb(25,28,29);
+      const ls=pdf.splitTextToSize(safe7bit(s),CW-12);
+      pdf.text(ls,ML+6,sy);sy+=ls.length*5.2+1.5;
+    });
+    y+=33;
 
-    // ═══════════════════════════════════════════════════════
-    // AI DISCLAIMER BOX
-    // ═══════════════════════════════════════════════════════
-    y=checkY(y,18);
-    fill(255,248,240);draw(200,100,0);pdf.setLineWidth(0.4);
-    pdf.roundedRect(ML,y,CW,15,1.5,1.5,'FD');pdf.setLineWidth(0.2);
-    fill(200,100,0);pdf.rect(ML,y,3.5,15,'F');
-    bold(null,7.5);rgb(200,100,0);
-    pdf.text(EN?'⚠  IMPORTANT NOTICE':'⚠  ÖNEMLİ UYARI',ML+7,y+5.5);
-    norm(null,8);rgb(25,28,29);
-    const warnTxt=EN?'This report is generated by AI (Gemma 4) and is for informational purposes only. It does not constitute a medical diagnosis or replace professional medical advice. Clinical responsibility rests with the treating physician.':'Bu rapor yapay zeka (Gemma 4) tarafından oluşturulmuştur ve yalnızca bilgilendirme amaçlıdır. Tıbbi tanı değildir; klinik karar sorumluluğu hekime aittir.';
-    const wlines=pdf.splitTextToSize(warnTxt,CW-10);pdf.text(wlines,ML+7,y+10.5);
-    y+=18;
+    // ─────────────────────────────────────────────
+    // AI DISCLAIMER
+    // ─────────────────────────────────────────────
+    y=checkY(y,20);
+    fill(255,248,235);draw(185,95,0);pdf.setLineWidth(0.4);
+    pdf.roundedRect(ML,y,CW,17,1.5,1.5,'FD');pdf.setLineWidth(0.2);
+    fill(185,95,0);pdf.rect(ML,y,4,17,'F');
+    bold(null,8.5);rgb(185,95,0);
+    pdf.text(EN?'! IMPORTANT NOTICE':'! ONEMLI UYARI',ML+8,y+7);
+    norm(null,9);rgb(28,28,28);
+    const warnTxt=EN
+      ?'This report is generated by AI (Gemma 4) and is for informational purposes only. It does not constitute a medical diagnosis or replace professional medical advice. Clinical responsibility rests with the treating physician.'
+      :'Bu rapor yapay zeka (Gemma 4) tarafindan olusturulmustur. Tibbi tani degildir; klinik karar sorumlulugu hekime aittir.';
+    const wlines=pdf.splitTextToSize(warnTxt,CW-12);pdf.text(wlines,ML+8,y+12.5);
+    y+=20;
 
-    // ── Footer on all pages ──
+    // ─────────────────────────────────────────────
+    // Footer on all pages
+    // ─────────────────────────────────────────────
     const totalPages=pdf.internal.getNumberOfPages();
     for(let i=1;i<=totalPages;i++){pdf.setPage(i);drawFooter();}
 
     // ── Save ──
-    const trM={ş:'s',Ş:'S',ğ:'g',Ğ:'G',ü:'u',Ü:'U',ö:'o',Ö:'O',ı:'i',İ:'I',ç:'c',Ç:'C'};
-    const safe=(d.patient_name||'Hasta').split('').map(c=>trM[c]||(/[a-zA-Z0-9\s_-]/.test(c)?c:'_')).join('').replace(/\s+/g,'_');
+    const trM={'\u015f':'s','\u015e':'S','\u011f':'g','\u011e':'G','\u00fc':'u','\u00dc':'U','\u00f6':'o','\u00d6':'O','\u0131':'i','\u0130':'I','\u00e7':'c','\u00c7':'C'};
+    const safeName=(d.patient_name||'Patient').split('').map(c=>trM[c]||(/[a-zA-Z0-9\s_-]/.test(c)?c:'_')).join('').replace(/\s+/g,'_');
     const lsuf=reportLang==='en'?'_EN':reportLang==='ar'?'_AR':'_TR';
-    pdf.save(`AnamnezAI_Rapor_${safe}${lsuf}_${new Date().toISOString().slice(0,10)}.pdf`);
+    pdf.save(`AnamnezAI_Report_${safeName}${lsuf}_${new Date().toISOString().slice(0,10)}.pdf`);
   }catch(err){
-    console.error('PDF hatası:',err);
-    const btn=document.getElementById('pdf-btn');
-    if(btn){ btn.textContent='❌ PDF Hatası'; btn.style.background='#ef4444'; }
+    console.error('PDF error:',err);
+    const b=document.getElementById('pdf-btn');
+    if(b){b.textContent='PDF Error';b.style.background='#ef4444';}
   }finally{
     if(btn){btn.disabled=false;btn.innerHTML=origT;}
     if(btnB){btnB.disabled=false;btnB.innerHTML=origB;}
   }
 }
-
 applyLangUI();
 if(data){ render(data); }
 else{
@@ -994,7 +1174,7 @@ const SM_DICT = {
     noFlags:'لا توجد إشارات إلحاح',
   },
 };
-const smLang = localStorage.getItem('ui_lang') || 'tr';
+const smLang = localStorage.getItem('ui_lang') || 'en';
 function smT(key) { return (SM_DICT[smLang] || SM_DICT.tr)[key] || key; }
 function applySMLang() {
   document.documentElement.lang = smLang;
@@ -1010,6 +1190,3 @@ function applySMLang() {
 }
 (function(){ applySMLang(); })();
 
-</script>
-</body>
-</html>
