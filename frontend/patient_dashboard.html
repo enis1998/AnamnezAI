@@ -712,13 +712,29 @@ function showClaimMsg(text,type){
 }
 
 function openVisitReport(sessionId){
-  fetch(`${API}/api/session/${sessionId}/summary`,{headers:{Authorization:`Bearer ${token}`}})
-    .then(r=>r.ok?r.json():null)
+  // Butonun loading state'ini aktive et
+  const btn = event && event.target ? event.target.closest('button') : null;
+  const origHtml = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled=true; btn.innerHTML=`<span class="material-symbols-outlined msym text-[14px] spin">refresh</span>`; }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(()=>controller.abort(), 60000); // 60 sn timeout
+
+  fetch(`${API}/api/session/${sessionId}/summary`,{
+    headers:{Authorization:`Bearer ${token}`},
+    signal: controller.signal
+  })
+    .then(r=>{ clearTimeout(timeoutId); return r.ok?r.json():null; })
     .then(data=>{
+      if(btn){ btn.disabled=false; btn.innerHTML=origHtml; }
       if(data){localStorage.setItem('anamnez_summary',JSON.stringify(data));window.location.href='summary.html';}
-      else showToast((PDL[pdLang]||PDL.tr).toastReport,true);
+      else showToast((PDL[pdLang]||PDL.tr).toastReport||'Rapor yüklenemedi.',true);
     })
-    .catch(()=>showToast((PDL[pdLang]||PDL.tr).toastReport,true));
+    .catch((e)=>{
+      clearTimeout(timeoutId);
+      if(btn){ btn.disabled=false; btn.innerHTML=origHtml; }
+      const msg = e.name==='AbortError' ? 'Zaman aşımı — rapor çok uzun sürdü.' : (PDL[pdLang]||PDL.tr).toastReport||'Rapor yüklenemedi.';
+      showToast(msg, true);
+    });
 }
 
 function showToast(msg,isErr=false){

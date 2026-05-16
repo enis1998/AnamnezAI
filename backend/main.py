@@ -1987,13 +1987,35 @@ async def get_summary_status(session_id: str):
 @app.get("/api/session/{session_id}/summary", response_model=ClinicalSummaryResponse)
 async def get_clinical_summary(session_id: str):
     session = sessions.get(session_id)
+    # Session not in memory — try loading from DB directly
+    if not session:
+        try:
+            with get_cursor() as cur:
+                cur.execute("SELECT data FROM sessions WHERE session_id=%s", (session_id,))
+                row = cur.fetchone()
+                if row:
+                    session = row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
+                    sessions[session_id] = session  # cache back
+        except Exception as _e:
+            pass
     if not session:
         raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
-    if not session["completed"]:
+    if not session.get("completed"):
         raise HTTPException(status_code=400, detail="Mülakat henüz tamamlanmadı.")
 
     if session_id in summaries:
         return ClinicalSummaryResponse(**summaries[session_id])
+    # Try loading summary from DB
+    try:
+        with get_cursor() as cur:
+            cur.execute("SELECT data FROM summaries WHERE session_id=%s", (session_id,))
+            row = cur.fetchone()
+            if row:
+                smry = row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
+                summaries[session_id] = smry
+                return ClinicalSummaryResponse(**smry)
+    except Exception as _e:
+        pass
 
     _t_start = _time.time()
 
@@ -2371,11 +2393,15 @@ async def delete_session(session_id: str, current_user: dict = Depends(require_d
 
 @app.get("/api/patient/history")
 async def get_patient_history(current_user: dict = Depends(require_auth)):
-    """Mevcut hastanın tüm tamamlanmış oturumlarını ve özetlerini döndürür."""
+    """Mevcut hastanın tüm tamamlanmış oturumlarını ve özetlerini döndürür (in-memory + DB)."""
     patient_id = current_user["user_id"]
     history = []
+    seen_sids = set()
+
+    # 1) In-memory sessions
     for sid, s in sessions.items():
         if s.get("patient_id") == patient_id and s.get("completed"):
+            seen_sids.add(sid)
             entry = {
                 "session_id": sid,
                 "created_at": s.get("created_at", ""),
@@ -2399,8 +2425,43 @@ async def get_patient_history(current_user: dict = Depends(require_auth)):
                     "generated_at": summaries[sid].get("generated_at", ""),
                 })
             history.append(entry)
+
+    # 2) DB fallback — pick up sessions not yet in memory
+    try:
+        with get_cursor() as cur:
+            cur.execute(
+                "SELECT s.session_id, s.data as sdata, sm.data as smdata "
+                "FROM sessions s LEFT JOIN summaries sm ON s.session_id=sm.session_id "
+                "WHERE (s.data->>'patient_id')=%s AND (s.data->>'completed')='true'",
+                (str(patient_id),)
+            )
+            for row in cur.fetchall():
+                sid = row["session_id"]
+                if sid in seen_sids:
+                    continue
+                s = row["sdata"] if isinstance(row["sdata"], dict) else json.loads(row["sdata"] or '{}')
+                sm = (row["smdata"] if isinstance(row["smdata"], dict) else json.loads(row["smdata"] or '{}')) if row["smdata"] else {}
+                entry = {
+                    "session_id": sid,
+                    "created_at": s.get("created_at", ""),
+                    "patient_name": s.get("patient_name"),
+                    "age": s.get("age"),
+                    "gender": s.get("gender"),
+                    "vitals": s.get("vitals"),
+                    "triage_level": sm.get("triage_level", "PENDING") if sm else "PENDING",
+                    "triage_color": sm.get("triage_color", "#8c9499") if sm else "#8c9499",
+                    "chief_complaint": sm.get("chief_complaint", "") if sm else "",
+                    "confidence_score": sm.get("confidence_score", 0) if sm else 0,
+                    "symptoms_summary": sm.get("symptoms_summary", "") if sm else "",
+                    "recommended_action": sm.get("recommended_action", "") if sm else "",
+                    "generated_at": sm.get("generated_at", "") if sm else "",
+                }
+                history.append(entry)
+    except Exception as _e:
+        print(f"[patient/history DB fallback error] {_e}")
+
     history.sort(key=lambda x: x.get("created_at", ""), reverse=True)
-    return {"history": history[:20], "total": len(history)}
+    return {"history": history[:50], "total": len(history)}
 
 
 # ─────────────────────────────────────────────

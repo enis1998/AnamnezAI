@@ -160,9 +160,15 @@ tailwind.config={theme:{extend:{colors:{
 
 <script>
 const API = '';
-const raw = localStorage.getItem('anamnez_summary');
-const data = raw ? JSON.parse(raw) : null;
-let reportLang = (data && data.language) || localStorage.getItem('report_lang') || localStorage.getItem('ui_lang') || 'en';
+let data = null;
+try {
+  const raw = localStorage.getItem('anamnez_summary');
+  data = raw ? JSON.parse(raw) : null;
+} catch(e) {
+  console.error('summary localStorage parse error:', e);
+  data = null;
+}
+let reportLang = (data && data.language) || localStorage.getItem('report_lang') || localStorage.getItem('ui_lang') || 'tr';
 
 // Doktor kontrolü
 let _isDoctor = false;
@@ -1144,7 +1150,19 @@ async function exportPDF(){
   }
 }
 applyLangUI();
-if(data){ render(data); }
+if(data){
+  try { render(data); }
+  catch(err){
+    console.error('render error:', err);
+    const ls=document.getElementById('loading-state');
+    if(ls) ls.innerHTML=`<div class="text-center py-20">
+      <span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span>
+      <p class="text-err font-bold mb-2">${I18N.tr.noData}</p>
+      <p class="text-onsv text-xs mb-4">${err.message||''}</p>
+      <a href="patient_dashboard.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Geçmişime Dön</a>
+    </div>`;
+  }
+}
 else{
   const ls=document.getElementById('loading-state');
   if(ls) ls.innerHTML=`<div class="text-center py-20"><span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span><p class="text-err font-bold mb-4">${I18N.tr.noData}</p><a href="index.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">${I18N.tr.goHome}</a></div>`;

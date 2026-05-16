@@ -93,10 +93,43 @@ out = run("docker exec anamnezai-backend-1 grep -c 'const DL' /app/frontend/doct
 print(f"  Container 'const DL': {out}")
 
 sftp.close()
+
+# ====================================================
+# docker cp: host → container (bind mount YOK!)
+# ====================================================
+print("\n🐳 Container'a docker cp ile dosyalar kopyalanıyor...")
+cp_ok = 0
+cp_fail = 0
+for rel in uploaded:
+    src = f"{REMOTE_FRONTEND}/{rel}"
+    dst = f"/app/frontend/{rel}"
+    # Hedef dizini oluştur
+    dst_dir = "/".join(dst.split("/")[:-1])
+    run(f"docker exec anamnezai-backend-1 mkdir -p {dst_dir} 2>/dev/null || true")
+    result = run(f"docker cp {src} anamnezai-backend-1:{dst}")
+    if "Error" in result or "error" in result:
+        print(f"  ❌ cp fail: {rel}")
+        cp_fail += 1
+    else:
+        cp_ok += 1
+
+print(f"  ✅ docker cp: {cp_ok} başarılı, {cp_fail} başarısız")
+
+# BOM temizle
+print("\n🧹 Container'daki HTML dosyalarından BOM temizleniyor...")
+run(r"""python3 -c "
+import os, glob
+for f in glob.glob('/app/frontend/*.html'):
+    with open(f,'rb') as fp: data=fp.read()
+    if data.startswith(b'\xef\xbb\xbf'):
+        with open(f,'wb') as fp: fp.write(data[3:])
+        print('BOM removed:', f)
+" """)
+
 client.close()
 
 print("\n" + "=" * 60)
-print("✅ Frontend push tamamlandı!")
+print("✅ Frontend push + docker cp tamamlandı!")
 print("   Tarayıcıda Ctrl+Shift+R (hard refresh) yapın.")
 print("   Veya F12 → Application → Storage → Clear site data")
 print("=" * 60)
