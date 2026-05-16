@@ -57,15 +57,15 @@ tailwind.config = {
   <div class="flex items-center gap-2">
     <button onclick="window.print()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ouv text-onsv text-sm hover:bg-surfc transition-colors">
       <span class="material-symbols-outlined msym text-[18px]">print</span>
-      <span class="hidden sm:inline">Yazdır</span>
+      <span id="cr-btn-print" class="hidden sm:inline">Yazdır</span>
     </button>
     <button onclick="exportPDF()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pri text-white text-sm hover:bg-pric transition-colors">
       <span class="material-symbols-outlined msym text-[18px]">picture_as_pdf</span>
-      <span class="hidden sm:inline">PDF İndir</span>
+      <span id="cr-btn-pdf" class="hidden sm:inline">PDF İndir</span>
     </button>
     <a href="doctor.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-ouv text-onsv text-sm hover:bg-surfc transition-colors">
       <span class="material-symbols-outlined msym text-[18px]">arrow_back</span>
-      <span class="hidden sm:inline">Panele Dön</span>
+      <span id="cr-btn-back" class="hidden sm:inline">Panele Dön</span>
     </a>
   </div>
 </header>
@@ -83,18 +83,18 @@ tailwind.config = {
     </div>
     <nav class="flex-1 px-4 space-y-1 text-sm">
       <a href="doctor.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
-        <span class="material-symbols-outlined msym text-[20px]">dashboard</span> Panel
+        <span class="material-symbols-outlined msym text-[20px]">dashboard</span> <span id="cr-nav-panel">Panel</span>
       </a>
       <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-surf text-pri font-semibold">
-        <span class="material-symbols-outlined msym text-[20px]">folder_shared</span> Hasta Kaydı
+        <span class="material-symbols-outlined msym text-[20px]">folder_shared</span> <span id="cr-nav-record">Hasta Kaydı</span>
       </a>
       <a href="analytics.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-surf transition-colors">
-        <span class="material-symbols-outlined msym text-[20px]">bar_chart</span> Analitik
+        <span class="material-symbols-outlined msym text-[20px]">bar_chart</span> <span id="cr-nav-analytics">Analitik</span>
       </a>
     </nav>
     <div class="px-4 mt-auto">
       <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-onsv hover:bg-errc hover:text-err transition-colors text-sm">
-        <span class="material-symbols-outlined msym text-[20px]">logout</span> Çıkış
+        <span class="material-symbols-outlined msym text-[20px]">logout</span> <span id="cr-nav-logout">Çıkış</span>
       </button>
     </div>
   </aside>
@@ -104,14 +104,14 @@ tailwind.config = {
     <!-- Loading -->
     <div id="loadingState" class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <div class="w-10 h-10 rounded-full border-4 border-secc border-t-sec animate-spin"></div>
-      <p class="text-onsv text-sm">Hasta kaydı yükleniyor...</p>
+      <p id="cr-loading-txt" class="text-onsv text-sm">Hasta kaydı yükleniyor...</p>
     </div>
 
     <!-- Error -->
     <div id="errorState" class="hidden flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <span class="material-symbols-outlined msym-fill text-err text-[48px]">error</span>
-      <p class="text-ons font-semibold">Kayıt bulunamadı</p>
-      <a href="doctor.html" class="px-4 py-2 rounded-lg bg-pri text-white text-sm">Panele Dön</a>
+      <p id="cr-error-txt" class="text-ons font-semibold">Kayıt bulunamadı</p>
+      <a href="doctor.html" id="cr-error-back" class="px-4 py-2 rounded-lg bg-pri text-white text-sm">Panele Dön</a>
     </div>
 
     <!-- Content -->
@@ -121,9 +121,9 @@ tailwind.config = {
         <div>
           <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-secc rounded-full text-[#006a68] text-xs font-semibold mb-3">
             <span class="material-symbols-outlined msym-fill text-[14px]">auto_awesome</span>
-            YZ ANALİZİ TAMAMLANDI
+            <span id="cr-ai-badge">YZ ANALİZİ TAMAMLANDI</span>
           </div>
-          <h1 class="text-3xl font-bold text-ons tracking-tight mb-1">Klinik İnceleme Raporu</h1>
+          <h1 id="cr-page-title" class="text-3xl font-bold text-ons tracking-tight mb-1">Klinik İnceleme Raporu</h1>
           <p id="caseId" class="text-onsv text-base">Case ID yükleniyor...</p>
         </div>
         <div id="triageBadge" class="px-5 py-2.5 rounded-xl font-bold text-lg triage-GREEN">YEŞİL</div>
@@ -138,9 +138,9 @@ tailwind.config = {
           <!-- AI Summary Card -->
           <section class="card p-6 editorial-shadow fade">
             <div class="flex justify-between items-start mb-6">
-              <h2 class="text-xl font-bold text-ons">Klinik YZ Özeti</h2>
+              <h2 id="cr-summary-title" class="text-xl font-bold text-ons">Klinik YZ Özeti</h2>
               <div class="text-right">
-                <p class="text-xs font-bold text-onsv uppercase tracking-widest mb-1">YZ Güven Skoru</p>
+                <p id="cr-ai-conf-label" class="text-xs font-bold text-onsv uppercase tracking-widest mb-1">YZ Güven Skoru</p>
                 <div class="flex items-center gap-1 justify-end text-2xl font-extrabold text-sec" id="confScore">
                   —%
                   <span class="material-symbols-outlined msym-fill text-sec text-[22px]">verified</span>
@@ -150,7 +150,7 @@ tailwind.config = {
 
             <!-- Chief Complaint -->
             <div class="bg-surf p-4 rounded-xl mb-6 border-l-4 border-sec">
-              <p class="text-lg font-semibold text-pri leading-snug italic" id="chiefComplaint">"Yükleniyor..."</p>
+              <p class="text-lg font-semibold text-pri leading-snug italic" id="chiefComplaint">"<span id='cr-complaint-loading'>Yükleniyor...</span>"</p>
             </div>
 
             <!-- Narrative -->
@@ -158,14 +158,14 @@ tailwind.config = {
               <div>
                 <h4 class="text-ons font-semibold mb-2 flex items-center gap-2">
                   <span class="material-symbols-outlined msym text-pri text-[18px]">schedule</span>
-                  Başlangıç & Süre
+                  <span id="cr-onset-title">Başlangıç & Süre</span>
                 </h4>
                 <p class="text-onsv leading-relaxed text-sm" id="narrativeOnset">—</p>
               </div>
               <div>
                 <h4 class="text-ons font-semibold mb-2 flex items-center gap-2">
                   <span class="material-symbols-outlined msym text-pri text-[18px]">analytics</span>
-                  Aciliyet Bayrakları
+                  <span id="cr-urgency-title">Aciliyet Bayrakları</span>
                 </h4>
                 <div id="urgencyFlags" class="space-y-1 text-sm">—</div>
               </div>
@@ -175,7 +175,7 @@ tailwind.config = {
             <div id="vitalSignsSection" class="hidden mt-6">
               <h4 class="text-ons font-semibold mb-3 flex items-center gap-2">
                 <span class="material-symbols-outlined msym text-pri text-[18px]">monitor_heart</span>
-                Hayati Bulgular
+                <span id="cr-vitals-title">Hayati Bulgular</span>
               </h4>
               <div id="vitalSignsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
             </div>
@@ -185,7 +185,7 @@ tailwind.config = {
           <section class="card p-6 editorial-shadow fade">
             <h2 class="text-xl font-bold text-ons mb-4 flex items-center gap-2">
               <span class="material-symbols-outlined msym text-pri">chat</span>
-              Mülakat Transkripti
+              <span id="cr-transcript-title">Mülakat Transkripti</span>
             </h2>
             <div id="qaTranscript" class="space-y-3 max-h-80 overflow-y-auto pr-1">
               <p class="text-onsv text-sm">Yükleniyor...</p>
@@ -200,8 +200,8 @@ tailwind.config = {
                   <span class="material-symbols-outlined msym-fill text-secc text-[18px]">clinical_notes</span>
                 </div>
                 <div class="text-left">
-                  <p class="font-bold text-[15px] text-white">Klinik Gerekçe Özeti</p>
-                  <p class="text-[11px] text-white/50 font-normal">Gemma 4 e4b · Triaj karar gerekçesi</p>
+                  <p id="cr-reasoning-title" class="font-bold text-[15px] text-white">Klinik Gerekçe Özeti</p>
+                  <p id="cr-reasoning-sub" class="text-[11px] text-white/50 font-normal">Gemma 4 e4b · Triaj karar gerekçesi</p>
                 </div>
                 <span class="px-2 py-0.5 rounded-full bg-secc/20 text-secc text-[10px] font-bold uppercase tracking-wider ml-1">Gemma 4</span>
               </div>
@@ -222,20 +222,20 @@ tailwind.config = {
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-xl font-bold text-ons flex items-center gap-2">
                 <span class="material-symbols-outlined msym text-pri">table_chart</span>
-                ICD-10 Kodlaması
+                <span id="cr-icd10-title">ICD-10 Kodlaması</span>
               </h2>
               <button onclick="suggestICD10()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pric text-white text-xs hover:bg-pri transition-colors">
                 <span class="material-symbols-outlined msym text-[16px]">auto_awesome</span>
-                YZ Öner
+                <span id="cr-icd10-suggest-btn">YZ Öner</span>
               </button>
             </div>
             <div class="overflow-hidden rounded-xl bg-white">
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr class="bg-surf">
-                    <th class="px-4 py-3 text-xs font-bold text-onsv uppercase">ICD-10 Kodu</th>
-                    <th class="px-4 py-3 text-xs font-bold text-onsv uppercase">Kategori</th>
-                    <th class="px-4 py-3 text-xs font-bold text-onsv uppercase">Açıklama</th>
+                     <th class="px-4 py-3 text-xs font-bold text-onsv uppercase" id="cr-icd-col-code">ICD-10 Kodu</th>
+                     <th class="px-4 py-3 text-xs font-bold text-onsv uppercase" id="cr-icd-col-cat">Kategori</th>
+                     <th class="px-4 py-3 text-xs font-bold text-onsv uppercase" id="cr-icd-col-desc">Açıklama</th>
                   </tr>
                 </thead>
                 <tbody id="icd10TableBody" class="divide-y divide-surfc text-sm">
@@ -341,15 +341,16 @@ tailwind.config = {
           <section class="card p-6 editorial-shadow fade no-print">
             <h2 class="text-xl font-bold text-ons mb-4 flex items-center gap-2">
               <span class="material-symbols-outlined msym text-pri">edit_note</span>
-              Doktor Notları
+              <span id="cr-notes-title">Doktor Notları</span>
             </h2>
             <textarea id="doctorNotes" rows="4"
               class="w-full border border-surfc rounded-xl p-3 text-sm resize-none bg-surf focus:ring-2 focus:ring-sec focus:outline-none"
+              id="cr-notes-placeholder"
               placeholder="Hasta hakkında klinik notlarınızı buraya yazın..."></textarea>
             <div class="flex gap-2 mt-3">
               <button onclick="saveNote()" class="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sec text-white text-sm hover:bg-pric transition-colors">
                 <span class="material-symbols-outlined msym text-[18px]">save</span>
-                Notu Kaydet
+                <span id="cr-save-note">Notu Kaydet</span>
               </button>
               <span id="noteSaved" class="hidden text-sec text-sm flex items-center gap-1">
                 <span class="material-symbols-outlined msym-fill text-[16px]">check_circle</span>
@@ -366,14 +367,14 @@ tailwind.config = {
           <section class="card p-6 editorial-shadow fade">
             <h2 class="text-lg font-bold text-ons mb-4 flex items-center gap-2">
               <span class="material-symbols-outlined msym text-pri">person</span>
-              Hasta Bilgileri
+              <span id="cr-patinfo-title">Hasta Bilgileri</span>
             </h2>
             <div class="space-y-3 text-sm" id="patientInfo">
-              <div class="flex justify-between"><span class="text-onsv">Ad Soyad</span><span id="patName" class="font-semibold text-ons">—</span></div>
-              <div class="flex justify-between"><span class="text-onsv">Yaş</span><span id="patAge" class="font-semibold text-ons">—</span></div>
-              <div class="flex justify-between"><span class="text-onsv">Cinsiyet</span><span id="patGender" class="font-semibold text-ons">—</span></div>
-              <div class="flex justify-between"><span class="text-onsv">Dil</span><span id="patLang" class="font-semibold text-ons">—</span></div>
-              <div class="flex justify-between"><span class="text-onsv">Tarih</span><span id="patDate" class="font-semibold text-ons">—</span></div>
+              <div class="flex justify-between"><span id="cr-pat-name-lbl" class="text-onsv">Ad Soyad</span><span id="patName" class="font-semibold text-ons">—</span></div>
+              <div class="flex justify-between"><span id="cr-pat-age-lbl" class="text-onsv">Yaş</span><span id="patAge" class="font-semibold text-ons">—</span></div>
+              <div class="flex justify-between"><span id="cr-pat-gender-lbl" class="text-onsv">Cinsiyet</span><span id="patGender" class="font-semibold text-ons">—</span></div>
+              <div class="flex justify-between"><span id="cr-pat-lang-lbl" class="text-onsv">Dil</span><span id="patLang" class="font-semibold text-ons">—</span></div>
+              <div class="flex justify-between"><span id="cr-pat-date-lbl" class="text-onsv">Tarih</span><span id="patDate" class="font-semibold text-ons">—</span></div>
             </div>
           </section>
 
@@ -381,7 +382,7 @@ tailwind.config = {
           <section id="allergySection" class="bg-errc p-5 rounded-2xl border border-err/10 fade">
             <div class="flex items-center gap-2 mb-4">
               <span class="material-symbols-outlined msym-fill text-err text-[22px]">warning</span>
-              <h2 class="text-base font-bold text-err">Kritik Alerjiler</h2>
+              <h2 id="cr-allergy-title" class="text-base font-bold text-err">Kritik Alerjiler</h2>
             </div>
             <div id="allergyList" class="space-y-2">
               <p class="text-sm text-err/70">Bilinen alerji yok</p>
@@ -392,7 +393,7 @@ tailwind.config = {
           <section id="chronicSection" class="card p-5 editorial-shadow fade">
             <h2 class="text-base font-bold text-ons mb-4 flex items-center gap-2">
               <span class="material-symbols-outlined msym text-pri">medical_information</span>
-              Kronik Hastalıklar
+              <span id="cr-chronic-title">Kronik Hastalıklar</span>
             </h2>
             <div id="chronicList" class="space-y-3 text-sm">
               <p class="text-onsv">Bilinen kronik hastalık yok</p>
@@ -403,7 +404,7 @@ tailwind.config = {
           <section id="medSection" class="card p-5 editorial-shadow fade">
             <h2 class="text-base font-bold text-ons mb-4 flex items-center gap-2">
               <span class="material-symbols-outlined msym text-pri">medication</span>
-              Kullandığı İlaçlar
+              <span id="cr-meds-title">Kullandığı İlaçlar</span>
             </h2>
             <div id="medList" class="space-y-2 text-sm">
               <p class="text-onsv">Bilinen ilaç yok</p>
@@ -414,9 +415,9 @@ tailwind.config = {
           <section class="card p-5 editorial-shadow fade no-print" style="border-left:4px solid #00475e">
             <h2 class="text-base font-bold text-pri mb-1 flex items-center gap-2">
               <span class="material-symbols-outlined msym-fill text-pric text-[20px]">stethoscope</span>
-              Doktor Nihai Kararı
+              <span id="cr-final-title">Doktor Nihai Kararı</span>
             </h2>
-            <p class="text-[10px] text-onsv mb-3">AI öneri — doktor karar verir</p>
+            <p id="cr-final-sub" class="text-[10px] text-onsv mb-3">AI öneri — doktor karar verir</p>
             <div class="flex gap-1.5 mb-3">
               <button onclick="drFinalTriage('RED')" class="flex-1 py-2 rounded-xl text-white text-[10px] font-bold hover:opacity-80 transition-all" style="background:#ba1a1a">🔴 ACİL</button>
               <button onclick="drFinalTriage('YELLOW')" class="flex-1 py-2 rounded-xl text-white text-[10px] font-bold hover:opacity-80 transition-all" style="background:#e07b26">🟡 ÖNCELİKLİ</button>
@@ -436,19 +437,19 @@ tailwind.config = {
 
           <!-- Quick Actions -->
           <section class="card p-5 editorial-shadow fade no-print">
-            <h2 class="text-base font-bold text-ons mb-4">Hızlı İşlemler</h2>
+            <h2 id="cr-actions-title" class="text-base font-bold text-ons mb-4">Hızlı İşlemler</h2>
             <div class="space-y-2">
               <a id="summaryLink" href="summary.html" class="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surf text-ons text-sm hover:bg-secc transition-colors">
                 <span class="material-symbols-outlined msym text-sec text-[20px]">summarize</span>
-                Klinik Özeti Görüntüle
+                <span id="cr-view-summary">Klinik Özeti Görüntüle</span>
               </a>
               <button onclick="exportFHIR()" class="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surf text-ons text-sm hover:bg-secc transition-colors">
                 <span class="material-symbols-outlined msym text-sec text-[20px]">share</span>
-                FHIR R4 Dışa Aktar
+                <span id="cr-export-fhir">FHIR R4 Dışa Aktar</span>
               </button>
               <button onclick="markSeen()" class="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sec text-white text-sm hover:bg-pric transition-colors">
                 <span class="material-symbols-outlined msym text-[20px]">check_circle</span>
-                Görüldü İşaretle
+                <span id="cr-mark-seen">Görüldü İşaretle</span>
               </button>
             </div>
           </section>
@@ -527,7 +528,7 @@ function renderPage() {
   const tl = s.triage_level || sess.triage_level || 'GREEN';
   const badge = document.getElementById('triageBadge');
   badge.className = `px-5 py-2.5 rounded-xl font-bold text-lg triage-${tl}`;
-  badge.textContent = { RED: '🔴 KIRMIZI', YELLOW: '🟡 SARI', GREEN: '🟢 YEŞİL' }[tl] || tl;
+  badge.textContent = ((CR_DICT[crLang]||CR_DICT.tr).triageLabel[tl]) || tl;
 
   // Confidence score
     // confidence_score backend'den 0-100 olarak geliyor (zaten yüzde)
@@ -548,7 +549,7 @@ function renderPage() {
         <span class="material-symbols-outlined msym-fill text-[12px]">warning</span>${f}
       </span>`
     ).join('');
-  } else { uf.textContent = 'Acil bayrak yok'; }
+  } else { uf.textContent = crT('noUrgencyFlags'); }
 
   // Vital signs
   const vitals = s.vital_signs || sess.vital_signs;
@@ -566,10 +567,12 @@ function renderPage() {
 
   // Patient info
   document.getElementById('patName').textContent = sess.patient_name || s.patient_name || '—';
-  document.getElementById('patAge').textContent = sess.age ? `${sess.age} yaş` : '—';
+  document.getElementById('patAge').textContent = sess.age ? `${sess.age} ${crT('ageUnit')}` : '—';
   document.getElementById('patGender').textContent = sess.gender || '—';
-  document.getElementById('patLang').textContent = sess.language === 'en' ? 'İngilizce' : 'Türkçe';
-  document.getElementById('patDate').textContent = sess.created_at ? new Date(sess.created_at).toLocaleString('tr-TR') : '—';
+  const langMap = { tr: crT('langTurkish'), en: crT('langEnglish'), ar: crT('langArabic') };
+  document.getElementById('patLang').textContent = langMap[sess.language] || sess.language || '—';
+  const locale = crLang === 'ar' ? 'ar-SA' : crLang === 'en' ? 'en-US' : 'tr-TR';
+  document.getElementById('patDate').textContent = sess.created_at ? new Date(sess.created_at).toLocaleString(locale) : '—';
 
   // Profile data (allergies, chronic, meds)
   const profile = s.patient_profile || sess.patient_profile || {};
@@ -577,9 +580,9 @@ function renderPage() {
   const chronic = profile.chronic_diseases || s.chronic_diseases || [];
   const meds = profile.medications || s.medications || [];
 
-  renderTags('allergyList', allergies, 'text-err', 'Bilinen alerji yok');
+  renderTags('allergyList', allergies, 'text-err', crT('noAllergies'));
   renderConditions('chronicList', chronic);
-  renderTags('medList', meds, 'text-sec', 'Bilinen ilaç yok');
+  renderTags('medList', meds, 'text-sec', crT('noMedications'));
 
   // Q&A transcript
   const history = sess.history || s.history || [];
@@ -593,7 +596,7 @@ function renderPage() {
       </div>`;
     }).join('');
   } else {
-    qa.innerHTML = '<p class="text-onsv text-sm">Mülakat transkripti bulunamadı.</p>';
+    qa.innerHTML = `<p class="text-onsv text-sm">${crT('noTranscript')}</p>`;
   }
 
   // Sprint 15: AI Thinking process
@@ -685,7 +688,7 @@ function renderTags(containerId, items, colorClass, emptyMsg) {
 function renderConditions(containerId, items) {
   const el = document.getElementById(containerId);
   const icons = ['water_drop','speed','monitor_heart','medication','psychiatry','healing'];
-  if (!items || !items.length) { el.innerHTML = '<p class="text-onsv">Bilinen kronik hastalık yok</p>'; return; }
+  if (!items || !items.length) { el.innerHTML = `<p class="text-onsv">${crT('noChronicConditions')}</p>`; return; }
   el.innerHTML = items.map((item, i) =>
     `<div class="flex items-start gap-3">
       <div class="w-8 h-8 rounded-full bg-secc flex items-center justify-center flex-shrink-0">
@@ -891,7 +894,7 @@ function renderEvidenceMap(evidenceMap) {
         <span class="ml-auto text-[11px] font-bold">${TRIAGE_EMOJI[item.supports]||''} ${item.supports||''}</span>
       </div>
       <div class="bg-surf rounded-lg px-3 py-2">
-        <p class="text-[9px] font-bold text-onsv uppercase tracking-widest mb-1">Hasta cevabı</p>
+        <p class="text-[9px] font-bold text-onsv uppercase tracking-widest mb-1">${crT('patientQuoteLbl')}</p>
         <p class="text-[12px] text-ons italic">"${escapeHtml(item.patient_quote)}"</p>
       </div>
     </div>
@@ -914,7 +917,7 @@ function renderClinicalCompleteness(s) {
   const missing = s.missing_information || [];
   if (missingEl) missingEl.innerHTML = missing.length
     ? missing.map(m => `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-errc text-err">⚠ ${escapeHtml(m)}</span>`).join('')
-    : '<span class="text-sec text-xs">Tüm bilgiler mevcut</span>';
+    : `<span class="text-sec text-xs">${crT('allInfoPresent')}</span>`;
   const suggested = s.recommended_next_questions || [];
   if (suggestEl) suggestEl.innerHTML = suggested.length
     ? suggested.map(q => `<div class="text-[12px] text-ons flex gap-2"><span class="text-pric font-bold">→</span>${escapeHtml(q)}</div>`).join('')
@@ -1030,6 +1033,133 @@ function escapeHtml(str) {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ── i18n: inherit language from localStorage ─────────────────────────────────
+const CR_DICT = {
+  tr: {
+    btnPrint:'Yazdır', btnPdf:'PDF İndir', btnBack:'Panele Dön',
+    navPanel:'Panel', navRecord:'Hasta Kaydı', navAnalytics:'Analitik', navLogout:'Çıkış',
+    loadingTxt:'Hasta kaydı yükleniyor...', errorTxt:'Kayıt bulunamadı', errorBack:'Panele Dön',
+    pageTitle:'Klinik İnceleme Raporu', aiBadge:'YZ ANALİZİ TAMAMLANDI',
+    summaryTitle:'Klinik YZ Özeti', aiConfLabel:'YZ Güven Skoru',
+    triageLabel:{RED:'🔴 KIRMIZI', YELLOW:'🟡 SARI', GREEN:'🟢 YEŞİL'},
+    noUrgencyFlags:'Acil bayrak yok',
+    patientQuoteLbl:'Hasta cevabı',
+    allInfoPresent:'Tüm bilgiler mevcut',
+    docDefault:'Yükleniyor...',
+    sectionNotes:'Klinik Notlar', saveNote:'Notu Kaydet',
+    sectionOnset:'Başlangıç & Süre', sectionUrgency:'Aciliyet Bayrakları', sectionVitals:'Hayati Bulgular',
+    transcriptTitle:'Mülakat Transkripti', reasoningTitle:'Klinik Gerekçe Özeti',
+    reasoningSub:'Gemma 4 e4b · Triaj karar gerekçesi',
+    icd10Title:'ICD-10 Kodlaması', icd10Suggest:'YZ Öner',
+    icdColCode:'ICD-10 Kodu', icdColCat:'Kategori', icdColDesc:'Açıklama',
+    trustTitle:'Klinik Kanıt & Kılavuz Kaynakları',
+    patInfoTitle:'Hasta Bilgileri',
+    patNameLbl:'Ad Soyad', patAgeLbl:'Yaş', patGenderLbl:'Cinsiyet', patLangLbl:'Dil', patDateLbl:'Tarih',
+    allergyTitle:'Kritik Alerjiler', chronicTitle:'Kronik Hastalıklar', medsTitle:'Kullandığı İla��lar',
+    finalTitle:'Doktor Nihai Kararı', finalSub:'AI öneri — doktor karar verir',
+    actionsTitle:'Hızlı İşlemler', viewSummary:'Klinik Özeti Görüntüle',
+    exportFhir:'FHIR R4 Dışa Aktar', markSeenBtn:'Görüldü İşaretle',
+    noAllergies:'Bilinen alerji yok', noMedications:'Bilinen ilaç yok',
+    noChronicConditions:'Bilinen kronik hastalık yok', noTranscript:'Mülakat transkripti bulunamadı.',
+    ageUnit:'yaş', langTurkish:'Türkçe', langEnglish:'İngilizce', langArabic:'Arapça',
+    notesTitle:'Doktor Notları', notesPlaceholder:'Hasta hakkında klinik notlarınızı buraya yazın...',
+  },
+  en: {
+    btnPrint:'Print', btnPdf:'Download PDF', btnBack:'Back to Panel',
+    navPanel:'Panel', navRecord:'Patient Record', navAnalytics:'Analytics', navLogout:'Logout',
+    loadingTxt:'Loading patient record...', errorTxt:'Record not found', errorBack:'Back to Panel',
+    pageTitle:'Clinical Review Report', aiBadge:'AI ANALYSIS COMPLETE',
+    summaryTitle:'Clinical AI Summary', aiConfLabel:'AI Confidence Score',
+    triageLabel:{RED:'🔴 RED', YELLOW:'🟡 YELLOW', GREEN:'🟢 GREEN'},
+    noUrgencyFlags:'No urgent flags',
+    patientQuoteLbl:'Patient answer',
+    allInfoPresent:'All information present',
+    docDefault:'Loading...',
+    sectionNotes:'Clinical Notes', saveNote:'Save Note',
+    sectionOnset:'Onset & Duration', sectionUrgency:'Urgency Flags', sectionVitals:'Vital Signs',
+    transcriptTitle:'Interview Transcript', reasoningTitle:'Clinical Reasoning Summary',
+    reasoningSub:'Gemma 4 e4b · Triage decision rationale',
+    icd10Title:'ICD-10 Coding', icd10Suggest:'AI Suggest',
+    icdColCode:'ICD-10 Code', icdColCat:'Category', icdColDesc:'Description',
+    trustTitle:'Clinical Evidence & Guideline Sources',
+    patInfoTitle:'Patient Information',
+    patNameLbl:'Full Name', patAgeLbl:'Age', patGenderLbl:'Gender', patLangLbl:'Language', patDateLbl:'Date',
+    allergyTitle:'Critical Allergies', chronicTitle:'Chronic Conditions', medsTitle:'Current Medications',
+    finalTitle:'Doctor Final Decision', finalSub:'AI suggestion — doctor decides',
+    actionsTitle:'Quick Actions', viewSummary:'View Clinical Summary',
+    exportFhir:'Export FHIR R4', markSeenBtn:'Mark as Seen',
+    noAllergies:'No known allergies', noMedications:'No known medications',
+    noChronicConditions:'No known chronic conditions', noTranscript:'Interview transcript not found.',
+    ageUnit:'y.o.', langTurkish:'Turkish', langEnglish:'English', langArabic:'Arabic',
+    notesTitle:'Doctor Notes', notesPlaceholder:'Write your clinical notes about the patient here...',
+  },
+  ar: {
+    btnPrint:'طباعة', btnPdf:'تنزيل PDF', btnBack:'العودة للوحة',
+    navPanel:'اللوحة', navRecord:'سجل المريض', navAnalytics:'التحليلات', navLogout:'تسجيل الخروج',
+    loadingTxt:'جارٍ تحميل سجل المريض...', errorTxt:'السجل غير موجود', errorBack:'العودة للوحة',
+    pageTitle:'تقرير المراجعة السريرية', aiBadge:'اكتمل التحليل الذكي',
+    summaryTitle:'ملخص الذكاء الاصطناعي السريري', aiConfLabel:'درجة ثقة الذكاء',
+    triageLabel:{RED:'🔴 أحمر', YELLOW:'🟡 أصفر', GREEN:'🟢 أخضر'},
+    noUrgencyFlags:'لا توجد إشارات إلحاح',
+    patientQuoteLbl:'إجابة المريض',
+    allInfoPresent:'جميع المعلومات متوفرة',
+    docDefault:'جارٍ التحميل...',
+    sectionNotes:'الملاحظات السريرية', saveNote:'حفظ الملاحظة',
+    sectionOnset:'البداية والمدة', sectionUrgency:'علامات الإلحاح', sectionVitals:'العلامات الحيوية',
+    transcriptTitle:'نص المقابلة', reasoningTitle:'ملخص التفكير السريري',
+    reasoningSub:'Gemma 4 e4b · مبررات قرار الفرز',
+    icd10Title:'ترميز ICD-10', icd10Suggest:'اقتراح ذكاء اصطناعي',
+    icdColCode:'كود ICD-10', icdColCat:'الفئة', icdColDesc:'الوصف',
+    trustTitle:'الأدلة السريرية ومصادر الإرشادات',
+    patInfoTitle:'مع��ومات المريض',
+    patNameLbl:'الاسم الكامل', patAgeLbl:'العمر', patGenderLbl:'الجنس', patLangLbl:'اللغة', patDateLbl:'التاريخ',
+    allergyTitle:'الحساسيات الحرجة', chronicTitle:'الأمراض المزمنة', medsTitle:'الأدوية الحالية',
+    finalTitle:'القرار النهائي للطبيب', finalSub:'اقتراح الذكاء الاصطناعي — الطبيب يقرر',
+    actionsTitle:'إجراءات سريعة', viewSummary:'عرض الملخص السريري',
+    exportFhir:'تصدير FHIR R4', markSeenBtn:'وضع علامة مشاهَد',
+    noAllergies:'لا توجد حساسية معروفة', noMedications:'لا توجد أدوية معروفة',
+    noChronicConditions:'لا توجد أمراض مزمنة معروفة', noTranscript:'لم يُعثَر على نص المقابلة.',
+    ageUnit:'سنة', langTurkish:'التركية', langEnglish:'الإنجليزية', langArabic:'العربية',
+    notesTitle:'ملاحظات الطبيب', notesPlaceholder:'اكتب ملاحظاتك السريرية حول المريض هنا...',
+  },
+};
+const crLang = localStorage.getItem('ui_lang') || 'tr';
+function crT(key) { return (CR_DICT[crLang] || CR_DICT.tr)[key] || key; }
+function applyCRLang() {
+  document.documentElement.lang = crLang;
+  document.documentElement.dir = crLang === 'ar' ? 'rtl' : 'ltr';
+  const m = {
+    'cr-btn-print': crT('btnPrint'), 'cr-btn-pdf': crT('btnPdf'),
+    'cr-btn-back': crT('btnBack'), 'cr-error-back': crT('errorBack'),
+    'cr-nav-panel': crT('navPanel'), 'cr-nav-record': crT('navRecord'),
+    'cr-nav-analytics': crT('navAnalytics'), 'cr-nav-logout': crT('navLogout'),
+    'cr-loading-txt': crT('loadingTxt'), 'cr-error-txt': crT('errorTxt'),
+    'cr-page-title': crT('pageTitle'), 'cr-ai-badge': crT('aiBadge'),
+    'cr-summary-title': crT('summaryTitle'), 'cr-ai-conf-label': crT('aiConfLabel'),
+    'cr-onset-title': crT('sectionOnset'), 'cr-urgency-title': crT('sectionUrgency'),
+    'cr-vitals-title': crT('sectionVitals'), 'cr-transcript-title': crT('transcriptTitle'),
+    'cr-reasoning-title': crT('reasoningTitle'), 'cr-reasoning-sub': crT('reasoningSub'),
+    'cr-icd10-title': crT('icd10Title'), 'cr-icd10-suggest-btn': crT('icd10Suggest'),
+    'cr-icd-col-code': crT('icdColCode'), 'cr-icd-col-cat': crT('icdColCat'), 'cr-icd-col-desc': crT('icdColDesc'),
+    'cr-patinfo-title': crT('patInfoTitle'),
+    'cr-pat-name-lbl': crT('patNameLbl'), 'cr-pat-age-lbl': crT('patAgeLbl'),
+    'cr-pat-gender-lbl': crT('patGenderLbl'), 'cr-pat-lang-lbl': crT('patLangLbl'), 'cr-pat-date-lbl': crT('patDateLbl'),
+    'cr-allergy-title': crT('allergyTitle'), 'cr-chronic-title': crT('chronicTitle'), 'cr-meds-title': crT('medsTitle'),
+    'cr-final-title': crT('finalTitle'), 'cr-final-sub': crT('finalSub'),
+    'cr-actions-title': crT('actionsTitle'), 'cr-view-summary': crT('viewSummary'),
+    'cr-export-fhir': crT('exportFhir'), 'cr-mark-seen': crT('markSeenBtn'),
+    'cr-notes-title': crT('notesTitle'), 'cr-save-note': crT('saveNote'),
+  };
+  Object.entries(m).forEach(([id, val]) => {
+    const el = document.getElementById(id); if (el) el.textContent = val;
+  });
+  // Update textarea placeholder
+  const ta = document.getElementById('doctorNotes');
+  if (ta) ta.placeholder = crT('notesPlaceholder');
+}
+(function(){ applyCRLang(); })();
+
 </script>
 </body>
 </html>

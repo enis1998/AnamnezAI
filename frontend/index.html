@@ -410,7 +410,7 @@ tailwind.config = {
 
 <script>
 const API = '';
-let sessionId = null, lang = 'tr', recognition = null;
+let sessionId = null, lang = localStorage.getItem('ui_lang') || 'tr', recognition = null;
 let chatHistory = [];
 let lastStartParams = null;
 let prepTimerRef = null;   // legacy — artık kullanılmıyor
@@ -626,14 +626,17 @@ const t = k => T[lang][k] ?? k;
 
 function setLang(l){
   lang = l;
+  localStorage.setItem('ui_lang', l);
   // RTL support for Arabic
   document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
   document.documentElement.lang = l;
   ['btn-tr','btn-en','btn-ar'].forEach(id=>{
     const el = document.getElementById(id);
-    if(el) el.className = id.endsWith(l)
-      ? 'px-3 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white'
-      : 'px-3 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
+    if(!el) return;
+    const isActive = id === 'btn-' + l;
+    el.style.background = isActive ? '#00475e' : '';
+    el.style.color = isActive ? '#ffffff' : '#3f4749';
+    el.style.fontWeight = '700';
   });
   applyT();
 }
@@ -1499,6 +1502,7 @@ async function analyzeImage() {
 
 // ── Init ──
 initAuthNav();
+setLang(lang); // Kayıtlı dili uygula (localStorage'dan okundu)
 checkHealth();
 setInterval(checkHealth, 30000);
 

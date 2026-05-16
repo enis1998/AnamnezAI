@@ -75,7 +75,7 @@ tailwind.config = {
     <div class="flex gap-2">
       <button onclick="doLogoutAndStay()"
         class="flex-1 py-2 rounded-xl bg-pri text-white text-sm font-semibold hover:bg-pric transition-all">
-        Çıkış Yap / Farklı Hesap
+        <span id="lg-btn-logout">Çıkış Yap / Farklı Hesap</span>
       </button>
       <a id="banner-panel-link" href="doctor.html"
         class="flex-1 py-2 text-center rounded-xl border border-surfc bg-surf text-onsv text-sm font-semibold hover:bg-surfc transition-all">
@@ -212,7 +212,7 @@ tailwind.config = {
 <script>
 // ── Google Client ID ── env'den gelemiyen durum için buradan da ayarlanabilir
 // Gerçek bir Client ID edinmek için: https://console.cloud.google.com/
-const GOOGLE_CLIENT_ID = window.__GOOGLE_CLIENT_ID__ || '201244506846-um6me6uhltvfck16jsp5mn5fgp9ftu3q.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = window.__GOOGLE_CLIENT_ID__ || '201244506846-m28jucbi8roj6io5126pabv8bmfcu71o.apps.googleusercontent.com';
 
 const API = '';
 let currentTab = 'patient';
@@ -420,6 +420,19 @@ function doLogoutAndStay() {
   localStorage.removeItem('anamnez_user');
   document.getElementById('already-logged-in-banner').classList.add('hidden');
 }
+
+// i18n: apply stored language
+(function(){
+  const l = localStorage.getItem('ui_lang') || 'tr';
+  document.documentElement.lang = l;
+  document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+  const logoutEl = document.getElementById('lg-btn-logout');
+  if (logoutEl) {
+    const labels = {tr:'Çıkış Yap / Farklı Hesap', en:'Logout / Switch Account', ar:'تسجيل الخروج / تغيير الحساب'};
+    logoutEl.textContent = labels[l] || labels.tr;
+  }
+})();
+
 </script>
 </body>
 </html>

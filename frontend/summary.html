@@ -58,11 +58,11 @@ tailwind.config={theme:{extend:{colors:{
     </div>
     <button id="pdf-btn" onclick="exportPDF()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sec text-white hover:opacity-90 transition-all text-[12px] font-bold flex-shrink-0">
       <span class="material-symbols-outlined msym text-[15px]">picture_as_pdf</span>
-      <span class="hbtn-txt" id="txt-pdf-btn">PDF İndir</span>
+      <span class="hbtn-txt" id="txt-pdf-btn"><span id="sm-btn-pdf">PDF İndir</span></span>
     </button>
     <button id="print-btn" onclick="window.print()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium flex-shrink-0">
       <span class="material-symbols-outlined msym text-[15px]">print</span>
-      <span class="hbtn-txt" id="txt-print-btn">Yazdır</span>
+      <span class="hbtn-txt" id="txt-print-btn"><span id="sm-btn-print">Yazdır</span></span>
     </button>
     <a href="index.html" id="btn-new-interview" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surfc text-onsv hover:bg-ouv/30 transition-all text-[12px] font-medium flex-shrink-0">
       <span class="material-symbols-outlined msym text-[15px]">replay</span>
@@ -162,7 +162,7 @@ tailwind.config={theme:{extend:{colors:{
 const API = '';
 const raw = localStorage.getItem('anamnez_summary');
 const data = raw ? JSON.parse(raw) : null;
-let reportLang = (data && data.language) || localStorage.getItem('report_lang') || 'tr';
+let reportLang = (data && data.language) || localStorage.getItem('report_lang') || localStorage.getItem('ui_lang') || 'tr';
 
 // Doktor kontrolü
 let _isDoctor = false;
@@ -353,6 +353,7 @@ function applyLangUI(){
 function setReportLang(lang){
   reportLang=lang;
   localStorage.setItem('report_lang',lang);
+  localStorage.setItem('ui_lang',lang);  // sync with global ui_lang
   document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   document.documentElement.lang = lang;
   applyLangUI();
@@ -968,6 +969,47 @@ else{
   const ls=document.getElementById('loading-state');
   if(ls) ls.innerHTML=`<div class="text-center py-20"><span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span><p class="text-err font-bold mb-4">${I18N.tr.noData}</p><a href="index.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">${I18N.tr.goHome}</a></div>`;
 }
+
+// ── i18n: inherit language from localStorage ─────────────────────────────────
+const SM_DICT = {
+  tr: {
+    btnPrint:'Yazdır', btnPdf:'PDF İndir', btnBack:'Panele Dön',
+    loading:'Yükleniyor...',
+    triageLabel:{RED:'🔴 KIRMIZI', YELLOW:'🟡 SARI', GREEN:'🟢 YEŞİL'},
+    triageLabelFull:{RED:'ACİL MÜDAHALE', YELLOW:'ACİL / BEKLEYEBİLİR', GREEN:'RUTIN KUYRUK'},
+    noFlags:'Acil bulgu yok',
+  },
+  en: {
+    btnPrint:'Print', btnPdf:'Download PDF', btnBack:'Back to Panel',
+    loading:'Loading...',
+    triageLabel:{RED:'🔴 RED', YELLOW:'🟡 YELLOW', GREEN:'🟢 GREEN'},
+    triageLabelFull:{RED:'EMERGENCY', YELLOW:'URGENT / CAN WAIT', GREEN:'ROUTINE QUEUE'},
+    noFlags:'No urgent flags',
+  },
+  ar: {
+    btnPrint:'طباعة', btnPdf:'تنزيل PDF', btnBack:'العودة للوحة',
+    loading:'جارٍ التحميل...',
+    triageLabel:{RED:'🔴 أحمر', YELLOW:'🟡 أصفر', GREEN:'🟢 أخضر'},
+    triageLabelFull:{RED:'طوارئ', YELLOW:'عاجل / انتظار', GREEN:'طابور روتيني'},
+    noFlags:'لا توجد إشارات إلحاح',
+  },
+};
+const smLang = localStorage.getItem('ui_lang') || 'tr';
+function smT(key) { return (SM_DICT[smLang] || SM_DICT.tr)[key] || key; }
+function applySMLang() {
+  document.documentElement.lang = smLang;
+  document.documentElement.dir = smLang === 'ar' ? 'rtl' : 'ltr';
+  const m = {
+    'sm-btn-print': smT('btnPrint'),
+    'sm-btn-pdf': smT('btnPdf'),
+    'sm-btn-back': smT('btnBack'),
+  };
+  Object.entries(m).forEach(([id, val]) => {
+    const el = document.getElementById(id); if (el) el.textContent = val;
+  });
+}
+(function(){ applySMLang(); })();
+
 </script>
 </body>
 </html>

@@ -40,7 +40,7 @@ tailwind.config={theme:{extend:{colors:{
         <span class="material-symbols-outlined msym-fill text-white text-[20px]">admin_panel_settings</span>
       </div>
       <div>
-        <h1 class="font-head font-bold text-[16px]">Admin Paneli</h1>
+        <h1 id="txt-admin-title" class="font-head font-bold text-[16px]">Admin Paneli</h1>
         <p class="text-[11px] text-white/60" id="txt-admin-name">Yükleniyor...</p>
       </div>
     </div>
@@ -95,40 +95,40 @@ tailwind.config={theme:{extend:{colors:{
         <div class="card p-4 text-center">
           <span class="material-symbols-outlined msym-fill text-pric text-2xl block mb-1">people</span>
           <p class="text-[28px] font-head font-bold text-pri" id="s-total-users">—</p>
-          <p class="text-[11px] text-onsv">Toplam Kullanıcı</p>
+          <p class="text-[11px] text-onsv" id="txt-stat-total-users">Toplam Kullanıcı</p>
         </div>
         <div class="card p-4 text-center">
           <span class="material-symbols-outlined msym-fill text-sec text-2xl block mb-1">medical_services</span>
           <p class="text-[28px] font-head font-bold text-pri" id="s-doctors">—</p>
-          <p class="text-[11px] text-onsv">Doktor</p>
+          <p class="text-[11px] text-onsv" id="txt-stat-doctors">Doktor</p>
         </div>
         <div class="card p-4 text-center">
           <span class="material-symbols-outlined msym-fill text-warn text-2xl block mb-1">folder</span>
           <p class="text-[28px] font-head font-bold text-pri" id="s-sessions">—</p>
-          <p class="text-[11px] text-onsv">Oturum (RAM)</p>
+          <p class="text-[11px] text-onsv" id="txt-stat-sessions">Oturum (RAM)</p>
         </div>
         <div class="card p-4 text-center">
           <span class="material-symbols-outlined msym-fill text-green-500 text-2xl block mb-1">visibility</span>
           <p class="text-[28px] font-head font-bold text-pri" id="s-seen">—</p>
-          <p class="text-[11px] text-onsv">Görüldü İşaretli</p>
+          <p class="text-[11px] text-onsv" id="txt-stat-seen">Görüldü İşaretli</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <!-- Queue -->
         <div class="card p-5">
-          <h2 class="font-head font-bold text-pri text-[14px] mb-4">Kuyruk Durumu</h2>
+          <h2 id="txt-section-queue" class="font-head font-bold text-pri text-[14px] mb-4">Kuyruk Durumu</h2>
           <div class="space-y-3">
             <div class="flex justify-between items-center py-2 border-b border-surfc">
-              <span class="text-[13px] text-ons">Aktif kuyruk</span>
+              <span id="txt-queue-active" class="text-[13px] text-ons">Aktif kuyruk</span>
               <span class="font-bold text-pri" id="s-queue">—</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-surfc">
-              <span class="text-[13px] text-ons">DB'deki toplam oturum</span>
+              <span id="txt-queue-db" class="text-[13px] text-ons">DB'deki toplam oturum</span>
               <span class="font-bold text-pri" id="s-db-sessions">—</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-surfc">
-              <span class="text-[13px] text-ons">AI modeli</span>
+              <span id="txt-queue-model" class="text-[13px] text-ons">AI modeli</span>
               <span class="font-mono text-[12px] bg-secc px-2 py-0.5 rounded-lg text-sec font-bold" id="s-model">—</span>
             </div>
             <div class="flex justify-between items-center py-2">
@@ -140,19 +140,19 @@ tailwind.config={theme:{extend:{colors:{
 
         <!-- Actions -->
         <div class="card p-5">
-          <h2 class="font-head font-bold text-pri text-[14px] mb-4">Hızlı İşlemler</h2>
+          <h2 id="txt-section-actions" class="font-head font-bold text-pri text-[14px] mb-4">Hızlı İşlemler</h2>
           <div class="space-y-3">
             <button onclick="exportAnalyticsCSV()" id="btn-csv"
               class="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 border-sec text-sec text-[13px] font-bold hover:bg-sec hover:text-white transition-all">
-              <span class="material-symbols-outlined msym text-[16px]">download</span>Analytics CSV İndir
+              <span class="material-symbols-outlined msym text-[16px]">download</span><span id="txt-btn-csv">Analytics CSV İndir</span>
             </button>
             <button onclick="clearOldSessions()"
               class="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border-2 border-warn text-warn text-[13px] font-bold hover:bg-warn hover:text-white transition-all">
-              <span class="material-symbols-outlined msym text-[16px]">cleaning_services</span>Eski Oturumları Temizle
+              <span class="material-symbols-outlined msym text-[16px]">cleaning_services</span><span id="txt-btn-cleanup">Eski Oturumları Temizle</span>
             </button>
             <button onclick="loadStats()"
               class="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border border-ouv text-onsv text-[13px] font-medium hover:bg-surfc transition-all">
-              <span class="material-symbols-outlined msym text-[16px]">refresh</span>İstatistikleri Yenile
+              <span class="material-symbols-outlined msym text-[16px]">refresh</span><span id="txt-btn-refresh-stats">İstatistikleri Yenile</span>
             </button>
           </div>
         </div>
@@ -160,7 +160,7 @@ tailwind.config={theme:{extend:{colors:{
 
       <!-- Role Distribution -->
       <div class="card p-5">
-        <h2 class="font-head font-bold text-pri text-[14px] mb-4">Rol Dağılımı</h2>
+        <h2 id="txt-section-roles" class="font-head font-bold text-pri text-[14px] mb-4">Rol Dağılımı</h2>
         <div id="role-distribution" class="flex flex-wrap gap-3">
           <div class="text-center py-4 text-onsv text-[13px] w-full">Yükleniyor...</div>
         </div>
@@ -170,7 +170,7 @@ tailwind.config={theme:{extend:{colors:{
     <!-- ── Tab: Kullanıcı Yönetimi ── -->
     <div id="tab-content-users" class="hidden">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="font-head font-bold text-pri text-[16px]">Kullanıcı Listesi</h2>
+        <h2 id="txt-user-list-title" class="font-head font-bold text-pri text-[16px]">Kullanıcı Listesi</h2>
         <div class="flex gap-2 items-center">
           <input id="user-search" type="text" placeholder="İsim veya e-posta ara..." oninput="filterUsers()"
             class="px-3 py-2 rounded-xl border border-ouv text-[13px] w-56 focus:outline-none focus:border-sec"/>
@@ -197,7 +197,7 @@ tailwind.config={theme:{extend:{colors:{
         <h2 class="font-head font-bold text-pri text-[16px]">Audit Log</h2>
         <button onclick="loadAuditLog()"
           class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-medium hover:bg-ouv/30 transition-all">
-          <span class="material-symbols-outlined msym text-[14px]">refresh</span>Yenile
+          <span class="material-symbols-outlined msym text-[14px]">refresh</span><span id="txt-audit-refresh">Yenile</span>
         </button>
       </div>
       <div class="card overflow-hidden">
@@ -212,7 +212,7 @@ tailwind.config={theme:{extend:{colors:{
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <!-- Kiosk Status -->
         <div class="card p-6">
-          <h2 class="font-head font-bold text-pri text-[15px] mb-5">Kiosk Durumu</h2>
+          <h2 id="txt-kiosk-status-title" class="font-head font-bold text-pri text-[15px] mb-5">Kiosk Durumu</h2>
           <div class="flex items-center justify-center py-6">
             <div id="kiosk-status-display" class="text-center">
               <span class="material-symbols-outlined msym-fill text-6xl block mb-3" id="kiosk-icon">tablet</span>
@@ -223,31 +223,31 @@ tailwind.config={theme:{extend:{colors:{
           <div class="flex gap-3 mt-4">
             <button onclick="setKiosk(true)" id="btn-lock"
               class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-bold bg-err text-white hover:opacity-90 transition-all">
-              <span class="material-symbols-outlined msym text-[16px]">lock</span>Kilitle
+              <span class="material-symbols-outlined msym text-[16px]">lock</span><span id="txt-btn-lock">Kilitle</span>
             </button>
             <button onclick="setKiosk(false)" id="btn-unlock"
               class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-bold bg-sec text-white hover:opacity-90 transition-all">
-              <span class="material-symbols-outlined msym text-[16px]">lock_open</span>Kilidi Aç
+              <span class="material-symbols-outlined msym text-[16px]">lock_open</span><span id="txt-btn-unlock">Kilidi Aç</span>
             </button>
           </div>
         </div>
 
         <!-- Kiosk Info -->
         <div class="card p-6">
-          <h2 class="font-head font-bold text-pri text-[15px] mb-4">Kiosk Hakkında</h2>
+          <h2 id="txt-kiosk-about-title" class="font-head font-bold text-pri text-[15px] mb-4">Kiosk Hakkında</h2>
           <div class="space-y-3 text-[13px]">
             <div class="flex items-start gap-3 p-3 bg-surf rounded-xl">
               <span class="material-symbols-outlined msym text-sec text-[18px] mt-0.5">info</span>
-              <p class="text-ons">Kiosk kilitleme, hastaların yeni mülakat başlatmasını engeller. Acil durumlarda veya sistem bakımında kullanın.</p>
+              <p id="txt-kiosk-info1" class="text-ons">Kiosk kilitleme, hastaların yeni mülakat başlatmasını engeller. Acil durumlarda veya sistem bakımında kullanın.</p>
             </div>
             <div class="flex items-start gap-3 p-3 bg-surf rounded-xl">
               <span class="material-symbols-outlined msym text-sec text-[18px] mt-0.5">qr_code</span>
-              <p class="text-ons">Kioskta tamamlanan her oturum için QR kod oluşturulur. Hasta bu QR ile kendi raporuna erişebilir.</p>
+              <p id="txt-kiosk-info2" class="text-ons">Kioskta tamamlanan her oturum için QR kod oluşturulur. Hasta bu QR ile kendi raporuna erişebilir.</p>
             </div>
             <div class="flex items-center gap-2 mt-4">
               <a href="kiosk.html" target="_blank"
                 class="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-sec text-sec text-[12px] font-bold hover:bg-sec hover:text-white transition-all">
-                <span class="material-symbols-outlined msym text-[14px]">open_in_new</span>Kiosk Sayfası
+                <span class="material-symbols-outlined msym text-[14px]">open_in_new</span><span id="txt-kiosk-page">Kiosk Sayfası</span>
               </a>
             </div>
           </div>
@@ -262,7 +262,7 @@ tailwind.config={theme:{extend:{colors:{
         <div class="card p-5">
           <div class="flex items-center gap-2 mb-4">
             <span class="material-symbols-outlined msym text-sec text-[18px]">database</span>
-            <h2 class="font-head font-bold text-pri text-[14px]">RAG Veritabanı Durumu</h2>
+            <h2 id="txt-rag-db-title" class="font-head font-bold text-pri text-[14px]">RAG Veritabanı Durumu</h2>
             <button onclick="loadRagStatus()" class="ml-auto w-7 h-7 rounded-lg bg-surfc hover:bg-ouv/30 flex items-center justify-center">
               <span class="material-symbols-outlined msym text-onsv text-[14px]">refresh</span>
             </button>
@@ -278,16 +278,16 @@ tailwind.config={theme:{extend:{colors:{
         <div class="card p-5">
           <div class="flex items-center gap-2 mb-4">
             <span class="material-symbols-outlined msym text-pric text-[18px]">post_add</span>
-            <h2 class="font-head font-bold text-pri text-[14px]">Metin Ekle</h2>
+            <h2 id="txt-rag-text-title" class="font-head font-bold text-pri text-[14px]">Metin Ekle</h2>
           </div>
           <div class="space-y-3">
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Kaynak Adı</label>
+              <label id="txt-rag-source-lbl" class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Kaynak Adı</label>
               <input id="rag-source" type="text" placeholder="ör: MTS_Protokol_v4"
                 class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent"/>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Kategori</label>
+              <label id="txt-rag-cat-lbl" class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Kategori</label>
               <select id="rag-category" class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent">
                 <option value="triage_protocol">Triaj Protokolü</option>
                 <option value="icd10_coding">ICD-10 Kodlama</option>
@@ -297,13 +297,13 @@ tailwind.config={theme:{extend:{colors:{
               </select>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Metin (min. 20 karakter)</label>
+              <label id="txt-rag-text-lbl" class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Metin (min. 20 karakter)</label>
               <textarea id="rag-text" rows="5" placeholder="Tıbbi bilgi metnini buraya girin..."
                 class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent resize-none"></textarea>
             </div>
             <button onclick="addRagText()"
               class="w-full py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2">
-              <span class="material-symbols-outlined msym text-[15px]">add_circle</span>RAG'a Ekle
+              <span class="material-symbols-outlined msym text-[15px]">add_circle</span><span id="txt-rag-add-btn">RAG'a Ekle</span>
             </button>
             <p id="rag-text-result" class="text-[11px] text-center min-h-[16px]"></p>
           </div>
@@ -315,12 +315,12 @@ tailwind.config={theme:{extend:{colors:{
         <div class="card p-5">
           <div class="flex items-center gap-2 mb-4">
             <span class="material-symbols-outlined msym text-warn text-[18px]">picture_as_pdf</span>
-            <h2 class="font-head font-bold text-pri text-[14px]">PDF Yükle</h2>
+            <h2 id="txt-rag-pdf-title" class="font-head font-bold text-pri text-[14px]">PDF Yükle</h2>
           </div>
           <label id="rag-pdf-drop"
             class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-ouv rounded-xl cursor-pointer bg-surfc hover:bg-surf transition-colors">
             <span class="material-symbols-outlined msym text-warn text-[24px] mb-1">upload_file</span>
-            <span class="text-[12px] font-semibold text-onsv">PDF seç veya sürükle</span>
+            <span id="txt-rag-pdf-drop" class="text-[12px] font-semibold text-onsv">PDF seç veya sürükle</span>
             <span class="text-[10px] text-onsv opacity-60">Maks. 50 MB</span>
             <input id="inp-rag-pdf" type="file" accept=".pdf" class="hidden" onchange="uploadRagPDF(this)"/>
           </label>
@@ -331,12 +331,12 @@ tailwind.config={theme:{extend:{colors:{
         <div class="card p-5">
           <div class="flex items-center gap-2 mb-4">
             <span class="material-symbols-outlined msym text-sec text-[18px]">restart_alt</span>
-            <h2 class="font-head font-bold text-pri text-[14px]">Yerleşik Bilgi Tabanı</h2>
+            <h2 id="txt-rag-builtin-title" class="font-head font-bold text-pri text-[14px]">Yerleşik Bilgi Tabanı</h2>
           </div>
-          <p class="text-[12px] text-onsv mb-4">MTS protokolleri, ICD-10 TR, Türkiye acil servis istatistikleri ve genişletilmiş klinik algoritmalar dahil onlarca tıbbi bilgi chunk'ı yeniden yükler.</p>
+          <p id="txt-rag-builtin-desc" class="text-[12px] text-onsv mb-4">MTS protokolleri, ICD-10 TR, Türkiye acil servis istatistikleri ve genişletilmiş klinik algoritmalar dahil onlarca tıbbi bilgi chunk'ı yeniden yükler.</p>
           <button onclick="reloadBuiltinRAG()"
             class="w-full py-2.5 rounded-xl bg-sec text-white text-[13px] font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined msym text-[15px]">sync</span>Yerleşik Bilgiyi Yenile
+            <span class="material-symbols-outlined msym text-[15px]">sync</span><span id="txt-rag-builtin-btn">Yerleşik Bilgiyi Yenile</span>
           </button>
           <p id="rag-builtin-result" class="text-[11px] text-center mt-2 min-h-[16px]"></p>
         </div>
@@ -351,26 +351,26 @@ tailwind.config={theme:{extend:{colors:{
             <span class="material-symbols-outlined msym text-pric text-[18px]">compare</span>
           </div>
           <div>
-            <h2 class="font-head font-bold text-pri text-[15px]">Gemma 4 vs Lite Model Karşılaştırması</h2>
-            <p class="text-[12px] text-onsv">Aynı klinik soru için iki modelin yanıtlarını yan yana görün</p>
+            <h2 id="txt-cmp-title" class="font-head font-bold text-pri text-[15px]">Gemma 4 vs Lite Model Karşılaştırması</h2>
+            <p id="txt-cmp-sub" class="text-[12px] text-onsv">Aynı klinik soru için iki modelin yanıtlarını yan yana görün</p>
           </div>
           <span class="ml-auto px-2.5 py-1 rounded-full text-[10px] font-bold bg-secc text-sec">Sprint 18</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Sistem Rolü (opsiyonel)</label>
+            <label id="txt-cmp-sys-lbl" class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Sistem Rolü (opsiyonel)</label>
             <input id="cmp-system" type="text" placeholder="ör: Sen bir acil tıp doktorusun..."
               class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent focus:border-sec focus:outline-none"/>
           </div>
           <div class="flex items-end">
             <button onclick="runCompare()"
               class="w-full py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2">
-              <span class="material-symbols-outlined msym text-[15px]">play_arrow</span>Karşılaştır
+              <span class="material-symbols-outlined msym text-[15px]">play_arrow</span><span id="txt-cmp-run-btn">Karşılaştır</span>
             </button>
           </div>
         </div>
         <div>
-          <label class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Klinik Soru / Prompt</label>
+          <label id="txt-cmp-prompt-lbl" class="block text-[10px] font-bold text-onsv uppercase tracking-wider mb-1">Klinik Soru / Prompt</label>
           <textarea id="cmp-prompt" rows="3"
             class="w-full rounded-xl bg-surfc px-3 py-2 text-[13px] border border-transparent resize-none focus:border-sec focus:outline-none"
             placeholder="ör: 58 yaşında erkek hasta göğüs ağrısı şikayetiyle başvurdu. Bir sonraki en klinik olarak değerli soruyu Türkçe sor."></textarea>
@@ -446,6 +446,58 @@ const ADL = {
     refreshBtn:'İstatistikleri Yenile',
     searchPlaceholder:'İsim veya e-posta ara...', allRoles:'Tüm Roller',
     userList:'Kullanıcı Listesi',
+    // Stats
+    statTotalUsers:'Toplam Kullanıcı', statDoctors:'Doktor',
+    statSessions:'Oturum (RAM)', statSeen:'Görüldü İşaretli',
+    sectionQueue:'Kuyruk Durumu', sectionActions:'Hızlı İşlemler', sectionRoles:'Rol Dağılımı',
+    queueActive:'Aktif kuyruk', queueDb:'DB'deki toplam oturum', queueModel:'AI modeli',
+    // Kiosk
+    kioskStatusTitle:'Kiosk Durumu', kioskAboutTitle:'Kiosk Hakkında',
+    btnLock:'Kilitle', btnUnlock:'Kilidi Aç', kioskPage:'Kiosk Sayfası',
+    kioskInfo1:'Kiosk kilitleme, hastaların yeni mülakat başlatmasını engeller. Acil durumlarda veya sistem bakımında kullanın.',
+    kioskInfo2:'Kioskta tamamlanan her oturum için QR kod oluşturulur. Hasta bu QR ile kendi raporuna erişebilir.',
+    kioskLocked:'🔒 Kiosk Kilitli', kioskUnlocked:'✅ Kiosk Açık',
+    kioskLockedSub:'Hasta girişi devre dışı', kioskUnlockedSub:'Hasta girişi aktif',
+    kioskChecking:'Kontrol ediliyor...', kioskConnErr:'Bağlantı hatası',
+    // RAG
+    ragDbTitle:'RAG Veritabanı Durumu', ragTextTitle:'Metin Ekle',
+    ragSourceLbl:'Kaynak Adı', ragCatLbl:'Kategori', ragTextLbl:'Metin (min. 20 karakter)',
+    ragAddBtn:'RAG'a Ekle', ragPdfTitle:'PDF Yükle', ragPdfDrop:'PDF seç veya sürükle',
+    ragBuiltinTitle:'Yerleşik Bilgi Tabanı', ragBuiltinBtn:'Yerleşik Bilgiyi Yenile',
+    ragBuiltinDesc:'MTS protokolleri, ICD-10 TR, Türkiye acil servis istatistikleri ve genişletilmiş klinik algoritmalar dahil onlarca tıbbi bilgi chunk'ı yeniden yükler.',
+    // Compare
+    cmpTitle:'Gemma 4 vs Lite Model Karşılaştırması',
+    cmpSub:'Aynı klinik soru için iki modelin yanıtlarını yan yana görün',
+    cmpSysLbl:'Sistem Rolü (opsiyonel)', cmpPromptLbl:'Klinik Soru / Prompt',
+    cmpRunBtn:'Karşılaştır',
+    // Audit
+    auditRefresh:'Yenile',
+    // Table headers
+    tbName:'Ad Soyad', tbEmail:'E-posta', tbRole:'Rol',
+    tbSpecialty:'Uzmanlık', tbStatus:'Durum', tbActions:'İşlemler',
+    tbTime:'Zaman', tbAction:'İşlem', tbUserRole:'Kullanıcı Rol', tbIP:'IP', tbDetail:'Detay',
+    // Role labels
+    roleDoctor:'Doktor', rolePatient:'Hasta', roleAdmin:'Admin', rolePersonnel:'Personel',
+    roleActive:'✓ Aktif', roleInactive:'Pasif',
+    btnEnable:'Aktif Et', btnDisable:'Devre Dışı',
+    noUsers:'Kullanıcı bulunamadı.', noLogs:'Henüz log kaydı yok.',
+    errPermission:'Yetki hatası.', errConnection:'Bağlantı hatası.',
+    errStats:'İstatistikler yüklenemedi', ragActive:'✅ RAG Aktif',
+    ragInactive:'⚠ RAG devre dışı veya başlatılmamış. Aşağıdan yerleşik bilgiyi yükleyin.',
+    noSources:'Henüz kaynak yok.', sourceUnit:'kaynak',
+    ragTextShort:'⚠ Metin çok kısa (min 20 karakter)',
+    uploading:'⏳ Yükleniyor...',
+    ragBuiltinLoading:'⏳ Yerleşik bilgi yükleniyor...',
+    cmpRunning:'⏳ İki model paralel olarak sorgulanıyor...',
+    cmpDoneFn:(s)=>`✅ Karşılaştırma tamamlandı (${s}s)`,
+    cleanupConfirm:'Görüldü işaretlenen tüm eski oturumlar RAM'den temizlenecek. Emin misiniz?',
+    roleUpdated:'Rol güncellendi ✓', roleUpdateFail:'Rol değiştirilemedi.',
+    userEnabled:'Kullanıcı aktif edildi ✓', userDisabled:'Kullanıcı devre dışı ✓',
+    processingBg:'arka planda işleniyor',
+    adminOnly:'⛔ Bu sayfa yalnızca admin için.',
+    csvDownloaded:'CSV indirildi ✓', csvFailed:'CSV indirilemedi.',
+    toastCleanedFn:(n)=>`✅ ${n} oturum temizlendi.`,
+    toastCleanupFail:'Temizleme başarısız.',
   },
   en: {
     adminTitle:'Admin Panel', doctorPanel:'Doctor Panel', logout:'Logout',
@@ -455,6 +507,58 @@ const ADL = {
     refreshBtn:'Refresh Stats',
     searchPlaceholder:'Search name or email...', allRoles:'All Roles',
     userList:'User List',
+    // Stats
+    statTotalUsers:'Total Users', statDoctors:'Doctors',
+    statSessions:'Sessions (RAM)', statSeen:'Marked Seen',
+    sectionQueue:'Queue Status', sectionActions:'Quick Actions', sectionRoles:'Role Distribution',
+    queueActive:'Active queue', queueDb:'DB total sessions', queueModel:'AI model',
+    // Kiosk
+    kioskStatusTitle:'Kiosk Status', kioskAboutTitle:'About Kiosk',
+    btnLock:'Lock', btnUnlock:'Unlock', kioskPage:'Kiosk Page',
+    kioskInfo1:'Kiosk lock prevents patients from starting new interviews. Use during emergencies or maintenance.',
+    kioskInfo2:'Each kiosk session generates a QR code. Patients can access their report via this QR.',
+    kioskLocked:'🔒 Kiosk Locked', kioskUnlocked:'✅ Kiosk Open',
+    kioskLockedSub:'Patient entry disabled', kioskUnlockedSub:'Patient entry active',
+    kioskChecking:'Checking...', kioskConnErr:'Connection error',
+    // RAG
+    ragDbTitle:'RAG Database Status', ragTextTitle:'Add Text',
+    ragSourceLbl:'Source Name', ragCatLbl:'Category', ragTextLbl:'Text (min. 20 chars)',
+    ragAddBtn:'Add to RAG', ragPdfTitle:'Upload PDF', ragPdfDrop:'Select or drop PDF',
+    ragBuiltinTitle:'Built-in Knowledge Base', ragBuiltinBtn:'Reload Built-in Knowledge',
+    ragBuiltinDesc:'Reloads dozens of medical knowledge chunks including MTS protocols, ICD-10, Turkey ER statistics, and extended clinical algorithms.',
+    // Compare
+    cmpTitle:'Gemma 4 vs Lite Model Comparison',
+    cmpSub:'View responses from both models side by side for the same clinical query',
+    cmpSysLbl:'System Role (optional)', cmpPromptLbl:'Clinical Question / Prompt',
+    cmpRunBtn:'Compare',
+    // Audit
+    auditRefresh:'Refresh',
+    // Table headers
+    tbName:'Full Name', tbEmail:'Email', tbRole:'Role',
+    tbSpecialty:'Specialty', tbStatus:'Status', tbActions:'Actions',
+    tbTime:'Time', tbAction:'Action', tbUserRole:'User Role', tbIP:'IP', tbDetail:'Detail',
+    // Role labels
+    roleDoctor:'Doctor', rolePatient:'Patient', roleAdmin:'Admin', rolePersonnel:'Personnel',
+    roleActive:'✓ Active', roleInactive:'Inactive',
+    btnEnable:'Activate', btnDisable:'Disable',
+    noUsers:'No users found.', noLogs:'No log entries yet.',
+    errPermission:'Permission error.', errConnection:'Connection error.',
+    errStats:'Could not load stats', ragActive:'✅ RAG Active',
+    ragInactive:'⚠ RAG disabled or not initialized. Load built-in knowledge below.',
+    noSources:'No sources yet.', sourceUnit:'sources',
+    ragTextShort:'⚠ Text too short (min 20 chars)',
+    uploading:'⏳ Uploading...',
+    ragBuiltinLoading:'⏳ Loading built-in knowledge...',
+    cmpRunning:'⏳ Querying both models in parallel...',
+    cmpDoneFn:(s)=>`✅ Comparison complete (${s}s)`,
+    cleanupConfirm:'All seen-marked old sessions will be cleared from RAM. Are you sure?',
+    roleUpdated:'Role updated ✓', roleUpdateFail:'Could not change role.',
+    userEnabled:'User activated ✓', userDisabled:'User disabled ✓',
+    processingBg:'processing in background',
+    adminOnly:'⛔ This page is for admins only.',
+    csvDownloaded:'CSV downloaded ✓', csvFailed:'CSV download failed.',
+    toastCleanedFn:(n)=>`✅ ${n} session(s) cleaned.`,
+    toastCleanupFail:'Cleanup failed.',
   },
   ar: {
     adminTitle:'لوحة المشرف', doctorPanel:'لوحة الطبيب', logout:'تسجيل الخروج',
@@ -464,6 +568,58 @@ const ADL = {
     refreshBtn:'تحديث الإحصائيات',
     searchPlaceholder:'ابحث عن الاسم أو البريد...', allRoles:'جميع الأدوار',
     userList:'قائمة المستخدمين',
+    // Stats
+    statTotalUsers:'إجمالي المستخدمين', statDoctors:'الأطباء',
+    statSessions:'الجلسات (RAM)', statSeen:'تم التعليم',
+    sectionQueue:'حالة الطابور', sectionActions:'إجراءات سريعة', sectionRoles:'توزيع الأدوار',
+    queueActive:'الطابور النشط', queueDb:'إجمالي جلسات DB', queueModel:'نموذج الذكاء',
+    // Kiosk
+    kioskStatusTitle:'حالة الكشك', kioskAboutTitle:'عن الكشك',
+    btnLock:'قفل', btnUnlock:'فتح', kioskPage:'صفحة الكشك',
+    kioskInfo1:'يمنع قفل الكشك المرضى من بدء مقابلات جديدة. استخدمه في حالات الطوارئ أو الصيانة.',
+    kioskInfo2:'يتم إنشاء رمز QR لكل جلسة كشك. يمكن للمرضى الوصول إلى تقاريرهم عبر هذا الرمز.',
+    kioskLocked:'🔒 الكشك مقفل', kioskUnlocked:'✅ الكشك مفتوح',
+    kioskLockedSub:'دخول المرضى معطّل', kioskUnlockedSub:'دخول المرضى نشط',
+    kioskChecking:'جارٍ الفحص...', kioskConnErr:'خطأ في الاتصال',
+    // RAG
+    ragDbTitle:'حالة قاعدة بيانات RAG', ragTextTitle:'إضافة نص',
+    ragSourceLbl:'اسم المصدر', ragCatLbl:'الفئة', ragTextLbl:'النص (20 حرفاً كحد أدنى)',
+    ragAddBtn:'أضف إلى RAG', ragPdfTitle:'رفع PDF', ragPdfDrop:'اختر أو اسحب PDF',
+    ragBuiltinTitle:'قاعدة المعرفة المدمجة', ragBuiltinBtn:'إعادة تحميل المعرفة المدمجة',
+    ragBuiltinDesc:'يعيد تحميل عشرات أجزاء المعرفة الطبية بما في ذلك بروتوكولات MTS وICD-10.',
+    // Compare
+    cmpTitle:'مقارنة Gemma 4 مع النموذج الخفيف',
+    cmpSub:'شاهد استجابات كلا النموذجين جنباً إلى جنب لنفس الاستعلام',
+    cmpSysLbl:'دور النظام (اختياري)', cmpPromptLbl:'السؤال السريري / الطلب',
+    cmpRunBtn:'مقارنة',
+    // Audit
+    auditRefresh:'تحديث',
+    // Table headers
+    tbName:'الاسم الكامل', tbEmail:'البريد الإلكتروني', tbRole:'الدور',
+    tbSpecialty:'التخصص', tbStatus:'الحالة', tbActions:'الإجراءات',
+    tbTime:'الوقت', tbAction:'الإجراء', tbUserRole:'دور المستخدم', tbIP:'IP', tbDetail:'التفاصيل',
+    // Role labels
+    roleDoctor:'طبيب', rolePatient:'مريض', roleAdmin:'مشرف', rolePersonnel:'موظف',
+    roleActive:'✓ نشط', roleInactive:'غير نشط',
+    btnEnable:'تفعيل', btnDisable:'تعطيل',
+    noUsers:'لم يُعثر على مستخدمين.', noLogs:'لا توجد سجلات بعد.',
+    errPermission:'خطأ في الصلاحيات.', errConnection:'خطأ في الاتصال.',
+    errStats:'تعذّر تحميل الإحصائيات', ragActive:'✅ RAG نشط',
+    ragInactive:'⚠ RAG معطّل أو غير مُهيّأ. حمّل المعرفة المدمجة أدناه.',
+    noSources:'لا توجد مصادر بعد.', sourceUnit:'مصادر',
+    ragTextShort:'⚠ النص قصير جداً (20 حرفاً كحد أدنى)',
+    uploading:'⏳ جارٍ الرفع...',
+    ragBuiltinLoading:'⏳ جارٍ تحميل المعرفة المدمجة...',
+    cmpRunning:'⏳ جارٍ الاستعلام عن كلا النموذجين...',
+    cmpDoneFn:(s)=>`✅ اكتملت المقارنة (${s}s)`,
+    cleanupConfirm:'ستُحذف جميع الجلسات القديمة المعلّمة من الذاكرة. هل أنت متأكد؟',
+    roleUpdated:'تم تحديث الدور ✓', roleUpdateFail:'تعذّر تغيير الدور.',
+    userEnabled:'تم تفعيل المستخدم ✓', userDisabled:'تم تعطيل المستخدم ✓',
+    processingBg:'تتم المعالجة في الخلفية',
+    adminOnly:'⛔ هذه الصفحة للمشرفين فقط.',
+    csvDownloaded:'تم تنزيل CSV ✓', csvFailed:'فشل تنزيل CSV.',
+    toastCleanedFn:(n)=>`✅ تم تنظيف ${n} جلسة.`,
+    toastCleanupFail:'فشل التنظيف.',
   },
 };
 
@@ -474,8 +630,28 @@ function setAdminLang(l) {
   const d = ADL[l] || ADL.tr;
   // Update text elements
   const m = {
+    'txt-admin-title': d.adminTitle,
     'txt-admin-doctor-panel': d.doctorPanel,
     'txt-admin-logout': d.logout,
+    'txt-stat-total-users': d.statTotalUsers, 'txt-stat-doctors': d.statDoctors,
+    'txt-stat-sessions': d.statSessions, 'txt-stat-seen': d.statSeen,
+    'txt-section-queue': d.sectionQueue, 'txt-section-actions': d.sectionActions,
+    'txt-section-roles': d.sectionRoles,
+    'txt-queue-active': d.queueActive, 'txt-queue-db': d.queueDb, 'txt-queue-model': d.queueModel,
+    'txt-btn-csv': d.csvBtn, 'txt-btn-cleanup': d.cleanupBtn, 'txt-btn-refresh-stats': d.refreshBtn,
+    'txt-user-list-title': d.userList, 'txt-audit-refresh': d.auditRefresh,
+    'txt-kiosk-status-title': d.kioskStatusTitle, 'txt-kiosk-about-title': d.kioskAboutTitle,
+    'txt-btn-lock': d.btnLock, 'txt-btn-unlock': d.btnUnlock, 'txt-kiosk-page': d.kioskPage,
+    'txt-kiosk-info1': d.kioskInfo1, 'txt-kiosk-info2': d.kioskInfo2,
+    'txt-rag-db-title': d.ragDbTitle, 'txt-rag-text-title': d.ragTextTitle,
+    'txt-rag-source-lbl': d.ragSourceLbl, 'txt-rag-cat-lbl': d.ragCatLbl,
+    'txt-rag-text-lbl': d.ragTextLbl, 'txt-rag-add-btn': d.ragAddBtn,
+    'txt-rag-pdf-title': d.ragPdfTitle, 'txt-rag-pdf-drop': d.ragPdfDrop,
+    'txt-rag-builtin-title': d.ragBuiltinTitle, 'txt-rag-builtin-btn': d.ragBuiltinBtn,
+    'txt-rag-builtin-desc': d.ragBuiltinDesc,
+    'txt-cmp-title': d.cmpTitle, 'txt-cmp-sub': d.cmpSub,
+    'txt-cmp-sys-lbl': d.cmpSysLbl, 'txt-cmp-prompt-lbl': d.cmpPromptLbl,
+    'txt-cmp-run-btn': d.cmpRunBtn,
   };
   Object.entries(m).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.textContent = val; });
   // Tab buttons
@@ -488,9 +664,10 @@ function setAdminLang(l) {
   ['tr','en','ar'].forEach(lang => {
     const el = document.getElementById(`alng-${lang}`);
     if (!el) return;
-    el.className = lang === l
-      ? 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-white text-pri'
-      : 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-white/70';
+    const isActive = lang === l;
+    el.style.background = isActive ? '#ffffff' : '';
+    el.style.color = isActive ? '#002f40' : 'rgba(255,255,255,0.7)';
+    el.style.fontWeight = '700';
   });
   // Search placeholder
   const si = document.getElementById('user-search'); if (si) si.placeholder = d.searchPlaceholder;
@@ -529,7 +706,7 @@ async function checkAuth() {
     if (!r.ok) { window.location.href = 'login.html'; return; }
     const d = await r.json();
     if (d.user.role !== 'admin') {
-      showToast('⛔ Bu sayfa yalnızca admin için.', true);
+      showToast((ADL[adminLang]||ADL.tr).adminOnly, true);
       setTimeout(() => { window.location.href = 'login.html'; }, 1500);
       return;
     }
@@ -562,21 +739,22 @@ async function loadRagStatus() {
     const d = await r.json();
     if (d.enabled && d.total_chunks >= 0) {
       const sources = d.sources || {};
+      const _rd = ADL[adminLang] || ADL.tr;
       const sourceHtml = Object.entries(sources).map(([src, cnt]) =>
         `<div class="flex justify-between items-center py-1.5 border-b border-surfc text-[12px]">
           <span class="text-ons font-medium truncate flex-1">${src.replace(/_/g,' ')}</span>
           <span class="font-bold text-sec ml-2">${cnt} chunk</span>
         </div>`
-      ).join('') || '<p class="text-ouv text-[12px]">Henüz kaynak yok.</p>';
+      ).join('') || `<p class="text-ouv text-[12px]">${_rd.noSources}</p>`;
       el.innerHTML = `
         <div class="flex gap-2 mb-3 flex-wrap">
-          <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700">✅ RAG Aktif</span>
+          <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700">${_rd.ragActive}</span>
           <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-secc text-sec">${d.total_chunks} chunk</span>
-          <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-surfc text-onsv">${Object.keys(sources).length} kaynak</span>
+          <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-surfc text-onsv">${Object.keys(sources).length} ${_rd.sourceUnit}</span>
         </div>
         <div class="rounded-xl border border-surfc overflow-hidden">${sourceHtml}</div>`;
     } else {
-      el.innerHTML = `<div class="p-4 rounded-xl bg-amber-50 text-amber-700 text-[13px]">⚠ RAG devre dışı veya başlatılmamış. Aşağıdan yerleşik bilgiyi yükleyin.</div>`;
+      el.innerHTML = `<div class="p-4 rounded-xl bg-amber-50 text-amber-700 text-[13px]">${(ADL[adminLang]||ADL.tr).ragInactive}</div>`;
     }
   } catch(e) {
     el.innerHTML = `<div class="text-err text-[12px]">RAG durumu alınamadı: ${e.message}</div>`;
@@ -679,7 +857,8 @@ async function loadStats() {
     document.getElementById('s-rag').textContent = d.rag_enabled ? '✅ Aktif' : '❌ Kapalı';
 
     const roleColors = { doctor: '#006a68', patient: '#002f40', admin: '#ba1a1a', personnel: '#e07b26' };
-    const roleLabels = { doctor: 'Doktor', patient: 'Hasta', admin: 'Admin', personnel: 'Personel' };
+    const _ld = ADL[adminLang] || ADL.tr;
+    const roleLabels = { doctor: _ld.roleDoctor, patient: _ld.rolePatient, admin: _ld.roleAdmin, personnel: _ld.rolePersonnel };
     document.getElementById('role-distribution').innerHTML = Object.entries(d.by_role || {}).map(([role, cnt]) =>
       `<div class="flex items-center gap-3 flex-1 min-w-[140px] p-4 rounded-xl border border-surfc">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-[18px] font-bold" style="background:${roleColors[role]||'#8c9499'}">${cnt}</div>
@@ -710,6 +889,15 @@ function filterUsers() {
   renderUsers(filtered);
 }
 
+function getRoleBadge() {
+  const d = ADL[adminLang] || ADL.tr;
+  return {
+    doctor:    ['bg-emerald-100 text-emerald-700', d.roleDoctor],
+    patient:   ['bg-blue-100 text-blue-700', d.rolePatient],
+    admin:     ['bg-red-100 text-red-700', d.roleAdmin],
+    personnel: ['bg-amber-100 text-amber-700', d.rolePersonnel],
+  };
+}
 const ROLE_BADGE = {
   doctor:    ['bg-emerald-100 text-emerald-700','Doktor'],
   patient:   ['bg-blue-100 text-blue-700','Hasta'],
@@ -719,22 +907,24 @@ const ROLE_BADGE = {
 
 function renderUsers(users) {
   const el = document.getElementById('users-table');
-  if (!users.length) { el.innerHTML = '<div class="p-8 text-center text-onsv text-[13px]">Kullanıcı bulunamadı.</div>'; return; }
+  const d = ADL[adminLang] || ADL.tr;
+  const rb = getRoleBadge();
+  if (!users.length) { el.innerHTML = `<div class="p-8 text-center text-onsv text-[13px]">${d.noUsers}</div>`; return; }
   el.innerHTML = `
   <table class="w-full text-[13px]">
     <thead class="bg-surf text-[11px] font-bold text-onsv uppercase tracking-wider">
       <tr>
-        <th class="px-5 py-3 text-left">Ad Soyad</th>
-        <th class="px-5 py-3 text-left">E-posta</th>
-        <th class="px-5 py-3 text-left">Rol</th>
-        <th class="px-5 py-3 text-left">Uzmanlık</th>
-        <th class="px-5 py-3 text-left">Durum</th>
-        <th class="px-5 py-3 text-left">İşlemler</th>
+        <th class="px-5 py-3 text-left">${d.tbName}</th>
+        <th class="px-5 py-3 text-left">${d.tbEmail}</th>
+        <th class="px-5 py-3 text-left">${d.tbRole}</th>
+        <th class="px-5 py-3 text-left">${d.tbSpecialty}</th>
+        <th class="px-5 py-3 text-left">${d.tbStatus}</th>
+        <th class="px-5 py-3 text-left">${d.tbActions}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-surfc">
       ${users.map(u => {
-        const [bc, bl] = ROLE_BADGE[u.role] || ['bg-surfc text-onsv', u.role];
+        const [bc, bl] = rb[u.role] || ['bg-surfc text-onsv', u.role];
         return `<tr class="hover:bg-surf transition-colors ${!u.is_active?'opacity-50':''}">
           <td class="px-5 py-3 font-semibold text-pri">${u.name}</td>
           <td class="px-5 py-3 text-onsv font-mono text-[12px]">${u.email}</td>
@@ -742,20 +932,20 @@ function renderUsers(users) {
             <select onchange="changeRole('${u.user_id}',this.value)"
               class="text-[11px] font-bold px-2 py-1 rounded-lg border border-ouv ${bc} appearance-none cursor-pointer">
               ${['doctor','patient','admin','personnel'].map(r=>
-                `<option value="${r}" ${r===u.role?'selected':''}>${ROLE_BADGE[r]?.[1]||r}</option>`
+                `<option value="${r}" ${r===u.role?'selected':''}>${rb[r]?.[1]||r}</option>`
               ).join('')}
             </select>
           </td>
           <td class="px-5 py-3 text-onsv">${u.specialty||'—'}</td>
           <td class="px-5 py-3">
             <span class="badge ${u.is_active?'bg-emerald-100 text-emerald-700':'bg-surfc text-onsv'}">
-              ${u.is_active?'✓ Aktif':'Pasif'}
+              ${u.is_active?d.roleActive:d.roleInactive}
             </span>
           </td>
           <td class="px-5 py-3">
             <button onclick="toggleActive('${u.user_id}',${u.is_active})"
               class="text-[11px] px-2.5 py-1 rounded-lg border ${u.is_active?'border-err text-err hover:bg-err hover:text-white':'border-sec text-sec hover:bg-sec hover:text-white'} transition-all font-semibold">
-              ${u.is_active?'Devre Dışı':'Aktif Et'}
+              ${u.is_active?d.btnDisable:d.btnEnable}
             </button>
           </td>
         </tr>`;
@@ -769,8 +959,9 @@ async function changeRole(userId, newRole) {
     const r = await fetch(`${API}/api/admin/users/${userId}/role`, {
       method: 'PUT', headers: authHeaders(), body: JSON.stringify({role: newRole})
     });
-    if (!r.ok) { const d = await r.json(); showToast(d.detail || 'Rol değiştirilemedi.', true); loadUsers(); return; }
-    showToast('Rol güncellendi ✓');
+    const _d2 = ADL[adminLang] || ADL.tr;
+    if (!r.ok) { const d = await r.json(); showToast(d.detail || _d2.roleUpdateFail, true); loadUsers(); return; }
+    showToast(_d2.roleUpdated);
     allUsers = allUsers.map(u => u.user_id === userId ? {...u, role: newRole} : u);
   } catch { showToast('Bağlantı hatası', true); loadUsers(); }
 }
@@ -781,8 +972,9 @@ async function toggleActive(userId, currentlyActive) {
     const r = await fetch(`${API}/api/admin/users/${userId}/active`, {
       method: 'PUT', headers: authHeaders(), body: JSON.stringify({active: newActive})
     });
-    if (!r.ok) { showToast('İşlem başarısız.', true); return; }
-    showToast(newActive ? 'Kullanıcı aktif edildi ✓' : 'Kullanıcı devre dışı ✓');
+    const _d3 = ADL[adminLang] || ADL.tr;
+    if (!r.ok) { showToast(_d3.errPermission, true); return; }
+    showToast(newActive ? _d3.userEnabled : _d3.userDisabled);
     allUsers = allUsers.map(u => u.user_id === userId ? {...u, is_active: newActive?1:0} : u);
     renderUsers(allUsers);
   } catch { showToast('Bağlantı hatası', true); }
@@ -791,27 +983,29 @@ async function toggleActive(userId, currentlyActive) {
 // ── Audit Log ──
 async function loadAuditLog() {
   const el = document.getElementById('audit-table');
+  const _d = ADL[adminLang] || ADL.tr;
+  const locale = adminLang === 'ar' ? 'ar-SA' : adminLang === 'en' ? 'en-US' : 'tr-TR';
   el.innerHTML = '<div class="text-center py-8"><span class="material-symbols-outlined msym spin text-sec text-2xl">refresh</span></div>';
   try {
     const r = await fetch(`${API}/api/audit-log?limit=100`, { headers: authHeaders() });
-    if (!r.ok) { el.innerHTML = '<div class="p-5 text-err text-[13px]">Yetki hatası veya log bulunamadı.</div>'; return; }
+    if (!r.ok) { el.innerHTML = `<div class="p-5 text-err text-[13px]">${_d.errPermission}</div>`; return; }
     const d = await r.json();
     const logs = d.logs || [];
-    if (!logs.length) { el.innerHTML = '<div class="p-8 text-center text-onsv text-[13px]">Henüz log kaydı yok.</div>'; return; }
+    if (!logs.length) { el.innerHTML = `<div class="p-8 text-center text-onsv text-[13px]">${_d.noLogs}</div>`; return; }
     el.innerHTML = `
     <table class="w-full text-[12px]">
       <thead class="bg-surf text-[10px] font-bold text-onsv uppercase tracking-wider">
         <tr>
-          <th class="px-4 py-2 text-left">Zaman</th>
-          <th class="px-4 py-2 text-left">İşlem</th>
-          <th class="px-4 py-2 text-left">Kullanıcı Rol</th>
-          <th class="px-4 py-2 text-left">IP</th>
-          <th class="px-4 py-2 text-left">Detay</th>
+          <th class="px-4 py-2 text-left">${_d.tbTime}</th>
+          <th class="px-4 py-2 text-left">${_d.tbAction}</th>
+          <th class="px-4 py-2 text-left">${_d.tbUserRole}</th>
+          <th class="px-4 py-2 text-left">${_d.tbIP}</th>
+          <th class="px-4 py-2 text-left">${_d.tbDetail}</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-surfc">
         ${logs.map(l => `<tr class="hover:bg-surf">
-          <td class="px-4 py-2 text-onsv font-mono">${new Date(l.created_at).toLocaleString('tr-TR')}</td>
+          <td class="px-4 py-2 text-onsv font-mono">${new Date(l.created_at).toLocaleString(locale)}</td>
           <td class="px-4 py-2 font-bold text-pri">${l.action||'—'}</td>
           <td class="px-4 py-2 text-onsv">${l.user_role||'—'}</td>
           <td class="px-4 py-2 font-mono text-onsv">${l.ip_address||'—'}</td>
@@ -819,20 +1013,21 @@ async function loadAuditLog() {
         </tr>`).join('')}
       </tbody>
     </table>`;
-  } catch { el.innerHTML = '<div class="p-5 text-err text-[13px]">Bağlantı hatası.</div>'; }
+  } catch { el.innerHTML = `<div class="p-5 text-err text-[13px]">${_d.errConnection}</div>`; }
 }
 
 // ── Kiosk ──
 async function loadKioskStatus() {
+  const _d = ADL[adminLang] || ADL.tr;
   try {
     const r = await fetch(`${API}/api/kiosk/status`);
     const d = await r.json();
     const locked = d.is_locked;
     document.getElementById('kiosk-icon').textContent = locked ? 'lock' : 'tablet';
     document.getElementById('kiosk-icon').style.color = locked ? '#ba1a1a' : '#006a68';
-    document.getElementById('kiosk-status-text').textContent = locked ? '🔒 Kiosk Kilitli' : '✅ Kiosk Açık';
-    document.getElementById('kiosk-status-sub').textContent = locked ? 'Hasta girişi devre dışı' : 'Hasta girişi aktif';
-  } catch { document.getElementById('kiosk-status-text').textContent = 'Bağlantı hatası'; }
+    document.getElementById('kiosk-status-text').textContent = locked ? _d.kioskLocked : _d.kioskUnlocked;
+    document.getElementById('kiosk-status-sub').textContent = locked ? _d.kioskLockedSub : _d.kioskUnlockedSub;
+  } catch { document.getElementById('kiosk-status-text').textContent = _d.kioskConnErr; }
 }
 
 async function setKiosk(lock) {

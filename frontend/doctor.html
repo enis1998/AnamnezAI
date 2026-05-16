@@ -1768,9 +1768,10 @@ function setLang(l){
   ['dlbtn-tr','dlbtn-en','dlbtn-ar'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.className = id.endsWith(l)
-      ? 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all bg-pric text-white'
-      : 'px-2.5 py-1 rounded-full text-[11px] font-bold transition-all text-onsv';
+    const isActive = id === 'dlbtn-' + l;
+    el.style.background = isActive ? '#00475e' : '';
+    el.style.color = isActive ? '#ffffff' : '#3f4749';
+    el.style.fontWeight = '700';
   });
 
   // TCFG badge etiketlerini güncelle (triage rozetleri)
