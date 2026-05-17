@@ -176,29 +176,29 @@ tailwind.config = {
   <div class="max-w-xl w-full mx-auto fade">
     <button onclick="goTo('scr-welcome')" class="flex items-center gap-2 text-white/50 hover:text-white mb-8 btn-kiosk transition-colors">
       <span class="material-symbols-outlined msym" style="font-size:28px">arrow_back</span>
-      <span class="text-[18px]">Geri</span>
+      <span class="text-[18px]" id="btn-back-form">Geri</span>
     </button>
-    <h2 class="text-[36px] font-head font-bold mb-2">Hasta Bilgileri</h2>
-    <p class="text-[16px] text-white/60 mb-8">Lütfen bilgilerinizi giriniz</p>
+    <h2 class="text-[36px] font-head font-bold mb-2" id="form-title-h2">Hasta Bilgileri</h2>
+    <p class="text-[16px] text-white/60 mb-8" id="form-desc-p">Lütfen bilgilerinizi giriniz</p>
 
     <div class="space-y-5">
       <div>
-        <label class="block text-[14px] font-bold text-white/70 uppercase tracking-wider mb-2">Ad Soyad</label>
+        <label class="block text-[14px] font-bold text-white/70 uppercase tracking-wider mb-2" id="lbl-name-form">AD SOYAD</label>
         <input id="k-name" type="text" placeholder="Adınız Soyadınız"
           class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-2xl font-semibold focus:border-sec transition-all"/>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-[14px] font-bold text-white/70 uppercase tracking-wider mb-2">Yaş</label>
+          <label class="block text-[14px] font-bold text-white/70 uppercase tracking-wider mb-2" id="lbl-age-form">YAŞ</label>
           <input id="k-age" type="number" min="1" max="120" placeholder="—"
             class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-2xl font-semibold text-center focus:border-sec transition-all"/>
         </div>
         <div>
-          <label class="block text-[14px] font-bold text-white/70 uppercase tracking-wider mb-2">Cinsiyet</label>
+          <label class="block text-[14px] font-bold text-white/70 uppercase tracking-wider mb-2" id="lbl-gender-form">CİNSİYET</label>
           <select id="k-gender" class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-xl font-semibold focus:border-sec transition-all">
-            <option value="Erkek">Erkek</option>
-            <option value="Kadın">Kadın</option>
-            <option value="Belirtmek İstemiyorum">Belirtmemi</option>
+            <option value="Erkek" id="kopt-m">Erkek</option>
+            <option value="Kadın" id="kopt-f">Kadın</option>
+            <option value="Belirtmek İstemiyorum" id="kopt-o">Belirtmemi</option>
           </select>
         </div>
       </div>
@@ -211,7 +211,7 @@ tailwind.config = {
       <button onclick="startKioskSession()" id="btn-kiosk-start"
         class="btn-kiosk w-full py-6 rounded-2xl bg-sec hover:bg-pric flex items-center justify-center gap-4 text-[24px] font-bold mt-4">
         <span class="material-symbols-outlined msym-fill" style="font-size:32px">psychology</span>
-        AI Mülakatı Başlat
+        <span id="btn-ai-start-text">AI Mülakatı Başlat</span>
       </button>
     </div>
   </div>
@@ -303,7 +303,7 @@ tailwind.config = {
       <span class="material-symbols-outlined msym-fill text-secc" style="font-size:32px" aria-hidden="true">qr_code_2</span>
       <div class="text-left">
         <p class="text-[18px] font-bold text-secc leading-tight" id="btn-qr-text">Telefona Aktar</p>
-        <p class="text-[12px] text-white/50 font-normal">QR kodu tarayın → sonuçlarınız telefonda</p>
+        <p class="text-[12px] text-white/50 font-normal" id="qr-btn-subtitle">QR kodu tarayın → sonuçlarınız telefonda</p>
       </div>
     </button>
 
@@ -332,7 +332,7 @@ tailwind.config = {
         <!-- Sıra no küçük tekrar -->
         <div class="inline-flex items-center gap-2 bg-secc/10 border border-secc/30 rounded-xl px-4 py-2 mb-4">
           <span class="material-symbols-outlined msym-fill text-secc text-[16px]">confirmation_number</span>
-          <span class="text-[13px] font-bold text-secc">Sıra: <span id="qr-ticket-no">—</span></span>
+          <span class="text-[13px] font-bold text-secc"><span id="qr-ticket-lbl">Sıra:</span> <span id="qr-ticket-no">—</span></span>
         </div>
 
         <!-- QR görsel alanı -->
@@ -343,7 +343,7 @@ tailwind.config = {
         </div>
 
         <button onclick="document.getElementById('qr-modal').classList.add('hidden')"
-          class="btn-kiosk w-full px-8 py-4 rounded-2xl bg-sec text-white font-bold text-[16px]">Kapat</button>
+          class="btn-kiosk w-full px-8 py-4 rounded-2xl bg-sec text-white font-bold text-[16px]" id="btn-qr-close"><span id="btn-qr-close-text">Kapat</span></button>
       </div>
     </div>
 
@@ -355,10 +355,10 @@ tailwind.config = {
   <div class="max-w-md w-full mx-auto fade">
     <button onclick="goTo('scr-welcome')" class="flex items-center gap-2 text-white/50 hover:text-white mb-8 btn-kiosk transition-colors">
       <span class="material-symbols-outlined msym" style="font-size:28px">arrow_back</span>
-      <span class="text-[18px]">Geri</span>
+      <span class="text-[18px]" id="btn-back-login">Geri</span>
     </button>
-    <h2 class="text-[36px] font-head font-bold mb-2">Giriş Yap</h2>
-    <p class="text-[16px] text-white/60 mb-8">Kayıtlı hesabınızla devam edin</p>
+    <h2 class="text-[36px] font-head font-bold mb-2" id="login-title-h2">Giriş Yap</h2>
+    <p class="text-[16px] text-white/60 mb-8" id="login-desc-p">Kayıtlı hesabınızla devam edin</p>
     <div class="space-y-4">
       <input id="k-email" type="email" placeholder="E-posta adresiniz"
         class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-[18px] focus:border-sec transition-all"/>
@@ -366,7 +366,7 @@ tailwind.config = {
         class="w-full px-5 py-4 rounded-2xl border-2 border-white/20 bg-white text-[18px] focus:border-sec transition-all"/>
       <div id="login-err" class="hidden p-4 rounded-2xl bg-errc text-err text-[16px] font-semibold"></div>
       <button onclick="kioskLogin()" class="btn-kiosk w-full py-5 rounded-2xl bg-sec text-[22px] font-bold mt-2">
-        <span style="vertical-align:middle">Giriş Yap</span>
+        <span id="btn-login-submit-text" style="vertical-align:middle">Giriş Yap</span>
       </button>
     </div>
   </div>
@@ -461,11 +461,22 @@ const I18N = {
     qrDesc: 'Oturumunuza telefonunuzdan devam etmek için QR kodu tarayın.',
     loginTitle: 'Giriş Yap',
     loginDesc: 'Kayıtlı hesabınızla devam edin',
+    loginSubmit: 'Giriş Yap',
     loginErr: 'E-posta veya şifre hatalı.',
     loginConnErr: 'Sunucuya bağlanılamadı.',
     btnBack: 'Geri',
-    roomInfo: 'Size atanan oda bilgisi için<br/>triaj personelini bekleyiniz',
-    waitInfo: 'Tahmini bekleme süresi için<br/>ekrana dikkat ediniz',
+    roomInfo: 'Oda bilgisi için<br/>triaj personelini bekleyiniz',
+    waitInfo: 'Bekleme süresi için<br/>ekrana dikkat ediniz',
+    ticketLabel: 'SIRA BİLETİNİZ',
+    yearsOld: 'yaşında',
+    closeBtnTxt: 'Kapat',
+    qrTicketLbl: 'Sıra:',
+    qrBtnSubtitle: 'QR kodu tarayın → sonuçlarınız telefonda',
+    formLabelName: 'AD SOYAD',
+    formLabelAge: 'YAŞ',
+    formLabelGender: 'CİNSİYET',
+    btnAIStart: 'AI Mülakatı Başlat',
+    emailPlaceholder: 'E-posta adresiniz',
   },
   en: {
     subtitle: 'AI-Powered Patient Pre-Triage',
@@ -502,16 +513,27 @@ const I18N = {
     triageLabel: 'Triage Result',
     btnHome: 'Return to Home',
     btnPrint: 'Print Queue Ticket',
-    btnQR: 'Continue via QR',
+    btnQR: 'Transfer to Phone',
     qrTitle: 'Scan with Phone',
     qrDesc: 'Scan the QR code to continue your session on your phone.',
     loginTitle: 'Log In',
     loginDesc: 'Continue with your registered account',
+    loginSubmit: 'Log In',
     loginErr: 'Invalid email or password.',
     loginConnErr: 'Could not connect to server.',
     btnBack: 'Back',
     roomInfo: 'For your assigned room,<br/>please wait for triage staff',
     waitInfo: 'Check the screen for<br/>estimated wait time',
+    ticketLabel: 'YOUR QUEUE TICKET',
+    yearsOld: 'years old',
+    closeBtnTxt: 'Close',
+    qrTicketLbl: 'Queue:',
+    qrBtnSubtitle: 'Scan QR code → see results on your phone',
+    formLabelName: 'FULL NAME',
+    formLabelAge: 'AGE',
+    formLabelGender: 'GENDER',
+    btnAIStart: 'Start AI Interview',
+    emailPlaceholder: 'Your email address',
   },
   ar: {}
 };
@@ -542,23 +564,42 @@ function applyTranslations() {
     'queue-label': 'queueLabel', 'wait-label': 'waitLabel',
     'btn-start-text': 'btnStart', 'btn-login-text': 'btnLogin',
     'footer-text': 'footer',
-    'btn-home-text': 'btnHome', 'btn-print-text': 'btnPrint', 'btn-qr-text': 'btnQR',
+    'btn-home-text': 'btnHome', 'btn-print-text': 'btnPrint',
     'qr-title': 'qrTitle', 'qr-desc': 'qrDesc',
+    // Done screen
+    'done-title-text': 'doneTitle', 'lbl-ticket': 'ticketLabel',
+    'btn-qr-text': 'btnQR', 'qr-btn-subtitle': 'qrBtnSubtitle',
+    'qr-ticket-lbl': 'qrTicketLbl', 'btn-qr-close-text': 'closeBtnTxt',
+    // Form screen
+    'btn-back-form': 'btnBack', 'form-title-h2': 'formTitle', 'form-desc-p': 'formDesc',
+    'lbl-name-form': 'formLabelName', 'lbl-age-form': 'formLabelAge', 'lbl-gender-form': 'formLabelGender',
+    'btn-ai-start-text': 'btnAIStart',
+    // Login screen
+    'btn-back-login': 'btnBack', 'login-title-h2': 'loginTitle', 'login-desc-p': 'loginDesc',
+    'btn-login-submit-text': 'loginSubmit',
   };
   Object.entries(ids).forEach(([id, key]) => {
     const el = document.getElementById(id);
     if (el) el.textContent = t(key);
   });
+  // innerHTML for elements with <br/>
+  const doneSubEl = document.getElementById('done-sub-text');
+  if (doneSubEl) doneSubEl.innerHTML = t('doneDesc');
+  const roomEl = document.getElementById('done-room-txt');
+  if (roomEl) roomEl.innerHTML = t('roomInfo');
+  const waitEl = document.getElementById('done-wait-txt');
+  if (waitEl) waitEl.innerHTML = t('waitInfo');
   // Input placeholders
   const nameInput = document.getElementById('k-name');
   if (nameInput) nameInput.placeholder = t('placeholderName');
   const answerInput = document.getElementById('k-answer');
   if (answerInput) answerInput.placeholder = t('placeholder');
-  // Form labels
-  const formTitle = document.querySelector('#scr-form h2');
-  if (formTitle) formTitle.textContent = t('formTitle');
-  const formDesc = document.querySelector('#scr-form p');
-  if (formDesc) formDesc.textContent = t('formDesc');
+  const emailInput = document.getElementById('k-email');
+  if (emailInput) emailInput.placeholder = t('emailPlaceholder');
+  // Gender options
+  const gm = document.getElementById('kopt-m'); if (gm) gm.textContent = t('optMale');
+  const gf = document.getElementById('kopt-f'); if (gf) gf.textContent = t('optFemale');
+  const go = document.getElementById('kopt-o'); if (go) go.textContent = t('optOther');
 }
 
 // ── Sprint 21: KVKK Consent + Emergency Warning ──────────────────────────────
@@ -696,7 +737,6 @@ async function startKioskSession() {
   const btn = document.getElementById('btn-kiosk-start');
   btn.disabled = true;
   btn.innerHTML = `<span class="material-symbols-outlined msym spin" style="font-size:28px">refresh</span> ${t('statusLoading')}`;
-
   try {
     const token = localStorage.getItem('anamnez_token');
     const headers = {'Content-Type': 'application/json'};
@@ -711,7 +751,7 @@ async function startKioskSession() {
     kioskSessionId = data.session_id;
     kioskStep = 1;
 
-    document.getElementById('chat-patient-label').textContent = `${name} · ${age} ${currentLang === 'en' ? 'years old' : 'yaşında'}`;
+    document.getElementById('chat-patient-label').textContent = `${name} · ${age} ${t('yearsOld')}`;
     document.getElementById('chat-messages').innerHTML = '';
     updateSteps(1);
     addMessage(data.question, true);
@@ -721,7 +761,7 @@ async function startKioskSession() {
     showFormErr(e.message || t('errConn'));
   } finally {
     btn.disabled = false;
-    btn.innerHTML = `<span class="material-symbols-outlined msym-fill" style="font-size:32px">psychology</span> ${t('btnAI')}`;
+    btn.innerHTML = `<span class="material-symbols-outlined msym-fill" style="font-size:32px">psychology</span> <span id="btn-ai-start-text">${t('btnAIStart')}</span>`;
   }
 }
 
@@ -853,9 +893,10 @@ async function fetchKioskSummary() {
   document.getElementById('done-ticket-no').textContent = ticketNo;
   document.getElementById('qr-ticket-no').textContent   = ticketNo;
   const now = new Date();
+  const locale = currentLang === 'en' ? 'en-GB' : 'tr-TR';
   document.getElementById('done-timestamp').textContent =
-    now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'}) + ' · ' +
-    now.toLocaleDateString('tr-TR');
+    now.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'}) + ' · ' +
+    now.toLocaleDateString(locale);
 
   // Triaj badge — arka plan üretimi tamamlanana kadar "Değerlendiriliyor" göster
   const pendingLabel = currentLang === 'en' ? '⏳ Evaluating…' : '⏳ Değerlendiriliyor…';
