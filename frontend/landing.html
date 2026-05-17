@@ -1427,7 +1427,9 @@ const LP_I18N_HTML_KEYS = new Set([
   'latency.body'
 ]);
 
-let lpLang = localStorage.getItem('ui_lang') || 'en';
+// Landing page always defaults to English (never reads localStorage)
+// User can change via TR/EN/AR buttons; selection is saved for other pages
+let lpLang = 'en';
 
 function setLandingLang(l) {
   lpLang = l;

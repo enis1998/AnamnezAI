@@ -671,7 +671,14 @@ function setAdminLang(l) {
   });
   // Search placeholder
   const si = document.getElementById('user-search'); if (si) si.placeholder = d.searchPlaceholder;
-  const rf = document.getElementById('user-role-filter'); if (rf && rf.options[0]) rf.options[0].text = d.allRoles;
+  const rf = document.getElementById('user-role-filter');
+  if (rf) {
+    if (rf.options[0]) rf.options[0].text = d.allRoles;
+    if (rf.options[1]) rf.options[1].text = d.roleDoctor;
+    if (rf.options[2]) rf.options[2].text = d.rolePatient;
+    if (rf.options[3]) rf.options[3].text = d.roleAdmin;
+    if (rf.options[4]) rf.options[4].text = d.rolePersonnel;
+  }
 }
 
 // Init language on load

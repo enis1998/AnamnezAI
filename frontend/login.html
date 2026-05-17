@@ -4,6 +4,34 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AnamnezAI — Sign In</title>
+<script>
+// ── Cache Buster: Unregister old service workers so login page is always fresh ──
+(function() {
+  var PAGE_VER = '20260517-v3';
+  if ('serviceWorker' in navigator) {
+    // Unregister all old SW registrations on login page
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      regs.forEach(function(r) {
+        if (r.active && r.active.scriptURL && r.active.scriptURL.indexOf('anamnezai-v16') === -1) {
+          r.unregister();
+        }
+      });
+    }).catch(function(){});
+    // Clear stale caches (keep only current version)
+    if ('caches' in window) {
+      caches.keys().then(function(keys) {
+        keys.forEach(function(k) {
+          if (k !== 'anamnezai-v16') caches.delete(k);
+        });
+      }).catch(function(){});
+    }
+  }
+  // Version check: if this page has old code, force network reload
+  if (!window.__LOGIN_PAGE_VER__) {
+    window.__LOGIN_PAGE_VER__ = PAGE_VER;
+  }
+})();
+</script>
 <script src="vendor/tailwind.min.js"></script>
 <link href="vendor/fonts/local_fonts.css" rel="stylesheet"/>
 <link href="vendor/fonts/material_symbols_local.css" rel="stylesheet"/>
@@ -344,27 +372,53 @@ function loadGoogleScript() {
 
 async function handleGoogleResponse(response) {
   const statusEl = document.getElementById('google-status');
-  statusEl.textContent = 'Verifying Google account...';
+  statusEl.textContent = 'Google hesabı doğrulanıyor...';
   statusEl.className = 'text-center text-xs text-onsv mt-2';
   statusEl.classList.remove('hidden');
 
-  try {
-    const res = await fetch(`${API}/auth/google`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({credential: response.credential})
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      showErr(data.detail || 'Google sign-in failed.');
-      statusEl.classList.add('hidden');
+  // Endpoint sırası: /p/connect (nötr yol) → /api/gsi → /auth/google
+  const endpoints = [`${API}/p/connect`, `${API}/api/gsi`, `${API}/auth/google`];
+  let lastErr = 'Google ile giriş yapılamadı. Lütfen sayfayı yenileyip tekrar deneyin.';
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({credential: response.credential})
+      });
+      // Yanıt JSON değilse (güvenlik duvarı HTML sayfası olabilir) → sonraki endpoint
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) { continue; }
+      const data = await res.json();
+      if (!res.ok) {
+        // 401/400 = kimlik doğrulama hatası → kullanıcıya göster
+        // 404/405/5xx = yanlış endpoint → sonraki dene
+        if (res.status === 401 || res.status === 400) {
+          lastErr = data.detail || 'Google hesabı doğrulanamadı.';
+          break;
+        }
+        continue;
+      }
+      saveAndRedirect(data);
       return;
+    } catch(err) {
+      // Ağ hatası veya JSON parse hatası → sonraki endpoint dene
+      continue;
     }
-    saveAndRedirect(data);
-  } catch(err) {
-    showErr('Server error during Google sign-in.');
-    statusEl.classList.add('hidden');
   }
+  showErr(lastErr);
+  statusEl.classList.add('hidden');
+}
+
+// Service Worker güncellendiğinde sayfayı otomatik yenile
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SW_UPDATED') {
+      // Yeni SW aktif oldu — sayfayı taze içerikle yenile
+      window.location.reload();
+    }
+  });
 }
 
 // Google GIS scripti: GOOGLE_CLIENT_ID varsa zaten yükle

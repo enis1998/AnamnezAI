@@ -39,7 +39,7 @@ tailwind.config={theme:{extend:{colors:{
   @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
   .dot-pulse{animation:dp 1.2s ease infinite}
   @keyframes dp{0%,100%{opacity:1}50%{opacity:.3}}
-  .lang-active{background:#00475e!important;color:#fff!important;box-shadow:0 1px 4px rgba(0,71,94,.35)!important}
+  .lang-active{background:#ffffff!important;color:#002f40!important;box-shadow:0 1px 4px rgba(0,0,0,.20)!important}
 </style>
 </head>
 <body>
@@ -739,6 +739,59 @@ function doLogout() {
   window.location.href = 'login.html';
 }
 
+// ── Dil bağımlı metin çevirisi (cinsiyet + backend sabit metinler) ──────────
+function localize(str) {
+  if (!str) return str;
+  const lang = uiLang || 'tr';
+  const map = {
+    tr: {
+      'Male':'Erkek','Female':'Kadın','Other':'Diğer','male':'erkek','female':'kadın',
+      'unknown':'bilinmiyor','Unknown':'Bilinmiyor',
+      // EN → TR backend strings
+      'Assessment completed':'Değerlendirme tamamlandı',
+      'Doctor examination recommended':'Doktor muayenesi önerilir',
+      'Doctor evaluation required':'Doktor değerlendirmesi gerekli',
+    },
+    en: {
+      'Erkek':'Male','Kadın':'Female','Diğer':'Other','erkek':'male','kadın':'female',
+      'bilinmiyor':'unknown','Bilinmiyor':'Unknown',
+      // TR → EN backend fallback strings
+      'Değerlendirme tamamlandı':'Assessment completed',
+      'Doktor muayenesi önerilir':'Doctor examination recommended',
+      'Doktor değerlendirmesi gerekli':'Doctor evaluation required',
+      'Değerlendirme bekleniyor':'Assessment pending',
+      'Özet bekleniyor...':'Summary pending...',
+      'Doktor gözden geçirmesi gerekli':'Doctor review required',
+    },
+    ar: {
+      'Erkek':'ذكر','Kadın':'أنثى','Male':'ذكر','Female':'أنثى',
+      'Değerlendirme tamamlandı':'التقييم مكتمل',
+      'Doktor muayenesi önerilir':'يُنصح بفحص الطبيب',
+      'Doktor değerlendirmesi gerekli':'يلزم تقييم الطبيب',
+    }
+  };
+  return (map[lang] && map[lang][str]) ? map[lang][str] : str;
+}
+
+// ── JSON ya da ham metin olan şikayet/özet alanlarından düz metin çıkar ──────
+function extractText(val) {
+  if (!val) return '';
+  if (typeof val === 'object') {
+    return val.chief_complaint || val.symptoms_summary || val.narrative || val.text || JSON.stringify(val).slice(0, 120);
+  }
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        const obj = JSON.parse(trimmed);
+        return obj.chief_complaint || obj.symptoms_summary || obj.narrative || obj.text || trimmed.slice(0, 120);
+      } catch(e) { return trimmed; }
+    }
+    return trimmed;
+  }
+  return String(val);
+}
+
 // ── Sprint 13: Kiosk Kilit/Açma ──────────────────────────────────────────────
 async function kioskLock(lock) {
   const token = getToken();
@@ -1324,17 +1377,17 @@ function openReportModal(sid, patientName) {
   const modal = document.getElementById('report-modal');
   const iframe = document.getElementById('report-modal-iframe');
   const title = document.getElementById('report-modal-title');
-  if (title) title.textContent = patientName || p.patient_name || 'Hasta Raporu';
+  if (title) title.textContent = patientName || p.patient_name || 'Patient Report';
   // Doktor görünümünü summary'e bildir
   localStorage.setItem('summary_from_doctor', '1');
-  iframe.src = 'summary.html?t=' + Date.now();
+  iframe.src = `summary.html?sid=${encodeURIComponent(sid)}&t=${Date.now()}`;
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
 
 function openReportNewTab() {
   if (_reportModalSid) {
-    window.open('summary.html', '_blank');
+    window.open(`summary.html?sid=${encodeURIComponent(_reportModalSid)}`, '_blank');
   }
 }
 
@@ -1771,7 +1824,7 @@ function setLang(l){
     if (!el) return;
     const isActive = id === 'dlbtn-' + l;
     el.classList.toggle('lang-active', isActive);
-    el.style.color = isActive ? '' : '#3f4749';
+    el.style.color = isActive ? '#002f40' : 'rgba(255,255,255,0.75)';
   });
 
   // TCFG badge etiketlerini güncelle (triage rozetleri)

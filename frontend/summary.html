@@ -1151,51 +1151,90 @@ async function exportPDF(){
 }
 applyLangUI();
 
-function _doRender(d){
-  try { render(d); }
-  catch(err){
-    console.error('render error:', err);
-    const ls=document.getElementById('loading-state');
-    if(ls) ls.innerHTML=`<div class="text-center py-20">
-      <span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span>
-      <p class="text-err font-bold mb-2">${I18N.tr.noData}</p>
-      <p class="text-onsv text-xs mb-4">${err.message||''}</p>
-      <a href="patient_dashboard.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Geçmişime Dön</a>
-    </div>`;
-  }
-}
-
-function _showErr(msg){
+// ── Hata ve render yardımcıları ───────────────────────────────────────────────
+function _showErr(msg, detail){
   const ls=document.getElementById('loading-state');
-  if(ls) ls.innerHTML=`<div class="text-center py-20">
+  if(!ls) return;
+  ls.innerHTML=`<div class="text-center py-20 px-4">
     <span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span>
-    <p class="text-err font-bold mb-4">${msg||I18N.tr.noData}</p>
-    <a href="patient_dashboard.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Geçmişime Dön</a>
+    <p class="text-err font-bold mb-2">${msg||'Rapor yüklenemedi'}</p>
+    ${detail?`<p class="text-onsv text-xs mb-4 font-mono bg-surfc rounded p-2 max-w-sm mx-auto">${detail}</p>`:''}
+    <div class="flex gap-3 justify-center mt-4">
+      <button onclick="location.reload()" class="px-5 py-2.5 rounded-xl bg-sec text-white text-[13px] font-bold">Tekrar Dene</button>
+      <a href="patient_dashboard.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Geçmişime Dön</a>
+    </div>
   </div>`;
 }
 
-// Önce URL parametresi: ?sid=SESSION_ID
+function _doRender(d){
+  try {
+    render(d);
+  } catch(err){
+    console.error('render error:', err);
+    // loading-state render sırasında kaldırılmış olabilir — yeniden ekle
+    let ls=document.getElementById('loading-state');
+    if(!ls){
+      ls=document.createElement('div');
+      ls.id='loading-state';
+      ls.className='text-center py-24';
+      const mc=document.getElementById('main-content');
+      if(mc) mc.insertBefore(ls, mc.firstChild);
+    }
+    _showErr('Rapor görüntülenirken hata oluştu', (err.message||String(err)).slice(0,200));
+  }
+}
+
+// ── URL ?sid= parametresi ile API'dan yükle ───────────────────────────────────
 const _urlSid = new URLSearchParams(location.search).get('sid');
+
+// Loading durumunu güncellemek için yardımcı
+function _setLoadingText(msg){
+  const ls = document.getElementById('loading-state');
+  if(!ls) return;
+  const pp = ls.querySelector('p');
+  if(pp) pp.textContent = msg;
+}
+
 if(_urlSid){
-  // Direkt API'dan çek — localStorage/cache bağımsız
+  _setLoadingText('Rapor yükleniyor...');
   const _tok = localStorage.getItem('anamnez_token');
-  fetch(`/api/session/${encodeURIComponent(_urlSid)}/summary`,
-    _tok ? {headers:{Authorization:`Bearer ${_tok}`}} : {}
-  )
-  .then(r => r.ok ? r.json() : null)
+  const _ctrl = new AbortController();
+  // 60 saniye timeout — Gemma ilk seferinde yavaş olabilir
+  const _timer = setTimeout(()=>_ctrl.abort(), 60000);
+
+  const _apiUrl = `/api/session/${encodeURIComponent(_urlSid)}/summary`;
+  const _fHeaders = Object.assign(
+    {'Cache-Control':'no-cache, no-store','Pragma':'no-cache'},
+    _tok ? {'Authorization':'Bearer '+_tok} : {}
+  );
+
+  fetch(_apiUrl, { signal: _ctrl.signal, cache: 'no-store', headers: _fHeaders })
+  .then(r => {
+    clearTimeout(_timer);
+    if(r.ok) return r.json();
+    return r.text().then(txt=>{ throw new Error('HTTP '+r.status+': '+txt.slice(0,200)); });
+  })
   .then(d => {
-    if(d){
-      localStorage.setItem('anamnez_summary', JSON.stringify(d));
+    if(d && d.session_id){
+      try { localStorage.setItem('anamnez_summary', JSON.stringify(d)); } catch(e){}
       _doRender(d);
     } else {
-      _showErr('Rapor sunucudan alınamadı.');
+      _showErr('Rapor sunucudan alınamadı', 'Sunucu boş yanıt döndürdü');
     }
   })
-  .catch(e => _showErr('Bağlantı hatası: ' + e.message));
+  .catch(e => {
+    clearTimeout(_timer);
+    if(e.name==='AbortError'){
+      _showErr('Sunucu zaman aşımı (60s)', 'Lütfen tekrar deneyin. Rapor oluşturuluyorsa birkaç dakika bekleyin.');
+    } else {
+      _showErr('Bağlantı hatası', (e.message||String(e)).slice(0,200));
+    }
+  });
+
 } else if(data){
   _doRender(data);
 } else {
-  _showErr(I18N.tr.noData);
+  _showErr('Rapor bulunamadı', 'Lütfen mülakatı tamamlayıp tekrar deneyin');
 }
 
 // ── i18n: inherit language from localStorage ─────────────────────────────────

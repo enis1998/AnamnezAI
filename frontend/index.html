@@ -413,6 +413,7 @@ tailwind.config = {
 const API = '';
 let sessionId = null, lang = localStorage.getItem('ui_lang') || 'en', recognition = null;
 let chatHistory = [];
+let interviewActive = false; // Mülakat devam ederken dil değişimini kilitle
 let lastStartParams = null;
 let prepTimerRef = null;   // legacy — artık kullanılmıyor
 let prepElapsedRef = null; // legacy — artık kullanılmıyor
@@ -626,6 +627,16 @@ const T = {
 const t = k => T[lang][k] ?? k;
 
 function setLang(l){
+  // Mülakat devam ediyorsa dil değişimine izin verme
+  if(interviewActive){
+    const msg = lang==='tr'
+      ? '🔒 Mülakat devam ediyor — dil değiştirilemez.'
+      : lang==='ar'
+      ? '🔒 المقابلة جارية — لا يمكن تغيير اللغة.'
+      : '🔒 Interview in progress — language cannot be changed.';
+    showToast(msg, false);
+    return;
+  }
   lang = l;
   localStorage.setItem('ui_lang', l);
   // RTL support for Arabic
@@ -933,6 +944,12 @@ async function _doStartInterview(name, age, gender, vitals=null){
     }
     const data = await res.json();
     sessionId = data.session_id;
+    interviewActive = true; // Mülakat başladı — dil kilitle
+    // Lang butonlarını görsel olarak kilitle
+    ['btn-tr','btn-en','btn-ar'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){ el.title = lang==='tr'?'Mülakat sırasında dil değiştirilemez':(lang==='ar'?'لا يمكن تغيير اللغة خلال المقابلة':'Language locked during interview'); el.style.opacity='0.5'; el.style.cursor='not-allowed'; }
+    });
     // Misafir mülakatı için claim_code'u sakla
     if(data.claim_code){
       localStorage.setItem('pending_claim_code', data.claim_code);
@@ -947,6 +964,10 @@ async function _doStartInterview(name, age, gender, vitals=null){
     if(typingInd) typingInd.classList.add('hidden');
     const initMsg = document.getElementById(initMsgId);
     if(initMsg) initMsg.remove();
+    interviewActive = false; // Hata — kilidi kaldır
+    ['btn-tr','btn-en','btn-ar'].forEach(id=>{
+      const el=document.getElementById(id); if(el){ el.style.opacity=''; el.style.cursor=''; el.title=''; }
+    });
     const msg = e.name==='TimeoutError'
       ? (lang==='tr'
           ? '⚠️ Model yanıt vermedi. Lütfen birkaç saniye sonra tekrar deneyin.'
@@ -963,8 +984,10 @@ async function _doStartInterview(name, age, gender, vitals=null){
 }
 
 function updateProgress(step, total){
-  document.getElementById('txt-step').textContent=`${step}/${total}`;
-  document.getElementById('prog-bar').style.width=`${(step/total)*100}%`;
+  const stepEl = document.getElementById('txt-step');
+  if(stepEl) stepEl.textContent=`${step}/${total}`;
+  const progBar = document.getElementById('prog-bar');
+  if(progBar) progBar.style.width=`${(step/total)*100}%`;
   // Adaptif dot'lar — total'e göre dinamik oluştur
   const dotsEl = document.getElementById('step-dots');
   if(dotsEl){
@@ -975,7 +998,8 @@ function updateProgress(step, total){
     }).join('');
   }
   const isLast = step >= total;
-  document.getElementById('txt-btn-next').textContent = isLast ? t('finishBtn') : t('sendBtn');
+  const nextBtn = document.getElementById('txt-btn-next');
+  if(nextBtn) nextBtn.textContent = isLast ? t('finishBtn') : t('sendBtn');
 }
 
 async function submitAnswer(){
@@ -1267,7 +1291,9 @@ async function fetchSummary(){
     // claim_code'u summary verisine de ekle (summary.html'de gösterilecek)
     data.claim_code = localStorage.getItem('pending_claim_code') || null;
     localStorage.setItem('anamnez_summary', JSON.stringify(data));
-    window.location.href='summary.html';
+    interviewActive = false; // Mülakat bitti — kilidi kaldır
+    // ?sid ile yönlendir — summary.html her zaman API'dan taze veri çeker
+    window.location.href = `summary.html?sid=${encodeURIComponent(sessionId)}`;
   } catch(err) {
     console.error('[fetchSummary] Hata:', err);
     // Analyzing ekranında kal — retry butonu göster
