@@ -23,13 +23,13 @@
 |:-----------------:|:--------------------------:|:----------------:|
 | ![Patient Info Form](docs/screenshots/01_patient_info_form.png) | ![AI Interview](docs/screenshots/02_patient_interview.png) | ![Clinical Summary](docs/screenshots/03_clinical_summary.png) |
 
-| Doctor Triage Queue | Kiosk Touch Screen | Clinical Review |
-|:-------------------:|:------------------:|:---------------:|
-| ![Doctor Panel](docs/screenshots/04_doctor_panel.png) | ![Kiosk](docs/screenshots/05_kiosk.png) | ![Clinical Review](docs/screenshots/06_clinical_review.png) |
+| Clinical Summary Detail | Patient Profile | Patient History |
+|:-----------------------:|:---------------:|:---------------:|
+| ![Clinical Summary Detail](docs/screenshots/04_clinical_summary_detail.png) | ![Patient Profile](docs/screenshots/05_patient_profile.png) | ![Patient History](docs/screenshots/06_patient_history.png) |
 
-| Admin Dashboard | Landing Page | Patient Registration |
-|:---------------:|:------------:|:--------------------:|
-| ![Admin](docs/screenshots/07_admin.png) | ![Landing](docs/screenshots/08_landing.png) | ![Register](docs/screenshots/09_register.png) |
+| Medication Info | Doctor Triage Panel | Kiosk Touch Screen |
+|:---------------:|:-------------------:|:------------------:|
+| ![Medication Info](docs/screenshots/07_medication_info.png) | ![Doctor Triage Panel](docs/screenshots/08_doctor_triage_panel.png) | ![Kiosk Touch Screen](docs/screenshots/09_kiosk.png) |
 
 ---
 
