@@ -1,7 +1,7 @@
 {
-  "version": "2026.05.15-final",
-  "cache_name": "anamnezai-v10",
-  "build_date": "2026-05-15",
+  "version": "2026.05.19-i18n",
+  "cache_name": "anamnezai-v11",
+  "build_date": "2026-05-19",
   "features": [
     "demo-cases-db",
     "i18n-doctor-panel",
@@ -9,12 +9,9 @@
     "landing-metrics-api",
     "session-cleanup-api",
     "rag-cloud-translation-fix",
-    "brand-cleanup"
+    "brand-cleanup",
+    "i18n-full-all-pages",
+    "kiosk-arabic-support",
+    "doctor-i18n-model-status"
   ]
 }
-  "version": "2026.05.15-qa",
-  "cache_name": "anamnezai-v9",
-  "build_date": "2026-05-15",
-  "notes": "QA final — i18n fixes, hardcoded demo removed, admin i18n, landing metrics dynamic"
-}
-

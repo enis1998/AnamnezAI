@@ -162,7 +162,7 @@ tailwind.config={theme:{extend:{colors:{
       <div class="card p-5">
         <h2 id="txt-section-roles" class="font-head font-bold text-pri text-[14px] mb-4">Rol Dağılımı</h2>
         <div id="role-distribution" class="flex flex-wrap gap-3">
-          <div class="text-center py-4 text-onsv text-[13px] w-full">Yükleniyor...</div>
+          <div class="text-center py-4 text-onsv text-[13px] w-full" id="txt-roles-loading">Yükleniyor...</div>
         </div>
       </div>
     </div>
@@ -388,16 +388,13 @@ tailwind.config={theme:{extend:{colors:{
               </div>
               <div>
                 <p class="font-bold text-pri text-[14px]" id="cmp-g4-model">Gemma 4 e4b</p>
-                <p class="text-[10px] text-onsv">Ana Klinik Model</p>
+                <p class="text-[10px] text-onsv" id="txt-cmp-primary-model-lbl">Ana Klinik Model</p>
               </div>
               <span class="ml-auto px-2 py-0.5 rounded-full bg-pric/10 text-pric text-[10px] font-bold">PRIMARY</span>
             </div>
             <div id="cmp-g4-time" class="text-[10px] text-onsv mb-2"></div>
             <div id="cmp-g4-response" class="bg-surfc rounded-xl p-4 text-[13px] text-ons leading-relaxed whitespace-pre-wrap min-h-[100px]">
-              <span class="text-ouv italic">Yanıt bekleniyor...</span>
-            </div>
-            <div id="cmp-g4-badge" class="mt-2 hidden">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">✅ Yanıt alındı</span>
+              <span class="text-ouv italic" id="txt-cmp-g4-waiting">Yanıt bekleniyor...</span>
             </div>
           </div>
           <!-- Lite Model -->
@@ -408,15 +405,13 @@ tailwind.config={theme:{extend:{colors:{
               </div>
               <div>
                 <p class="font-bold text-pri text-[14px]" id="cmp-lite-model">Lite Model (gemma3:1b)</p>
-                <p class="text-[10px] text-onsv">Hızlı Tier-1 Model</p>
+                <p class="text-[10px] text-onsv" id="txt-cmp-fast-model-lbl">Hızlı Tier-1 Model</p>
               </div>
               <span class="ml-auto px-2 py-0.5 rounded-full bg-warn/10 text-warn text-[10px] font-bold">FAST</span>
             </div>
             <div id="cmp-lite-time" class="text-[10px] text-onsv mb-2"></div>
             <div id="cmp-lite-response" class="bg-surfc rounded-xl p-4 text-[13px] text-ons leading-relaxed whitespace-pre-wrap min-h-[100px]">
-              <span class="text-ouv italic">Yanıt bekleniyor...</span>
-            </div>
-            <div id="cmp-lite-badge" class="mt-2 hidden"></div>
+              <span class="text-ouv italic" id="txt-cmp-lite-waiting">Yanıt bekleniyor...</span>
           </div>
         </div>
         <!-- Analysis note -->
@@ -486,8 +481,10 @@ const ADL = {
     ragInactive:'⚠ RAG devre dışı veya başlatılmamış. Aşağıdan yerleşik bilgiyi yükleyin.',
     noSources:'Henüz kaynak yok.', sourceUnit:'kaynak',
     ragTextShort:'⚠ Metin çok kısa (min 20 karakter)',
+    ragOn:'✅ Aktif', ragOff:'❌ Kapalı',
     uploading:'⏳ Yükleniyor...',
     ragBuiltinLoading:'⏳ Yerleşik bilgi yükleniyor...',
+    ragTextAddedFn:(n)=>`✅ ${n} chunk eklendi.`,
     cmpRunning:'⏳ İki model paralel olarak sorgulanıyor...',
     cmpDoneFn:(s)=>`✅ Karşılaştırma tamamlandı (${s}s)`,
     cleanupConfirm:'Görüldü işaretlenen tüm eski oturumlar RAM'den temizlenecek. Emin misiniz?',
@@ -498,6 +495,15 @@ const ADL = {
     csvDownloaded:'CSV indirildi ✓', csvFailed:'CSV indirilemedi.',
     toastCleanedFn:(n)=>`✅ ${n} oturum temizlendi.`,
     toastCleanupFail:'Temizleme başarısız.',
+    cmpWaiting:'Yanıt bekleniyor...', cmpResponseReady:'✅ Yanıt alındı',
+    primaryModelLbl:'Ana Klinik Model', fastModelLbl:'Hızlı Tier-1 Model',
+    ragCatTriaj:'Triaj Protokolü', ragCatICD10:'ICD-10 Kodlama', ragCatClinical:'Klinik Referans',
+    ragCatEpi:'Epidemiyoloji', ragCatCustom:'Özel',
+    ragPdfUploadedFn:(f,s)=>`✅ PDF yüklendi: ${f} (${s})`,
+    ragPdfFailed:'PDF yüklenemedi', ragBuiltinAddedFn:(a,t)=>`✅ ${a} yeni chunk eklendi (toplam: ${t})`,
+    errGeneric:'Hata: ', rolesLoading:'Yükleniyor...',
+    liteNotInstalled:'ℹ Lite model (gemma3:1b) Ollama\'da kurulu değil. <code>ollama pull gemma3:1b</code> ile yükleyin.',
+    notAvail:'Kurulu Değil',
   },
   en: {
     adminTitle:'Admin Panel', doctorPanel:'Doctor Panel', logout:'Logout',
@@ -545,10 +551,12 @@ const ADL = {
     errPermission:'Permission error.', errConnection:'Connection error.',
     errStats:'Could not load stats', ragActive:'✅ RAG Active',
     ragInactive:'⚠ RAG disabled or not initialized. Load built-in knowledge below.',
+    ragOn:'✅ Active', ragOff:'❌ Disabled',
     noSources:'No sources yet.', sourceUnit:'sources',
     ragTextShort:'⚠ Text too short (min 20 chars)',
     uploading:'⏳ Uploading...',
     ragBuiltinLoading:'⏳ Loading built-in knowledge...',
+    ragTextAddedFn:(n)=>`✅ ${n} chunks added.`,
     cmpRunning:'⏳ Querying both models in parallel...',
     cmpDoneFn:(s)=>`✅ Comparison complete (${s}s)`,
     cleanupConfirm:'All seen-marked old sessions will be cleared from RAM. Are you sure?',
@@ -559,6 +567,15 @@ const ADL = {
     csvDownloaded:'CSV downloaded ✓', csvFailed:'CSV download failed.',
     toastCleanedFn:(n)=>`✅ ${n} session(s) cleaned.`,
     toastCleanupFail:'Cleanup failed.',
+    cmpWaiting:'Waiting for response...', cmpResponseReady:'✅ Response received',
+    primaryModelLbl:'Primary Clinical Model', fastModelLbl:'Fast Tier-1 Model',
+    ragCatTriaj:'Triage Protocol', ragCatICD10:'ICD-10 Coding', ragCatClinical:'Clinical Reference',
+    ragCatEpi:'Epidemiology', ragCatCustom:'Custom',
+    ragPdfUploadedFn:(f,s)=>`✅ PDF uploaded: ${f} (${s})`,
+    ragPdfFailed:'PDF upload failed', ragBuiltinAddedFn:(a,t)=>`✅ ${a} new chunks added (total: ${t})`,
+    errGeneric:'Error: ', rolesLoading:'Loading...',
+    liteNotInstalled:'ℹ Lite model (gemma3:1b) not installed in Ollama. Use <code>ollama pull gemma3:1b</code>.',
+    notAvail:'Not Installed',
   },
   ar: {
     adminTitle:'لوحة المشرف', doctorPanel:'لوحة الطبيب', logout:'تسجيل الخروج',
@@ -605,11 +622,13 @@ const ADL = {
     noUsers:'لم يُعثر على مستخدمين.', noLogs:'لا توجد سجلات بعد.',
     errPermission:'خطأ في الصلاحيات.', errConnection:'خطأ في الاتصال.',
     errStats:'تعذّر تحميل الإحصائيات', ragActive:'✅ RAG نشط',
+    ragOn:'✅ نشط', ragOff:'❌ معطّل',
     ragInactive:'⚠ RAG معطّل أو غير مُهيّأ. حمّل المعرفة المدمجة أدناه.',
     noSources:'لا توجد مصادر بعد.', sourceUnit:'مصادر',
     ragTextShort:'⚠ النص قصير جداً (20 حرفاً كحد أدنى)',
     uploading:'⏳ جارٍ الرفع...',
     ragBuiltinLoading:'⏳ جارٍ تحميل المعرفة المدمجة...',
+    ragTextAddedFn:(n)=>`✅ تمت إضافة ${n} جزء.`,
     cmpRunning:'⏳ جارٍ الاستعلام عن كلا النموذجين...',
     cmpDoneFn:(s)=>`✅ اكتملت المقارنة (${s}s)`,
     cleanupConfirm:'ستُحذف جميع الجلسات القديمة المعلّمة من الذاكرة. هل أنت متأكد؟',
@@ -620,8 +639,26 @@ const ADL = {
     csvDownloaded:'تم تنزيل CSV ✓', csvFailed:'فشل تنزيل CSV.',
     toastCleanedFn:(n)=>`✅ تم تنظيف ${n} جلسة.`,
     toastCleanupFail:'فشل التنظيف.',
+    cmpWaiting:'في انتظار الرد...', cmpResponseReady:'✅ تم استلام الرد',
+    primaryModelLbl:'النموذج السريري الأساسي', fastModelLbl:'النموذج السريع Tier-1',
+    ragCatTriaj:'بروتوكول الفرز', ragCatICD10:'ترميز ICD-10', ragCatClinical:'مرجع سريري',
+    ragCatEpi:'علم الأوبئة', ragCatCustom:'مخصص',
+    ragPdfUploadedFn:(f,s)=>`✅ تم رفع PDF: ${f} (${s})`,
+    ragPdfFailed:'فشل رفع PDF', ragBuiltinAddedFn:(a,t)=>`✅ تمت إضافة ${a} أجزاء جديدة (الإجمالي: ${t})`,
+    errGeneric:'خطأ: ', rolesLoading:'جارٍ التحميل...',
+    liteNotInstalled:'ℹ النموذج الخفيف (gemma3:1b) غير مثبت في Ollama. استخدم <code>ollama pull gemma3:1b</code>.',
+    notAvail:'غير متاح',
   },
 };
+
+function at(key, ...args) {
+  try {
+    const d = ADL[adminLang] || ADL.en;
+    const val = d[key] !== undefined ? d[key] : (ADL.en[key] || key);
+    if (typeof val === 'function') return val(...args);
+    return val;
+  } catch(e) { return key; }
+}
 
 function setAdminLang(l) {
   adminLang = l;
@@ -652,8 +689,20 @@ function setAdminLang(l) {
     'txt-cmp-title': d.cmpTitle, 'txt-cmp-sub': d.cmpSub,
     'txt-cmp-sys-lbl': d.cmpSysLbl, 'txt-cmp-prompt-lbl': d.cmpPromptLbl,
     'txt-cmp-run-btn': d.cmpRunBtn,
+    'txt-cmp-primary-model-lbl': d.primaryModelLbl, 'txt-cmp-fast-model-lbl': d.fastModelLbl,
+    'txt-cmp-g4-waiting': d.cmpWaiting, 'txt-cmp-lite-waiting': d.cmpWaiting,
+    'txt-roles-loading': d.rolesLoading,
   };
   Object.entries(m).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.textContent = val; });
+  // RAG category options
+  const ragCat = document.getElementById('rag-category');
+  if (ragCat && ragCat.options.length >= 5) {
+    ragCat.options[0].text = d.ragCatTriaj;
+    ragCat.options[1].text = d.ragCatICD10;
+    ragCat.options[2].text = d.ragCatClinical;
+    ragCat.options[3].text = d.ragCatEpi;
+    ragCat.options[4].text = d.ragCatCustom;
+  }
   // Tab buttons
   const tabs = {stats:d.tabStats, users:d.tabUsers, audit:d.tabAudit, kiosk:d.tabKiosk, rag:d.tabRag, compare:d.tabCompare};
   Object.entries(tabs).forEach(([tab, label]) => {
@@ -764,7 +813,7 @@ async function loadRagStatus() {
       el.innerHTML = `<div class="p-4 rounded-xl bg-amber-50 text-amber-700 text-[13px]">${(ADL[adminLang]||ADL.tr).ragInactive}</div>`;
     }
   } catch(e) {
-    el.innerHTML = `<div class="text-err text-[12px]">RAG durumu alınamadı: ${e.message}</div>`;
+    el.innerHTML = `<div class="text-err text-[12px]">${at('errStats')}: ${e.message}</div>`;
   }
 }
 
@@ -773,7 +822,7 @@ async function addRagText() {
   const source = document.getElementById('rag-source').value.trim() || 'admin_upload';
   const category = document.getElementById('rag-category').value;
   const resultEl = document.getElementById('rag-text-result');
-  if (text.length < 20) { resultEl.textContent = '⚠ Metin çok kısa (min 20 karakter)'; resultEl.style.color='#ba1a1a'; return; }
+  if (text.length < 20) { resultEl.textContent = at('ragTextShort'); resultEl.style.color='#ba1a1a'; return; }
   try {
     const r = await fetch(`${API}/api/rag/ingest/text`, {
       method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
@@ -781,16 +830,16 @@ async function addRagText() {
     });
     const d = await r.json();
     if (r.ok) {
-      resultEl.textContent = `✅ ${d.added_chunks || 0} chunk eklendi.`;
+      resultEl.textContent = at('ragTextAddedFn', d.added_chunks || 0);
       resultEl.style.color = '#006a68';
       document.getElementById('rag-text').value = '';
       setTimeout(loadRagStatus, 1000);
     } else {
-      resultEl.textContent = `⚠ ${d.detail || 'Hata'}`;
+      resultEl.textContent = `⚠ ${d.detail || at('errGeneric')}`;
       resultEl.style.color = '#ba1a1a';
     }
   } catch(e) {
-    resultEl.textContent = `Bağlantı hatası: ${e.message}`;
+    resultEl.textContent = at('errConnection') + ': ' + e.message;
     resultEl.style.color = '#ba1a1a';
   }
 }
@@ -799,7 +848,7 @@ async function uploadRagPDF(input) {
   const file = input.files[0];
   if (!file) return;
   const resultEl = document.getElementById('rag-pdf-result');
-  resultEl.textContent = '⏳ Yükleniyor...';
+  resultEl.textContent = at('uploading');
   resultEl.style.color = '#e07b26';
   const form = new FormData();
   form.append('file', file);
@@ -811,15 +860,15 @@ async function uploadRagPDF(input) {
     });
     const d = await r.json();
     if (r.ok) {
-      resultEl.textContent = `✅ PDF yüklendi: ${d.filename} (${d.status === 'processing' ? 'arka planda işleniyor' : d.total_chunks + ' chunk'})`;
+      resultEl.textContent = at('ragPdfUploadedFn', d.filename, d.status === 'processing' ? at('processingBg') : d.total_chunks + ' chunk');
       resultEl.style.color = '#006a68';
       setTimeout(loadRagStatus, 2000);
     } else {
-      resultEl.textContent = `⚠ ${d.detail || 'PDF yüklenemedi'}`;
+      resultEl.textContent = `⚠ ${d.detail || at('ragPdfFailed')}`;
       resultEl.style.color = '#ba1a1a';
     }
   } catch(e) {
-    resultEl.textContent = `Hata: ${e.message}`;
+    resultEl.textContent = at('errGeneric') + e.message;
     resultEl.style.color = '#ba1a1a';
   }
   input.value = '';
@@ -827,7 +876,7 @@ async function uploadRagPDF(input) {
 
 async function reloadBuiltinRAG() {
   const resultEl = document.getElementById('rag-builtin-result');
-  resultEl.textContent = '⏳ Yerleşik bilgi yükleniyor...';
+  resultEl.textContent = at('ragBuiltinLoading');
   resultEl.style.color = '#e07b26';
   try {
     const r = await fetch(`${API}/api/rag/ingest/builtin`, {
@@ -835,15 +884,15 @@ async function reloadBuiltinRAG() {
     });
     const d = await r.json();
     if (r.ok) {
-      resultEl.textContent = `✅ ${d.added_chunks || 0} yeni chunk eklendi (toplam: ${d.total_chunks || 0})`;
+      resultEl.textContent = at('ragBuiltinAddedFn', d.added_chunks || 0, d.total_chunks || 0);
       resultEl.style.color = '#006a68';
       setTimeout(loadRagStatus, 1000);
     } else {
-      resultEl.textContent = `⚠ ${d.detail || 'Hata'}`;
+      resultEl.textContent = `⚠ ${d.detail || at('errGeneric')}`;
       resultEl.style.color = '#ba1a1a';
     }
   } catch(e) {
-    resultEl.textContent = `Hata: ${e.message}`;
+    resultEl.textContent = at('errGeneric') + e.message;
     resultEl.style.color = '#ba1a1a';
   }
 }
@@ -852,7 +901,7 @@ async function reloadBuiltinRAG() {
 async function loadStats() {
   try {
     const r = await fetch(`${API}/api/admin/stats`, { headers: authHeaders() });
-    if (!r.ok) { showToast('İstatistikler yüklenemedi', true); return; }
+    if (!r.ok) { showToast(at('errStats'), true); return; }
     const d = await r.json();
     document.getElementById('s-total-users').textContent = d.total_users;
     document.getElementById('s-doctors').textContent = d.by_role?.doctor || 0;
@@ -861,7 +910,7 @@ async function loadStats() {
     document.getElementById('s-queue').textContent = d.queue_length;
     document.getElementById('s-db-sessions').textContent = d.sessions_in_db;
     document.getElementById('s-model').textContent = d.model;
-    document.getElementById('s-rag').textContent = d.rag_enabled ? '✅ Aktif' : '❌ Kapalı';
+    document.getElementById('s-rag').textContent = d.rag_enabled ? at('ragOn') : at('ragOff');
 
     const roleColors = { doctor: '#006a68', patient: '#002f40', admin: '#ba1a1a', personnel: '#e07b26' };
     const _ld = ADL[adminLang] || ADL.tr;
@@ -871,19 +920,19 @@ async function loadStats() {
         <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-[18px] font-bold" style="background:${roleColors[role]||'#8c9499'}">${cnt}</div>
         <div><p class="font-bold text-pri text-[14px]">${roleLabels[role]||role}</p><p class="text-[11px] text-onsv">${role}</p></div>
       </div>`
-    ).join('') || '<p class="text-onsv text-[13px]">Kullanıcı bulunamadı.</p>';
-  } catch(e) { showToast('Bağlantı hatası', true); }
+    ).join('') || `<p class="text-onsv text-[13px]">${at('noUsers')}</p>`;
+  } catch(e) { showToast(at('errConnection'), true); }
 }
 
 // ── Users ──
 async function loadUsers() {
   try {
     const r = await fetch(`${API}/api/admin/users`, { headers: authHeaders() });
-    if (!r.ok) { document.getElementById('users-table').innerHTML = '<div class="p-5 text-err text-[13px]">Yetki hatası.</div>'; return; }
+    if (!r.ok) { document.getElementById('users-table').innerHTML = `<div class="p-5 text-err text-[13px]">${at('errPermission')}</div>`; return; }
     const d = await r.json();
     allUsers = d.users || [];
     renderUsers(allUsers);
-  } catch { document.getElementById('users-table').innerHTML = '<div class="p-5 text-err text-[13px]">Bağlantı hatası.</div>'; }
+  } catch { document.getElementById('users-table').innerHTML = `<div class="p-5 text-err text-[13px]">${at('errConnection')}</div>`; }
 }
 
 function filterUsers() {
@@ -906,16 +955,25 @@ function getRoleBadge() {
   };
 }
 const ROLE_BADGE = {
-  doctor:    ['bg-emerald-100 text-emerald-700','Doktor'],
-  patient:   ['bg-blue-100 text-blue-700','Hasta'],
-  admin:     ['bg-red-100 text-red-700','Admin'],
-  personnel: ['bg-amber-100 text-amber-700','Personel'],
+  doctor:    ['bg-emerald-100 text-emerald-700',''],
+  patient:   ['bg-blue-100 text-blue-700',''],
+  admin:     ['bg-red-100 text-red-700',''],
+  personnel: ['bg-amber-100 text-amber-700',''],
 };
+function getRoleBadgeLabels() {
+  const d = ADL[adminLang] || ADL.en;
+  return {
+    doctor: ['bg-emerald-100 text-emerald-700', d.roleDoctor],
+    patient: ['bg-blue-100 text-blue-700', d.rolePatient],
+    admin: ['bg-red-100 text-red-700', d.roleAdmin],
+    personnel: ['bg-amber-100 text-amber-700', d.rolePersonnel],
+  };
+}
 
 function renderUsers(users) {
   const el = document.getElementById('users-table');
   const d = ADL[adminLang] || ADL.tr;
-  const rb = getRoleBadge();
+  const rb = getRoleBadgeLabels();
   if (!users.length) { el.innerHTML = `<div class="p-8 text-center text-onsv text-[13px]">${d.noUsers}</div>`; return; }
   el.innerHTML = `
   <table class="w-full text-[13px]">
@@ -970,7 +1028,7 @@ async function changeRole(userId, newRole) {
     if (!r.ok) { const d = await r.json(); showToast(d.detail || _d2.roleUpdateFail, true); loadUsers(); return; }
     showToast(_d2.roleUpdated);
     allUsers = allUsers.map(u => u.user_id === userId ? {...u, role: newRole} : u);
-  } catch { showToast('Bağlantı hatası', true); loadUsers(); }
+  } catch { showToast(at('errConnection'), true); loadUsers(); }
 }
 
 async function toggleActive(userId, currentlyActive) {
@@ -984,7 +1042,7 @@ async function toggleActive(userId, currentlyActive) {
     showToast(newActive ? _d3.userEnabled : _d3.userDisabled);
     allUsers = allUsers.map(u => u.user_id === userId ? {...u, is_active: newActive?1:0} : u);
     renderUsers(allUsers);
-  } catch { showToast('Bağlantı hatası', true); }
+  } catch { showToast(at('errConnection'), true); }
 }
 
 // ── Audit Log ──
@@ -1045,7 +1103,7 @@ async function setKiosk(lock) {
     if (!r.ok) { showToast('İşlem başarısız.', true); return; }
     showToast(lock ? '🔒 Kiosk kilitlendi' : '🔓 Kiosk açıldı');
     loadKioskStatus();
-  } catch { showToast('Bağlantı hatası', true); }
+  } catch { showToast(at('errConnection'), true); }
 }
 
 async function clearOldSessions() {
@@ -1056,7 +1114,7 @@ async function clearOldSessions() {
     const d = await r.json();
     showToast(`✅ ${d.cleaned} oturum temizlendi.`);
     loadStats();
-  } catch(e) { showToast('Bağlantı hatası: ' + e.message, true); }
+  } catch(e) { showToast(at('errConnection') + ': ' + e.message, true); }
 }
 
 // ── Sprint 18: Model Karşılaştırma ──
@@ -1097,7 +1155,7 @@ async function runCompare() {
     document.getElementById('cmp-g4-time').textContent = `⏱ ${elapsed}s (toplam süre)`;
     if (g4.status === 'ok' && g4.response) {
       g4El.textContent = g4.response;
-      g4Badge.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">✅ Yanıt alındı</span>';
+      g4Badge.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">${at('cmpResponseReady')}</span>`;
       g4Badge.classList.remove('hidden');
     } else {
       g4El.innerHTML = `<span class="text-err text-[12px]">⚠ ${g4.error || 'Yanıt alınamadı'}</span>`;
@@ -1108,11 +1166,11 @@ async function runCompare() {
     if (lite.status === 'ok' && lite.response) {
       if (liteModelEl) liteModelEl.textContent = lite.model || 'Lite Model';
       liteEl.textContent = lite.response;
-      liteBadge.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">⚡ Hızlı yanıt</span>';
+      liteBadge.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">${at('cmpResponseReady')}</span>`;
       liteBadge.classList.remove('hidden');
     } else if (lite.status === 'not_available') {
-      if (liteModelEl) liteModelEl.textContent = 'Lite Model — Kurulu Değil';
-      liteEl.innerHTML = '<span class="text-onsv text-[12px]">ℹ Lite model (gemma3:1b) Ollama\'da kurulu değil. <code>ollama pull gemma3:1b</code> ile yükleyin.</span>';
+      if (liteModelEl) liteModelEl.textContent = `Lite Model — ${at('notAvail') || 'N/A'}`;
+      liteEl.innerHTML = `<span class="text-onsv text-[12px]">${at('liteNotInstalled') || 'ℹ Lite model (gemma3:1b) not installed in Ollama. Use <code>ollama pull gemma3:1b</code>.'}</span>`;
     } else {
       liteEl.innerHTML = `<span class="text-err text-[12px]">⚠ ${lite.error || 'Yanıt alınamadı'}</span>`;
     }
@@ -1123,7 +1181,7 @@ async function runCompare() {
     statusEl.textContent = `✅ Karşılaştırma tamamlandı (${elapsed}s)`;
     statusEl.style.color = '#006a68';
   } catch(e) {
-    statusEl.textContent = `Bağlantı hatası: ${e.message}`;
+    statusEl.textContent = at('errConnection') + ': ' + e.message;
     statusEl.style.color = '#ba1a1a';
   }
 }

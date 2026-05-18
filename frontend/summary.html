@@ -87,8 +87,8 @@ tailwind.config={theme:{extend:{colors:{
       <div class="flex items-start gap-3 mb-4">
         <span class="material-symbols-outlined msym-fill text-sec text-[28px] flex-shrink-0 mt-0.5">bookmark_add</span>
         <div>
-          <p class="font-head font-bold text-pri text-[14px] mb-0.5">Mülakatınızı hesabınıza ekleyin</p>
-          <p class="text-[12px] text-onsv">Aşağıdaki kodu not alın. Giriş yaptıktan sonra bu kodu "Geçmişim" sayfasına girerek mülakatınızı hesabınıza ekleyebilirsiniz.</p>
+          <p class="font-head font-bold text-pri text-[14px] mb-0.5" id="claim-banner-title">Mülakatınızı hesabınıza ekleyin</p>
+          <p class="text-[12px] text-onsv" id="claim-banner-desc">Aşağıdaki kodu not alın. Giriş yaptıktan sonra bu kodu "Geçmişim" sayfasına girerek mülakatınızı hesabınıza ekleyebilirsiniz.</p>
         </div>
       </div>
       <!-- Büyük kod gösterimi -->
@@ -171,10 +171,10 @@ window.onerror = function(msg, src, line, col, err) {
   }
   if (!document.getElementById('report-content')) {
     ls.innerHTML = '<div style="text-align:center;padding:40px 16px;font-family:sans-serif">' +
-      '<p style="color:#ba1a1a;font-weight:bold;font-size:15px;margin-bottom:8px">⚠ JavaScript Hatası</p>' +
+      '<p style="color:#ba1a1a;font-weight:bold;font-size:15px;margin-bottom:8px">⚠ ' + (typeof t==='function'?t('jsErrTitle'):'JavaScript Error') + '</p>' +
       '<p style="color:#3f4749;font-size:12px;font-family:monospace;background:#f4f7f9;padding:8px;border-radius:8px;word-break:break-all;max-width:400px;margin:0 auto 16px">' +
       (msg||'') + (src ? ' \n' + src + ':' + (line||'') : '') + '</p>' +
-      '<button onclick="location.reload()" style="padding:10px 20px;background:#006a68;color:white;border:none;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer">Sayfayı Yenile</button>' +
+      '<button onclick="location.reload()" style="padding:10px 20px;background:#006a68;color:white;border:none;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer">' + (typeof t==='function'?t('reloadPage'):'Reload') + '</button>' +
       '</div>';
   }
   return false;
@@ -221,27 +221,25 @@ function showPatientCard(d) {
   if (!card) return;
   const EMOJIS = {RED:'🔴', YELLOW:'🟡', GREEN:'🟢'};
   const COLORS = {RED:'#ba1a1a', YELLOW:'#e07b26', GREEN:'#006a68'};
-  const LEVEL_TR = {RED:'ACİL — Hemen bakılacak', YELLOW:'Öncelikli — Kısa süre içinde', GREEN:'Rutin — Sıranızı bekleyiniz'};
-  const LEVEL_EN = {RED:'IMMEDIATE — Will be seen now', YELLOW:'URGENT — Will be seen shortly', GREEN:'ROUTINE — Please wait in queue'};
+  const LEVEL_LABELS = {
+    tr: {RED:'ACİL — Hemen bakılacak', YELLOW:'Öncelikli — Kısa süre içinde', GREEN:'Rutin — Sıranızı bekleyiniz'},
+    en: {RED:'IMMEDIATE — Will be seen now', YELLOW:'URGENT — Will be seen shortly', GREEN:'ROUTINE — Please wait in queue'},
+    ar: {RED:'عاجل جداً — ستُرى الآن', YELLOW:'عاجل — ستُرى قريباً', GREEN:'روتيني — يرجى الانتظار في الطابور'},
+  };
   const lang = reportLang;
   const level = d.triage_level || 'YELLOW';
   const color = COLORS[level] || '#006a68';
-  const levelLabel = lang === 'en' ? (LEVEL_EN[level]||level) : (LEVEL_TR[level]||level);
+  const levelMap = LEVEL_LABELS[lang] || LEVEL_LABELS.tr;
+  const levelLabel = levelMap[level] || level;
   card.style.setProperty('--triage-color', color);
   document.getElementById('pr-emoji').textContent = EMOJIS[level] || '🟡';
   document.getElementById('pr-level').textContent = levelLabel;
   document.getElementById('pr-level').style.color = color;
   document.getElementById('pr-priority').style.background = color + '15';
   document.getElementById('pr-priority').style.border = `2px solid ${color}40`;
-  if (lang === 'en') {
-    document.getElementById('pr-title').textContent = 'Your information has been sent to your doctor';
-    document.getElementById('pr-subtitle').textContent = 'Please stay in the waiting area.';
-    document.getElementById('pr-complaint-label').textContent = 'Your main concern:';
-    document.getElementById('pr-wait').textContent = 'Check the screen\nfor wait time';
-    document.getElementById('pr-room').textContent = 'Wait for staff\nfor room info';
-    document.getElementById('pr-safety').textContent = 'If your symptoms worsen or new symptoms appear, immediately notify the healthcare staff.';
-    document.getElementById('pr-disclaimer').textContent = '⚕️ This is an AI-assisted pre-triage tool. Please wait for your doctor for a final diagnosis.';
-  }
+  // Apply i18n strings via t() for all static text elements
+  const ids = ['pr-title','pr-subtitle','pr-complaint-label','pr-wait','pr-room','pr-safety','pr-disclaimer'];
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=t({'pr-title':'prTitle','pr-subtitle':'prSubtitle','pr-complaint-label':'prComplaintLabel','pr-wait':'prWait','pr-room':'prRoom','pr-safety':'prSafety','pr-disclaimer':'prDisclaimer'}[id]); });
   document.getElementById('pr-complaint').textContent = d.chief_complaint || '—';
   card.classList.remove('hidden');
 }
@@ -283,6 +281,16 @@ const I18N = {
     prDisclaimer:'⚕️ Bu sistem yapay zeka destekli bir ön triaj aracıdır. Kesin tanı için doktorunuzu bekleyiniz.',
     claimTitle:'Mülakat Kodunuz', claimHint:'Bu kodu kaydettikten sonra hesabınıza ekleyebilirsiniz.',
     claimLogin:'Giriş Yap', claimRegister:'Kayıt Ol', claimSkip:'Şimdi değil',
+    claimBannerTitle:'Mülakatınızı hesabınıza ekleyin',
+    claimBannerDesc:'Aşağıdaki kodu not alın. Giriş yaptıktan sonra bu kodu "Geçmişim" sayfasına girerek mülakatınızı hesabınıza ekleyebilirsiniz.',
+    ragSourceFn:(n)=>`Bu özet ${n} tıbbi bilgi parçasından oluşan RAG veritabanından yararlandı.`,
+    retryBtn:'Tekrar Dene', backToDash:'Geçmişime Dön', reloadPage:'Sayfayı Yenile',
+    reportPending:'Rapor bekleniyor... Sorun devam ederse:',
+    aiGenerating:'AI raporu hazırlıyor, lütfen bekleyin...',
+    reportFailed:'Rapor yüklenemedi', reportNoData:'Sunucu boş yanıt döndürdü',
+    timeoutErr:'Sunucu zaman aşımı (3 dk) — lütfen sayfayı yenileyin.',
+    connErrMsg:'Bağlantı hatası', renderErrMsg:'Rapor görüntülenirken hata oluştu',
+    jsErrTitle:'JavaScript Hatası',
   },
   en:{
     loading:'Loading report...',
@@ -319,6 +327,16 @@ const I18N = {
     prDisclaimer:'⚕️ This is an AI-powered pre-triage tool. Please wait for your doctor for a definitive diagnosis.',
     claimTitle:'Your Interview Code', claimHint:'You can add this to your account after logging in.',
     claimLogin:'Log In', claimRegister:'Register', claimSkip:'Not now',
+    claimBannerTitle:'Add your interview to your account',
+    claimBannerDesc:'Note the code below. After logging in, enter this code in "My History" to add your interview to your account.',
+    ragSourceFn:(n)=>`This summary used a RAG database of ${n} medical knowledge chunks.`,
+    retryBtn:'Retry', backToDash:'Back to History', reloadPage:'Reload Page',
+    reportPending:'Waiting for report... If issue persists:',
+    aiGenerating:'AI is generating your report, please wait...',
+    reportFailed:'Failed to load report', reportNoData:'Server returned empty response',
+    timeoutErr:'Server timeout (3 min) — please reload the page.',
+    connErrMsg:'Connection error', renderErrMsg:'Error while rendering report',
+    jsErrTitle:'JavaScript Error',
   },
   ar:{
     loading:'جارٍ تحميل التقرير...',
@@ -355,10 +373,20 @@ const I18N = {
     prDisclaimer:'⚕️ هذا النظام أداة فرز مبدئي بالذكاء الاصطناعي. انتظر طبيبك للتشخيص النهائي.',
     claimTitle:'رمز مقابلتك', claimHint:'يمكنك إضافته لحسابك بعد تسجيل الدخول.',
     claimLogin:'تسجيل الدخول', claimRegister:'إنشاء حساب', claimSkip:'ليس الآن',
+    claimBannerTitle:'أضف مقابلتك إلى حسابك',
+    claimBannerDesc:'احتفظ بالرمز أدناه. بعد تسجيل الدخول، أدخله في صفحة "سجلاتي" لإضافة مقابلتك.',
+    ragSourceFn:(n)=>`استُعين بقاعدة بيانات RAG تحتوي على ${n} مقطع طبي لإعداد هذا الملخص.`,
+    retryBtn:'إعادة المحاولة', backToDash:'العودة للسجلات', reloadPage:'إعادة تحميل',
+    reportPending:'في انتظار التقرير... إذا استمرت المشكلة:',
+    aiGenerating:'الذكاء الاصطناعي يُنشئ تقريرك، يرجى الانتظار...',
+    reportFailed:'فشل تحميل التقرير', reportNoData:'أعاد الخادم استجابة فارغة',
+    timeoutErr:'انتهت مهلة الخادم (3 دقائق) — يرجى إعادة التحميل.',
+    connErrMsg:'خطأ في الاتصال', renderErrMsg:'خطأ أثناء عرض التقرير',
+    jsErrTitle:'خطأ JavaScript',
   }
 };
 
-function t(key){ return (I18N[reportLang]||I18N.tr)[key]||key; }
+function t(key, ...args){ const val=(I18N[reportLang]||I18N.tr)[key]||(I18N.tr[key]||key); return typeof val==='function'?val(...args):val; }
 
 // ── Global helpers (used by both render() and exportPDF()) ──────────────────
 
@@ -403,6 +431,7 @@ function applyLangUI(){
     // Claim banner
     'claim-title-txt':'claimTitle','claim-hint-txt':'claimHint',
     'claim-login-txt':'claimLogin','claim-reg-txt':'claimRegister','claim-skip-txt':'claimSkip',
+    'claim-banner-title':'claimBannerTitle','claim-banner-desc':'claimBannerDesc',
   };
   Object.entries(m).forEach(([id,k])=>{ const el=document.getElementById(id); if(el) el.textContent=t(k); });
   const rlTr=document.getElementById('rl-tr'), rlEn=document.getElementById('rl-en'), rlAr=document.getElementById('rl-ar');
@@ -494,11 +523,11 @@ function render(d){
     </div>
     <div id="rag-source-badge" class="hidden card p-3 mb-4 flex items-center gap-2 text-[11px] text-sec border border-sec/20" style="background:#f0faf9">
       <span class="material-symbols-outlined msym text-[14px]">database</span>
-      <span id="rag-source-txt">Bu özet RAG kaynaklarından yararlandı.</span>
+      <span id="rag-source-txt">${t('ragSourceFn','')||''}</span>
     </div>` : `
     <div id="rag-source-badge" class="hidden card p-3 mb-4 flex items-center gap-2 text-[11px] text-sec border border-sec/20" style="background:#f0faf9">
       <span class="material-symbols-outlined msym text-[14px]">database</span>
-      <span id="rag-source-txt">Bu özet RAG kaynaklarından yararlandı.</span>
+      <span id="rag-source-txt">${t('ragSourceFn','')}</span>
     </div>`;
   const condHtml=(d.possible_conditions||[])
     .map(c=>localize(String(c||'')))
@@ -710,7 +739,7 @@ async function fetchRagInfo(sessionId) {
     const ragTxt = document.getElementById('rag-source-txt');
     if (badge && d.rag_enabled && d.rag_chunks > 0) {
       badge.classList.remove('hidden');
-      if (ragTxt) ragTxt.textContent = `Bu özet ${d.rag_chunks} tıbbi bilgi parçasından oluşan RAG veritabanından yararlandı (MTS Protokolü, ICD-10 TR, Klinik algoritmalar).`;
+      if (ragTxt) ragTxt.textContent = t('ragSourceFn', d.rag_chunks);
     }
   } catch {}
 }
@@ -1198,11 +1227,11 @@ function _showErr(msg, detail){
   const ls = _getOrCreateLoadingState();
   ls.innerHTML = `<div class="text-center py-20 px-4">
     <span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span>
-    <p class="text-err font-bold mb-2">${msg||'Rapor yüklenemedi'}</p>
+    <p class="text-err font-bold mb-2">${msg||t('reportFailed')}</p>
     ${detail?`<p class="text-onsv text-xs mb-4 font-mono bg-surfc rounded p-2 max-w-sm mx-auto break-all">${String(detail).slice(0,300)}</p>`:''}
     <div class="flex gap-3 justify-center mt-4 flex-wrap">
-      <button onclick="location.reload()" class="px-5 py-2.5 rounded-xl bg-sec text-white text-[13px] font-bold">Tekrar Dene</button>
-      <a href="patient_dashboard.html" target="_top" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Geçmişime Dön</a>
+      <button onclick="location.reload()" class="px-5 py-2.5 rounded-xl bg-sec text-white text-[13px] font-bold">${t('retryBtn')}</button>
+      <a href="patient_dashboard.html" target="_top" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">${t('backToDash')}</a>
     </div>
   </div>`;
 }
@@ -1214,7 +1243,7 @@ function _doRender(d){
     console.error('render error:', err);
     // _getOrCreateLoadingState her zaman bir element döner
     const errDetail = (err.stack||err.message||String(err)).slice(0,400);
-    _showErr('Rapor görüntülenirken hata oluştu', errDetail);
+    _showErr(t('renderErrMsg'), errDetail);
   }
 }
 
@@ -1266,10 +1295,10 @@ if(_urlSid){
       if(!existingRetry){
         const retryDiv = document.createElement('div');
         retryDiv.className = 'stuck-retry mt-4 flex flex-col items-center gap-2';
-        retryDiv.innerHTML = `<p class="text-onsv text-xs">Rapor bekleniyor... Sorun devam ederse:</p>
+        retryDiv.innerHTML = `<p class="text-onsv text-xs">${t('reportPending')}</p>
           <div class="flex gap-2 flex-wrap justify-center">
-            <button onclick="location.reload()" class="px-4 py-2 rounded-xl bg-sec text-white text-[12px] font-bold">Sayfayı Yenile</button>
-            <a href="patient_dashboard.html" target="_top" class="px-4 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-bold">Geçmişim</a>
+            <button onclick="location.reload()" class="px-4 py-2 rounded-xl bg-sec text-white text-[12px] font-bold">${t('reloadPage')}</button>
+            <a href="patient_dashboard.html" target="_top" class="px-4 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-bold">${t('patientPanel')}</a>
           </div>`;
         ls.appendChild(retryDiv);
       }
@@ -1289,7 +1318,7 @@ if(_urlSid){
       if(stRes.ok){
         const st = await stRes.json();
         if(st.generating && !st.ready){
-          _setLoadingText('AI raporu hazırlıyor, lütfen bekleyin...');
+          _setLoadingText(t('aiGenerating'));
         }
       }
     } catch(e){}
@@ -1311,15 +1340,15 @@ if(_urlSid){
         data = d;
         _doRender(d);
       } else {
-        _showErr('Rapor sunucudan alınamadı', 'Sunucu boş yanıt döndürdü');
+        _showErr(t('reportFailed'), t('reportNoData'));
       }
     } catch(e){
       clearTimeout(_timer);
       clearTimeout(_stuckTimer);
       if(e.name==='AbortError'){
-        _showErr('Sunucu zaman aşımı (3 dk)', 'Lütfen sayfayı yenileyin. Rapor uzun süre oluşturuluyorsa birkaç dakika bekleyip tekrar deneyin.');
+        _showErr(t('timeoutErr'), '');
       } else {
-        _showErr('Bağlantı hatası', (e.message||String(e)).slice(0,300));
+        _showErr(t('connErrMsg'), (e.message||String(e)).slice(0,300));
       }
     }
   }
@@ -1331,7 +1360,7 @@ if(_urlSid){
 } else if(data){
   _doRender(data);
 } else {
-  _showErr('Rapor bulunamadı', 'Lütfen mülakatı tamamlayıp tekrar deneyin');
+  _showErr(t('noData'), t('connErrMsg'));
 }
 
 // ── i18n: inherit language from localStorage ─────────────────────────────────

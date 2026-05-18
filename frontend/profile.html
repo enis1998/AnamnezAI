@@ -55,9 +55,14 @@ tailwind.config = {
     <span class="font-head font-bold text-pri text-[15px]">AnamnezAI</span>
   </a>
   <div class="flex items-center gap-3">
+    <div class="flex gap-1 bg-pri/20 p-1 rounded-full">
+      <button onclick="setProfileLang('tr')" id="pr-lang-tr" class="px-2.5 py-0.5 rounded-full text-white text-[11px] font-bold transition-all">TR</button>
+      <button onclick="setProfileLang('en')" id="pr-lang-en" class="px-2.5 py-0.5 rounded-full text-white text-[11px] font-bold transition-all">EN</button>
+      <button onclick="setProfileLang('ar')" id="pr-lang-ar" class="px-2.5 py-0.5 rounded-full text-white text-[11px] font-bold transition-all">AR</button>
+    </div>
     <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sec text-white text-[12px] font-bold hover:bg-pri transition-all">
       <span class="material-symbols-outlined msym text-[15px]">add_circle</span>
-      Yeni Mülakat
+      <span id="pr-new-interview">Yeni Mülakat</span>
     </a>
     <button onclick="doLogout()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surf border border-surfc text-[12px] font-semibold text-onsv hover:bg-surfc transition-all">
       <span class="material-symbols-outlined msym text-[15px]">logout</span>
@@ -92,23 +97,23 @@ tailwind.config = {
       <div class="card p-5 fade">
         <div class="flex items-center gap-2 mb-4">
           <span class="material-symbols-outlined msym-fill text-sec text-[18px]">medical_information</span>
-          <h2 class="font-head font-bold text-pri text-[15px]">Tıbbi Profil</h2>
+          <h2 class="font-head font-bold text-pri text-[15px]" id="pr-lbl-medical-profile">Tıbbi Profil</h2>
           <button onclick="saveProfile()" id="btn-save"
             class="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-sec text-white rounded-xl text-[12px] font-bold hover:bg-pri transition-all">
             <span class="material-symbols-outlined msym text-[14px]">save</span>
-            Kaydet
+            <span id="pr-save-btn-txt">Kaydet</span>
           </button>
         </div>
 
         <div class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Doğum Yılı</label>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1" id="pr-lbl-birth-year">Doğum Yılı</label>
               <input id="inp-birth-year" type="number" min="1920" max="2020" placeholder="1990"
                 class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all"/>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Cinsiyet</label>
+              <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1" id="pr-lbl-gender">Cinsiyet</label>
               <select id="inp-gender" class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all appearance-none">
                 <option value="">-- Seçin --</option>
                 <option>Erkek</option><option>Kadın</option><option>Belirtmek İstemiyorum</option>
@@ -116,7 +121,7 @@ tailwind.config = {
             </div>
           </div>
           <div>
-            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Kan Grubu</label>
+            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1" id="pr-lbl-blood">Kan Grubu</label>
             <select id="inp-blood" class="w-full px-3 py-2 border border-surfc rounded-xl text-sm bg-surf focus:border-sec transition-all appearance-none">
               <option value="">-- Seçin --</option>
               <option>A Rh+</option><option>A Rh-</option><option>B Rh+</option><option>B Rh-</option>
@@ -126,7 +131,7 @@ tailwind.config = {
 
           <!-- Kronik Hastalıklar -->
           <div>
-            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1">Kronik Hastalıklar</label>
+            <label class="block text-[10px] font-bold text-onsv uppercase tracking-wide mb-1" id="pr-lbl-chronic">Kronik Hastalıklar</label>
             <div id="chronic-tags" class="flex flex-wrap gap-1.5 min-h-[32px] p-2 border border-surfc rounded-xl bg-surf mb-1.5"></div>
             <div class="flex gap-2">
               <input id="inp-chronic" type="text" placeholder="Hastalık ekle... (Enter)"
@@ -238,7 +243,129 @@ tailwind.config = {
 
 <script>
 const API = '';
-function extractText(val){
+// ── i18n ─────────────────────────────────────────────────────────────────────
+let prLang = localStorage.getItem('ui_lang') || 'en';
+const PRL = {
+  tr:{
+    newInterview:'Yeni Mülakat', logout:'Çıkış', loading:'Yükleniyor...',
+    medicalProfile:'Tıbbi Profil', save:'Kaydet', saving:'Kaydediliyor...',
+    birthYear:'Doğum Yılı', gender:'Cinsiyet', bloodType:'Kan Grubu',
+    selectOption:'-- Seçin --', male:'Erkek', female:'Kadın', noGender:'Belirtmek İstemiyorum',
+    chronicTitle:'Kronik Hastalıklar', chronicPh:'Hastalık ekle... (Enter)',
+    medsTitle:'Sürekli Kullanılan İlaçlar', medsPh:'İlaç ekle... (Enter)',
+    allergyTitle:'Alerjiler', allergyPh:'Alerji ekle... (Enter)',
+    notesTitle:'Ek Notlar', notesPh:'Genel sağlık notu, ameliyat geçmişi vb.',
+    savedMsg:'Profil kaydedildi ✓',
+    statsTotal:'Toplam', statsEmergency:'Acil', statsRoutine:'Rutin',
+    historyTitle:'Geçmiş Ziyaretler', historyRecordFn:(n)=>`${n} kayıt`,
+    histEmpty:'Henüz tamamlanmış mülakat yok',
+    histEmptySub:'İlk mülakatınızı başlatmak için aşağıdaki butona tıklayın',
+    startInterview:'Mülakat Başlat',
+    noComplaint:'Şikayet bilgisi yok', confLabel:'% GÜVENCİ',
+    rolePatient:'Hasta', roleDoctor:'Doktor', roleAdmin:'Admin', rolePersonnel:'Personel',
+    toastLoadFail:'Profil yüklenemedi.', toastSaveFail:'Kayıt başarısız.',
+    toastHistFail:'Geçmiş yüklenemedi.', toastReportFail:'Rapor yüklenemedi.',
+    triageRed:'🔴 ACİL', triageYellow:'🟡 ACIL/BEK', triageGreen:'🟢 RUTİN', triagePending:'⏳ BEKL',
+  },
+  en:{
+    newInterview:'New Interview', logout:'Logout', loading:'Loading...',
+    medicalProfile:'Medical Profile', save:'Save', saving:'Saving...',
+    birthYear:'Birth Year', gender:'Gender', bloodType:'Blood Type',
+    selectOption:'-- Select --', male:'Male', female:'Female', noGender:'Prefer not to say',
+    chronicTitle:'Chronic Conditions', chronicPh:'Add condition... (Enter)',
+    medsTitle:'Current Medications', medsPh:'Add medication... (Enter)',
+    allergyTitle:'Allergies', allergyPh:'Add allergy... (Enter)',
+    notesTitle:'Additional Notes', notesPh:'General health notes, surgery history, etc.',
+    savedMsg:'Profile saved ✓',
+    statsTotal:'Total', statsEmergency:'Emergency', statsRoutine:'Routine',
+    historyTitle:'Visit History', historyRecordFn:(n)=>`${n} record(s)`,
+    histEmpty:'No completed interviews yet',
+    histEmptySub:'Click below to start your first interview',
+    startInterview:'Start Interview',
+    noComplaint:'No complaint info', confLabel:'% CONF',
+    rolePatient:'Patient', roleDoctor:'Doctor', roleAdmin:'Admin', rolePersonnel:'Personnel',
+    toastLoadFail:'Could not load profile.', toastSaveFail:'Could not save.',
+    toastHistFail:'Could not load history.', toastReportFail:'Could not load report.',
+    triageRed:'🔴 EMERGENCY', triageYellow:'🟡 URGENT', triageGreen:'🟢 ROUTINE', triagePending:'⏳ PENDING',
+  },
+  ar:{
+    newInterview:'مقابلة جديدة', logout:'تسجيل الخروج', loading:'جارٍ التحميل...',
+    medicalProfile:'الملف الطبي', save:'حفظ', saving:'جارٍ الحفظ...',
+    birthYear:'سنة الميلاد', gender:'الجنس', bloodType:'فصيلة الدم',
+    selectOption:'-- اختر --', male:'ذكر', female:'أنثى', noGender:'أفضّل عدم الإجابة',
+    chronicTitle:'الأمراض المزمنة', chronicPh:'أضف مرضاً... (Enter)',
+    medsTitle:'الأدوية المستمرة', medsPh:'أضف دواءً... (Enter)',
+    allergyTitle:'الحساسية', allergyPh:'أضف حساسيةً... (Enter)',
+    notesTitle:'ملاحظات إضافية', notesPh:'ملاحظات صحية عامة، تاريخ العمليات الجراحية...',
+    savedMsg:'تم حفظ الملف ✓',
+    statsTotal:'الإجمالي', statsEmergency:'طارئ', statsRoutine:'روتيني',
+    historyTitle:'سجل الزيارات', historyRecordFn:(n)=>`${n} سجل`,
+    histEmpty:'لا توجد مقابلات مكتملة بعد',
+    histEmptySub:'انقر أدناه لبدء مقابلتك الأولى',
+    startInterview:'بدء المقابلة',
+    noComplaint:'لا توجد معلومات عن الشكوى', confLabel:'% ثقة',
+    rolePatient:'مريض', roleDoctor:'طبيب', roleAdmin:'مشرف', rolePersonnel:'موظف',
+    toastLoadFail:'تعذّر تحميل الملف.', toastSaveFail:'تعذّر الحفظ.',
+    toastHistFail:'تعذّر تحميل السجل.', toastReportFail:'تعذّر تحميل التقرير.',
+    triageRed:'🔴 طارئ', triageYellow:'🟡 عاجل', triageGreen:'🟢 روتيني', triagePending:'⏳ انتظار',
+  },
+};
+function pt(key,...args){try{const d=PRL[prLang]||PRL.en;const v=d[key]!==undefined?d[key]:(PRL.en[key]||key);return typeof v==='function'?v(...args):v;}catch(e){return key;}}
+
+function applyProfileLang(){
+  const d = PRL[prLang]||PRL.en;
+  const loco = prLang==='ar'?'ar-SA':prLang==='en'?'en-GB':'tr-TR';
+  document.documentElement.dir = prLang==='ar'?'rtl':'ltr';
+  // Nav
+  const ni = document.getElementById('pr-new-interview'); if(ni) ni.textContent = d.newInterview;
+  const nv = document.getElementById('pr-nav-logout'); if(nv) nv.textContent = document.getElementById('nav-user-name')?.textContent || d.logout;
+  // Form labels
+  const m = {
+    'pr-lbl-medical-profile':d.medicalProfile, 'pr-lbl-birth-year':d.birthYear,
+    'pr-lbl-gender':d.gender, 'pr-lbl-blood':d.bloodType,
+    'pr-lbl-chronic':d.chronicTitle, 'pr-lbl-meds':d.medsTitle,
+    'pr-lbl-allergy':d.allergyTitle, 'pr-lbl-notes':d.notesTitle,
+    'pr-save-btn-txt':d.save, 'pr-saved-msg':d.savedMsg,
+    'pr-stat-total-lbl':d.statsTotal, 'pr-stat-emergency-lbl':d.statsEmergency,
+    'pr-stat-routine-lbl':d.statsRoutine, 'pr-history-title':d.historyTitle,
+    'pr-hist-empty-title':d.histEmpty, 'pr-hist-empty-sub':d.histEmptySub,
+    'pr-hist-start-btn':d.startInterview,
+  };
+  Object.entries(m).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.textContent=val;});
+  // Placeholders
+  const ph = {'inp-chronic':d.chronicPh,'inp-medication':d.medsPh,'inp-allergy':d.allergyPh,'inp-notes':d.notesPh};
+  Object.entries(ph).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.placeholder=val;});
+  // Gender options
+  const gs = document.getElementById('inp-gender');
+  if(gs&&gs.options.length>=4){gs.options[0].text=d.selectOption;gs.options[1].text=d.male;gs.options[2].text=d.female;gs.options[3].text=d.noGender;}
+  // Blood options
+  const bs = document.getElementById('inp-blood');
+  if(bs&&bs.options.length>0) bs.options[0].text=d.selectOption;
+  // History count
+  const hc = document.getElementById('history-count');
+  if(hc && hc._count!==undefined) hc.textContent = d.historyRecordFn(hc._count);
+  // TRIAGE_CFG labels
+  TRIAGE_CFG.RED.label = d.triageRed;
+  TRIAGE_CFG.YELLOW.label = d.triageYellow;
+  TRIAGE_CFG.GREEN.label = d.triageGreen;
+  TRIAGE_CFG.PENDING.label = d.triagePending;
+  // Lang button styles
+  ['tr','en','ar'].forEach(l=>{
+    const el=document.getElementById(`pr-lang-${l}`);
+    if(!el)return;
+    el.style.background = l===prLang?'rgba(255,255,255,0.25)':'';
+    el.style.fontWeight = l===prLang?'700':'400';
+  });
+  // History date locale
+  window._histLocale = loco;
+}
+
+function setProfileLang(l){
+  prLang=l;
+  localStorage.setItem('ui_lang',l);
+  applyProfileLang();
+}
+
   if(!val) return '';
   const s=String(val).trim();
   if(s.startsWith('{')){

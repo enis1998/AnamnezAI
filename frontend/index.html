@@ -461,7 +461,7 @@ function initAuthNav() {
   const pill = document.getElementById('user-pill');
   const loginBtn = document.getElementById('nav-login-btn');
   if (user && getToken()) {
-    document.getElementById('user-name-pill').textContent = user.name?.split(' ')[0] || 'Kullanıcı';
+    document.getElementById('user-name-pill').textContent = user.name?.split(' ')[0] || t('defaultUser');
     pill.classList.remove('hidden');
     pill.classList.add('flex');
     if (loginBtn) { loginBtn.classList.add('hidden'); loginBtn.classList.remove('flex'); }
@@ -470,11 +470,7 @@ function initAuthNav() {
     const staffRoles = ['doctor', 'admin', 'personnel'];
     if (staffRoles.includes(user.role)) {
       const dest = user.role === 'admin' ? 'admin.html' : 'doctor.html';
-      showToast(
-        lang === 'en'
-          ? `Welcome Dr. ${user.name?.split(' ')[0]}! Redirecting to your panel...`
-          : `Hoş geldiniz Dr. ${user.name?.split(' ')[0]}! Doktor panelinize yönlendiriliyorsunuz...`
-      );
+      showToast(t('drWelcomeFn', user.name?.split(' ')[0]));
       setTimeout(() => { window.location.href = dest; }, 1800);
       // Formu kilitle — yanlışlıkla mülakat başlatılmasın
       const btn = document.getElementById('btn-start');
@@ -555,6 +551,8 @@ const T = {
     reportRetry:'Raporu Yeniden Oluştur', backToInterview:'← Mülakata Dön',
     modelWarming:'Model Isınıyor...',
     modelWarmBanner:'⏳ Gemma 4 modeli arka planda yükleniyor — ilk mülakatınız biraz daha uzun sürebilir.',
+    namePh:'Adınızı girin', defaultUser:'Kullanıcı',
+    drWelcomeFn:(name)=>`Hoş geldiniz Dr. ${name}! Doktor panelinize yönlendiriliyorsunuz...`,
   },
   en:{
     powered:'Powered by Gemma 4',
@@ -589,6 +587,8 @@ const T = {
     reportRetry:'Retry Report', backToInterview:'← Back to Interview',
     modelWarming:'Model Loading...',
     modelWarmBanner:'⏳ Gemma 4 is loading in the background — your first interview may take a bit longer.',
+    namePh:'Enter your name', defaultUser:'User',
+    drWelcomeFn:(name)=>`Welcome Dr. ${name}! Redirecting to your panel...`,
   },
   ar:{
     powered:'مدعوم بـ Gemma 4',
@@ -623,9 +623,11 @@ const T = {
     reportRetry:'إعادة إنشاء التقرير', backToInterview:'← العودة للمقابلة',
     modelWarming:'النموذج يُحمَّل...',
     modelWarmBanner:'⏳ Gemma 4 يُحمَّل في الخلفية — قد تستغرق مقابلتك الأولى وقتاً أطول قليلاً.',
+    namePh:'أدخل اسمك', defaultUser:'مستخدم',
+    drWelcomeFn:(name)=>`أهلاً د. ${name}! جارٍ توجيهك إلى لوحتك...`,
   }
 };
-const t = k => T[lang][k] ?? k;
+const t = (k, ...args) => { const v = (T[lang]??T.tr)[k] ?? k; return typeof v === 'function' ? v(...args) : v; };
 
 function setLang(l){
   // Mülakat devam ediyorsa dil değişimine izin verme
@@ -685,7 +687,7 @@ function applyT(){
   if(ia) ia.placeholder = t('ansPh');
   // Name input placeholder
   const ni = document.getElementById('inp-name');
-  if(ni && !ni.value) ni.placeholder = lang==='tr'?'Adınızı girin':(lang==='ar'?'أدخل اسمك':'Enter your name');
+  if(ni && !ni.value) ni.placeholder = t('namePh');
   // Görüntü context seçenekleri
   const imgCtx = document.getElementById('img-context');
   if(imgCtx && imgCtx.options.length>=5){

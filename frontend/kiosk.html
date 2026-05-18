@@ -102,6 +102,7 @@ tailwind.config = {
   <div class="fixed top-4 right-4 flex items-center gap-2 z-50" role="toolbar" aria-label="Dil ve erişilebilirlik seçenekleri">
     <button class="lang-btn" onclick="setLang('tr')" id="lang-tr" aria-label="Türkçe" aria-pressed="false">TR</button>
     <button class="lang-btn active" onclick="setLang('en')" id="lang-en" aria-label="English" aria-pressed="true">EN</button>
+    <button class="lang-btn" onclick="setLang('ar')" id="lang-ar" aria-label="العربية" aria-pressed="false">AR</button>
     <button onclick="toggleVoice()" class="lang-btn" id="btn-voice" aria-label="Sesli yönlendirme" title="Sesli yönlendirme (TTS)">
       <span class="material-symbols-outlined msym" style="font-size:16px;vertical-align:middle" id="voice-icon">volume_up</span>
     </button>
@@ -535,7 +536,63 @@ const I18N = {
     btnAIStart: 'Start AI Interview',
     emailPlaceholder: 'Your email address',
   },
-  ar: {}
+  ar: {
+    subtitle: 'الفرز المبدئي للمرضى بالذكاء الاصطناعي',
+    subtitle2: 'AI-Powered Patient Pre-Triage',
+    statusChecking: 'جارٍ التحقق من حالة النظام...',
+    statusReady: 'النظام جاهز ✓',
+    statusLoading: 'النموذج يُحمَّل...',
+    statusMaint: 'النظام في صيانة',
+    statusOffline: 'لا يوجد اتصال بالخادم',
+    statusLocked: '🔒 الكشك مغلق مؤقتاً',
+    queueLabel: 'المرضى في الانتظار',
+    waitLabel: 'وقت الانتظار (د)',
+    btnStart: 'بدء المقابلة',
+    btnLogin: 'تسجيل الدخول بحسابي',
+    footer: 'بياناتك محمية وفقاً للوائح المعمول بها · AnamnezAI v5.0',
+    formTitle: 'بيانات المريض',
+    formDesc: 'يرجى إدخال معلوماتك',
+    labelName: 'الاسم الكامل',
+    placeholderName: 'اسمك الكامل',
+    labelAge: 'العمر',
+    labelGender: 'الجنس',
+    optMale: 'ذكر', optFemale: 'أنثى', optOther: 'أفضل عدم الإفصاح',
+    btnAI: 'بدء مقابلة الذكاء الاصطناعي',
+    errName: 'يرجى إدخال اسمك.',
+    errAge: 'يرجى إدخال عمر صحيح.',
+    errConn: 'خطأ في الاتصال.',
+    chatLabel: 'المقابلة جارية',
+    placeholder: 'اكتب إجابتك...',
+    thinking: 'Gemma 4 يُفكّر...',
+    completed: 'شكراً! تم تسجيل إجاباتك. جارٍ تقييم الفرز...',
+    errRetry: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
+    doneTitle: 'اكتملت المقابلة',
+    doneDesc: 'الذكاء الاصطناعي يُقيّم أعراضك.<br/>يرجى انتظار موظف الفرز.',
+    triageLabel: 'نتيجة الفرز',
+    btnHome: 'العودة للرئيسية',
+    btnPrint: 'طباعة تذكرة الدور',
+    btnQR: 'نقل إلى الهاتف',
+    qrTitle: 'امسح بالهاتف',
+    qrDesc: 'امسح رمز QR لمتابعة جلستك على هاتفك.',
+    loginTitle: 'تسجيل الدخول',
+    loginDesc: 'تابع بحسابك المسجَّل',
+    loginSubmit: 'تسجيل الدخول',
+    loginErr: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+    loginConnErr: 'تعذَّر الاتصال بالخادم.',
+    btnBack: 'رجوع',
+    roomInfo: 'لمعرفة رقم الغرفة<br/>يرجى انتظار موظف الفرز',
+    waitInfo: 'راجع الشاشة<br/>لمعرفة وقت الانتظار',
+    ticketLabel: 'تذكرة دورك',
+    yearsOld: 'سنة',
+    closeBtnTxt: 'إغلاق',
+    qrTicketLbl: 'الدور:',
+    qrBtnSubtitle: 'امسح رمز QR ← النتائج على هاتفك',
+    formLabelName: 'الاسم الكامل',
+    formLabelAge: 'العمر',
+    formLabelGender: 'الجنس',
+    btnAIStart: 'بدء مقابلة الذكاء الاصطناعي',
+    emailPlaceholder: 'بريدك الإلكتروني',
+  }
 };
 
 function t(key) { return (I18N[currentLang] || I18N.tr)[key] || I18N.tr[key] || key; }
@@ -544,12 +601,12 @@ function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('kiosk_lang', lang);
   // Update button states
-  ['tr','en'].forEach(l => {
+  ['tr','en','ar'].forEach(l => {
     const btn = document.getElementById('lang-'+l);
     if (btn) { btn.classList.toggle('active', l === lang); btn.setAttribute('aria-pressed', l === lang); }
   });
-  // Direction always LTR (TR + EN only)
-  document.body.dir = 'ltr';
+  // RTL for Arabic
+  document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
   document.documentElement.lang = lang;
   // Re-render all text
   applyTranslations();
@@ -645,6 +702,9 @@ function updateEmergencyWarning() {
   if (currentLang === 'en') {
     emergTitle.textContent = '⚠️ Emergency Warning';
     emergBody.textContent = 'If you have chest pain, difficulty breathing, loss of consciousness, stroke symptoms, or severe bleeding — do NOT use this system. Call emergency services (112) immediately.';
+  } else if (currentLang === 'ar') {
+    emergTitle.textContent = '⚠️ تحذير طارئ';
+    emergBody.textContent = 'إذا كنت تعاني من ألم في الصدر أو صعوبة في التنفس أو فقدان الوعي أو أعراض السكتة الدماغية أو نزيف حاد — لا تستخدم هذا النظام، اتصل بالطوارئ (112) فوراً.';
   } else {
     emergTitle.textContent = '⚠️ Acil Durum Uyarısı';
     emergBody.textContent = 'Göğüs ağrısı, nefes darlığı, bilinç kaybı, felç belirtisi veya yoğun kanama varsa — bu sistemi beklemeyin, hemen 112\'yi arayın.';

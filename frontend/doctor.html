@@ -450,6 +450,8 @@ const DL = {
     statusConnecting:'Bağlanıyor...', statusReady:'Gemma 4 Hazır ✓', statusWarming:'Model Isınıyor...',
     statusActive:'Gemma 4 Aktif', statusWaiting:'Ollama Bekleniyor', statusOffline:'Bağlantı Yok',
     modelOffline:'Model Çevrimdışı', backendOffline:'Backend Bağlanamıyor',
+    ragNoData:'RAG ⚠ Veri yok', ragDisabled:'RAG — Devre dışı',
+    notAvail:'YOK', kioskError:'❌ Kiosk hatası: ', healthPersonnel:'Sağlık Personeli',
     kioskLocked:'🔒 Kiosk kilitlendi', kioskUnlocked:'🔓 Kiosk açıldı',
     confirmOverrideFn:(l)=>`Triaj seviyesini ${l} olarak değiştirmek istediğinize emin misiniz?`,
     alertOverrideFail:'Triaj değiştirilemedi.', alertSeenFail:'İşlem başarısız.',
@@ -557,6 +559,8 @@ const DL = {
     statusConnecting:'Connecting...', statusReady:'Gemma 4 Ready ✓', statusWarming:'Model Warming...',
     statusActive:'Gemma 4 Active', statusWaiting:'Waiting for Ollama', statusOffline:'No Connection',
     modelOffline:'Model Offline', backendOffline:'Backend Unreachable',
+    ragNoData:'RAG ⚠ No data', ragDisabled:'RAG — Disabled',
+    notAvail:'N/A', kioskError:'❌ Kiosk error: ', healthPersonnel:'Health Personnel',
     kioskLocked:'🔒 Kiosk locked', kioskUnlocked:'🔓 Kiosk unlocked',
     confirmOverrideFn:(l)=>`Are you sure you want to change triage level to ${l}?`,
     alertOverrideFail:'Could not change triage.', alertSeenFail:'Operation failed.',
@@ -664,6 +668,8 @@ const DL = {
     statusConnecting:'جارٍ الاتصال...', statusReady:'Gemma 4 جاهز ✓', statusWarming:'النموذج يسخن...',
     statusActive:'Gemma 4 نشط', statusWaiting:'في انتظار Ollama', statusOffline:'لا يوجد اتصال',
     modelOffline:'النموذج غير متصل', backendOffline:'الخادم غير متاح',
+    ragNoData:'RAG ⚠ لا توجد بيانات', ragDisabled:'RAG — معطّل',
+    notAvail:'غير متوفر', kioskError:'❌ خطأ في الكشك: ', healthPersonnel:'كادر صحي',
     kioskLocked:'🔒 تم قفل الكشك', kioskUnlocked:'🔓 تم فتح الكشك',
     confirmOverrideFn:(l)=>`هل أنت متأكد من تغيير مستوى الفرز إلى ${l}؟`,
     alertOverrideFail:'تعذر تغيير الفرز.', alertSeenFail:'فشلت العملية.',
@@ -818,7 +824,7 @@ async function kioskLock(lock) {
     console.error('Kiosk işlemi başarısız:', e.message);
     const t2 = document.createElement('div');
     t2.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;padding:10px 20px;border-radius:8px;z-index:9999';
-    t2.textContent = '❌ Kiosk hatası: ' + e.message;
+    t2.textContent = t('kioskError') + e.message;
     document.body.appendChild(t2);
     setTimeout(() => t2.remove(), 3000);
   }
@@ -865,12 +871,12 @@ async function checkModelStatus() {
     // Top-bar model pill güncelle
     dot.className   = `w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-500' : 'bg-warn dot-pulse'}`;
     pill.className  = `flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${online ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`;
-    txt.textContent = online ? (d.gemma_model || 'Gemma 4') + ' Aktif' : 'Model Çevrimdışı';
+    txt.textContent = online ? t('statusActive') : t('modelOffline');
 
     // Sprint 15: Model Status Bar'ı güncelle
     _updateModelBar('mbar-gemma4', d.gemma_available, `Gemma 4 e4b ${d.model_ready ? '✅ ACTIVE' : d.model_warming ? '⏳ LOADING' : '⚠ STANDBY'}`);
-    _updateModelBar('mbar-medgemma', d.medgemma_available, `MedGemma 4b ${d.medgemma_available ? '✅ READY' : '⚠ YOK'}`);
-    _updateModelBar('mbar-lite', d.lite_model_available, `Lite 1b ${d.lite_model_available ? '✅ READY' : '⚠ YOK'}`);
+    _updateModelBar('mbar-medgemma', d.medgemma_available, `MedGemma 4b ${d.medgemma_available ? '✅ READY' : '⚠ ' + t('notAvail')}`);
+    _updateModelBar('mbar-lite', d.lite_model_available, `Lite 1b ${d.lite_model_available ? '✅ READY' : '⚠ ' + t('notAvail')}`);
 
     // RAG durumu
     const ragEl = document.getElementById('mbar-rag-txt');
@@ -879,10 +885,10 @@ async function checkModelStatus() {
         ragEl.textContent = `RAG ✅ ${d.rag_chunks} chunk`;
         ragEl.style.color = '#006a68';
       } else if (d.rag_enabled) {
-        ragEl.textContent = 'RAG ⚠ Veri yok';
+        ragEl.textContent = t('ragNoData');
         ragEl.style.color = '#e07b26';
       } else {
-        ragEl.textContent = 'RAG — Devre dışı';
+        ragEl.textContent = t('ragDisabled');
         ragEl.style.color = '#8c9499';
       }
     }
@@ -892,10 +898,10 @@ async function checkModelStatus() {
   } catch {
     dot.className  = 'w-1.5 h-1.5 rounded-full bg-err';
     pill.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-errc text-err';
-    txt.textContent = 'Backend Bağlanamıyor';
-    _updateModelBar('mbar-gemma4', false, 'Gemma 4 — Bağlanamıyor');
-    _updateModelBar('mbar-medgemma', false, 'MedGemma — Bağlanamıyor');
-    _updateModelBar('mbar-lite', false, 'Lite — Bağlanamıyor');
+    txt.textContent = t('backendOffline');
+    _updateModelBar('mbar-gemma4', false, 'Gemma 4 — ' + t('backendOffline'));
+    _updateModelBar('mbar-medgemma', false, 'MedGemma — ' + t('backendOffline'));
+    _updateModelBar('mbar-lite', false, 'Lite — ' + t('backendOffline'));
   }
 }
 
@@ -934,8 +940,8 @@ function _updateModelBar(barId, available, label) {
   // Sidebar'a isim/unvan yaz
   const nameEl = document.getElementById('doctor-name-sidebar');
   const specEl = document.getElementById('doctor-spec-sidebar');
-  if (nameEl) nameEl.textContent = user.name || 'Dr. Kullanıcı';
-  if (specEl) specEl.textContent = user.specialty || 'Sağlık Personeli';
+  if (nameEl) nameEl.textContent = user.name || t('healthPersonnel');
+  if (specEl) specEl.textContent = user.specialty || t('healthPersonnel');
 })();
 
 // Demo data — Artık DB'den yükleniyor (frontend'de hardcoded değil)
