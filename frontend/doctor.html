@@ -39,8 +39,9 @@ tailwind.config={theme:{extend:{colors:{
   @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
   .dot-pulse{animation:dp 1.2s ease infinite}
   @keyframes dp{0%,100%{opacity:1}50%{opacity:.3}}
-  .lang-active{background:#ffffff!important;color:#002f40!important;box-shadow:0 1px 4px rgba(0,0,0,.20)!important}
-  .lang-pill{color:#747a7d;font-weight:700}
+  .lang-active{background:#00475e!important;color:#ffffff!important;font-weight:700!important;box-shadow:0 2px 6px rgba(0,71,94,.35)!important}
+  .lang-pill{color:#747a7d;font-weight:600;border:1.5px solid transparent}
+  .lang-pill:hover:not(.lang-active){background:rgba(0,71,94,.08)!important;color:#00475e!important}
 </style>
 </head>
 <body>
@@ -1114,7 +1115,7 @@ function renderTable(patients, containerId, live){
       <td class="px-4 py-3.5">${waitHtml}</td>
       <td class="px-4 py-3.5 text-right">
         <button class="px-3 py-1.5 rounded-xl text-white text-[11px] font-bold hover:opacity-80 transition-all"
-          style="${cfg.badge}" onclick="event.stopPropagation();showDetail('${p.session_id}')">
+          style="${cfg.badge}" onclick="event.stopPropagation();openFullReport('${p.session_id}')">
           ${t('btnReport')}
         </button>
       </td>
@@ -1379,13 +1380,16 @@ let _reportModalSid = null;
 function openReportModal(sid, patientName) {
   _reportModalSid = sid;
   const p = allPatients[sid];
-  if (!p) return;
-  localStorage.setItem('anamnez_summary', JSON.stringify(p));
+  // Store patient data in localStorage so summary.html can render it
+  // (works for both live sessions and demo cases)
+  if (p) {
+    localStorage.setItem('anamnez_summary', JSON.stringify(p));
+  }
   const modal = document.getElementById('report-modal');
   const iframe = document.getElementById('report-modal-iframe');
   const title = document.getElementById('report-modal-title');
-  if (title) title.textContent = patientName || p.patient_name || 'Patient Report';
-  // Doktor görünümünü summary'e bildir
+  if (title) title.textContent = patientName || (p && p.patient_name) || 'Patient Report';
+  // Flag: opened from doctor panel
   localStorage.setItem('summary_from_doctor', '1');
   iframe.src = `summary.html?sid=${encodeURIComponent(sid)}&t=${Date.now()}`;
   modal.classList.remove('hidden');
@@ -1407,8 +1411,7 @@ function closeReportModal() {
 
 function openFullReport(sid){
   const p = allPatients[sid];
-  if(!p) return;
-  openReportModal(sid, p.patient_name);
+  openReportModal(sid, p ? p.patient_name : sid);
 }
 
 function openClinicalReview(sid){
@@ -1571,16 +1574,22 @@ async function loadSeenPatients() {
 async function viewSeenSummary(sid) {
   try {
     const r = await fetch(`${API}/api/session/${sid}/detail`, { headers: authHeaders() });
-    if (!r.ok) throw new Error('Veri alınamadı');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const detail = await r.json();
     const summary = detail.summary;
-    if (summary) {
+    if (summary && summary.session_id) {
       allPatients[sid] = {...(allPatients[sid]||{}), ...summary};
-      openReportModal(sid, summary.patient_name || sid);
-    } else {
-      alert(t('detailICD10None'));
     }
-  } catch(e) { alert(t('alertReportFail') + e.message); }
+    // Open the report modal regardless — summary.html will render from localStorage or API
+    openReportModal(sid, (summary && summary.patient_name) || allPatients[sid]?.patient_name || sid);
+  } catch(e) {
+    // Fallback: try to open from allPatients if API fails
+    if (allPatients[sid]) {
+      openReportModal(sid, allPatients[sid].patient_name || sid);
+    } else {
+      alert(t('alertReportFail') + e.message);
+    }
+  }
 }
 
 async function suggestICD10(sid) {
@@ -1831,8 +1840,8 @@ function setLang(l){
     if (!el) return;
     const isActive = id === 'dlbtn-' + l;
     el.classList.toggle('lang-active', isActive);
-    // Active: dark text (via .lang-active CSS); inactive: muted gray
-    el.style.color = isActive ? '#002f40' : '#747a7d';
+    el.style.color = '';   // let CSS handle it
+    el.style.background = ''; // let CSS handle it
   });
 
   // TCFG badge etiketlerini güncelle (triage rozetleri)
