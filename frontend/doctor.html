@@ -1880,16 +1880,16 @@ function setLang(l){
   if (currentDetailSid) showDetail(currentDetailSid);
 }
 
+// ─────────────────────────────────────────────
+//  Pre-Visit Appointments Module
+// ─────────────────────────────────────────────
+var _previsitOpen = false;
+
 // Sayfa yüklenince kayıtlı dili uygula
 (function(){ setLang(uiLang); })();
 
 // İlk kuyruk yüklemesi — DL ve t() hazır olduktan sonra
 loadQueue();
-
-// ─────────────────────────────────────────────
-//  Pre-Visit Appointments Module
-// ─────────────────────────────────────────────
-let _previsitOpen = false;
 
 function togglePrevisitSection() {
   _previsitOpen = !_previsitOpen;

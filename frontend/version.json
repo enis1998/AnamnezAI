@@ -1,6 +1,6 @@
 {
-  "version": "2026.05.19-i18n",
-  "cache_name": "anamnezai-v11",
+  "version": "2026.05.19-i18n-fix2",
+  "cache_name": "anamnezai-v12",
   "build_date": "2026-05-19",
   "features": [
     "demo-cases-db",
