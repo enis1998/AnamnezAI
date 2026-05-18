@@ -419,6 +419,16 @@ function escHtml(s){
 }
 
 function render(d){
+  if(!d) return;
+  d = Object.assign({
+    urgency_flags:[], vitals:null, image_findings:null,
+    evidence:[], guideline_sources:[], possible_conditions:[],
+    doctor_review_required:true, unsafe_to_self_manage:false,
+    evidence_map:[], safety_guardrail_triggered:false,
+    guardrail_rules_fired:[], ai_execution_log:{},
+    missing_information:[], recommended_next_questions:[],
+    clinical_completeness_score:0
+  }, d);
   const ls=document.getElementById('loading-state');
   if(ls) ls.remove();
   const lv=TRIAGE[d.triage_level]||TRIAGE.YELLOW;
@@ -1180,7 +1190,8 @@ function _doRender(d){
       const mc=document.getElementById('main-content');
       if(mc) mc.insertBefore(ls, mc.firstChild);
     }
-    _showErr('Rapor görüntülenirken hata oluştu', (err.message||String(err)).slice(0,200));
+    const errDetail = (err.stack||err.message||String(err)).slice(0,400);
+    _showErr('Rapor görüntülenirken hata oluştu', errDetail);
   }
 }
 
@@ -1198,38 +1209,52 @@ function _setLoadingText(msg){
 if(_urlSid){
   _setLoadingText('Rapor yükleniyor...');
   const _tok = localStorage.getItem('anamnez_token');
-  const _ctrl = new AbortController();
-  // 60 saniye timeout — Gemma ilk seferinde yavaş olabilir
-  const _timer = setTimeout(()=>_ctrl.abort(), 60000);
 
-  const _apiUrl = `/api/session/${encodeURIComponent(_urlSid)}/summary`;
-  const _fHeaders = Object.assign(
-    {'Cache-Control':'no-cache, no-store','Pragma':'no-cache'},
-    _tok ? {'Authorization':'Bearer '+_tok} : {}
-  );
+  async function _fetchSummaryWithRetry(){
+    const _apiUrl = `/api/session/${encodeURIComponent(_urlSid)}/summary`;
+    const _fHeaders = Object.assign(
+      {'Cache-Control':'no-cache, no-store','Pragma':'no-cache'},
+      _tok ? {'Authorization':'Bearer '+_tok} : {}
+    );
+    // Poll status first — if generating, show progress and wait
+    try {
+      const stRes = await fetch(`/api/session/${encodeURIComponent(_urlSid)}/summary/status`,
+        {cache:'no-store', headers: _fHeaders});
+      if(stRes.ok){
+        const st = await stRes.json();
+        if(st.generating && !st.ready){
+          _setLoadingText('AI raporu hazırlıyor, lütfen bekleyin...');
+        }
+      }
+    } catch(e){}
 
-  fetch(_apiUrl, { signal: _ctrl.signal, cache: 'no-store', headers: _fHeaders })
-  .then(r => {
-    clearTimeout(_timer);
-    if(r.ok) return r.json();
-    return r.text().then(txt=>{ throw new Error('HTTP '+r.status+': '+txt.slice(0,200)); });
-  })
-  .then(d => {
-    if(d && d.session_id){
-      try { localStorage.setItem('anamnez_summary', JSON.stringify(d)); } catch(e){}
-      _doRender(d);
-    } else {
-      _showErr('Rapor sunucudan alınamadı', 'Sunucu boş yanıt döndürdü');
+    // Fetch summary with 180s timeout — backend waits up to 180s for background generation
+    const _ctrl = new AbortController();
+    const _timer = setTimeout(()=>_ctrl.abort(), 185000);
+    try {
+      const r = await fetch(_apiUrl, { signal: _ctrl.signal, cache: 'no-store', headers: _fHeaders });
+      clearTimeout(_timer);
+      if(!r.ok){
+        const txt = await r.text();
+        throw new Error('HTTP '+r.status+': '+txt.slice(0,200));
+      }
+      const d = await r.json();
+      if(d && d.session_id){
+        try { localStorage.setItem('anamnez_summary', JSON.stringify(d)); } catch(e){}
+        _doRender(d);
+      } else {
+        _showErr('Rapor sunucudan alınamadı', 'Sunucu boş yanıt döndürdü');
+      }
+    } catch(e){
+      clearTimeout(_timer);
+      if(e.name==='AbortError'){
+        _showErr('Sunucu zaman aşımı (3 dk)', 'Lütfen sayfayı yenileyin. Rapor uzun süre oluşturuluyorsa birkaç dakika bekleyip tekrar deneyin.');
+      } else {
+        _showErr('Bağlantı hatası', (e.message||String(e)).slice(0,300));
+      }
     }
-  })
-  .catch(e => {
-    clearTimeout(_timer);
-    if(e.name==='AbortError'){
-      _showErr('Sunucu zaman aşımı (60s)', 'Lütfen tekrar deneyin. Rapor oluşturuluyorsa birkaç dakika bekleyin.');
-    } else {
-      _showErr('Bağlantı hatası', (e.message||String(e)).slice(0,200));
-    }
-  });
+  }
+  _fetchSummaryWithRetry();
 
 } else if(data){
   _doRender(data);

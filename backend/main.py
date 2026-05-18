@@ -1947,6 +1947,7 @@ async def submit_answer_stream(req: AnswerRequest, request: Request):
 # Mülakat tamamlanır tamamlanmaz başlatılır — hasta beklemiyor.
 # Frontend /summary/status ile polling yapar, hazır olunca tek seferlik /summary çağırır.
 _summary_generating: set[str] = set()   # hangi session'lar şu an üretiliyor
+_summary_events: dict = {}              # session_id -> asyncio.Event (generation done signal)
 
 async def _background_summary(session_id: str) -> None:
     """
@@ -1959,12 +1960,16 @@ async def _background_summary(session_id: str) -> None:
     if session_id in _summary_generating:
         return                           # zaten başlatılmış, ikinci task açma
     _summary_generating.add(session_id)
+    evt = asyncio.Event()
+    _summary_events[session_id] = evt
     try:
         await get_clinical_summary(session_id)
     except Exception as e:
         print(f"[BG-Summary] {session_id[:8]}... hata: {e}")
     finally:
         _summary_generating.discard(session_id)
+        evt.set()
+        _summary_events.pop(session_id, None)
 
 
 @app.get("/api/session/{session_id}/summary/status")
@@ -2026,6 +2031,28 @@ async def get_clinical_summary(session_id: str):
                 return ClinicalSummaryResponse(**smry)
     except Exception as _e:
         pass
+
+    # If background task is already generating, wait for it (max 180s) instead of double-calling LLM
+    if session_id in _summary_generating:
+        evt = _summary_events.get(session_id)
+        if evt:
+            try:
+                await asyncio.wait_for(asyncio.shield(evt.wait()), timeout=180.0)
+            except asyncio.TimeoutError:
+                pass
+        # Check cache again after waiting
+        if session_id in summaries:
+            return ClinicalSummaryResponse(**summaries[session_id])
+        try:
+            with get_cursor() as cur:
+                cur.execute("SELECT data FROM summaries WHERE session_id=%s", (session_id,))
+                row = cur.fetchone()
+                if row:
+                    smry = row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
+                    summaries[session_id] = smry
+                    return ClinicalSummaryResponse(**smry)
+        except Exception:
+            pass
 
     _t_start = _time.time()
 
