@@ -182,8 +182,13 @@ window.onerror = function(msg, src, line, col, err) {
 const API = '';
 let data = null;
 try {
-  const raw = localStorage.getItem('anamnez_summary');
+  // Try session-specific key first (set by doctor.html openReportModal for guaranteed match)
+  const _earlySid = new URLSearchParams(location.search).get('sid');
+  const _specificRaw = _earlySid ? localStorage.getItem('anamnez_summary_' + _earlySid) : null;
+  const raw = _specificRaw || localStorage.getItem('anamnez_summary');
   data = raw ? JSON.parse(raw) : null;
+  // Ensure session_id matches URL sid
+  if (data && _earlySid && !data.session_id) data.session_id = _earlySid;
 } catch(e) {
   console.error('summary localStorage parse error:', e);
   data = null;

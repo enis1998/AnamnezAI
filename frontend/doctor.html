@@ -1389,7 +1389,11 @@ function openReportModal(sid, patientName) {
   const p = allPatients[sid];
   // Store patient data in localStorage so summary.html can render it (live + demo cases)
   if (p) {
-    try { localStorage.setItem('anamnez_summary', JSON.stringify(p)); } catch(e) { console.warn('[Report] localStorage write failed:', e); }
+    try {
+      const pWithSid = Object.assign({}, p, {session_id: sid}); // ensure session_id is always set
+      localStorage.setItem('anamnez_summary', JSON.stringify(pWithSid));
+      localStorage.setItem('anamnez_summary_' + sid, JSON.stringify(pWithSid)); // session-specific key
+    } catch(e) { console.warn('[Report] localStorage write failed:', e); }
   }
   const modal = document.getElementById('report-modal');
   const iframe = document.getElementById('report-modal-iframe');
@@ -1416,8 +1420,13 @@ function openReportNewTab() {
 }
 
 function closeReportModal() {
-  document.getElementById('report-modal').classList.add('hidden');
-  document.getElementById('report-modal-iframe').src = '';
+  const modal = document.getElementById('report-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none'; // clear inline style set by openReportModal
+  }
+  const iframe = document.getElementById('report-modal-iframe');
+  if (iframe) iframe.src = '';
   document.body.style.overflow = '';
   localStorage.removeItem('summary_from_doctor');
 }
