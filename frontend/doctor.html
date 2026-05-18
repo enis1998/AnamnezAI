@@ -1792,6 +1792,11 @@ setInterval(checkModelStatus, 30000);  // 30sn'de bir model durumu güncelle
 // SSE yoksa backup polling (sadece retry bağlantıda)
 
 
+// ─────────────────────────────────────────────
+//  Pre-Visit Appointments Module
+// ─────────────────────────────────────────────
+var _previsitOpen = false;
+
 function setLang(l){
   uiLang = l;
   localStorage.setItem('ui_lang', l);
@@ -1896,13 +1901,10 @@ function setLang(l){
   if (currentDetailSid) showDetail(currentDetailSid);
 }
 
-// ─────────────────────────────────────────────
-//  Pre-Visit Appointments Module
-// ─────────────────────────────────────────────
-var _previsitOpen = false;
 
 // Sayfa yüklenince kayıtlı dili uygula
 (function(){ setLang(uiLang); })();
+
 
 // İlk kuyruk yüklemesi — DL ve t() hazır olduktan sonra
 loadQueue();
