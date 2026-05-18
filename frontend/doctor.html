@@ -1407,6 +1407,13 @@ function openReportModal(sid, patientName) {
   const url = 'summary.html?sid=' + encodeURIComponent(sid) + '&t=' + Date.now();
   console.log('[Report] Setting iframe src:', url);
   iframe.src = url;
+  // After iframe loads, send patient data via postMessage as additional fallback
+  iframe.onload = function() {
+    try {
+      const pMsg = allPatients[sid] ? Object.assign({}, allPatients[sid], {session_id: sid}) : {session_id: sid};
+      iframe.contentWindow.postMessage({type: 'DOC_PATIENT_DATA', sid: sid, data: pMsg}, location.origin);
+    } catch(e) {}
+  };
   modal.classList.remove('hidden');
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
