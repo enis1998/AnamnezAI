@@ -414,10 +414,7 @@ async function handleGoogleResponse(response) {
 // Service Worker güncellendiğinde sayfayı otomatik yenile
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SW_UPDATED') {
-      // Yeni SW aktif oldu — sayfayı taze içerikle yenile
-      window.location.reload();
-    }
+    if (event.data && event.data.type === 'SW_UPDATED') { console.log("[SW] Update ignored"); }
   });
 }
 

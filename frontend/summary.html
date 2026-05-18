@@ -159,6 +159,26 @@ tailwind.config={theme:{extend:{colors:{
 </main>
 
 <script>
+window.onerror = function(msg, src, line, col, err) {
+  var ls = document.getElementById('loading-state');
+  if (!ls) {
+    ls = document.createElement('div');
+    ls.id = 'loading-state';
+    ls.className = 'text-center py-24';
+    var mc = document.getElementById('main-content');
+    if (mc) mc.insertBefore(ls, mc.firstChild);
+    else document.body.appendChild(ls);
+  }
+  if (!document.getElementById('report-content')) {
+    ls.innerHTML = '<div style="text-align:center;padding:40px 16px;font-family:sans-serif">' +
+      '<p style="color:#ba1a1a;font-weight:bold;font-size:15px;margin-bottom:8px">⚠ JavaScript Hatası</p>' +
+      '<p style="color:#3f4749;font-size:12px;font-family:monospace;background:#f4f7f9;padding:8px;border-radius:8px;word-break:break-all;max-width:400px;margin:0 auto 16px">' +
+      (msg||'') + (src ? ' \n' + src + ':' + (line||'') : '') + '</p>' +
+      '<button onclick="location.reload()" style="padding:10px 20px;background:#006a68;color:white;border:none;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer">Sayfayı Yenile</button>' +
+      '</div>';
+  }
+  return false;
+};
 const API = '';
 let data = null;
 try {
@@ -1162,16 +1182,27 @@ async function exportPDF(){
 applyLangUI();
 
 // ── Hata ve render yardımcıları ───────────────────────────────────────────────
+function _getOrCreateLoadingState(){
+  let ls = document.getElementById('loading-state');
+  if(!ls){
+    ls = document.createElement('div');
+    ls.id = 'loading-state';
+    ls.className = 'text-center py-24';
+    const mc = document.getElementById('main-content');
+    if(mc) mc.insertBefore(ls, mc.firstChild);
+    else document.body.appendChild(ls);
+  }
+  return ls;
+}
 function _showErr(msg, detail){
-  const ls=document.getElementById('loading-state');
-  if(!ls) return;
-  ls.innerHTML=`<div class="text-center py-20 px-4">
+  const ls = _getOrCreateLoadingState();
+  ls.innerHTML = `<div class="text-center py-20 px-4">
     <span class="material-symbols-outlined msym-fill text-5xl text-err block mb-4">error</span>
     <p class="text-err font-bold mb-2">${msg||'Rapor yüklenemedi'}</p>
-    ${detail?`<p class="text-onsv text-xs mb-4 font-mono bg-surfc rounded p-2 max-w-sm mx-auto">${detail}</p>`:''}
-    <div class="flex gap-3 justify-center mt-4">
+    ${detail?`<p class="text-onsv text-xs mb-4 font-mono bg-surfc rounded p-2 max-w-sm mx-auto break-all">${String(detail).slice(0,300)}</p>`:''}
+    <div class="flex gap-3 justify-center mt-4 flex-wrap">
       <button onclick="location.reload()" class="px-5 py-2.5 rounded-xl bg-sec text-white text-[13px] font-bold">Tekrar Dene</button>
-      <a href="patient_dashboard.html" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Geçmişime Dön</a>
+      <a href="patient_dashboard.html" target="_top" class="px-5 py-2.5 rounded-xl bg-pric text-white text-[13px] font-bold">Geçmişime Dön</a>
     </div>
   </div>`;
 }
@@ -1181,15 +1212,7 @@ function _doRender(d){
     render(d);
   } catch(err){
     console.error('render error:', err);
-    // loading-state render sırasında kaldırılmış olabilir — yeniden ekle
-    let ls=document.getElementById('loading-state');
-    if(!ls){
-      ls=document.createElement('div');
-      ls.id='loading-state';
-      ls.className='text-center py-24';
-      const mc=document.getElementById('main-content');
-      if(mc) mc.insertBefore(ls, mc.firstChild);
-    }
+    // _getOrCreateLoadingState her zaman bir element döner
     const errDetail = (err.stack||err.message||String(err)).slice(0,400);
     _showErr('Rapor görüntülenirken hata oluştu', errDetail);
   }
@@ -1206,9 +1229,52 @@ function _setLoadingText(msg){
   if(pp) pp.textContent = msg;
 }
 
+// SW_UPDATED reload — sadece henüz render edilmemişse ve max 1 kez
+(function(){
+  // SW_UPDATED: artık otomatik reload YAPILMIYOR — sadece logla
+  // Rapor yüklenirken reload sayfayı bozabilir
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.addEventListener('message', function(ev){
+    if(ev.data && ev.data.type === 'SW_UPDATED'){
+      console.log('[SW] SW_UPDATED alındı, reload YOK (rapor yüklenirken güvenli değil)');
+    }
+  });
+})();
+
 if(_urlSid){
-  _setLoadingText('Rapor yükleniyor...');
+  // localStorage'da bu session'ın datası varsa ANINDA göster (API fetch beklemeden)
+  if(data && data.session_id === _urlSid){
+    _doRender(data);
+    // Arka planda taze veri çek (sessizce güncelle)
+    setTimeout(function(){
+      fetch('/api/session/'+encodeURIComponent(_urlSid)+'/summary',{cache:'no-store'})
+        .then(function(r){return r.ok?r.json():null;})
+        .then(function(d){if(d&&d.session_id){try{localStorage.setItem('anamnez_summary',JSON.stringify(d));}catch(e){}}})
+        .catch(function(){});
+    }, 2000);
+  } else {
+    _setLoadingText('Rapor yükleniyor...');
+  }
   const _tok = localStorage.getItem('anamnez_token');
+
+  // 20 saniye sonra takılma varsa retry butonu göster
+  const _stuckTimer = setTimeout(function(){
+    if(!document.getElementById('report-content')){
+      const ls = _getOrCreateLoadingState();
+      // Yeniden yükleme butonunu ekle (hata değil, sadece bekliyor)
+      const existingRetry = ls.querySelector('.stuck-retry');
+      if(!existingRetry){
+        const retryDiv = document.createElement('div');
+        retryDiv.className = 'stuck-retry mt-4 flex flex-col items-center gap-2';
+        retryDiv.innerHTML = `<p class="text-onsv text-xs">Rapor bekleniyor... Sorun devam ederse:</p>
+          <div class="flex gap-2 flex-wrap justify-center">
+            <button onclick="location.reload()" class="px-4 py-2 rounded-xl bg-sec text-white text-[12px] font-bold">Sayfayı Yenile</button>
+            <a href="patient_dashboard.html" target="_top" class="px-4 py-2 rounded-xl bg-surfc text-onsv text-[12px] font-bold">Geçmişim</a>
+          </div>`;
+        ls.appendChild(retryDiv);
+      }
+    }
+  }, 20000);
 
   async function _fetchSummaryWithRetry(){
     const _apiUrl = `/api/session/${encodeURIComponent(_urlSid)}/summary`;
@@ -1234,6 +1300,7 @@ if(_urlSid){
     try {
       const r = await fetch(_apiUrl, { signal: _ctrl.signal, cache: 'no-store', headers: _fHeaders });
       clearTimeout(_timer);
+      clearTimeout(_stuckTimer);
       if(!r.ok){
         const txt = await r.text();
         throw new Error('HTTP '+r.status+': '+txt.slice(0,200));
@@ -1241,12 +1308,14 @@ if(_urlSid){
       const d = await r.json();
       if(d && d.session_id){
         try { localStorage.setItem('anamnez_summary', JSON.stringify(d)); } catch(e){}
+        data = d;
         _doRender(d);
       } else {
         _showErr('Rapor sunucudan alınamadı', 'Sunucu boş yanıt döndürdü');
       }
     } catch(e){
       clearTimeout(_timer);
+      clearTimeout(_stuckTimer);
       if(e.name==='AbortError'){
         _showErr('Sunucu zaman aşımı (3 dk)', 'Lütfen sayfayı yenileyin. Rapor uzun süre oluşturuluyorsa birkaç dakika bekleyip tekrar deneyin.');
       } else {
@@ -1254,7 +1323,10 @@ if(_urlSid){
       }
     }
   }
-  _fetchSummaryWithRetry();
+  // Eğer localStorage'dan zaten render edildiyse, API fetch'i sadece güncelleme için yap
+  if(!(data && data.session_id === _urlSid)){
+    _fetchSummaryWithRetry();
+  }
 
 } else if(data){
   _doRender(data);

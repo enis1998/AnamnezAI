@@ -3,20 +3,11 @@
  * Sprint 4: Offline support, background sync, cache strategy
  */
 
-const CACHE_NAME = 'anamnezai-v20';
-const APP_VERSION = '2026.05.17-interview-fix-v1';
+const CACHE_NAME = 'anamnezai-v31';
+const APP_VERSION = '2026.05.18-v31-no-swupdate';
 const STATIC_ASSETS = [
   '/',
-  '/index.html',
-  '/kiosk.html',
-  // login.html intentionally excluded — always fetch from network (critical auth page)
-  '/register.html',
-  '/patient_dashboard.html',
-  '/doctor.html',
-  '/summary.html',
-  '/analytics.html',
-  '/clinical_review.html',
-  '/landing.html',
+  // HTML files intentionally excluded — always fetch from network (must be fresh)
   '/manifest.json',
 ];
 
@@ -32,20 +23,19 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// ── Activate: clean old caches + notify all clients to reload
+// ── Activate: clean old caches + notify clients of update (only when upgrading)
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
+    caches.keys().then(keys => {
+      const oldCacheExists = keys.some(k => k !== CACHE_NAME && k.startsWith('anamnezai-'));
+      return Promise.all(
         keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      )
-    ).then(() => {
-      self.clients.claim();
-      // Notify all open clients to reload so they get fresh HTML
-      return self.clients.matchAll({ type: 'window' }).then(clients => {
-        clients.forEach(client => {
-          client.postMessage({ type: 'SW_UPDATED', version: APP_VERSION });
-        });
+      ).then(() => {
+        self.clients.claim();
+        // SW update notifications removed - pages should not reload on SW update
+        }););
+          });
+        }
       });
     })
   );
@@ -71,12 +61,11 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // login.html: always network-first, no cache fallback (must be fresh)
-  // Also handles ?_fresh= query params and clearcache.html
-  if (url.pathname === '/login.html' || url.pathname === '/' || url.pathname === '/clearcache.html') {
+  // HTML files: ALWAYS network-only (must be fresh, never stale)
+  if (url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname === '/clearcache.html') {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
-        .catch(() => caches.match('/login.html'))
+        .catch(() => new Response('Offline', { status: 503 }))
     );
     return;
   }
@@ -135,4 +124,3 @@ self.addEventListener('notificationclick', event => {
   const url = event.notification.data?.url || '/';
   event.waitUntil(clients.openWindow(url));
 });
-
