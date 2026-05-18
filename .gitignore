@@ -61,3 +61,28 @@ evaluation/test_results_live.txt
 evaluation/*_live.txt
 evaluation/*_output.txt
 
+# Debug / one-off scripts at root level (never commit these)
+check_*.py
+debug_*.py
+diag_*.py
+diagnose_*.py
+fix_*.py
+deploy_*.py
+verify_*.py
+test_*.py
+final_*.py
+deep_*.py
+live_*.py
+read_*.py
+find_*.py
+tmp_*.py
+*_check.py
+*_diag.py
+*_fix.py
+*_deploy.py
+backend_status.txt
+backend_stderr.log
+backend_stdout.log
+deploy_output.txt
+db_check.txt
+
