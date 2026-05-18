@@ -161,10 +161,10 @@ tailwind.config={theme:{extend:{colors:{
           <span class="material-symbols-outlined msym text-[15px]">monitor</span><span id="txt-kiosk-btn">Kiosk Ekranı</span>
         </a>
         <!-- Dil Seçici -->
-        <div class="flex bg-surfc rounded-full p-0.5 gap-0.5">
-          <button onclick="setLang('tr')" id="dlbtn-tr" class="lang-pill px-2.5 py-1 rounded-full text-[11px] transition-all">TR</button>
-          <button onclick="setLang('en')" id="dlbtn-en" class="lang-pill px-2.5 py-1 rounded-full text-[11px] transition-all">EN</button>
-          <button onclick="setLang('ar')" id="dlbtn-ar" class="lang-pill px-2.5 py-1 rounded-full text-[11px] transition-all">AR</button>
+        <div class="flex rounded-full p-0.5 gap-0.5" style="background:#e8ecee">
+          <button onclick="setLang('tr')" id="dlbtn-tr" style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;border:none;outline:none">TR</button>
+          <button onclick="setLang('en')" id="dlbtn-en" style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;border:none;outline:none">EN</button>
+          <button onclick="setLang('ar')" id="dlbtn-ar" style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;border:none;outline:none">AR</button>
         </div>
       </div>
     </header>
@@ -1377,23 +1377,36 @@ function showDetail(sid){
 
 let _reportModalSid = null;
 
+function openFullReport(sid){
+  const p = allPatients[sid];
+  console.log('[Report] openFullReport sid=', sid, 'patient=', p ? p.patient_name : 'NOT IN allPatients');
+  openReportModal(sid, p ? p.patient_name : sid);
+}
+
 function openReportModal(sid, patientName) {
+  console.log('[Report] openReportModal sid=', sid, 'name=', patientName);
   _reportModalSid = sid;
   const p = allPatients[sid];
-  // Store patient data in localStorage so summary.html can render it
-  // (works for both live sessions and demo cases)
+  // Store patient data in localStorage so summary.html can render it (live + demo cases)
   if (p) {
-    localStorage.setItem('anamnez_summary', JSON.stringify(p));
+    try { localStorage.setItem('anamnez_summary', JSON.stringify(p)); } catch(e) { console.warn('[Report] localStorage write failed:', e); }
   }
   const modal = document.getElementById('report-modal');
   const iframe = document.getElementById('report-modal-iframe');
   const title = document.getElementById('report-modal-title');
+  if (!modal || !iframe) {
+    console.error('[Report] Modal element not found! modal=', !!modal, 'iframe=', !!iframe);
+    return;
+  }
   if (title) title.textContent = patientName || (p && p.patient_name) || 'Patient Report';
-  // Flag: opened from doctor panel
-  localStorage.setItem('summary_from_doctor', '1');
-  iframe.src = `summary.html?sid=${encodeURIComponent(sid)}&t=${Date.now()}`;
+  try { localStorage.setItem('summary_from_doctor', '1'); } catch(e) {}
+  const url = 'summary.html?sid=' + encodeURIComponent(sid) + '&t=' + Date.now();
+  console.log('[Report] Setting iframe src:', url);
+  iframe.src = url;
   modal.classList.remove('hidden');
+  modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  console.log('[Report] Modal visible =', !modal.classList.contains('hidden'));
 }
 
 function openReportNewTab() {
@@ -1407,11 +1420,6 @@ function closeReportModal() {
   document.getElementById('report-modal-iframe').src = '';
   document.body.style.overflow = '';
   localStorage.removeItem('summary_from_doctor');
-}
-
-function openFullReport(sid){
-  const p = allPatients[sid];
-  openReportModal(sid, p ? p.patient_name : sid);
 }
 
 function openClinicalReview(sid){
@@ -1840,8 +1848,10 @@ function setLang(l){
     if (!el) return;
     const isActive = id === 'dlbtn-' + l;
     el.classList.toggle('lang-active', isActive);
-    el.style.color = '';   // let CSS handle it
-    el.style.background = ''; // let CSS handle it
+    // Forcefully apply styles via JS (bypasses all CSS specificity issues)
+    el.style.cssText = isActive
+      ? 'padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;border:none;outline:none;background:#00475e;color:#ffffff;box-shadow:0 2px 6px rgba(0,71,94,.4)'
+      : 'padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;border:none;outline:none;background:transparent;color:#747a7d';
   });
 
   // TCFG badge etiketlerini güncelle (triage rozetleri)
