@@ -3,8 +3,8 @@
  * Sprint 4: Offline support, background sync, cache strategy
  */
 
-const CACHE_NAME = 'anamnezai-v33';
-const APP_VERSION = '2026.05.18-v31-no-swupdate';
+const CACHE_NAME = 'anamnezai-v35';
+const APP_VERSION = '2026.05.19-v34-setreportlang-fix';
 const STATIC_ASSETS = [
   '/',
   // HTML files intentionally excluded — always fetch from network (must be fresh)

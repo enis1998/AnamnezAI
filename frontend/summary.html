@@ -460,6 +460,7 @@ function setReportLang(lang){
   if(!document.getElementById('loading-state')) document.getElementById('main-content').appendChild(ls);
   if(data) setTimeout(()=>render(data),50);
 }
+window.setReportLang = setReportLang; // explicit global assignment — fail-safe for iframe onclick
 
 const TRIAGE={
   RED:{bg:'#fff5f5',border:'#ba1a1a',icon:'emergency'},
@@ -1407,4 +1408,32 @@ function applySMLang() {
   });
 }
 (function(){ applySMLang(); })();
+
+// ── Explicit window assignments (fail-safe for iframe context) ──────────────
+window.setReportLang = setReportLang;
+window.exportPDF = (typeof exportPDF === 'function') ? exportPDF : function(){};
+window.applyLangUI = applyLangUI;
+
+// ── postMessage listener: receive patient data from doctor.html ──────────────
+window.addEventListener('message', function(ev) {
+  try {
+    if (!ev.data || ev.data.type !== 'DOC_PATIENT_DATA') return;
+    const pData = ev.data.data;
+    const sid = ev.data.sid;
+    if (!pData || !sid) return;
+    // Only use if report not already rendered
+    if (document.getElementById('report-content')) return;
+    // Store in localStorage for this session
+    try { localStorage.setItem('anamnez_summary_' + sid, JSON.stringify(pData)); } catch(e){}
+    // If this is for our current page's sid
+    if (_urlSid && sid === _urlSid && !document.getElementById('report-content')) {
+      data = pData;
+      _doRender(pData);
+    }
+  } catch(e){ console.warn('[postMessage]', e); }
+});
+
+</script>
+</body>
+</html>
 
