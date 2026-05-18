@@ -1996,10 +1996,35 @@ async def get_summary_status(session_id: str):
       ready=false → generating=true ise arka planda üretiliyor, birkaç sn bekle
     """
     session = sessions.get(session_id)
+    # Backend restart sonrası memory'de yoksa DB'den yükle
+    if not session:
+        try:
+            with get_cursor() as cur:
+                cur.execute("SELECT data FROM sessions WHERE session_id=%s", (session_id,))
+                row = cur.fetchone()
+                if row:
+                    session = row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
+                    sessions[session_id] = session  # cache back in memory
+        except Exception:
+            pass
     if not session:
         raise HTTPException(status_code=404, detail="Oturum bulunamadı.")
+    # DB'de summary var mı kontrol et (memory'de yoksa)
+    if session_id not in summaries:
+        try:
+            with get_cursor() as cur:
+                cur.execute("SELECT 1 FROM summaries WHERE session_id=%s", (session_id,))
+                if cur.fetchone():
+                    # Summary DB'de var — memory cache'e de işaretle
+                    summaries_db_ready = True
+                else:
+                    summaries_db_ready = False
+        except Exception:
+            summaries_db_ready = False
+        ready = summaries_db_ready
+    else:
+        ready = True
 
-    ready = session_id in summaries
     generating = session_id in _summary_generating
     completed = session.get("completed", False)
 

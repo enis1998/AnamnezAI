@@ -1,0 +1,55 @@
+# AnamnezAI — Yerel Windows geliştirme için bağımsız Docker Compose
+# Kullanım: docker compose -f docker-compose.local.yml up --build
+# Sunucu volume mount'larını (Linux yolları) kullanmaz
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: anamnezai
+      POSTGRES_USER: anamnezai
+      POSTGRES_PASSWORD: anamnezai_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U anamnezai -d anamnezai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - GEMMA_MODEL=gemma4:e4b
+      - MEDGEMMA_MODEL=medgemma:4b
+      - FRONTEND_DIR=/app/frontend
+      - RAG_ENABLED=true
+      - OLLAMA_NUM_GPU=0
+      - JWT_SECRET_KEY=local_dev_secret_key_change_in_prod
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=anamnezai
+      - POSTGRES_USER=anamnezai
+      - POSTGRES_PASSWORD=anamnezai_secret
+      - DOCTOR_CLINIC_CODES=CLINIC2026,AYBU2026,DEMO2026
+    volumes:
+      - chroma_data:/app/chroma_db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  chroma_data:
+
+

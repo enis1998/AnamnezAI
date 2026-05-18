@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"/>
+<title>Clearing Cache — AnamnezAI</title>
+<style>
+body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#f4f7f9;color:#191c1d;margin:0}
+.card{background:#fff;border-radius:16px;padding:40px;box-shadow:0 2px 16px rgba(0,47,64,.1);max-width:400px;width:90%;text-align:center}
+h2{margin:0 0 12px;color:#002f40}
+p{color:#3f4749;margin:8px 0}
+.spinner{width:40px;height:40px;border:4px solid #e8ecee;border-top-color:#006a68;border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status{margin-top:16px;font-size:13px;color:#006a68;font-weight:600}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>🔄 Clearing Cache</h2>
+  <p>Stale data and service workers are being cleared...</p>
+  <div class="spinner"></div>
+  <div class="status" id="status">Working...</div>
+</div>
+<script>
+async function clearEverything() {
+  const status = document.getElementById('status');
+  let done = [];
+
+  // 1. Unregister all service workers
+  if ('serviceWorker' in navigator) {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs) { await r.unregister(); }
+      done.push('Service workers: cleared ✓');
+    } catch(e) { done.push('Service workers: ' + e.message); }
+  }
+
+  // 2. Clear all caches
+  if ('caches' in window) {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+      done.push('Cache storage: cleared ✓');
+    } catch(e) { done.push('Cache: ' + e.message); }
+  }
+
+  // 3. Clear relevant localStorage
+  ['anamnez_token', 'anamnez_user'].forEach(k => {
+    try { /* keep these - user login data */ } catch(e) {}
+  });
+
+  done.push('Done! Redirecting...');
+  status.textContent = done.join(' | ');
+
+  // 4. Redirect to login page (fresh, no cache)
+  setTimeout(() => {
+    window.location.replace('/login.html?_fresh=' + Date.now());
+  }, 1500);
+}
+
+clearEverything();
+</script>
+</body>
+</html>
+

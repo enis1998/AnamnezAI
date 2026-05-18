@@ -23,21 +23,17 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// ── Activate: clean old caches + notify clients of update (only when upgrading)
+// ── Activate: clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => {
-      const oldCacheExists = keys.some(k => k !== CACHE_NAME && k.startsWith('anamnezai-'));
-      return Promise.all(
+    caches.keys().then(keys =>
+      Promise.all(
         keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
       ).then(() => {
         self.clients.claim();
-        // SW update notifications removed - pages should not reload on SW update
-        }););
-          });
-        }
-      });
-    })
+        // SW update notifications removed — pages must NOT reload on SW update
+      })
+    )
   );
 });
 
