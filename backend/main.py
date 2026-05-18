@@ -1952,8 +1952,7 @@ _summary_events: dict = {}              # session_id -> asyncio.Event (generatio
 async def _background_summary(session_id: str) -> None:
     """
     Özeti arka planda üretir ve `summaries` dict'ine kaydeder.
-    `get_clinical_summary` zaten cache'i kontrol ettiği için hazırsa anlık döner.
-    Hata olursa sessizce geçilir — frontend /summary'yi tekrar çağırırsa on-demand üretilir.
+    Timeout veya hata durumunda 1 kez otomatik retry yapar.
     """
     if session_id in summaries:
         return                           # zaten hazır, tekrar üretme
@@ -1962,14 +1961,28 @@ async def _background_summary(session_id: str) -> None:
     _summary_generating.add(session_id)
     evt = asyncio.Event()
     _summary_events[session_id] = evt
-    try:
-        await get_clinical_summary(session_id)
-    except Exception as e:
-        print(f"[BG-Summary] {session_id[:8]}... hata: {e}")
-    finally:
-        _summary_generating.discard(session_id)
-        evt.set()
-        _summary_events.pop(session_id, None)
+    max_attempts = 2
+    for attempt in range(max_attempts):
+        try:
+            await get_clinical_summary(session_id)
+            break   # Başarılı, döngüden çık
+        except HTTPException as e:
+            if e.status_code in (504, 503) and attempt < max_attempts - 1:
+                # Timeout / Ollama yavaş → kısa bekleme sonrası retry
+                print(f"[BG-Summary] {session_id[:8]}... {e.status_code}, {attempt+1}. deneme sonrası retry (15s)...")
+                await asyncio.sleep(15)
+            else:
+                print(f"[BG-Summary] {session_id[:8]}... HTTPException {e.status_code}: {e.detail}")
+                break
+        except Exception as e:
+            print(f"[BG-Summary] {session_id[:8]}... hata (deneme {attempt+1}): {e}")
+            if attempt < max_attempts - 1:
+                await asyncio.sleep(10)
+            else:
+                break
+    _summary_generating.discard(session_id)
+    evt.set()
+    _summary_events.pop(session_id, None)
 
 
 @app.get("/api/session/{session_id}/summary/status")
@@ -2032,12 +2045,12 @@ async def get_clinical_summary(session_id: str):
     except Exception as _e:
         pass
 
-    # If background task is already generating, wait for it (max 180s) instead of double-calling LLM
+    # If background task is already generating, wait for it (max 250s) instead of double-calling LLM
     if session_id in _summary_generating:
         evt = _summary_events.get(session_id)
         if evt:
             try:
-                await asyncio.wait_for(asyncio.shield(evt.wait()), timeout=180.0)
+                await asyncio.wait_for(asyncio.shield(evt.wait()), timeout=250.0)
             except asyncio.TimeoutError:
                 pass
         # Check cache again after waiting
@@ -2094,7 +2107,7 @@ async def get_clinical_summary(session_id: str):
         system=get_triage_system(lang),
         rag_query=session.get("chief_complaint", "") or session.get("answers", [""])[0][:200],
         rag_mode="triage",
-        timeout=200.0,
+        timeout=260.0,
     )
 
     _t_llm = _time.time()

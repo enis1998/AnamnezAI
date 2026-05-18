@@ -402,6 +402,7 @@ tailwind.config = {
     <div class="w-2 h-2 rounded-full bg-sec dot-bounce" style="animation-delay:200ms"></div>
     <div class="w-2 h-2 rounded-full bg-sec dot-bounce" style="animation-delay:400ms"></div>
   </div>
+  <p class="text-onsv text-[11px] mt-4 opacity-60" id="txt-analyzing-hint"></p>
 </div>
 
 </main>
@@ -1227,28 +1228,52 @@ function retryAnswer(ans) {
 }
 
 async function fetchSummary(){
+  // Canlı saniye sayacı — kullanıcıya "bekliyor" hissi
+  let _totalElapsed = 0;
+  const _elapsedTimer = setInterval(() => {
+    _totalElapsed += 2;
+    const hint = document.getElementById('txt-analyzing-hint');
+    if (hint && _totalElapsed > 30) {
+      hint.textContent = lang === 'en'
+        ? `⏱ Gemma 4 is performing deep clinical analysis — this may take up to 3 minutes.`
+        : lang === 'ar'
+        ? `⏱ Gemma 4 يُجري تحليلاً سريرياً معمّقاً — قد يستغرق ذلك حتى 3 دقائق.`
+        : `⏱ Gemma 4 derin klinik analiz yapıyor — bu 3 dakikaya kadar sürebilir.`;
+    }
+  }, 2000);
+
   try {
     // ── Arka plan üretimini bekle (polling) ─────────────────────────────────────
     // Backend zaten asyncio.create_task ile özet üretmeye başladı.
-    // 2 sn aralıklarla durum sorguluyoruz. Max 50×2 = 100 sn.
-    const MAX_POLL = 50;
+    // 2 sn aralıklarla durum sorguluyoruz. Max 90×2 = 180 sn.
+    const MAX_POLL = 90;
+    let pollReady = false;
     for (let i = 0; i < MAX_POLL; i++) {
       await new Promise(r => setTimeout(r, 2000));
       try {
-        const stRes = await fetch(`${API}/api/session/${sessionId}/summary/status`);
+        const stRes = await fetch(`${API}/api/session/${sessionId}/summary/status`,
+          {signal: AbortSignal.timeout(8000)});
         if (stRes.ok) {
           const st = await stRes.json();
-          if (st.ready) break;
+          if (st.ready) { pollReady = true; break; }
           // Henüz değil → ekran metnini güncelle
           const tip = document.querySelector('#view-analyzing p');
           if (tip) {
             const elapsed = (i + 1) * 2;
-            const pct = Math.min(95, Math.round((elapsed / 80) * 100));
-            tip.textContent = lang === 'en'
-              ? `AI is preparing your clinical report… (${elapsed}s)`
-              : lang === 'ar'
-              ? `الذكاء الاصطناعي يُعدّ تقريرك السريري… (${elapsed}s)`
-              : `Klinik rapor hazırlanıyor… (${elapsed}s)`;
+            const pct = Math.min(92, Math.round((elapsed / 150) * 100));
+            if (elapsed < 120) {
+              tip.textContent = lang === 'en'
+                ? `AI is preparing your clinical report… (${elapsed}s)`
+                : lang === 'ar'
+                ? `الذكاء الاصطناعي يُعدّ تقريرك السريري… (${elapsed}s)`
+                : `Klinik rapor hazırlanıyor… (${elapsed}s)`;
+            } else {
+              tip.textContent = lang === 'en'
+                ? `Almost ready — complex case analysis in progress… (${elapsed}s)`
+                : lang === 'ar'
+                ? `جاهز تقريباً — تحليل حالة معقدة جارٍ… (${elapsed}s)`
+                : `Neredeyse hazır — karmaşık vaka analizi sürüyor… (${elapsed}s)`;
+            }
             // Progress bar güncelle
             const pb = document.querySelector('#view-analyzing .prog-bar-summary');
             if (pb) pb.style.width = pct + '%';
@@ -1257,7 +1282,18 @@ async function fetchSummary(){
       } catch(e) { /* polling hatası — devam et */ }
     }
     // ── Özet hazır (veya timeout) → tek seferlik çek ───────────────────────────
-    const res = await fetch(`${API}/api/session/${sessionId}/summary`);
+    // progress bar'ı %95'e taşı — son fetch bekleniyor
+    const pbFinal = document.querySelector('#view-analyzing .prog-bar-summary');
+    if (pbFinal) pbFinal.style.width = '95%';
+    const tip2 = document.querySelector('#view-analyzing p');
+    if (tip2 && !pollReady) {
+      tip2.textContent = lang === 'en'
+        ? 'Finalizing report…'
+        : lang === 'ar' ? 'جارٍ إتمام التقرير…'
+        : 'Rapor sonlandırılıyor…';
+    }
+    const res = await fetch(`${API}/api/session/${sessionId}/summary`,
+      {signal: AbortSignal.timeout(240000)});
     if(!res.ok) throw new Error(`summary_${res.status}`);
     const data = await res.json();
 
@@ -1291,10 +1327,12 @@ async function fetchSummary(){
     // claim_code'u summary verisine de ekle (summary.html'de gösterilecek)
     data.claim_code = localStorage.getItem('pending_claim_code') || null;
     localStorage.setItem('anamnez_summary', JSON.stringify(data));
+    clearInterval(_elapsedTimer);
     interviewActive = false; // Mülakat bitti — kilidi kaldır
     // ?sid ile yönlendir — summary.html her zaman API'dan taze veri çeker
     window.location.href = `summary.html?sid=${encodeURIComponent(sessionId)}`;
   } catch(err) {
+    clearInterval(_elapsedTimer);
     console.error('[fetchSummary] Hata:', err);
     // Analyzing ekranında kal — retry butonu göster
     _showSummaryRetryUI();
